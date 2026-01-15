@@ -1,0 +1,76 @@
+# generated: 2026-01-15
+# project: k2m-edtech-program-
+# project_key: k2m-edtech-program-
+# tracking_system: file-system
+# story_location: c:\Users\OMEN\Documents\K2M\k2m-edtech-program-\_bmad-output\implementation-artifacts
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review (via Dev's code-review workflow)
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+#
+# WORKFLOW NOTES:
+# ===============
+# - Epic transitions to 'in-progress' automatically when first story is created
+# - Stories can be worked in parallel if team capacity allows
+# - SM typically creates next story after previous one is 'done' to incorporate learnings
+# - Dev moves story to 'review', then runs code-review (fresh context, different LLM recommended)
+
+generated: 2026-01-15
+project: k2m-edtech-program-
+project_key: k2m-edtech-program-
+tracking_system: file-system
+story_location: c:\Users\OMEN\Documents\K2M\k2m-edtech-program-\_bmad-output\implementation-artifacts
+
+development_status:
+  epic-0: in-progress
+  0-1-define-conversion-baseline-success-metrics: review
+  0-2-implement-analytics-heatmap-tracking: review
+  0-3-establish-user-testing-protocol: review
+  0-4-implement-automated-visual-testing: review
+  epic-0-retrospective: optional
+
+  epic-1: in-progress
+  1-1-initialize-project-with-design-tokens: done
+  1-2-configure-gsap-lenis-infrastructure: ready-for-dev
+  1-3-build-hero-section-structure: ready-for-dev
+  1-4-implement-hero-text-reveal-animations: ready-for-dev
+  1-5-optimize-hero-performance: backlog
+  epic-1-retrospective: optional
+
+  epic-2: backlog
+  2-0-build-pre-map-anticipation-framing: backlog
+  2-1-create-territory-map-svg-structure: backlog
+  2-2-build-particle-coalescence-system: backlog
+  2-3-implement-zone-illumination-and-magnetic-hovers: backlog
+  epic-2-retrospective: optional
+
+  epic-3: backlog
+  3-1-build-discord-preview-section: backlog
+  3-2-animate-chat-bubbles-and-emojis: backlog
+  3-3-create-cta-section-with-typeform-integration: backlog
+  3-4-implement-cta-animations-and-responsive-design: backlog
+  epic-3-retrospective: optional
+
+  epic-4: backlog
+  4-1-implement-graceful-degradation-fallbacks: backlog
+  4-2-add-seo-meta-tags: backlog
+  4-3-post-launch-iteration-framework: backlog
+  epic-4-retrospective: optional
