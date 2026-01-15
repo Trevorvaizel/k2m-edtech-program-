@@ -1,9 +1,22 @@
 import './styles/token.css'
 import './style.css'
+import './components/Hero/Hero.css'
+
+// Import Hero component HTML
+import heroHtml from './components/Hero/Hero.html?raw';
 
 // K2M Landing Page Entry Point
+// Hero section integrated (Story 1.3)
 // Animation infrastructure initialized with GSAP + Lenis
-// Ready for hero section implementation (Story 1.3+)
+
+// Load Hero HTML into app container
+const app = document.getElementById('app');
+if (app) {
+  app.innerHTML = heroHtml;
+  console.log('✅ Hero section loaded');
+} else {
+  console.error('❌ App container not found');
+}
 
 // Import GSAP and ScrollTrigger for global availability
 import { gsap, ScrollTrigger } from './utils/gsap-config.js';

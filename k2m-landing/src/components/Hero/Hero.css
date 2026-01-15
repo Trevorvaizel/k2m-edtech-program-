@@ -1,0 +1,76 @@
+/* Import design tokens */
+@import '../../styles/token.css';
+
+/* Hero Container - Layout & Spacing */
+.hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  z-index: 1;
+}
+
+/* Content Wrapper - Center content */
+.hero-content {
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+/* Gradient Background Layer */
+.gradient-layer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, #000000 0%, #0A0A0A 100%);
+  z-index: 0;
+  opacity: 1;
+}
+
+/* Hero Title - Typography from design tokens */
+.hero-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: clamp(2.5rem, 8vw, 5rem);
+  color: var(--text-primary);
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+}
+
+/* Hero Subtitle - Secondary heading */
+.hero-subtitle {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+}
+
+/* Hero Body Text - Readable body copy */
+.hero-body p {
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 1.5em;
+}
+
+/* Ocean Mint Glow Text - Key phrase highlights */
+.glow-text {
+  color: var(--ocean-mint-glow); /* #40E0D0 */
+  display: inline-block; /* For animation targeting in Story 1.4 */
+}
+
+/* Responsive Design - Mobile */
+@media (max-width: 768px) {
+  .hero {
+    padding: 1.5rem; /* More padding on mobile for safety */
+  }
+
+  .hero-content {
+    text-align: left; /* Left-align on mobile for readability */
+  }
+}
