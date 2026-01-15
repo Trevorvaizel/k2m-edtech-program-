@@ -1,5 +1,5 @@
-/* Import design tokens */
-@import '../../styles/token.css';
+/* Hero Component Styles */
+/* Design tokens imported in main.js to avoid render blocking */
 
 /* Hero Container - Layout & Spacing */
 .hero {
@@ -15,6 +15,7 @@
 
 /* Content Wrapper - Center content */
 .hero-content {
+  position: relative; /* For z-index stacking context */
   max-width: 1200px;
   margin: 0 auto;
   text-align: center;
