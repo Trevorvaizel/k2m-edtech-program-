@@ -2,5 +2,49 @@ import './styles/token.css'
 import './style.css'
 
 // K2M Landing Page Entry Point
-// Foundation initialized with design tokens and Tailwind CSS
+// Animation infrastructure initialized with GSAP + Lenis
 // Ready for hero section implementation (Story 1.3+)
+
+// Import GSAP and ScrollTrigger for global availability
+import { gsap, ScrollTrigger } from './utils/gsap-config.js';
+
+// Import and initialize Lenis smooth scroll
+import { lenis } from './utils/lenis-config.js';
+
+// RequestAnimationFrame loop for Lenis updates (AC: 5)
+function raf(time) {
+  lenis.raf(time);
+  requestAnimationFrame(raf);
+}
+
+// Start the animation loop
+requestAnimationFrame(raf);
+
+// Log successful initialization
+console.log('✅ GSAP + Lenis initialized successfully');
+console.log('✅ Smooth scroll active');
+
+// Document visibility detection for tab switching (AC: 6, 7)
+// Pause animations when tab is hidden to prevent sync issues and save resources
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    // Tab is hidden - pause Lenis and GSAP
+    try {
+      lenis.stop();
+      gsap.globalTimeline.pause();
+      console.log('⏸️ Animations paused (tab hidden)');
+    } catch (error) {
+      console.error('Error pausing animations:', error);
+    }
+  } else {
+    // Tab is visible again - resume Lenis and GSAP
+    try {
+      lenis.start();
+      gsap.globalTimeline.resume();
+      console.log('▶️ Animations resumed (tab visible)');
+    } catch (error) {
+      console.error('Error resuming animations:', error);
+    }
+  }
+});
+
