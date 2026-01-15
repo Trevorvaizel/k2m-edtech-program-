@@ -1,0 +1,22 @@
+:root {
+  /* Color Palette */
+  --pure-black: #000000;
+  --soft-black: #0A0A0A;
+  --charcoal: #1A1A1A;
+
+  --ocean-mint-primary: #20B2AA;
+  --ocean-mint-glow: #40E0D0;
+  --ocean-mint-dim: #008B8B;
+
+  /* Text Colors */
+  --text-primary: #FFFFFF;
+  --text-secondary: #B0B0B0;
+  --text-muted: #6A6A6A;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--pure-black);
+  color: var(--text-primary);
+}
