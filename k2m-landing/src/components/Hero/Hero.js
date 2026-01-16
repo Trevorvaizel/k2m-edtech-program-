@@ -72,14 +72,14 @@ export function initHeroAnimations() {
             textShadow: '0 0 0px rgba(64, 224, 208, 0)'
           },
           {
-            textShadow: '0 0 80px rgba(64, 224, 208, 1), 0 0 120px rgba(64, 224, 208, 0.7), 0 0 160px rgba(64, 224, 208, 0.4)',
-            duration: 1.0, // Full scroll duration for dramatic effect
+            textShadow: '0 0 60px rgba(64, 224, 208, 0.9), 0 0 90px rgba(64, 224, 208, 0.5)', // Simplified 2-layer glow
+            duration: 1.0,
             ease: 'power2.inOut'
-          }, 0); // Start immediately for more visibility
+          }, 0);
       }
 
-      // Living typography with 3-layer parallax (desktop only)
-      createParallaxLayers(heroTitle, tl);
+      // Living typography with 3-layer parallax (DISABLED for performance)
+      // createParallaxLayers(heroTitle, tl);
 
       // Performance optimization
       tl.eventCallback('onComplete', () => {
