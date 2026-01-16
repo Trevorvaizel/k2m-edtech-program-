@@ -56,7 +56,7 @@
 .hero-body p {
   font-family: 'Inter', sans-serif;
   font-weight: 400;
-  font-size: clamp(1rem, 2vw, 1.25rem); /* Balanced size for readability */
+  font-size: clamp(0.9rem, 1.8vw, 1.1rem); /* Reduced for better visual balance */
   color: var(--text-secondary);
   line-height: 1.6;
   margin-bottom: 1.5em;
