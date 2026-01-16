@@ -106,6 +106,14 @@
 
 /* Ocean Mint Glow Text - Key phrase highlights */
 .glow-text {
+  color: var(--ocean-mint-glow); /* #40E0D0 - solid ocean mint */
+  display: inline-block; /* For animation targeting in Story 1.4 */
+  /* Initial subtle glow - will intensify on scroll */
+  text-shadow: 0 0 10px rgba(64, 224, 208, 0.4);
+}
+
+/* Ocean Mint Gradient Text - Special emphasis for "in control?" */
+.glow-gradient {
   /* Ocean mint gradient using logo colors */
   background: linear-gradient(135deg, #06b6d4 0%, #22d3ee 50%, #40E0D0 100%);
   -webkit-background-clip: text;
