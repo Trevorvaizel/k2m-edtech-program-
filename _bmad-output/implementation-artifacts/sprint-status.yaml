@@ -52,12 +52,12 @@ development_status:
   1-2-configure-gsap-lenis-infrastructure: review
   1-3-build-hero-section-structure: done
   1-4-implement-hero-text-reveal-animations: done
-  1-5-optimize-hero-performance: ready-for-dev
+  1-5-optimize-hero-performance: review
   epic-1-retrospective: optional
 
-  epic-2: backlog
+  epic-2: in-progress
   2-0-build-pre-map-anticipation-framing: backlog
-  2-1-create-territory-map-svg-structure: backlog
+  2-1-create-territory-map-svg-structure: ready-for-dev
   2-2-build-particle-coalescence-system: backlog
   2-3-implement-zone-illumination-and-magnetic-hovers: backlog
   epic-2-retrospective: optional
