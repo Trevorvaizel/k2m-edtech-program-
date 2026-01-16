@@ -106,10 +106,15 @@
 
 /* Ocean Mint Glow Text - Key phrase highlights */
 .glow-text {
-  color: var(--ocean-mint-glow); /* #40E0D0 */
+  /* Ocean mint gradient using logo colors */
+  background: linear-gradient(135deg, #06b6d4 0%, #22d3ee 50%, #40E0D0 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+
   display: inline-block; /* For animation targeting in Story 1.4 */
   /* Initial subtle glow - will intensify on scroll */
-  text-shadow: 0 0 10px rgba(64, 224, 208, 0.4);
+  filter: drop-shadow(0 0 10px rgba(6, 182, 212, 0.4));
 }
 
 /* Responsive Design - Mobile */
@@ -119,7 +124,7 @@
   }
 
   .hero-content {
-    text-align: left; /* Left-align on mobile for readability */
+    text-align: center; /* Center-align on mobile for better visual balance */
   }
 
   .hero-logo {
