@@ -45,9 +45,9 @@ export function initHeroAnimations() {
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: '.hero',
-          start: 'top top', // Start when hero top hits viewport top (immediately on load)
-          end: 'bottom center',
-          scrub: 1, // Scrub animation to scroll position (smooth scroll-linked effect)
+          start: 'top top', // Start when hero top hits viewport top
+          end: '+=2000', // Scroll 2000px to complete animation (full screen scroll)
+          scrub: 1, // Smooth scroll-linked animation
         }
       });
 
@@ -67,6 +67,7 @@ export function initHeroAnimations() {
 
       // Ocean mint glow - spans entire scroll for maximum visibility
       if (glowTexts.length > 0) {
+        console.log(`🎨 Animating ${glowTexts.length} glow text elements`);
         tl.fromTo(glowTexts,
           {
             textShadow: '0 0 0px rgba(64, 224, 208, 0)'
@@ -74,8 +75,16 @@ export function initHeroAnimations() {
           {
             textShadow: '0 0 80px rgba(64, 224, 208, 1), 0 0 120px rgba(64, 224, 208, 0.7), 0 0 160px rgba(64, 224, 208, 0.4)',
             duration: 1.0, // Full scroll duration for dramatic effect
-            ease: 'power2.inOut'
+            ease: 'power2.inOut',
+            onUpdate: function() {
+              // Debug: log glow progress during scroll
+              if (Math.random() > 0.95) { // Log 5% of the time to avoid spam
+                console.log('✨ Glow animating, scroll progress:', this.progress());
+              }
+            }
           }, 0); // Start immediately for more visibility
+      } else {
+        console.warn('⚠️ No glow text elements found!');
       }
 
       // Living typography with 3-layer parallax (desktop only)
@@ -100,9 +109,9 @@ export function initHeroAnimations() {
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: '.hero',
-          start: 'top top', // Start when hero top hits viewport top (immediately on load)
-          end: 'bottom center',
-          scrub: 1, // Scrub animation to scroll position (smooth scroll-linked effect)
+          start: 'top top', // Start when hero top hits viewport top
+          end: '+=2000', // Scroll 2000px to complete animation (full screen scroll)
+          scrub: 1, // Smooth scroll-linked animation
         }
       });
 
@@ -122,6 +131,7 @@ export function initHeroAnimations() {
 
       // Ocean mint glow - full scroll for visibility
       if (glowTexts.length > 0) {
+        console.log(`🎨 Mobile: Animating ${glowTexts.length} glow text elements`);
         tl.fromTo(glowTexts,
           {
             textShadow: '0 0 0px rgba(64, 224, 208, 0)'
@@ -131,6 +141,8 @@ export function initHeroAnimations() {
             duration: 1.0, // Full scroll duration
             ease: 'power2.inOut'
           }, 0); // Start immediately
+      } else {
+        console.warn('⚠️ Mobile: No glow text elements found!');
       }
 
       // Skip 3-layer parallax on mobile (already handled in createParallaxLayers)
