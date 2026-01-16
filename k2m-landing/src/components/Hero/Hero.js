@@ -32,6 +32,9 @@ export function initHeroAnimations() {
     if (el) enableGPU(el);
   });
 
+  // Initialize logo hover animation
+  initLogoAnimation();
+
   // Track timeline for cleanup
   let timeline = null;
 
@@ -178,6 +181,45 @@ export function initHeroAnimations() {
       if (el) disableGPU(el);
     });
   };
+}
+
+/**
+ * Initialize logo hover animation
+ * Makes the K2M cluster logo revolve on hover
+ */
+function initLogoAnimation() {
+  const logo = document.querySelector('.k2m-logo');
+  if (!logo) {
+    console.warn('K2M logo not found - skipping logo animation');
+    return;
+  }
+
+  let rotationTween = null;
+
+  // Hover start - begin revolving
+  logo.addEventListener('mouseenter', () => {
+    if (rotationTween) rotationTween.kill();
+
+    // Create smooth rotation animation
+    rotationTween = gsap.to(logo, {
+      rotation: 360,
+      duration: 4, // 4 seconds per rotation
+      ease: 'none',
+      repeat: -1, // Infinite loop
+    });
+
+    console.log('🔄 Logo revolving started');
+  });
+
+  // Hover end - stop revolving smoothly
+  logo.addEventListener('mouseleave', () => {
+    if (rotationTween) {
+      // Don't kill immediately - let it complete current rotation
+      rotationTween.repeat(0); // Stop after current rotation
+      rotationTween = null;
+    }
+    console.log('⏸️ Logo revolving stopped');
+  });
 }
 
 /**

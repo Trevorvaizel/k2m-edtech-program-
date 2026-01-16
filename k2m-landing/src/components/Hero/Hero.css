@@ -13,6 +13,45 @@
   z-index: 1;
 }
 
+/* Logo Header */
+.hero-logo {
+  position: absolute;
+  top: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+}
+
+.k2m-logo {
+  width: 80px;
+  height: 80px;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  filter: drop-shadow(0 0 10px rgba(6, 182, 212, 0.3));
+}
+
+.k2m-logo:hover {
+  filter: drop-shadow(0 0 20px rgba(6, 182, 212, 0.6));
+}
+
+/* Logo animation classes - added by GSAP */
+.k2m-logo.revolve-slow {
+  animation: revolve 8s linear infinite;
+}
+
+.k2m-logo.revolve-medium {
+  animation: revolve 4s linear infinite;
+}
+
+@keyframes revolve {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Content Wrapper - Center content */
 .hero-content {
   position: relative; /* For z-index stacking context */
@@ -81,5 +120,14 @@
 
   .hero-content {
     text-align: left; /* Left-align on mobile for readability */
+  }
+
+  .hero-logo {
+    top: 1.5rem; /* Slightly closer to top on mobile */
+  }
+
+  .k2m-logo {
+    width: 60px; /* Smaller logo on mobile */
+    height: 60px;
   }
 }
