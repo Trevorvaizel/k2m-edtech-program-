@@ -72,14 +72,14 @@ export function initHeroAnimations() {
             textShadow: '0 0 0px rgba(64, 224, 208, 0)'
           },
           {
-            textShadow: '0 0 60px rgba(64, 224, 208, 0.9), 0 0 90px rgba(64, 224, 208, 0.5)', // Simplified 2-layer glow
+            textShadow: '0 0 60px rgba(64, 224, 208, 0.9), 0 0 90px rgba(64, 224, 208, 0.5)',
             duration: 1.0,
             ease: 'power2.inOut'
           }, 0);
       }
 
-      // Living typography with 3-layer parallax (DISABLED for performance)
-      // createParallaxLayers(heroTitle, tl);
+      // Living typography with optimized 3-layer parallax (no blur filters)
+      createParallaxLayers(heroTitle, tl);
 
       // Performance optimization
       tl.eventCallback('onComplete', () => {
