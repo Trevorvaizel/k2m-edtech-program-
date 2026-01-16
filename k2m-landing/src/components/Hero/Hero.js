@@ -46,7 +46,7 @@ export function initHeroAnimations() {
         scrollTrigger: {
           trigger: '.hero',
           start: 'top top', // Start when hero top hits viewport top
-          end: '+=2000', // Scroll 2000px to complete animation (full screen scroll)
+          end: 'bottom bottom', // End when hero bottom hits viewport bottom
           scrub: 1, // Smooth scroll-linked animation
         }
       });
@@ -110,7 +110,7 @@ export function initHeroAnimations() {
         scrollTrigger: {
           trigger: '.hero',
           start: 'top top', // Start when hero top hits viewport top
-          end: '+=2000', // Scroll 2000px to complete animation (full screen scroll)
+          end: 'bottom bottom', // End when hero bottom hits viewport bottom
           scrub: 1, // Smooth scroll-linked animation
         }
       });
