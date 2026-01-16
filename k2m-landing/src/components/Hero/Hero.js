@@ -9,8 +9,8 @@ import { gsap, ScrollTrigger } from '../../utils/gsap-config.js';
 import { enableGPU, disableGPU, isMobile, monitorPerformance } from '../../utils/performance-optimizations.js';
 
 /**
- * Initialize Hero animations
- * Creates cinematic text reveal with stagger, ocean mint glow, and parallax effects
+ * Initialize Hero animations with mobile-specific optimizations
+ * Uses ScrollTrigger.matchMedia() for responsive performance
  */
 export function initHeroAnimations() {
   // DOM Elements
@@ -32,72 +32,150 @@ export function initHeroAnimations() {
     if (el) enableGPU(el);
   });
 
-  // Create main timeline with ScrollTrigger
-  const tl = gsap.timeline({
-    scrollTrigger: {
-      trigger: '.hero',
-      start: 'top top',
-      end: 'bottom center',
-      scrub: 1,
+  // Track timeline for cleanup
+  let timeline = null;
+
+  // Task 1: Mobile-specific optimizations with matchMedia
+  ScrollTrigger.matchMedia({
+    // Desktop (min-width: 769px) - Full animation complexity
+    '(min-width: 769px)': function() {
+      console.log('Desktop animations initialized - full complexity');
+
+      // Create main timeline with ScrollTrigger
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: '.hero',
+          start: 'top top',
+          end: 'bottom center',
+          scrub: 1,
+        }
+      });
+
+      // Subtitle and body reveal with desktop timing (1.0s total)
+      tl.to(heroSubtitle, {
+        opacity: 1,
+        y: 0,
+        duration: 0.6,
+        ease: 'power3.out'
+      }, 0)
+      .to(heroBody, {
+        opacity: 1,
+        y: 0,
+        duration: 0.8,
+        ease: 'power3.out'
+      }, 0.2); // Desktop stagger: 0.2s
+
+      // Ocean mint glow - full duration (1.5s)
+      if (glowTexts.length > 0) {
+        tl.fromTo(glowTexts,
+          {
+            textShadow: '0 0 0px rgba(64, 224, 208, 0)'
+          },
+          {
+            textShadow: '0 0 60px rgba(64, 224, 208, 1), 0 0 100px rgba(64, 224, 208, 0.6), 0 0 140px rgba(64, 224, 208, 0.3)',
+            duration: 1.5,
+            ease: 'power2.inOut'
+          }, 0.2);
+      }
+
+      // Living typography with 3-layer parallax (desktop only)
+      createParallaxLayers(heroTitle, tl);
+
+      // Performance optimization
+      tl.eventCallback('onComplete', () => {
+        animatedElements.forEach(el => {
+          if (el) disableGPU(el);
+        });
+      });
+
+      // Store timeline reference for cleanup
+      timeline = tl;
+    },
+
+    // Mobile (max-width: 768px) - Simplified animations
+    '(max-width: 768px)': function() {
+      console.log('Mobile animations initialized - simplified for performance');
+
+      // Create main timeline with ScrollTrigger
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: '.hero',
+          start: 'top top',
+          end: 'bottom center',
+          scrub: 1,
+        }
+      });
+
+      // Subtitle and body reveal with mobile timing (0.5s total)
+      tl.to(heroSubtitle, {
+        opacity: 1,
+        y: 0,
+        duration: 0.3,  // Mobile: 0.5x desktop duration
+        ease: 'power3.out'
+      }, 0)
+      .to(heroBody, {
+        opacity: 1,
+        y: 0,
+        duration: 0.4,  // Mobile: 0.5x desktop duration
+        ease: 'power3.out'
+      }, 0.1); // Mobile stagger: 0.1s (50% of desktop)
+
+      // Ocean mint glow - simplified (0.75s vs 1.5s desktop)
+      if (glowTexts.length > 0) {
+        tl.fromTo(glowTexts,
+          {
+            textShadow: '0 0 0px rgba(64, 224, 208, 0)'
+          },
+          {
+            textShadow: '0 0 40px rgba(64, 224, 208, 0.8), 0 0 70px rgba(64, 224, 208, 0.4)',  // Single layer glow on mobile
+            duration: 0.75,  // Mobile: 0.5x desktop duration
+            ease: 'power2.inOut'
+          }, 0.15); // Mobile timing: 0.15s
+      }
+
+      // Skip 3-layer parallax on mobile (already handled in createParallaxLayers)
+
+      // Performance optimization
+      tl.eventCallback('onComplete', () => {
+        animatedElements.forEach(el => {
+          if (el) disableGPU(el);
+        });
+      });
+
+      // Store timeline reference for cleanup
+      timeline = tl;
     }
   });
 
-  // Task 2: Surprise reveal - Headline visible, subtitle/body fade UP on scroll
-  // Subtitle and body reveal in quick succession
-  tl.to(heroSubtitle, {
-    opacity: 1,
-    y: 0,
-    duration: 0.6,
-    ease: 'power3.out'
-  }, 0) // Start immediately as scroll begins
-  .to(heroBody, {
-    opacity: 1,
-    y: 0,
-    duration: 0.8,
-    ease: 'power3.out'
-  }, 0.1); // Tight stagger - body follows quickly
-
-  // Task 3: Ocean mint glow PULSES dramatically as you scroll
-  // Grows from nothing to prominent glowing effect
-  if (glowTexts.length > 0) {
-    tl.fromTo(glowTexts,
-      {
-        textShadow: '0 0 0px rgba(64, 224, 208, 0)'  // No glow initially
-      },
-      {
-        textShadow: '0 0 60px rgba(64, 224, 208, 1), 0 0 100px rgba(64, 224, 208, 0.6), 0 0 140px rgba(64, 224, 208, 0.3)',  // Dramatic multi-layer glow
-        duration: 1.5,
-        ease: 'power2.inOut'
-      }, 0.2);  // Starts slightly after text begins revealing
-  }
-
-  // Task 4: Living typography with 3-layer parallax
-  // Creates depth by animating text layers at different speeds
-  createParallaxLayers(heroTitle, tl);
-
-  // Task 5: Performance optimization
-  // Disable GPU acceleration after animations complete
-  tl.eventCallback('onComplete', () => {
-    animatedElements.forEach(el => {
-      if (el) disableGPU(el);
-    });
-  });
-
-  // Task 6: Safari compatibility - pause on tab hidden
+  // Task 2: Safari compatibility - pause on tab hidden (applies to both desktop and mobile)
   document.addEventListener('visibilitychange', handleVisibilityChange);
 
-  // Task 7: Optional performance monitoring
+  // Task 3: Performance monitoring (applies to both desktop and mobile)
   const stopMonitoring = monitorPerformance();
 
-  // Store cleanup function on the element for later use
+  // Store cleanup function on hero section (always available, not inside matchMedia)
   heroSection._cleanup = () => {
+    // Remove visibility change listener
     document.removeEventListener('visibilitychange', handleVisibilityChange);
+
+    // Stop performance monitoring
     if (stopMonitoring) stopMonitoring();
-    tl.kill();
+
+    // Kill timeline if it exists
+    if (timeline) {
+      timeline.kill();
+    }
+
+    // Kill all ScrollTriggers for hero section
     ScrollTrigger.getAll().forEach(trigger => {
       if (trigger.trigger === heroSection) {
         trigger.kill();
       }
+    });
+
+    // Disable GPU acceleration on all animated elements
+    animatedElements.forEach(el => {
+      if (el) disableGPU(el);
     });
   };
 }
@@ -194,9 +272,3 @@ export function cleanupHeroAnimations() {
   }
 }
 
-// Auto-initialize if this file is loaded directly
-if (typeof window !== 'undefined') {
-  window.addEventListener('load', () => {
-    initHeroAnimations();
-  });
-}
