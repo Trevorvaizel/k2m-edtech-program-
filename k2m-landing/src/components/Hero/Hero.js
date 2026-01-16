@@ -65,17 +65,17 @@ export function initHeroAnimations() {
         ease: 'power3.out'
       }, 0.2); // Desktop stagger: 0.2s
 
-      // Ocean mint glow - full duration (1.5s)
+      // Ocean mint glow - spans entire scroll for maximum visibility
       if (glowTexts.length > 0) {
         tl.fromTo(glowTexts,
           {
             textShadow: '0 0 0px rgba(64, 224, 208, 0)'
           },
           {
-            textShadow: '0 0 60px rgba(64, 224, 208, 1), 0 0 100px rgba(64, 224, 208, 0.6), 0 0 140px rgba(64, 224, 208, 0.3)',
-            duration: 1.5,
+            textShadow: '0 0 80px rgba(64, 224, 208, 1), 0 0 120px rgba(64, 224, 208, 0.7), 0 0 160px rgba(64, 224, 208, 0.4)',
+            duration: 1.0, // Full scroll duration for dramatic effect
             ease: 'power2.inOut'
-          }, 0.2);
+          }, 0); // Start immediately for more visibility
       }
 
       // Living typography with 3-layer parallax (desktop only)
@@ -106,31 +106,31 @@ export function initHeroAnimations() {
         }
       });
 
-      // Subtitle and body reveal with mobile timing (0.5s total)
+      // Subtitle and body reveal with mobile timing
       tl.to(heroSubtitle, {
         opacity: 1,
         y: 0,
-        duration: 0.3,  // Mobile: 0.5x desktop duration
+        duration: 0.3,
         ease: 'power3.out'
       }, 0)
       .to(heroBody, {
         opacity: 1,
         y: 0,
-        duration: 0.4,  // Mobile: 0.5x desktop duration
+        duration: 0.6, // Longer duration for better visibility
         ease: 'power3.out'
-      }, 0.1); // Mobile stagger: 0.1s (50% of desktop)
+      }, 0.1); // Mobile stagger: 0.1s
 
-      // Ocean mint glow - simplified (0.75s vs 1.5s desktop)
+      // Ocean mint glow - full scroll for visibility
       if (glowTexts.length > 0) {
         tl.fromTo(glowTexts,
           {
             textShadow: '0 0 0px rgba(64, 224, 208, 0)'
           },
           {
-            textShadow: '0 0 40px rgba(64, 224, 208, 0.8), 0 0 70px rgba(64, 224, 208, 0.4)',  // Single layer glow on mobile
-            duration: 0.75,  // Mobile: 0.5x desktop duration
+            textShadow: '0 0 60px rgba(64, 224, 208, 0.9), 0 0 100px rgba(64, 224, 208, 0.6)',  // Stronger glow
+            duration: 1.0, // Full scroll duration
             ease: 'power2.inOut'
-          }, 0.15); // Mobile timing: 0.15s
+          }, 0); // Start immediately
       }
 
       // Skip 3-layer parallax on mobile (already handled in createParallaxLayers)
