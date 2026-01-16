@@ -1,0 +1,107 @@
+<!-- TerritoryMap.html - Territory Map WHOA Moment Structure -->
+<section class="territory-map" id="territory-map" aria-label="Territory Map showing learning journey from Zone 0 to 4">
+  <!-- Particle container for Story 2.2 -->
+  <div class="particle-container">
+    <!-- Particles will be injected here by MapParticles.js in Story 2.2 -->
+  </div>
+
+  <!-- SVG visual representation (background layer) - "The Discovered Map" -->
+  <svg class="territory-svg" viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg"
+       role="img" aria-label="Journey path from Zone 0 to Zone 4">
+    <defs>
+      <!-- Zone 4 presence glow - strongest attractor -->
+      <radialGradient id="destination-glow">
+        <stop offset="0%" stop-color="rgba(64,224,208,0.5)" />
+        <stop offset="40%" stop-color="rgba(64,224,208,0.2)" />
+        <stop offset="100%" stop-color="rgba(64,224,208,0)" />
+      </radialGradient>
+    </defs>
+
+    <!-- The worn path - organic Bezier curve (NOT straight lines) -->
+    <path
+      d="M 100,700 C 200,650 300,600 400,550
+         S 550,480 650,430
+         S 800,380 900,320
+         S 1000,250 1100,180"
+      stroke="rgba(32,178,170,0.15)"
+      stroke-width="4"
+      stroke-linecap="round"
+      stroke-dasharray="12 6"
+      fill="none"
+      class="journey-path" />
+
+    <!-- Zone markers - DEGREES OF BECOMING (opacity increases toward Zone 4) -->
+    <g class="zone-markers">
+      <!-- Zone 0: Ghost state - barely visible -->
+      <circle cx="100" cy="700" r="35"
+              fill="rgba(26,26,26,0.6)"
+              stroke="rgba(255,255,255,0.1)"
+              stroke-width="1"
+              class="zone-marker zone-0-marker"
+              data-zone="0" />
+
+      <!-- Zone 1: Emerging -->
+      <circle cx="400" cy="550" r="38"
+              fill="rgba(26,26,26,0.65)"
+              stroke="rgba(255,255,255,0.15)"
+              stroke-width="1"
+              class="zone-marker zone-1-marker"
+              data-zone="1" />
+
+      <!-- Zone 2: Forming -->
+      <circle cx="650" cy="430" r="42"
+              fill="rgba(26,26,26,0.7)"
+              stroke="rgba(255,255,255,0.2)"
+              stroke-width="1.5"
+              class="zone-marker zone-2-marker"
+              data-zone="2" />
+
+      <!-- Zone 3: Solid -->
+      <circle cx="900" cy="320" r="46"
+              fill="rgba(26,26,26,0.8)"
+              stroke="rgba(32,178,170,0.3)"
+              stroke-width="1.5"
+              class="zone-marker zone-3-marker"
+              data-zone="3" />
+
+      <!-- Zone 4: The destination - FULLY PRESENT with glow -->
+      <circle cx="1100" cy="180" r="180"
+              fill="url(#destination-glow)"
+              class="zone-4-glow" />
+      <circle cx="1100" cy="180" r="55"
+              fill="rgba(26,26,26,0.9)"
+              stroke="rgba(64,224,208,0.8)"
+              stroke-width="2"
+              class="zone-marker zone-4-marker"
+              data-zone="4" />
+    </g>
+  </svg>
+
+  <!-- Zone content (foreground layer) -->
+  <div class="map-zones">
+    <div class="zone zone-0" data-zone="0">
+      <h3>AI isn't for me</h3>
+      <p>Where most students start. Feeling overwhelmed.</p>
+    </div>
+
+    <div class="zone zone-1" data-zone="1">
+      <h3>I could try this</h3>
+      <p>First sparks of curiosity.</p>
+    </div>
+
+    <div class="zone zone-2" data-zone="2">
+      <h3>AI does tasks for me</h3>
+      <p>Using it for real work. But inconsistent.</p>
+    </div>
+
+    <div class="zone zone-3" data-zone="3">
+      <h3>AI understands my intent</h3>
+      <p>True collaboration begins.</p>
+    </div>
+
+    <div class="zone zone-4 zone-destination" data-zone="4">
+      <h3>I control the quality</h3>
+      <p>You direct. You refine. You own the outcome. This is where confidence lives.</p>
+    </div>
+  </div>
+</section>

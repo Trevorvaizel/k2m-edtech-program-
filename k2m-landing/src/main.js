@@ -2,21 +2,24 @@ import './styles/token.css'
 import './style.css'
 import './components/Hero/Hero.css'
 import './components/TerritoryMap/MapFraming.css'
+import './components/TerritoryMap/TerritoryMap.css'
 
 // Import Hero component HTML
 import heroHtml from './components/Hero/Hero.html?raw';
 import mapFramingHtml from './components/TerritoryMap/MapFraming.html?raw';
+import territoryMapHtml from './components/TerritoryMap/TerritoryMap.html?raw';
 
 // K2M Landing Page Entry Point
 // Hero section integrated (Story 1.3)
 // Animation infrastructure initialized with GSAP + Lenis
 
-// Load Hero and MapFraming HTML into app container
+// Load Hero, MapFraming, and TerritoryMap HTML into app container
 const app = document.getElementById('app');
 if (app) {
-  app.innerHTML = heroHtml + mapFramingHtml;
+  app.innerHTML = heroHtml + mapFramingHtml + territoryMapHtml;
   console.log('✅ Hero section loaded');
   console.log('✅ MapFraming section loaded');
+  console.log('✅ TerritoryMap section loaded');
 } else {
   console.error('❌ App container not found');
 }
