@@ -1083,3 +1083,22 @@ _Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)_
 - Verified GPU acceleration and memory management patterns
 - Created comprehensive test suite (7 tests passing)
 - Documentation complete for Epic 2 (Territory Map) performance patterns
+
+**2026-01-16 - Code Review Fixes (Commit 95f59d9):**
+- ✅ Fixed duplicate visibilitychange event listener (kept in main.js, removed from Hero.js)
+- ✅ Fixed weak test assertion in story-1-5-performance.spec.ts (now expects >= 2 FPS logs)
+- ✅ Fixed parallax layer test to check sibling spans instead of child spans
+- ✅ Removed unused handleVisibilityChange() function from Hero.js
+- ✅ Updated cleanup function to not remove duplicate event listener
+- ⚠️ Tasks 3-5 still require manual validation (Lighthouse audit, 60fps desktop, 45fps mobile)
+
+**2026-01-16 - Performance Fixes (Commit 0568a33):**
+- ✅ Disabled 3-layer parallax effect to fix 25 FPS performance drops during body text animation
+- ✅ Simplified glow animation from 3-layer to 2-layer text-shadow
+- ✅ Reduced text-shadow blur radius from 80px/120px/160px to 60px/90px
+- ✅ Expected result: Consistent 60 FPS on desktop during all animations
+
+**2026-01-16 - Font Size Adjustment (Commit 19f50a8):**
+- ✅ Reduced hero body text font size for better visual balance
+- ✅ Changed from clamp(1rem, 2vw, 1.25rem) to clamp(0.9rem, 1.8vw, 1.1rem)
+- ✅ Addresses user feedback about paragraph being too large
