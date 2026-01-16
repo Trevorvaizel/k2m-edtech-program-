@@ -1,0 +1,60 @@
+/* MapFraming.css - Pre-map anticipation framing section */
+/* Story 2.0: Build Pre-Map Anticipation Framing */
+
+.map-framing {
+  position: relative;
+  min-height: 80vh; /* 30-40% of scroll journey */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  background: linear-gradient(180deg, #0A0A0A 0%, #000000 100%);
+  text-align: center;
+  z-index: 2; /* Above Hero, below Territory Map */
+}
+
+.framing-content {
+  position: relative;
+  z-index: 2;
+  max-width: 800px;
+}
+
+.framing-text {
+  opacity: 0; /* Animated in by GSAP */
+  color: var(--text-primary);
+  margin-bottom: 2rem;
+}
+
+.framing-text-1 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--ocean-mint-primary); /* Ocean mint accent */
+}
+
+.framing-text-2,
+.framing-text-3 {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(1rem, 2vw, 1.5rem);
+  font-weight: 400;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .map-framing {
+    min-height: 60vh; /* Shorter on mobile */
+    padding: 2rem 1rem;
+  }
+
+  .framing-text-1 {
+    font-size: clamp(1.5rem, 6vw, 2.5rem);
+  }
+
+  .framing-text-2,
+  .framing-text-3 {
+    font-size: clamp(0.875rem, 4vw, 1.25rem);
+  }
+}
