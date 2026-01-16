@@ -147,16 +147,13 @@ export function initHeroAnimations() {
     }
   });
 
-  // Task 2: Safari compatibility - pause on tab hidden (applies to both desktop and mobile)
-  document.addEventListener('visibilitychange', handleVisibilityChange);
-
+  // Note: visibilitychange listener handled globally in main.js (not duplicated here)
   // Task 3: Performance monitoring (applies to both desktop and mobile)
   const stopMonitoring = monitorPerformance();
 
   // Store cleanup function on hero section (always available, not inside matchMedia)
   heroSection._cleanup = () => {
-    // Remove visibility change listener
-    document.removeEventListener('visibilitychange', handleVisibilityChange);
+    // Note: visibilitychange listener removed by main.js, not duplicated here
 
     // Stop performance monitoring
     if (stopMonitoring) stopMonitoring();
@@ -245,20 +242,6 @@ function createParallaxLayers(element, tl) {
 
   // Layer 3 (original) stays at y: 0 (fastest, foreground)
   // Already handled by the text reveal animation above
-}
-
-/**
- * Handle visibility change for Safari compatibility
- * Pauses animations when tab is hidden, resumes when visible
- */
-function handleVisibilityChange() {
-  if (document.hidden) {
-    // Pause all GSAP animations
-    gsap.globalTimeline.pause();
-  } else {
-    // Resume animations
-    gsap.globalTimeline.play();
-  }
 }
 
 /**
