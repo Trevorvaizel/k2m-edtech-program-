@@ -1,3 +1,9 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Fix body styles after Tailwind reset */
+body {
+  background-color: var(--pure-black);
+  color: var(--text-primary);
+}

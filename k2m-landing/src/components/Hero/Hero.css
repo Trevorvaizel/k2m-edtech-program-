@@ -47,6 +47,9 @@
   font-size: clamp(1.5rem, 4vw, 2.5rem);
   color: var(--text-secondary);
   margin-bottom: 2rem;
+  /* Hidden initially for surprise reveal on scroll */
+  opacity: 0;
+  transform: translateY(30px);
 }
 
 /* Hero Body Text - Readable body copy */
@@ -57,12 +60,17 @@
   color: var(--text-secondary);
   line-height: 1.6;
   margin-bottom: 1.5em;
+  /* Hidden initially for surprise reveal on scroll */
+  opacity: 0;
+  transform: translateY(50px);
 }
 
 /* Ocean Mint Glow Text - Key phrase highlights */
 .glow-text {
   color: var(--ocean-mint-glow); /* #40E0D0 */
   display: inline-block; /* For animation targeting in Story 1.4 */
+  /* Initial subtle glow - will intensify on scroll */
+  text-shadow: 0 0 10px rgba(64, 224, 208, 0.4);
 }
 
 /* Responsive Design - Mobile */
