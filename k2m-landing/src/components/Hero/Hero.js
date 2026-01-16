@@ -198,26 +198,26 @@ function createParallaxLayers(element, tl) {
   const text = element.textContent;
 
   // Create 3 layers for parallax effect
-  // Layer 1: Shadow (background)
+  // Layer 1: Shadow (background) - NO BLUR for performance
   const layer1 = document.createElement('span');
   layer1.textContent = text;
   layer1.style.cssText = `
     position: absolute;
-    opacity: 0.3;
-    filter: blur(4px);
+    opacity: 0.25;
     z-index: 1;
     pointer-events: none;
+    will-change: transform, opacity;
   `;
 
-  // Layer 2: Blur (middle)
+  // Layer 2: Semi-transparent (middle) - NO BLUR for performance
   const layer2 = document.createElement('span');
   layer2.textContent = text;
   layer2.style.cssText = `
     position: absolute;
-    opacity: 0.6;
-    filter: blur(1px);
+    opacity: 0.5;
     z-index: 2;
     pointer-events: none;
+    will-change: transform, opacity;
   `;
 
   // Layer 3: Sharp (foreground) - this is the original element
@@ -228,23 +228,33 @@ function createParallaxLayers(element, tl) {
   element.parentNode.insertBefore(layer1, element);
   element.parentNode.insertBefore(layer2, element);
 
+  // Enable GPU acceleration on parallax layers
+  enableGPU(layer1);
+  enableGPU(layer2);
+
   // Animate layers at different speeds for parallax effect
-  // Layer 1 moves -30px (slowest, background)
+  // Layer 1 moves -20px (slowest, background) - REDUCED from -30px
   tl.to(layer1, {
-    y: -30,
+    y: -20,
     ease: 'none',
     duration: 1
   }, 0);
 
-  // Layer 2 moves -15px (medium)
+  // Layer 2 moves -10px (medium) - REDUCED from -15px
   tl.to(layer2, {
-    y: -15,
+    y: -10,
     ease: 'none',
     duration: 1
   }, 0);
 
   // Layer 3 (original) stays at y: 0 (fastest, foreground)
   // Already handled by the text reveal animation above
+
+  // Disable GPU acceleration after animations complete
+  tl.eventCallback('onComplete', () => {
+    disableGPU(layer1);
+    disableGPU(layer2);
+  });
 }
 
 /**
