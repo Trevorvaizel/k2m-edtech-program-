@@ -45,9 +45,9 @@ export function initHeroAnimations() {
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: '.hero',
-          start: 'top 80%', // Trigger when hero top hits 80% viewport (on load)
+          start: 'top 80%', // Trigger when hero top hits 80% viewport
           end: 'bottom center',
-          scrub: 1,
+          toggleActions: 'play none none reverse' // Play on enter, reverse on exit
         }
       });
 
@@ -100,9 +100,9 @@ export function initHeroAnimations() {
       const tl = gsap.timeline({
         scrollTrigger: {
           trigger: '.hero',
-          start: 'top 80%', // Trigger when hero top hits 80% viewport (on load)
+          start: 'top 80%', // Trigger when hero top hits 80% viewport
           end: 'bottom center',
-          scrub: 1,
+          toggleActions: 'play none none reverse' // Play on enter, reverse on exit
         }
       });
 
