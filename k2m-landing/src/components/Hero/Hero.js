@@ -67,7 +67,6 @@ export function initHeroAnimations() {
 
       // Ocean mint glow - spans entire scroll for maximum visibility
       if (glowTexts.length > 0) {
-        console.log(`🎨 Animating ${glowTexts.length} glow text elements`);
         tl.fromTo(glowTexts,
           {
             textShadow: '0 0 0px rgba(64, 224, 208, 0)'
@@ -75,16 +74,8 @@ export function initHeroAnimations() {
           {
             textShadow: '0 0 80px rgba(64, 224, 208, 1), 0 0 120px rgba(64, 224, 208, 0.7), 0 0 160px rgba(64, 224, 208, 0.4)',
             duration: 1.0, // Full scroll duration for dramatic effect
-            ease: 'power2.inOut',
-            onUpdate: function() {
-              // Debug: log glow progress during scroll
-              if (Math.random() > 0.95) { // Log 5% of the time to avoid spam
-                console.log('✨ Glow animating, scroll progress:', this.progress());
-              }
-            }
+            ease: 'power2.inOut'
           }, 0); // Start immediately for more visibility
-      } else {
-        console.warn('⚠️ No glow text elements found!');
       }
 
       // Living typography with 3-layer parallax (desktop only)
