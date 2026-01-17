@@ -1,6 +1,6 @@
 # Story 2.1: Create Territory Map SVG Structure
 
-Status: ready-for-dev
+Status: review
 
 <!-- Note: Implementation approach updated per Party Mode decision 2026-01-16. Changed from CSS Grid to absolute positioning for Awwwards-level spatial storytelling along diagonal journey path. -->
 
