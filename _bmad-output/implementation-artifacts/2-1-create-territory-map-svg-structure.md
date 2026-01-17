@@ -2,7 +2,7 @@
 
 Status: ready-for-dev
 
-<!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
+<!-- Note: Implementation approach updated per Party Mode decision 2026-01-16. Changed from CSS Grid to absolute positioning for Awwwards-level spatial storytelling along diagonal journey path. -->
 
 ## Story
 
@@ -86,33 +86,41 @@ So that I can understand the learning journey and identify my current position.
   - [ ] 1.8 Ensure semantic HTML structure (section > div.zone > h3 + p)
   - [ ] 1.9 Verify all text content matches approved copy exactly
 
-- [ ] 2. Create TerritoryMap CSS with responsive grid layout (AC: 3, 4)
+- [ ] 2. Create TerritoryMap CSS with absolute positioning layout (AC: 3, 4)
   - [ ] 2.1 Create `/src/components/TerritoryMap/TerritoryMap.css` file
   - [ ] 2.2 Add section styling with pure black background (#000000)
   - [ ] 2.3 Set section dimensions: `min-height: 100vh` for full viewport
-  - [ ] 2.4 Use CSS Grid for zone layout: `grid-template-columns: repeat(5, 1fr)`
-  - [ ] 2.5 Add generous padding: `4rem` on desktop, `2rem` on mobile
-  - [ ] 2.6 Style zone containers with:
-    - `position: relative` for absolute positioning of particles
+  - [ ] 2.4 Use **absolute positioning** for zone layout along diagonal journey path (Party Mode decision)
+  - [ ] 2.5 Position zones to match SVG coordinates (viewBox 1200x800):
+    - Zone 0: `left: 8.3%, bottom: 12.5%` (100/1200, 700/800)
+    - Zone 1: `left: 33.3%, bottom: 31.25%` (400/1200, 550/800)
+    - Zone 2: `left: 54.2%, bottom: 46.25%` (650/1200, 430/800)
+    - Zone 3: `left: 75%, bottom: 60%` (900/1200, 320/800)
+    - Zone 4: `left: 91.6%, top: 22.5%` (1100/1200, 180/800) - destination
+  - [ ] 2.6 Add generous padding: `4rem` on desktop, `2rem` on mobile
+  - [ ] 2.7 Style zone containers with:
+    - `position: absolute` with `transform: translate(-50%, -50%)` for centering
+    - `width: 220px` for consistent zone cards
     - `border-radius: 12px` for soft edges
     - `padding: 1.5rem` for text spacing
     - `background: rgba(26, 26, 26, 0.7)` for semi-transparent effect
     - `backdrop-filter: blur(10px)` for frosted glass effect
-  - [ ] 2.7 Apply typography: Space Grotesk (h3), Inter (p)
-  - [ ] 2.8 Style Zone 4 with ocean mint accent:
+  - [ ] 2.8 Apply typography: Space Grotesk (h3), Inter (p)
+  - [ ] 2.9 Style Zone 4 with ocean mint accent:
     - `border: 2px solid var(--ocean-mint-glow)`
     - `box-shadow: 0 0 30px rgba(64, 224, 208, 0.2)`
     - Accent color on heading text: `color: var(--ocean-mint-glow)`
-  - [ ] 2.9 Ensure text contrast meets WCAG AA (4.5:1 for body, 3:1 for large text)
+  - [ ] 2.10 Ensure text contrast meets WCAG AA (4.5:1 for body, 3:1 for large text)
 
 - [ ] 3. Implement responsive design for mobile (AC: 4)
   - [ ] 3.1 Add media query for mobile breakpoint (max-width: 768px)
-  - [ ] 3.2 Adjust zone layout: `grid-template-columns: 1fr` (vertical stack)
-  - [ ] 3.3 Reduce padding on mobile: `2rem` instead of `4rem`
-  - [ ] 3.4 Scale font sizes with `clamp()` for responsive typography
-  - [ ] 3.5 Ensure no horizontal scrolling on mobile devices
-  - [ ] 3.6 Test on iPhone 12+ viewport (375x667)
-  - [ ] 3.7 Test on Samsung Galaxy S21+ viewport (360x800)
+  - [ ] 3.2 Adjust zone layout: **switch from absolute to relative** positioning for vertical stack
+  - [ ] 3.3 Reset zone positioning: `left: auto, right: auto, top: auto, bottom: auto, transform: none`
+  - [ ] 3.4 Reduce padding on mobile: `2rem` instead of `4rem`
+  - [ ] 3.5 Scale font sizes with `clamp()` for responsive typography
+  - [ ] 3.6 Ensure no horizontal scrolling on mobile devices
+  - [ ] 3.7 Test on iPhone 12+ viewport (375x667)
+  - [ ] 3.8 Test on Samsung Galaxy S21+ viewport (360x800)
 
 - [ ] 4. Create "The Discovered Map" SVG structure (AC: 1)
   - [ ] 4.1 Add inline SVG element with `viewBox="0 0 1200 800"` to TerritoryMap.html
@@ -174,11 +182,11 @@ So that I can understand the learning journey and identify my current position.
 - [ ] 9. Test visual design and spacing (AC: 4)
   - [ ] 9.1 View page on desktop browser (1920x1080)
   - [ ] 9.2 Verify all 5 zones are visible without scrolling
-  - [ ] 9.3 Check zones are evenly spaced and aligned via CSS Grid
+  - [ ] 9.3 Check zones are positioned along diagonal journey path (bottom-left → top-right)
   - [ ] 9.4 Verify text is readable against black background
   - [ ] 9.5 Test Zone 4 accent is visible but not distracting
   - [ ] 9.6 View page on mobile (375x667)
-  - [ ] 9.7 Verify vertical layout works well on small screens
+  - [ ] 9.7 Verify vertical layout works well on small screens (zones stack relative)
   - [ ] 9.8 Check no horizontal scrolling occurs
   - [ ] 9.9 Verify font sizes are legible on mobile
 
@@ -326,7 +334,7 @@ app.innerHTML += territoryMapHtml;
 
 #### CSS Styling Strategy:
 
-**CSS Grid Layout (5-Column Desktop, 1-Column Mobile):**
+**Absolute Positioning Layout (Diagonal Journey Path - Party Mode Decision):**
 ```css
 /* TerritoryMap.css */
 .territory-map {
@@ -361,26 +369,62 @@ app.innerHTML += territoryMapHtml;
   filter: drop-shadow(0 0 20px rgba(32,178,170,0.3)); /* Subtle glow */
 }
 
-/* Zone container - CSS Grid layout */
+/* Zone container - Absolute positioning canvas */
 .map-zones {
   position: relative;
   z-index: 2; /* Above particles and SVG */
   width: 100%;
-  max-width: 1400px;
-  display: grid;
-  grid-template-columns: repeat(5, 1fr); /* 5 equal columns */
-  gap: 2rem; /* Space between zones */
+  max-width: 1200px; /* Match SVG viewBox */
+  height: 800px; /* Match SVG viewBox */
 }
 
-/* Individual zone styling */
+/* Individual zone styling - Positioned along journey path */
 .zone {
-  position: relative;
+  position: absolute;
+  width: 220px; /* Fixed width for positioning */
   padding: 1.5rem;
   border-radius: 12px;
   background: rgba(26, 26, 26, 0.7); /* Semi-transparent */
   backdrop-filter: blur(10px); /* Frosted glass effect */
   border: 1px solid rgba(255, 255, 255, 0.1);
+  transform: translate(-50%, -50%); /* Center on SVG coordinates */
   transition: none; /* GSAP handles animations in Story 2.3 */
+}
+
+/* Zone positioning - Match SVG coordinates (percentage conversion) */
+/* Valley - Starting point (ghost state) */
+.zone-0 {
+  left: 8.3%;   /* 100/1200 */
+  bottom: 12.5%; /* (800-700)/800 from bottom */
+  opacity: 0.3; /* Ghost state - degrees of becoming */
+}
+
+/* Foothills (emerging) */
+.zone-1 {
+  left: 33.3%;  /* 400/1200 */
+  bottom: 31.25%; /* (800-550)/800 */
+  opacity: 0.45; /* Emerging */
+}
+
+/* Crossing - Midpoint (forming) */
+.zone-2 {
+  left: 54.2%;  /* 650/1200 */
+  bottom: 46.25%; /* (800-430)/800 */
+  opacity: 0.6; /* Forming */
+}
+
+/* Ascent (solid) */
+.zone-3 {
+  left: 75%;    /* 900/1200 */
+  bottom: 60%;  /* (800-320)/800 */
+  opacity: 0.8; /* Solid */
+}
+
+/* Summit - Destination (fully present) */
+.zone-4 {
+  left: 91.6%;  /* 1100/1200 */
+  top: 22.5%;   /* 180/800 from top */
+  opacity: 1.0; /* Fully present */
 }
 
 .zone h3 {
@@ -410,7 +454,7 @@ app.innerHTML += territoryMapHtml;
   color: var(--ocean-mint-glow); /* #40E0D0 */
 }
 
-/* Mobile responsive - Vertical layout */
+/* Mobile responsive - Vertical journey */
 @media (max-width: 768px) {
   .territory-map {
     padding: 2rem 1rem;
@@ -418,19 +462,29 @@ app.innerHTML += territoryMapHtml;
   }
 
   .map-zones {
-    grid-template-columns: 1fr; /* Single column */
+    position: relative; /* Switch from absolute positioning */
+    height: auto; /* Let content flow */
+    display: flex;
+    flex-direction: column;
     gap: 1.5rem;
+  }
+
+  .zone {
+    position: relative; /* Reset from absolute */
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    bottom: auto !important;
+    transform: none; /* Reset centering */
+    width: 100%; /* Full width on mobile */
+    max-width: 400px;
+    margin: 0 auto;
+    padding: 1.5rem;
+    /* Maintain opacity gradient for vertical journey */
   }
 
   .map-svg {
     display: none; /* Hide diagonal SVG on mobile */
-  }
-
-  .zone {
-    padding: 1.5rem;
-    width: 100%;
-    max-width: 400px;
-    margin: 0 auto;
   }
 
   .zone h3 {
@@ -632,33 +686,38 @@ Story 1.5 taught us to always optimize for mobile:
 
 ### Latest Tech Information
 
-#### CSS Grid Layout (2025):
-**Modern Approach for Zone Layout:**
+#### Absolute Positioning Best Practices (2025):
+**Awwwards-Level Spatial Storytelling:**
 ```css
+/* Zone container - Absolute positioning canvas */
 .map-zones {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr); /* 5 equal columns */
-  gap: 2rem; /* Space between zones */
-  max-width: 1400px;
-  margin: 0 auto; /* Center */
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 1200px; /* Match SVG viewBox */
+  height: 800px; /* Match SVG viewBox */
 }
+
+/* Individual zone positioning - Along diagonal journey */
+.zone {
+  position: absolute;
+  width: 220px;
+  transform: translate(-50%, -50%); /* Center on coordinates */
+}
+
+/* Position zones to match SVG viewBox coordinates */
+.zone-0 { left: 8.3%; bottom: 12.5%; }
+.zone-1 { left: 33.3%; bottom: 31.25%; }
+.zone-2 { left: 54.2%; bottom: 46.25%; }
+.zone-3 { left: 75%; bottom: 60%; }
+.zone-4 { left: 91.6%; top: 22.5%; }
 ```
 
 **Benefits:**
-- Responsive and flexible
-- Easy to reorder zones
-- Built-in gap handling
-- Better than flexbox for 2D layouts
-
-**Mobile Responsive:**
-```css
-@media (max-width: 768px) {
-  .map-zones {
-    grid-template-columns: 1fr; /* Single column */
-    gap: 1.5rem;
-  }
-}
-```
+- **Spatial Storytelling**: Diagonal ascent (bottom-left → top-right) creates emotional journey
+- **Visual Hierarchy**: Zone positions reflect "degrees of becoming" (ghost → fully present)
+- **Particle Targeting**: Absolute positions work perfectly with GSAP motionPath (Story 2.2)
+- **Mobile Flexibility**: Absolute on desktop, relative stack on mobile
 
 #### Inline SVG Best Practices (2025):
 **No External Files Needed:**
@@ -837,7 +896,7 @@ _Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)_
 - Integration patterns applied from Story 2.0 (Vite ?raw imports)
 - Performance patterns incorporated from Story 1.5 (mobile optimization)
 - Design tokens used from Story 1.1 (ocean mint accent)
-- Technical approach: CSS Grid layout, inline SVG, semantic HTML
+- Technical approach: **Absolute positioning along diagonal journey path** per Party Mode decision 2026-01-16
 - Particle container prepared for Story 2.2 (absolute positioning, z-index layering)
 - data-zone attributes added for Story 2.3 (hover animations)
 - Confirmed Epic 2 scope: Zones 0-4 only (per git commit 28da64)
