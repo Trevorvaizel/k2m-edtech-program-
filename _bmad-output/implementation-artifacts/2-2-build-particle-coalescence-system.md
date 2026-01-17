@@ -302,51 +302,51 @@ cleanup() {
 
 ## Tasks / Subtasks
 
-- [ ] Create MapParticleSystem class architecture (AC: Particle system initialization)
-  - [ ] Implement init() method with device detection
-  - [ ] Calculate target positions for all particles
-  - [ ] Create particle DOM elements with initial state
-  - [ ] Store target coordinates on each particle
+- [x] Create MapParticleSystem class architecture (AC: Particle system initialization)
+  - [x] Implement init() method with device detection
+  - [x] Calculate target positions for all particles
+  - [x] Create particle DOM elements with initial state
+  - [x] Store target coordinates on each particle
 
-- [ ] Style particles with CSS (AC: Particle styling)
-  - [ ] Create .map-particle class with radial gradient
-  - [ ] Add mobile responsive styles (2px particles)
-  - [ ] Apply will-change for GPU acceleration
-  - [ ] Test particle visibility on black background
+- [x] Style particles with CSS (AC: Particle styling)
+  - [x] Create .map-particle class with radial gradient
+  - [x] Add mobile responsive styles (2px particles)
+  - [x] Apply will-change for GPU acceleration
+  - [ ] Test particle visibility on black background (BLOCKED: HTML loading issue)
 
-- [ ] Implement chaos → order animation (AC: Chaos → Order animation)
-  - [ ] Create ScrollTrigger configuration with scrub: 0.3
-  - [ ] Add pre-reveal anticipation (0.3s scale pulse)
-  - [ ] Implement sequential coalescence (from: "start", not random)
-  - [ ] Apply 80/20 emotional punctuation (subtle + bold particles)
-  - [ ] Add overlap timing (-=0.5s for "The Stitch Pattern")
-  - [ ] Test animation feels smooth and organic
+- [x] Implement chaos → order animation (AC: Chaos → Order animation)
+  - [x] Create ScrollTrigger configuration with scrub: 0.3
+  - [x] Add pre-reveal anticipation (0.3s scale pulse)
+  - [x] Implement sequential coalescence (from: "start", not random)
+  - [x] Apply 80/20 emotional punctuation (subtle + bold particles)
+  - [x] Add overlap timing (-=0.5s for "The Stitch Pattern")
+  - [ ] Test animation feels smooth and organic (BLOCKED: HTML loading issue)
 
-- [ ] Add text crystallization effects (AC: Text crystallization)
-  - [ ] Animate blur: 12px → 0px for Zone 0-1 text
-  - [ ] Stagger text reveals by zone
-  - [ ] Overlap text animation with particle coalescence
+- [x] Add text crystallization effects (AC: Text crystallization)
+  - [x] Animate blur: 12px → 0px for Zone 0-1 text
+  - [x] Stagger text reveals by zone
+  - [x] Overlap text animation with particle coalescence
 
-- [ ] Implement performance safeguards (AC: Performance safeguards)
-  - [ ] Add hardware capability detection
-  - [ ] Implement FPS monitoring
-  - [ ] Create fallback animation for low-end devices
-  - [ ] Test on mobile devices (45fps+ target)
-  - [ ] Test on desktop (60fps target)
+- [x] Implement performance safeguards (AC: Performance safeguards)
+  - [x] Add hardware capability detection
+  - [x] Implement FPS monitoring
+  - [x] Create fallback animation for low-end devices
+  - [ ] Test on mobile devices (45fps+ target) (BLOCKED: HTML loading issue)
+  - [ ] Test on desktop (60fps target) (BLOCKED: HTML loading issue)
 
-- [ ] Add accessibility support (AC: Accessibility support)
-  - [ ] Detect prefers-reduced-motion
-  - [ ] Implement instant-appear fallback
-  - [ ] Add ARIA labels for screen readers
-  - [ ] Test with screen reader (VoiceOver/NVDA)
-  - [ ] Test keyboard navigation through zones
+- [x] Add accessibility support (AC: Accessibility support)
+  - [x] Detect prefers-reduced-motion
+  - [x] Implement instant-appear fallback
+  - [x] Add ARIA labels for screen readers
+  - [ ] Test with screen reader (VoiceOver/NVDA) (BLOCKED: HTML loading issue)
+  - [ ] Test keyboard navigation through zones (BLOCKED: HTML loading issue)
 
-- [ ] Implement memory management (AC: Memory management)
-  - [ ] Create cleanup() method
-  - [ ] Kill ScrollTrigger instances
-  - [ ] Clear will-change properties
-  - [ ] Remove particles from DOM
-  - [ ] Test for memory leaks (10-minute scroll session)
+- [x] Implement memory management (AC: Memory management)
+  - [x] Create cleanup() method
+  - [x] Kill ScrollTrigger instances
+  - [x] Clear will-change properties
+  - [x] Remove particles from DOM
+  - [ ] Test for memory leaks (10-minute scroll session) (BLOCKED: HTML loading issue)
 
 ## Dev Notes
 
@@ -492,37 +492,83 @@ Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
 
 ### Debug Log References
 
+**BLOCKING ISSUE - HTML Loading Failure:**
+- **Error:** `SyntaxError: Unexpected identifier 'as'` prevents main.js from executing
+- **Impact:** TerritoryMap HTML never inserted into DOM, all tests fail
+- **Root Cause:** TypeScript syntax in Playwright test files inside `page.evaluate()` calls
+- **Attempts:**
+  1. Fixed MapParticles.js import (changed from `gsap` to `gsap-config.js`)
+  2. Removed most `as any` type assertions from story-2-2-visual.spec.ts
+  3. Created debug-html-loading.spec.ts to isolate issue
+  4. Confirmed TerritoryMap section not loading (`.territory-map` selector returns null)
+  5. Manual HTML insertion test SUCCESSFUL - HTML files are valid
+- **Status:** Implementation complete, tests written, but cannot validate due to HTML loading blocker
+
 ### Completion Notes List
 
-**Adversarial Review Applied:**
-This story has been regenerated following a comprehensive adversarial code review that identified 21 issues across 4 severity levels. All critical blockers and major gaps have been addressed:
+**Implementation Complete (2026-01-17):**
 
-**Fixed Issues:**
-1. ✅ Scope gap - Clarified as Zone 0-1 focus only
-2. ✅ Undefined targets - Added particle distribution algorithm
-3. ✅ Violates Disney's Staging - Changed to `from: "start"` sequential reveals
-4. ✅ Missing emotional punctuation - Added 80/20 subtle/bold particle split
-5. ✅ Inconsistent scrub values - Set scrub: 0.3 for Zone 0-1
-6. ✅ Missing zone techniques - Documented future stories for zones 2-4
-7. ✅ No text crystallization - Added blur → sharp text animation
-8. ✅ Insufficient particle count - Increased to 300 desktop / 105 mobile
-9. ✅ No performance safeguards - Added hardware detection + FPS monitoring
-10. ✅ Incomplete memory management - Added explicit cleanup() method
-11. ✅ No accessibility - Added prefers-reduced-motion + ARIA labels
-12. ✅ Weak testing criteria - Added quantifiable metrics (70% completion, 30s duration)
+✅ **Code Implementation: ALL TASKS COMPLETE**
+1. Created MapParticles.js with full particle system:
+   - Device detection (desktop: 300, mobile: 105 particles)
+   - 80/20 emotional punctuation (subtle/bold particle split)
+   - Disney principles: Anticipation, Staging, Follow-Through, Overlapping Action
+   - ScrollTrigger with scrub: 0.3 for mystery→curiosity arc
+   - Text crystallization (blur: 12px → 0px)
+   - Performance safeguards (hardware detection, FPS monitoring, low-end fallback)
+   - Accessibility (prefers-reduced-motion, ARIA labels)
+   - Memory management (cleanup method with ScrollTrigger killing)
+
+2. Created Map.css with particle styling:
+   - Radial gradient backgrounds
+   - Mobile responsive (2px particles on mobile)
+   - will-change for GPU acceleration
+
+3. Updated TerritoryMap.html:
+   - Added zone-text classes for text crystallization
+   - Updated ARIA labels with particle description
+
+4. Updated TerritoryMap.css:
+   - Imported Map.css for particle styles
+
+5. Updated main.js:
+   - Imported MapParticleSystem
+   - Initialized particle system on window.load
+
+6. Created comprehensive test suite (story-2-2-visual.spec.ts):
+   - 17 tests covering all AC
+   - Desktop/mobile particle counts
+   - Styling validation
+   - Animation behavior
+   - Performance checks
+   - Accessibility validation
+   - Memory management tests
+
+7. Created debug test (debug-html-loading.spec.ts):
+   - Isolated HTML loading issue
+   - Confirmed manual insertion works
+
+**Known Issues:**
+❌ **BLOCKING:** TypeScript syntax error in test files prevents main.js execution
+   - Error: `SyntaxError: Unexpected identifier 'as'`
+   - Files affected: Playwright test files with `page.evaluate()` containing TypeScript syntax
+   - Impact: Cannot validate implementation until tests run
+   - Next steps: Remove all remaining TypeScript syntax from test files
 
 **File List**
 
-**To be created:**
-- `/src/components/TerritoryMap/MapParticles.js`
-- `/src/components/TerritoryMap/Map.css`
+**Created:**
+- `/src/components/TerritoryMap/MapParticles.js` - Full particle system implementation (341 lines)
+- `/src/components/TerritoryMap/Map.css` - Particle styling (15 lines)
+- `/tests/screenshots/story-2-2-visual.spec.ts` - Comprehensive test suite (543 lines, 17 tests)
+- `/tests/debug-html-loading.spec.ts` - Debug test for HTML loading issue (155 lines, 7 tests)
 
-**To be modified:**
-- `/src/components/TerritoryMap/TerritoryMap.html` (from Story 2.1) - Add particle container
-- `/src/components/TerritoryMap/TerritoryMap.css` (from Story 2.1) - Add particle container styles
+**Modified:**
+- `/src/components/TerritoryMap/TerritoryMap.html` - Added zone-text classes, updated ARIA labels
+- `/src/components/TerritoryMap/TerritoryMap.css` - Imported Map.css
+- `/src/main.js` - Imported and initialized MapParticleSystem
 
-**Dependencies:**
-- GSAP v3.12+ (already installed via Story 1.2)
-- ScrollTrigger plugin (already installed via Story 1.2)
-- CSS variables from `/src/styles/token.css` (already created via Story 1.1)
-- Performance utilities from `/src/utils/performance-optimizations.js` (already created via Story 1.2)
+**Debug Files (for investigation):**
+- `/check-particles.js` - Debug script to verify particle container
+- `/diagnose-hero.js` - Existing debug file
+- `/check-console.js` - Existing debug file
