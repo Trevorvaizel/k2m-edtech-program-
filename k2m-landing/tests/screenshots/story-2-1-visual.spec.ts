@@ -161,36 +161,57 @@ test.describe('Story 2.1 - TerritoryMap Visual Tests', () => {
     const territoryMap = page.locator('.territory-map');
     await territoryMap.scrollIntoViewIfNeeded();
 
-    // Verify zone headings contrast (WCAG AA requires 3:1 for large text)
-    const zone0Heading = page.locator('.zone-0 h3');
-    const headingColor = await zone0Heading.evaluate((el) => {
-      const rgb = window.getComputedStyle(el).color.match(/\d+/g);
+    // Get background color (should be pure black #000000)
+    const bgColor = await territoryMap.evaluate((el) => {
+      const rgb = window.getComputedStyle(el).backgroundColor.match(/\d+/g);
       if (rgb) {
         const [r, g, b] = rgb.map(Number);
-        // Calculate luminance
-        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-        return luminance;
+        // Calculate relative luminance for black
+        const [rs, gs, bs] = [r/255, g/255, b/255].map(c => c <= 0.03928 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4));
+        return 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
       }
       return 0;
     });
 
-    // White text on black background should have high contrast
-    expect(headingColor).toBeGreaterThan(0.7); // High luminance = good contrast
+    // Verify zone headings contrast (WCAG AA requires 3:1 for large text)
+    const zone0Heading = page.locator('.zone-0 h3');
+    const headingContrast = await zone0Heading.evaluate((el) => {
+      const rgb = window.getComputedStyle(el).color.match(/\d+/g);
+      if (rgb) {
+        const [r, g, b] = rgb.map(Number);
+        // Calculate relative luminance using WCAG formula
+        const [rs, gs, bs] = [r/255, g/255, b/255].map(c => c <= 0.03928 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4));
+        const fgLuminance = 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+        const bgLuminance = 0; // Pure black background
+        // Calculate contrast ratio
+        const lighter = Math.max(fgLuminance, bgLuminance);
+        const darker = Math.min(fgLuminance, bgLuminance);
+        return (lighter + 0.05) / (darker + 0.05);
+      }
+      return 0;
+    });
+
+    // White text on black should exceed 3:1 for large text
+    expect(headingContrast).toBeGreaterThanOrEqual(3.0);
 
     // Verify zone descriptions contrast (WCAG AA requires 4.5:1 for normal text)
     const zone0Desc = page.locator('.zone-0 p');
-    const descColor = await zone0Desc.evaluate((el) => {
+    const descContrast = await zone0Desc.evaluate((el) => {
       const rgb = window.getComputedStyle(el).color.match(/\d+/g);
       if (rgb) {
         const [r, g, b] = rgb.map(Number);
-        const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-        return luminance;
+        const [rs, gs, bs] = [r/255, g/255, b/255].map(c => c <= 0.03928 ? c/12.92 : Math.pow((c+0.055)/1.055, 2.4));
+        const fgLuminance = 0.2126 * rs + 0.7152 * gs + 0.0722 * bs;
+        const bgLuminance = 0; // Pure black background
+        const lighter = Math.max(fgLuminance, bgLuminance);
+        const darker = Math.min(fgLuminance, bgLuminance);
+        return (lighter + 0.05) / (darker + 0.05);
       }
       return 0;
     });
 
-    // Text should be readable
-    expect(descColor).toBeGreaterThan(0.5); // Sufficient contrast
+    // Text should meet 4.5:1 contrast ratio
+    expect(descContrast).toBeGreaterThanOrEqual(4.5);
   });
 
   test('should render correctly on mobile viewport with vertical layout', async ({ page }) => {
@@ -251,6 +272,17 @@ test.describe('Story 2.1 - TerritoryMap Visual Tests', () => {
     });
     expect(bodyWidth).toBe(viewportWidth); // No horizontal overflow
 
+    // Verify opacity gradient is maintained on mobile (vertical journey)
+    const zone0Opacity = await zone0.evaluate((el) => {
+      return parseFloat(window.getComputedStyle(el).opacity);
+    });
+    expect(zone0Opacity).toBe(0.3); // Ghost state
+
+    const zone4Opacity = await zone4.evaluate((el) => {
+      return parseFloat(window.getComputedStyle(el).opacity);
+    });
+    expect(zone4Opacity).toBe(1.0); // Fully present
+
     // Screenshot for mobile visual regression
     await expect(page).toHaveScreenshot('story-2-1-mobile-vertical.png', {
       maxDiffPixels: 150,
@@ -259,13 +291,17 @@ test.describe('Story 2.1 - TerritoryMap Visual Tests', () => {
   });
 
   test('should have accessible semantic HTML structure', async ({ page }) => {
-    // Verify aria-label is present on section
+    // Scroll TerritoryMap into view
     const territoryMap = page.locator('.territory-map');
+    await territoryMap.scrollIntoViewIfNeeded();
+    await expect(territoryMap).toBeVisible();
+
+    // Verify aria-label is present on section
     const ariaLabel = await territoryMap.getAttribute('aria-label');
     expect(ariaLabel).toBe('Territory Map showing learning journey from Zone 0 to 4');
 
     // Verify SVG has role="img" and aria-label
-    const svg = page.locator('.territory-svg');
+    const svg = page.locator('.map-svg');
     await expect(svg).toHaveAttribute('role', 'img');
 
     const svgAriaLabel = await svg.getAttribute('aria-label');
@@ -331,8 +367,13 @@ test.describe('Story 2.1 - TerritoryMap Visual Tests', () => {
   });
 
   test('should render SVG with correct structure and styling', async ({ page }) => {
+    // Scroll TerritoryMap into view first
+    const territoryMap = page.locator('.territory-map');
+    await territoryMap.scrollIntoViewIfNeeded();
+    await expect(territoryMap).toBeVisible();
+
     // Verify SVG element exists with correct viewBox
-    const svg = page.locator('.territory-svg');
+    const svg = page.locator('.map-svg');
     await expect(svg).toBeVisible();
 
     const viewBox = await svg.getAttribute('viewBox');

@@ -19,17 +19,17 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  z-index: 1; /* Above background, below zones */
+  z-index: 1; /* Layer 1: Particles - Above background, below zones */
   will-change: transform, opacity; /* Prepare for animations */
 }
 
 /* SVG background - "The Discovered Map" */
-.territory-svg {
+.map-svg {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  z-index: 0; /* Behind everything */
+  z-index: 0; /* Layer 0: Background - Behind everything */
   opacity: 0.2; /* More visible for journey path */
   filter: drop-shadow(0 0 20px rgba(32,178,170,0.3)); /* Subtle glow */
 }
@@ -37,10 +37,10 @@
 /* Zone container - Absolute positioning canvas */
 .map-zones {
   position: relative;
-  z-index: 2; /* Above particles and SVG */
+  z-index: 2; /* Layer 2: Zones - Above particles and SVG */
   width: 100%;
   max-width: 1200px; /* Match SVG viewBox */
-  height: 800px; /* Match SVG viewBox */
+  height: 800px; /* Match SVG viewBox - Desktop only, mobile uses auto */
 }
 
 /* Individual zone styling - Positioned along journey path */
@@ -50,15 +50,15 @@
   padding: 1.5rem;
   border-radius: 12px;
   background: rgba(26, 26, 26, 0.7); /* Frosted glass effect */
-  backdrop-filter: blur(20px); /* Modern glass morphism */
-  -webkit-backdrop-filter: blur(20px); /* Safari support */
+  backdrop-filter: blur(10px); /* Modern glass morphism - matches story spec */
+  -webkit-backdrop-filter: blur(10px); /* Safari support */
   border: 1px solid rgba(255, 255, 255, 0.1);
   transform: translate(-50%, -50%); /* Center on SVG coordinates */
   transition: none; /* GSAP handles animations */
 }
 
 /* Fallback for browsers without backdrop-filter */
-@supports not (backdrop-filter: blur(20px)) {
+@supports not (backdrop-filter: blur(10px)) {
   .zone {
     background: rgba(26, 26, 26, 0.9); /* Solid fallback */
   }
@@ -70,7 +70,6 @@
   left: 8.3%;   /* 100/1200 */
   bottom: 12.5%; /* (800-700)/800 from bottom */
   opacity: 0.3; /* Ghost state - degrees of becoming */
-  filter: blur(2px);
 }
 
 /* Foothills (emerging) */
@@ -78,7 +77,6 @@
   left: 33.3%;  /* 400/1200 */
   bottom: 31.25%; /* (800-550)/800 */
   opacity: 0.45; /* Emerging */
-  filter: blur(1.5px);
 }
 
 /* Crossing - Midpoint (forming) */
@@ -86,7 +84,6 @@
   left: 54.2%;  /* 650/1200 */
   bottom: 46.25%; /* (800-430)/800 */
   opacity: 0.6; /* Forming */
-  filter: blur(1px);
 }
 
 /* Ascent (solid) */
@@ -94,7 +91,6 @@
   left: 75%;    /* 900/1200 */
   bottom: 60%;  /* (800-320)/800 */
   opacity: 0.8; /* Solid */
-  filter: blur(0.5px);
 }
 
 /* Summit - Destination (fully present) */
@@ -102,7 +98,6 @@
   left: 91.6%;  /* 1100/1200 */
   top: 22.5%;   /* 180/800 from top */
   opacity: 1.0; /* Fully present */
-  filter: blur(0); /* Crystal clear */
 }
 
 /* Typography */
@@ -143,7 +138,7 @@
 
   .map-zones {
     position: relative; /* Switch from absolute positioning */
-    height: auto; /* Let content flow */
+    height: auto; /* Mobile: Let content flow (overrides desktop 800px) */
     display: flex;
     flex-direction: column;
     gap: 1.5rem;
