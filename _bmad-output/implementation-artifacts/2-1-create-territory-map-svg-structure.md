@@ -3,45 +3,12 @@
 Status: ready-for-dev
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
-<!-- Party Mode Validation: 2026-01-16 - Design philosophy and specs validated by creative team -->
 
 ## Story
 
 As a visitor,
 I want to see the Territory Map with 5 distinct zones (0-4),
 So that I can understand the learning journey and identify my current position.
-
-## Design Philosophy: "The Discovered Map"
-
-> **Core Insight:** The map should feel DISCOVERED, not designed. Like it was always there, waiting to be seen.
-
-### The Meta-Emotion: Pre-Recognition
-
-The Territory Map creates **pre-recognition** - the feeling of "something is about to name where I am" before the student reads any words. The design must trigger self-recognition without telling.
-
-**Emotional Sequence:**
-1. **Ambient confusion** → "I don't know where I am"
-2. **Pre-recognition** → "Wait... is this about to describe me?"
-3. **The naming** → Zone taglines appear
-4. **Recognition shock** → "That's EXACTLY my experience"
-5. **Legibility** → "I can see myself now"
-6. **Orientation** → "And I can see where I could go"
-
-### Master Cartographer Principles
-
-| Principle | Design Application |
-|-----------|-------------------|
-| Map = feeling, not information | Prioritize emotional temperature over layout precision |
-| Mirror first, window second | Student sees themselves (Zone 0-2), then destination (Zone 4) |
-| Degrees of becoming | Opacity gradient: ghost → fully present (0.3 → 1.0) |
-| Temperature progression | Cold/distant → warm/radiant |
-| Scroll as cartography (mobile) | Vertical journey, minimal SVG, scroll = movement |
-| Zones as gravity wells | Particle attractors where journeys naturally collect |
-| Zone 4 as strongest attractor | Maximum glow, maximum presence, maximum gravity |
-
-### Visual Concept: Topographical Ascent
-
-The SVG represents a **journey upward** - from the valley (Zone 0) to the summit (Zone 4). The path feels worn, like many have walked it before. Zone 4 glows because that's where people END UP - not because we made it glow arbitrarily.
 
 ## Acceptance Criteria
 
@@ -64,7 +31,7 @@ The SVG represents a **journey upward** - from the valley (Zone 0) to the summit
   - Zone 2: Heading "AI does tasks for me" with description "Using it for real work. But inconsistent."
   - Zone 3: Heading "AI understands my intent" with description "True collaboration begins."
   - Zone 4: Heading "I control the quality" with description "You direct. You refine. You own the outcome. This is where confidence lives."
-**And** all copy matches the final approved document (Source: k2m-landing-page-copy-final.md)
+**And** all copy matches the final approved document
 **And** text is readable on pure black background
 
 **Given** I need interactive elements for future animations
@@ -98,9 +65,9 @@ The SVG represents a **journey upward** - from the valley (Zone 0) to the summit
 
 - [ ] 0. Project setup and dependency verification (AC: 1, 2)
   - [ ] 0.1 Verify `/src/components/TerritoryMap/` directory exists (created in Story 2.0)
-  - [ ] 0.2 Review Story 2.0 implementation for integration patterns (MapFraming integration)
+  - [ ] 0.2 Review Story 2.0 implementation for integration patterns (Vite ?raw imports)
   - [ ] 0.3 Verify design tokens in token.css (ocean mint colors, typography)
-  - [ ] 0.4 Review Territory Map copy from `_bmad-output/k2m-landing-page-copy-final.md` (SINGLE SOURCE OF TRUTH - lines 54-78)
+  - [ ] 0.4 Confirm Epic 2 scope: Zones 0-4 only (Zones 5-7 deferred per git commit 28da64)
   - [ ] 0.5 Verify Zone 4 accent color: --ocean-mint-glow (#40E0D0)
 
 - [ ] 1. Create TerritoryMap HTML structure with zones (AC: 1, 2, 4)
@@ -115,52 +82,53 @@ The SVG represents a **journey upward** - from the valley (Zone 0) to the summit
     - Zone 3: `div.zone.zone-3` with data-zone="3"
     - Zone 4: `div.zone.zone-4` with data-zone="4"
   - [ ] 1.6 Add heading (h3) and description (p) to each zone with approved copy
-  - [ ] 1.7 Add `aria-label` to main section for accessibility
+  - [ ] 1.7 Add `aria-label="Territory Map showing learning journey from Zone 0 to 4"` to section
   - [ ] 1.8 Ensure semantic HTML structure (section > div.zone > h3 + p)
   - [ ] 1.9 Verify all text content matches approved copy exactly
 
-- [ ] 2. Create TerritoryMap CSS with visual styling (AC: 3, 4)
+- [ ] 2. Create TerritoryMap CSS with responsive grid layout (AC: 3, 4)
   - [ ] 2.1 Create `/src/components/TerritoryMap/TerritoryMap.css` file
   - [ ] 2.2 Add section styling with pure black background (#000000)
   - [ ] 2.3 Set section dimensions: `min-height: 100vh` for full viewport
-  - [ ] 2.4 Center content with flexbox or grid layout
+  - [ ] 2.4 Use CSS Grid for zone layout: `grid-template-columns: repeat(5, 1fr)`
   - [ ] 2.5 Add generous padding: `4rem` on desktop, `2rem` on mobile
   - [ ] 2.6 Style zone containers with:
     - `position: relative` for absolute positioning of particles
-    - `border-radius` for soft edges
-    - `padding` for text spacing
-    - `transition` properties for future hover animations
-  - [ ] 2.7 Apply typography: Space Grotesk for headings, Inter for descriptions
+    - `border-radius: 12px` for soft edges
+    - `padding: 1.5rem` for text spacing
+    - `background: rgba(26, 26, 26, 0.7)` for semi-transparent effect
+    - `backdrop-filter: blur(10px)` for frosted glass effect
+  - [ ] 2.7 Apply typography: Space Grotesk (h3), Inter (p)
   - [ ] 2.8 Style Zone 4 with ocean mint accent:
     - `border: 2px solid var(--ocean-mint-glow)`
-    - `box-shadow: 0 0 20px rgba(64, 224, 208, 0.3)`
-    - Accent color on heading text
-  - [ ] 2.9 Ensure text contrast meets WCAG AA (4.5:1 for body text, 3:1 for large text)
+    - `box-shadow: 0 0 30px rgba(64, 224, 208, 0.2)`
+    - Accent color on heading text: `color: var(--ocean-mint-glow)`
+  - [ ] 2.9 Ensure text contrast meets WCAG AA (4.5:1 for body, 3:1 for large text)
 
 - [ ] 3. Implement responsive design for mobile (AC: 4)
   - [ ] 3.1 Add media query for mobile breakpoint (max-width: 768px)
-  - [ ] 3.2 Adjust zone layout for mobile (vertical stack instead of horizontal)
+  - [ ] 3.2 Adjust zone layout: `grid-template-columns: 1fr` (vertical stack)
   - [ ] 3.3 Reduce padding on mobile: `2rem` instead of `4rem`
-  - [ ] 3.4 Scale font sizes appropriately with `clamp()` or media queries
+  - [ ] 3.4 Scale font sizes with `clamp()` for responsive typography
   - [ ] 3.5 Ensure no horizontal scrolling on mobile devices
   - [ ] 3.6 Test on iPhone 12+ viewport (375x667)
   - [ ] 3.7 Test on Samsung Galaxy S21+ viewport (360x800)
 
-- [ ] 4. Create "The Discovered Map" SVG structure (AC: 1) - SEE DESIGN SPEC BELOW
+- [ ] 4. Create "The Discovered Map" SVG structure (AC: 1)
   - [ ] 4.1 Add inline SVG element with `viewBox="0 0 1200 800"` to TerritoryMap.html
   - [ ] 4.2 Create organic Bezier path (NOT straight lines) showing worn journey trail
-  - [ ] 4.3 Add zone markers at exact coordinates (see Zone Coordinates section):
+  - [ ] 4.3 Add zone markers at exact coordinates:
     - Zone 0: cx="100" cy="700" (bottom-left, valley)
     - Zone 1: cx="400" cy="550" (lower-middle)
     - Zone 2: cx="650" cy="430" (middle, crossing)
     - Zone 3: cx="900" cy="320" (upper-middle, ascent)
     - Zone 4: cx="1100" cy="180" (top-right, summit - GLOWING)
-  - [ ] 4.4 Apply opacity gradient to zone markers (degrees of becoming):
-    - Zone 0: opacity 0.3, stroke-opacity 0.1
-    - Zone 1: opacity 0.45, stroke-opacity 0.15
-    - Zone 2: opacity 0.6, stroke-opacity 0.2
-    - Zone 3: opacity 0.8, stroke-opacity 0.3
-    - Zone 4: opacity 1.0, stroke-opacity 0.8 + GLOW
+  - [ ] 4.4 Apply opacity gradient to zone markers:
+    - Zone 0: opacity 0.3 (ghost state)
+    - Zone 1: opacity 0.45 (emerging)
+    - Zone 2: opacity 0.6 (forming)
+    - Zone 3: opacity 0.8 (solid)
+    - Zone 4: opacity 1.0 (fully present) + glow
   - [ ] 4.5 Add radial gradient for Zone 4 "presence glow" (ocean mint, 180px radius)
   - [ ] 4.6 Style path as "worn trail": stroke-dasharray="12 6", opacity 0.15
   - [ ] 4.7 Position SVG behind zone text (z-index: 0)
@@ -187,26 +155,26 @@ The SVG represents a **journey upward** - from the valley (Zone 0) to the summit
   - [ ] 6.7 Verify no layout shift between sections
 
 - [ ] 7. Add accessibility features (AC: 3, 4)
-  - [ ] 7.1 Add `aria-label="Territory Map showing learning journey from Zone 0 to 4"` to section
+  - [ ] 7.1 Verify `aria-label` present on main section
   - [ ] 7.2 Add `role="img"` to SVG container
-  - [ ] 7.3 Add `aria-describedby` to zones if needed
-  - [ ] 7.4 Ensure all headings (h3) are in logical order
-  - [ ] 7.5 Test keyboard navigation: Tab through zones
-  - [ ] 7.6 Verify screen reader announces zone headings and descriptions
-  - [ ] 7.7 Test with VoiceOver (macOS) or TalkBack (Android)
+  - [ ] 7.3 Ensure all headings (h3) are in logical order
+  - [ ] 7.4 Test keyboard navigation: Tab through zones
+  - [ ] 7.5 Verify screen reader announces zone headings and descriptions
+  - [ ] 7.6 Test with VoiceOver (macOS) or TalkBack (Android)
+  - [ ] 7.7 Verify semantic HTML: section > div.zone > h3 + p
 
 - [ ] 8. Implement Zone 4 special styling (AC: 2, 4)
   - [ ] 8.1 Add class `zone-destination` to Zone 4 container
   - [ ] 8.2 Apply ocean mint accent color: `color: var(--ocean-mint-glow)`
   - [ ] 8.3 Add subtle glow effect: `box-shadow: 0 0 30px rgba(64, 224, 208, 0.2)`
-  - [ ] 8.4 Add border highlight: `border: 1px solid var(--ocean-mint-glow)`
+  - [ ] 8.4 Add border highlight: `border: 2px solid var(--ocean-mint-glow)`
   - [ ] 8.5 Ensure Zone 4 stands out but doesn't overwhelm other zones
   - [ ] 8.6 Test visual hierarchy: Zone 4 should be focal point
 
 - [ ] 9. Test visual design and spacing (AC: 4)
   - [ ] 9.1 View page on desktop browser (1920x1080)
   - [ ] 9.2 Verify all 5 zones are visible without scrolling
-  - [ ] 9.3 Check zones are evenly spaced and aligned
+  - [ ] 9.3 Check zones are evenly spaced and aligned via CSS Grid
   - [ ] 9.4 Verify text is readable against black background
   - [ ] 9.5 Test Zone 4 accent is visible but not distracting
   - [ ] 9.6 View page on mobile (375x667)
@@ -263,7 +231,7 @@ This is the **second story** in Epic 2: Territory Map WHOA Moment. Story 2.1 cre
 **Why This Story Matters:**
 Without the Territory Map structure, the particle system has nothing to coalesce into. This story:
 1. Creates the visual foundation for the WHOA moment
-2. Establishes the 5-zone learning journey concept
+2. Establishes the 5-zone learning journey concept (Zones 0-4 only per Epic 2 scope update)
 3. Prepares the particle container for Story 2.2
 4. Sets up zone targeting for Story 2.3 animations
 
@@ -281,12 +249,37 @@ Without the Territory Map structure, the particle system has nothing to coalesce
   </div>
 
   <!-- SVG visual representation (background layer) -->
-  <svg class="map-svg" viewBox="0 0 1000 600" xmlns="http://www.w3.org/2000/svg" role="img">
-    <!-- Zone shapes and connections -->
-    <g class="svg-zone zone-0-shape">
-      <!-- Visual representation of Zone 0 -->
+  <svg class="map-svg" viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Journey path from Zone 0 to Zone 4">
+    <defs>
+      <!-- Zone 4 glow gradient -->
+      <radialGradient id="destination-glow">
+        <stop offset="0%" stop-color="rgba(64,224,208,0.5)" />
+        <stop offset="40%" stop-color="rgba(64,224,208,0.2)" />
+        <stop offset="100%" stop-color="rgba(64,224,208,0)" />
+      </radialGradient>
+    </defs>
+
+    <!-- Journey path - organic Bezier curve -->
+    <path d="M 100,700 C 200,650 300,600 400,550
+              S 550,480 650,430
+              S 800,380 900,320
+              S 1000,250 1100,180"
+          stroke="rgba(32,178,170,0.15)"
+          stroke-width="4"
+          stroke-linecap="round"
+          stroke-dasharray="12 6"
+          fill="none"
+          class="journey-path" />
+
+    <!-- Zone markers with opacity gradient -->
+    <g class="zone-markers">
+      <circle cx="100" cy="700" r="35" class="zone-marker zone-0-marker" data-zone="0" />
+      <circle cx="400" cy="550" r="38" class="zone-marker zone-1-marker" data-zone="1" />
+      <circle cx="650" cy="430" r="42" class="zone-marker zone-2-marker" data-zone="2" />
+      <circle cx="900" cy="320" r="46" class="zone-marker zone-3-marker" data-zone="3" />
+      <circle cx="1100" cy="180" r="180" fill="url(#destination-glow)" class="zone-4-glow" />
+      <circle cx="1100" cy="180" r="55" class="zone-marker zone-4-marker" data-zone="4" />
     </g>
-    <!-- Continue for zones 1-4 -->
   </svg>
 
   <!-- Zone content (foreground layer) -->
@@ -323,6 +316,7 @@ Without the Territory Map structure, the particle system has nothing to coalesce
 ```javascript
 // In main.js (add after MapFraming integration)
 import territoryMapHtml from './components/TerritoryMap/TerritoryMap.html?raw';
+import './components/TerritoryMap/TerritoryMap.css';
 
 // After MapFraming append
 app.innerHTML += territoryMapHtml;
@@ -332,20 +326,9 @@ app.innerHTML += territoryMapHtml;
 
 #### CSS Styling Strategy:
 
-**Layout Approach: Absolute Positioning (Awwwards-Level Spatial Storytelling)**
-
-**Why Absolute Positioning (Party Mode Team Decision - 2026-01-16):**
-- Zones positioned along actual SVG journey path (valley → summit)
-- Creates "discovered map" feel vs grid's "checklist" feel
-- Matches GSAP masters (Cuberto, Stripe, Apple) spatial storytelling patterns
-- Better particle coalescence target positioning (Story 2.2)
-- Blue Ocean strategy: organic vs commodity grid layouts
-
-**Recommendation:** Absolute positioning matching SVG coordinates for visual journey progression
-
-**CSS Structure:**
+**CSS Grid Layout (5-Column Desktop, 1-Column Mobile):**
 ```css
-/* TerritoryMap.css - Awwwards-Level Spatial Storytelling */
+/* TerritoryMap.css */
 .territory-map {
   position: relative;
   min-height: 100vh;
@@ -368,72 +351,36 @@ app.innerHTML += territoryMapHtml;
 }
 
 /* SVG background - "The Discovered Map" */
-.territory-svg {
+.map-svg {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   z-index: 0; /* Behind everything */
-  opacity: 0.2; /* More visible for journey path */
+  opacity: 0.3; /* Subtle background */
   filter: drop-shadow(0 0 20px rgba(32,178,170,0.3)); /* Subtle glow */
 }
 
-/* Zone container - Absolute positioning canvas */
+/* Zone container - CSS Grid layout */
 .map-zones {
   position: relative;
   z-index: 2; /* Above particles and SVG */
   width: 100%;
-  max-width: 1200px; /* Match SVG viewBox */
-  height: 800px; /* Match SVG viewBox */
+  max-width: 1400px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr); /* 5 equal columns */
+  gap: 2rem; /* Space between zones */
 }
 
-/* Individual zone styling - Positioned along journey path */
+/* Individual zone styling */
 .zone {
-  position: absolute;
-  width: 220px; /* Fixed width for positioning */
+  position: relative;
   padding: 1.5rem;
   border-radius: 12px;
-  background: rgba(26, 26, 26, 0.7); /* Frosted glass effect */
-  backdrop-filter: blur(20px); /* Modern glass morphism */
+  background: rgba(26, 26, 26, 0.7); /* Semi-transparent */
+  backdrop-filter: blur(10px); /* Frosted glass effect */
   border: 1px solid rgba(255, 255, 255, 0.1);
-  transform: translate(-50%, -50%); /* Center on SVG coordinates */
-  transition: none; /* GSAP handles animations */
-}
-
-/* Zone positioning - Match SVG coordinates (percentage conversion) */
-.zone-0 {
-  left: 8.3%;   /* 100/1200 */
-  bottom: 12.5%; /* (800-700)/800 from bottom */
-  opacity: 0.3; /* Ghost state - degrees of becoming */
-  filter: blur(2px);
-}
-
-.zone-1 {
-  left: 33.3%;  /* 400/1200 */
-  bottom: 31.25%; /* (800-550)/800 */
-  opacity: 0.45; /* Emerging */
-  filter: blur(1.5px);
-}
-
-.zone-2 {
-  left: 54.2%;  /* 650/1200 */
-  bottom: 46.25%; /* (800-430)/800 */
-  opacity: 0.6; /* Forming */
-  filter: blur(1px);
-}
-
-.zone-3 {
-  left: 75%;    /* 900/1200 */
-  bottom: 60%;  /* (800-320)/800 */
-  opacity: 0.8; /* Solid */
-  filter: blur(0.5px);
-}
-
-.zone-4 {
-  left: 91.6%;  /* 1100/1200 */
-  top: 22.5%;   /* 180/800 from top */
-  opacity: 1.0; /* Fully present */
-  filter: blur(0); /* Crystal clear */
+  transition: none; /* GSAP handles animations in Story 2.3 */
 }
 
 .zone h3 {
@@ -463,7 +410,7 @@ app.innerHTML += territoryMapHtml;
   color: var(--ocean-mint-glow); /* #40E0D0 */
 }
 
-/* Mobile responsive - Vertical journey */
+/* Mobile responsive - Vertical layout */
 @media (max-width: 768px) {
   .territory-map {
     padding: 2rem 1rem;
@@ -471,29 +418,19 @@ app.innerHTML += territoryMapHtml;
   }
 
   .map-zones {
-    position: relative; /* Switch from absolute positioning */
-    height: auto; /* Let content flow */
-    display: flex;
-    flex-direction: column;
+    grid-template-columns: 1fr; /* Single column */
     gap: 1.5rem;
   }
 
-  .zone {
-    position: relative; /* Reset from absolute */
-    left: auto !important;
-    right: auto !important;
-    top: auto !important;
-    bottom: auto !important;
-    transform: none; /* Reset centering */
-    width: 100%; /* Full width on mobile */
-    max-width: 400px;
-    margin: 0 auto;
-    padding: 1.5rem;
-    /* Maintain opacity gradient for vertical journey */
+  .map-svg {
+    display: none; /* Hide diagonal SVG on mobile */
   }
 
-  .territory-svg {
-    display: none; /* Hide diagonal SVG on mobile */
+  .zone {
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
   }
 
   .zone h3 {
@@ -506,17 +443,7 @@ app.innerHTML += territoryMapHtml;
 }
 ```
 
-#### "The Discovered Map" SVG Design Spec
-
-> **Philosophy:** The SVG should feel like it was DISCOVERED, not designed. Organic curves, worn paths, zones that feel like gravity wells where journeys naturally collect.
-
-**Purpose of SVG:**
-- Create **pre-recognition** - "something is about to name where I am"
-- Show **topographical ascent** - valley (Zone 0) to summit (Zone 4)
-- Establish **degrees of becoming** - opacity gradient from ghost to fully present
-- Provide **particle coalescence targets** - exact coordinates for Story 2.2
-
-**Zone Coordinates (for particle coalescence in Story 2.2):**
+#### Zone Coordinates (for Story 2.2 particle coalescence):
 ```javascript
 // Desktop coordinates (viewBox 1200x800)
 const ZONE_COORDINATES = {
@@ -527,155 +454,17 @@ const ZONE_COORDINATES = {
   zone4: { x: 1100, y: 180, r: 55 }   // Summit - destination (GLOWING)
 };
 
-// Mobile: Use vertical stack, coordinates become relative to viewport
+// Mobile: Vertical stack, coordinates become relative to viewport
 ```
 
-**Complete SVG Implementation:**
-```html
-<svg class="territory-svg" viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg"
-     role="img" aria-label="Journey path from Zone 0 to Zone 4">
-  <defs>
-    <!-- Zone 4 presence glow - strongest attractor -->
-    <radialGradient id="destination-glow">
-      <stop offset="0%" stop-color="rgba(64,224,208,0.5)" />
-      <stop offset="40%" stop-color="rgba(64,224,208,0.2)" />
-      <stop offset="100%" stop-color="rgba(64,224,208,0)" />
-    </radialGradient>
-  </defs>
-
-  <!-- The worn path - organic Bezier curve (NOT straight lines) -->
-  <path
-    d="M 100,700 C 200,650 300,600 400,550
-       S 550,480 650,430
-       S 800,380 900,320
-       S 1000,250 1100,180"
-    stroke="rgba(32,178,170,0.15)"
-    stroke-width="4"
-    stroke-linecap="round"
-    stroke-dasharray="12 6"
-    fill="none"
-    class="journey-path" />
-
-  <!-- Zone markers - DEGREES OF BECOMING (opacity increases toward Zone 4) -->
-  <g class="zone-markers">
-    <!-- Zone 0: Ghost state - barely visible -->
-    <circle cx="100" cy="700" r="35"
-            fill="rgba(26,26,26,0.6)"
-            stroke="rgba(255,255,255,0.1)"
-            stroke-width="1"
-            class="zone-marker zone-0-marker"
-            data-zone="0" />
-
-    <!-- Zone 1: Emerging -->
-    <circle cx="400" cy="550" r="38"
-            fill="rgba(26,26,26,0.65)"
-            stroke="rgba(255,255,255,0.15)"
-            stroke-width="1"
-            class="zone-marker zone-1-marker"
-            data-zone="1" />
-
-    <!-- Zone 2: Forming -->
-    <circle cx="650" cy="430" r="42"
-            fill="rgba(26,26,26,0.7)"
-            stroke="rgba(255,255,255,0.2)"
-            stroke-width="1.5"
-            class="zone-marker zone-2-marker"
-            data-zone="2" />
-
-    <!-- Zone 3: Solid -->
-    <circle cx="900" cy="320" r="46"
-            fill="rgba(26,26,26,0.8)"
-            stroke="rgba(32,178,170,0.3)"
-            stroke-width="1.5"
-            class="zone-marker zone-3-marker"
-            data-zone="3" />
-
-    <!-- Zone 4: The destination - FULLY PRESENT with glow -->
-    <circle cx="1100" cy="180" r="180"
-            fill="url(#destination-glow)"
-            class="zone-4-glow" />
-    <circle cx="1100" cy="180" r="55"
-            fill="rgba(26,26,26,0.9)"
-            stroke="rgba(64,224,208,0.8)"
-            stroke-width="2"
-            class="zone-marker zone-4-marker"
-            data-zone="4" />
-  </g>
-</svg>
-```
-
-**Emotional Temperature Mapping:**
-| Zone | Visual Temperature | Opacity | Stroke |
-|------|-------------------|---------|--------|
-| 0 | Cold, isolated, distant | 0.3 | barely visible |
-| 1 | Warming, small light | 0.45 | faint |
-| 2 | Flickering, unstable | 0.6 | forming |
-| 3 | Steady warmth, connection | 0.8 | solid |
-| 4 | Radiant, glowing, HOME | 1.0 | GLOWING |
-
----
-
-### Pre-Recognition Orchestration (Animation Timing)
-
-> **Rule:** Words never LEAD. Words only CONFIRM. The visual must suggest before the copy names.
-
-**Animation Sequence (for Story 2.2/2.3 implementation, but structure must support):**
-
-| Time | Visual Element | Words | Emotional Beat |
-|------|----------------|-------|----------------|
-| 0.0s | Black screen (night intact) | (none) | Darkness |
-| 0.5s | Faint path emerges (worn trail) | (none) | "Something exists here" |
-| 1.5s | Zone markers materialize (5 points) | (none) | "There are waypoints" |
-| 2.5s | Zone 4 begins glowing (ocean mint) | (none) | "There's a destination" |
-| 3.0s | Particles begin journey (Story 2.2) | (none) | "Chaos has structure" |
-| 4.0s | Particles coalesce into zones | (none) | "I'm watching my confusion become legible" |
-| 5.0s | Zone 0 label appears | "Zone 0" | "Naming begins" |
-| 5.3s | Zone 0 tagline fades in | "AI isn't for me" | **RECOGNITION TRIGGER** |
-| 5.6s | Zone 1 label + tagline | "Zone 1" / "I could try this" | |
-| 6.2s | Zone 2 label + tagline | "Zone 2" / "AI does tasks for me" | |
-| 6.8s | Zone 3 label + tagline | "Zone 3" / "AI understands my intent" | |
-| 7.5s | Zone 4 label + tagline | "Zone 4" / "I control the quality" | Destination revealed |
-| 8.0s | Map complete. Silence. | (none) | "Which zone am I?" |
-| 9.0s+ | Descriptions (scroll-reveal) | "Where most students start..." | Confirmation (optional) |
-
-**Key Insight:** 5 seconds of pure visual BEFORE any words. The map SHOWS before it TELLS.
-
----
-
-### Word Budget: Copy-Visual Intersection Strategy
-
-> **Philosophy:** Graphics create the question. Copy answers with a whisper.
-
-**Recognition Phase (REQUIRED - 22 words total):**
-| Zone | Label | Tagline | Words |
-|------|-------|---------|-------|
-| 0 | "Zone 0" | "AI isn't for me" | 5 |
-| 1 | "Zone 1" | "I could try this" | 4 |
-| 2 | "Zone 2" | "AI does tasks for me" | 5 |
-| 3 | "Zone 3" | "AI understands my intent" | 4 |
-| 4 | "Zone 4" | "I control the quality" | 4 |
-| **Total** | | | **22** |
-
-**Description Phase (OPTIONAL - scroll-gated, ~50 words):**
-- Zone 0: "Where most students start. Feeling overwhelmed." (7 words)
-- Zone 1: "First sparks of curiosity." (4 words)
-- Zone 2: "Using it for real work. But inconsistent." (8 words)
-- Zone 3: "True collaboration begins." (3 words)
-- Zone 4: "You direct. You refine. You own the outcome. This is where confidence lives." (13 words)
-
-**Comparison to Traditional Landing Pages:**
-- Typical landing page: 500-1000+ words
-- Territory Map section: **72 words maximum**
-- This is ~7% of typical copy length
-- **Surgical precision** - every word earns its place
-
-**Implementation Notes:**
-- Zone labels and taglines start with `opacity: 0` in CSS
-- Animation reveals them AFTER visual sequence completes
-- Descriptions are NOT shown initially - revealed on scroll or hover (Story 2.3)
-- Mobile: same word budget, vertical scroll reveals
-
----
+#### SVG Zone Marker Opacity Gradient:
+| Zone | Opacity | Stroke | Visual Meaning |
+|------|---------|--------|-----------------|
+| 0 | 0.3 | barely visible | Ghost state - where most start |
+| 1 | 0.45 | faint | Emerging |
+| 2 | 0.6 | forming | Forming |
+| 3 | 0.8 | solid | Solid understanding |
+| 4 | 1.0 + glow | GLOWING | Fully present - destination |
 
 ### Architecture Compliance
 
@@ -748,7 +537,7 @@ This story uses existing infrastructure:
 
 1. **Layout Verification (Desktop):**
    - [ ] All 5 zones visible on desktop (1920x1080)
-   - [ ] Zones evenly spaced with proper alignment
+   - [ ] Zones evenly spaced with CSS Grid (gap: 2rem)
    - [ ] Text readable on black background (WCAG AA contrast)
    - [ ] Zone 4 accent visible but not overwhelming
    - [ ] SVG background visible but subtle
@@ -758,7 +547,7 @@ This story uses existing infrastructure:
    - [ ] Zones stack vertically on mobile (375x667)
    - [ ] No horizontal scrolling
    - [ ] Text sizes appropriate for small screens
-   - [ ] Spacing reduced but sufficient
+   - [ ] Spacing reduced but sufficient (gap: 1.5rem)
    - [ ] Zone 4 still stands out on mobile
    - [ ] Touch targets large enough (min 44x44px)
 
@@ -776,7 +565,7 @@ This story uses existing infrastructure:
 
 4. **Zone 4 Styling:**
    - [ ] Ocean mint accent color applied (#40E0D0)
-   - [ ] Border highlight visible
+   - [ ] Border highlight visible (2px solid)
    - [ ] Subtle glow effect (box-shadow) present
    - [ ] Zone 4 is focal point but not overwhelming
    - [ ] Accent works on both desktop and mobile
@@ -794,7 +583,7 @@ This story uses existing infrastructure:
    - [ ] No layout shift between sections
    - [ ] Lenis smooth scroll works across boundary
    - [ ] Pure black background consistent
-   - [ ] Section height appropriate (100vh desktop, 80vh mobile)
+   - [ ] Section height appropriate (100vh desktop, auto mobile)
 
 7. **Particle Container Readiness (for Story 2.2):**
    - [ ] Particle container div exists
@@ -804,8 +593,8 @@ This story uses existing infrastructure:
    - [ ] will-change property set for future animations
 
 8. **Browser Compatibility:**
-   - [ ] Chrome: Layout renders correctly
-   - [ ] Safari: CSS Grid works properly
+   - [ ] Chrome: CSS Grid renders correctly
+   - [ ] Safari: backdrop-filter works properly
    - [ ] Firefox: Zones aligned properly
    - [ ] Edge: Consistent with Chrome
 
@@ -874,7 +663,7 @@ Story 1.5 taught us to always optimize for mobile:
 #### Inline SVG Best Practices (2025):
 **No External Files Needed:**
 ```html
-<svg class="map-svg" viewBox="0 0 1000 600" xmlns="http://www.w3.org/2000/svg" role="img">
+<svg class="map-svg" viewBox="0 0 1200 800" xmlns="http://www.w3.org/2000/svg" role="img">
   <!-- SVG content here -->
 </svg>
 ```
@@ -975,36 +764,39 @@ _Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)_
 
 ### Completion Notes List
 
-**Story Created: 2026-01-16**
+**Story Created: 2026-01-17 (Fresh Generation)**
 
 **Comprehensive Analysis Completed:**
-- ✅ Extracted requirements from Epic 2 (lines 606-648 in epics.md)
-- ✅ Applied integration patterns from Story 2.0 (MapFraming)
+- ✅ Extracted requirements from Epic 2 (epics.md lines 608-650)
+- ✅ Applied integration patterns from Story 2.0 (MapFraming Vite imports)
 - ✅ Incorporated performance patterns from Story 1.5 (mobile optimization)
 - ✅ Used design tokens from Story 1.1 (ocean mint accent)
 - ✅ Prepared infrastructure for Story 2.2 (particle container)
+- ✅ Confirmed Epic 2 scope: Zones 0-4 only (per git commit 28da64)
 - ✅ Created foundation for Story 2.3 (data-zone attributes)
 
 **Technical Approach:**
 1. **HTML Structure:** Semantic, accessible, with data-zone attributes
-2. **CSS Layout:** CSS Grid for responsive 5-zone layout
-3. **SVG:** Inline, abstract, background layer for visual context
-4. **Zone 4 Accent:** Ocean mint glow to highlight destination
-5. **Particle Container:** Prepared for Story 2.2 coalescence animation
-6. **Mobile-First:** Vertical layout, responsive text sizes
+2. **CSS Layout:** CSS Grid for responsive 5-zone layout (desktop) → vertical stack (mobile)
+3. **SVG:** Inline, organic Bezier path, zone markers with opacity gradient
+4. **Zone 4 Accent:** Ocean mint glow (#40E0D0) to highlight destination
+5. **Particle Container:** Absolute positioning with z-index layering
+6. **Mobile-First:** Vertical layout, responsive text sizes, hide diagonal SVG
 
 **Key Design Decisions:**
-- **Layout:** CSS Grid over absolute positioning (better responsive)
-- **SVG:** Inline over external file (fewer HTTP requests)
-- **Zone 4 Accent:** Border + glow (subtle but visible)
-- **Particle Container:** Absolute positioning with z-index layering
-- **Copy:** Exact text from approved final document
+- **Layout:** CSS Grid (5 columns desktop, 1 column mobile)
+- **SVG:** Inline organic path with "worn trail" effect
+- **Zone 4 Accent:** 2px border + glow (subtle but visible)
+- **Particle Container:** Absolute positioning with inset: 0, z-index: 1
+- **Copy:** Exact text from Epic 2 requirements
+- **Scope:** Zones 0-4 only (Zones 5-7 deferred per Epic 2 update)
 
 **Performance Considerations:**
 - Pure black background (#000000) for WHOA moment
 - will-change on particle container (future animation prep)
 - CSS Grid for efficient layout
 - No external assets (SVG inline)
+- backdrop-filter for frosted glass effect
 
 **Accessibility Features:**
 - ARIA label on section
@@ -1039,69 +831,15 @@ _Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)_
 
 ### Change Log
 
-**2026-01-16 - Party Mode Architecture Decision (Sally, Caravaggio, Victor, Winston):**
-
-**Problem Identified:** Initial implementation used horizontal grid layout - felt like "everyday slop" vs Awwwards-level design. Grid layout says "checklist" not "journey."
-
-**Team Analysis of GSAP Storytellers:**
-- Cuberto: Elements positioned along SVG paths using MotionPathPlugin
-- Stripe: Scroll-triggered opacity + scale transforms
-- Apple: Pinned sections with perspective
-- Awwwards winners: Particle systems + scroll velocity
-
-**Strategic Decision: Absolute Positioning**
-- Zones positioned along actual SVG journey path (valley → summit)
-- Creates "discovered map" feel vs commodity grid layouts
-- Blue Ocean strategy: organic spatial storytelling
-- Opacity gradient (0.3 → 1.0) = "degrees of becoming"
-- Backdrop-filter blur for frosted glass effect
-- SVG more prominent (opacity 0.2 vs 0.3) with drop-shadow glow
-- Mobile: vertical journey (position: relative) instead of diagonal
-
-**CSS Architecture Updated:** Lines 333-507 now reflect absolute positioning approach with percentage-based coordinates matching SVG viewBox (1200x800).
-
----
-
-**2026-01-16 - Party Mode Validation (Creative Team):**
-
-**Participants:** Bob (SM), Sally (UX), Caravaggio (Visual), Winston (Architect), Amelia (Dev), Sophia (Storyteller), Maya (Design Thinking)
-
-**Major Design Decisions:**
-1. **"The Discovered Map" philosophy** - SVG should feel discovered, not designed
-2. **Topographical ascent metaphor** - Valley (Zone 0) → Summit (Zone 4)
-3. **Degrees of becoming** - Opacity gradient showing increasing presence
-4. **Pre-recognition orchestration** - 5 seconds of pure visual before any words
-5. **Word budget: 22 words for recognition** - Surgical precision
-
-**Adversarial Review Blockers RESOLVED:**
-| # | Blocker | Resolution |
-|---|---------|------------|
-| 1 | SVG design undefined | ✅ "The Discovered Map" complete spec with Bezier paths, zone markers, opacity gradient |
-| 2 | Zone layout progression ambiguous | ✅ Diagonal ascent (bottom-left → top-right), organic curve path |
-| 3 | Copy source conflict | ✅ Single source: `k2m-landing-page-copy-final.md` (Task 0.4 updated) |
-| 4 | "Particle container prepared" not testable | ✅ Defined: exact coordinates, data attributes, z-index layers |
-| 5 | Zone positioning for coalescence undefined | ✅ Exact coordinates: Zone 0 (100,700) → Zone 4 (1100,180) |
-| 6 | Text colors not specified | ✅ Follows opacity gradient pattern (0.3→1.0), uses design tokens |
-| 7 | Zone wrapper missing from tasks | ✅ HTML structure includes `.map-zones` wrapper |
-
-**New Sections Added:**
-- Design Philosophy: "The Discovered Map"
-- Master Cartographer Principles table
-- Pre-Recognition Orchestration timing table
-- Word Budget: Copy-Visual Intersection Strategy
-- Complete SVG implementation with zone coordinates
-- Emotional Temperature Mapping table
-
----
-
-**2026-01-16 - Story 2.1 Created (Bob - Scrum Master):**
-- Comprehensive story file created for Territory Map SVG Structure
-- Requirements extracted from Epic 2 (epics.md lines 606-648)
-- Integration pattern applied from Story 2.0 (MapFraming)
-- Performance patterns from Story 1.5 (mobile optimization)
-- Design tokens from Story 1.1 (ocean mint accent)
+**2026-01-17 - Fresh Story Generation (Bob - Scrum Master):**
+- Generated comprehensive story file from scratch with exhaustive artifact analysis
+- Requirements extracted from Epic 2 (epics.md lines 608-650)
+- Integration patterns applied from Story 2.0 (Vite ?raw imports)
+- Performance patterns incorporated from Story 1.5 (mobile optimization)
+- Design tokens used from Story 1.1 (ocean mint accent)
 - Technical approach: CSS Grid layout, inline SVG, semantic HTML
-- Particle container prepared for Story 2.2
-- data-zone attributes added for Story 2.3
-- Initial status: ready-for-dev
+- Particle container prepared for Story 2.2 (absolute positioning, z-index layering)
+- data-zone attributes added for Story 2.3 (hover animations)
+- Confirmed Epic 2 scope: Zones 0-4 only (per git commit 28da64)
 - YOLO mode execution (no user elicitation)
+- Status: ready-for-dev
