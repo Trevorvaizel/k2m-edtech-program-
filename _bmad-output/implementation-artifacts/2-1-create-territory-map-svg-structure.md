@@ -1,6 +1,6 @@
 # Story 2.1: Create Territory Map SVG Structure
 
-Status: review
+Status: completed
 
 <!-- Note: Implementation approach updated per Party Mode decision 2026-01-16. Changed from CSS Grid to absolute positioning for Awwwards-level spatial storytelling along diagonal journey path. -->
 
@@ -902,3 +902,20 @@ _Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)_
 - Confirmed Epic 2 scope: Zones 0-4 only (per git commit 28da64)
 - YOLO mode execution (no user elicitation)
 - Status: ready-for-dev
+
+**2026-01-17 - Adversarial Review and Fixes (Amelia - Dev Agent):**
+- **Critical Issues Found:** CSS class naming violation (.territory-svg vs .map-svg)
+- **Spec Compliance Issues Fixed:**
+  - Renamed .territory-svg → .map-svg in HTML, CSS, and tests
+  - Fixed backdrop-filter: 20px → 10px to match story spec
+  - Removed unauthorized blur filters from zones 0-4
+  - Fixed mobile height bug with explicit height: auto override
+  - Added z-index layer documentation (Layer 0: SVG, Layer 1: Particles, Layer 2: Zones)
+- **Test Improvements:**
+  - Fixed WCAG contrast test to use actual WCAG formula with relative luminance
+  - Added mobile opacity assertions (Zone 0: 0.3, Zone 4: 1.0)
+  - Added scrollIntoViewIfNeeded() to SVG tests
+  - Updated all test references from .territory-svg → .map-svg
+- **Test Results:** 12/12 tests passing (19.3s)
+- **Git Commit:** 4c133ed - "Fix Story 2.1: Correct spec compliance and test improvements"
+- **Status:** completed - All acceptance criteria met, spec compliance verified
