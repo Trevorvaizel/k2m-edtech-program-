@@ -2,469 +2,60 @@
 
 Status: ready-for-dev
 
-<!-- Note: Party Mode decision 2026-01-16: Absolute positioning for zones along diagonal journey path. Particle system targets SVG zone marker coordinates (viewBox 1200x800). -->
-
 ## Story
 
 As a visitor,
-I want to see 200 particles (desktop) or 50 particles (mobile) coalesce from chaos into the Territory Map shape,
-So that I experience a stunning "WHOA moment" that represents transformation.
+I want to see particles coalesce from chaos into order across the Territory Map,
+So that I experience a stunning "WHOA moment" that represents transformation from confusion to clarity.
+
+## Scope Decision
+
+**IMPORTANT**: This story focuses on **Zone 0-1 (Wilderness) particle drift animation** - the foundational WHOA moment.
+
+Zone-specific animation techniques for zones 2-4 are deferred to future stories:
+- **Story 2.2b** (deferred): Zone 2 snap transitions (scrub: 0.5, snappy)
+- **Story 2.2c** (deferred): Zone 3 fluid morphing (scrub: 1.5, conversational)
+- **Story 2.2d** (deferred): Zone 4 mirror pause (scrub: 2.0, contemplative)
+
+This prevents scope creep and ensures each zone's unique emotional signature is properly implemented.
 
 ## Acceptance Criteria
 
-**Given** the Territory Map HTML exists with zones positioned (Story 2.1)
-**When** I create `/src/components/TerritoryMap/MapParticles.js`
-**Then** a `MapParticleSystem` class is defined
-**And** the class accepts a container element
-**And** `particleCount` is set based on `isMobile()`:
-  - Desktop: 200 particles
-  - Mobile: 50 particles
-**And** particles are created as div elements with class `.map-particle`
+**Given** the Territory Map HTML exists (from Story 2.1)
 
-**Given** particles need to be styled
-**When** I create `/src/components/TerritoryMap/MapParticles.css`
-**Then** `.map-particle` has:
-  - `position: absolute`
-  - `width: 4px` and `height: 4px` (desktop)
-  - `width: 2px` and `height: 2px` (mobile via media query)
-  - `background: radial-gradient(circle, var(--ocean-mint-glow) 0%, transparent 70%)`
-  - `border-radius: 50%`
-  - `will-change: transform, opacity`
-  - `pointer-events: none`
-**And** particles use GPU acceleration
+**When** I create `/src/components/TerritoryMap/MapParticles.js`
+
+**Then** a `MapParticleSystem` class is defined with the following architecture:
+
+### Particle System Initialization
 
 **Given** the particle system is initialized
 **When** I call the `init()` method
-**Then** particles are created and added to container
-**And** each particle has random initial position (`Math.random() * 100%`)
-**And** all particles are initially hidden (`opacity: 0`)
-**And** `animateFormation()` is called automatically
+**Then** the following occurs:
 
-**Given** I need the chaos → order animation
-**When** I implement `animateFormation()` method
-**Then** a GSAP timeline is created with ScrollTrigger
-**And** ScrollTrigger config includes:
-  - `trigger: ".territory-map"`
-  - `start: "top center"`
-  - `end: "center center"`
-  - `scrub: 2`
-  - `anticipatePin: 1`
-**And** background gradually dims to pure black before reveal
-**And** particles spiral from chaos to their positions
+1. **Particle count is set based on device capability**:
+   ```javascript
+   const isMobile = window.innerWidth < 768;
+   const particleCount = isMobile ? 105 : 300; // 15 particles per zone × 7 zones
+   ```
 
-**Given** the animation timeline
-**When** I animate particle formation
-**Then** Phase 1 (Chaos):
-  - Particles start at `opacity: 0`, `scale: 0`
-  - Particles have random x/y positions (-500 to 500px from center)
-**And** Phase 2 (Coalesce):
-  - Particles animate to `opacity: 1`, `scale: 1`
-  - Particles move to zone positions using GSAP motionPath
-  - Duration is 2s
-  - Stagger is `amount: 1.5, from: "random"`
-  - Ease is `"power2.inOut"` for gentle motion
-**And** the spiral motion path is visible (particles follow Bezier curve)
+2. **Particles are created as div elements**:
+   - Class: `.map-particle`
+   - Initial state: `opacity: 0`, `scale: 0`
+   - Random starting positions: `x: Math.random() * 2000 - 1000`, `y: Math.random() * 2000 - 1000`
 
-**Given** particles must coalesce to SVG zone marker coordinates
-**When** I define particle target positions
-**Then** particles distribute among 5 zones using SVG coordinates (viewBox 1200x800):
-  - Zone 0: cx="100" cy="700" (20 particles desktop / 5 mobile)
-  - Zone 1: cx="400" cy="550" (40 particles desktop / 10 mobile)
-  - Zone 2: cx="650" cy="430" (50 particles desktop / 12 mobile)
-  - Zone 3: cx="900" cy="320" (50 particles desktop / 12 mobile)
-  - Zone 4: cx="1100" cy="180" (40 particles desktop / 11 mobile)
-**And** particles cluster around zone centers with random offset (±40px)
-**And** particles use GSAP motionPath to follow SVG journey path
+3. **Target positions are calculated** using zone-based distribution:
+   - Zone 0-1 (Wilderness): 40% of particles (120 desktop, 42 mobile)
+   - Zone 2-4 (Future zones): 60% of particles distributed across remaining zones
+   - Each particle assigned a `targetX`, `targetY` based on its destination zone
 
-**Given** the particle animation is complete
-**When** I scroll to the map section
-**Then** particles coalesce from chaos into the Territory Map shape
-**And** the animation takes 2 seconds to complete
-**And** the motion feels smooth and organic
-**And** the WHOA moment creates a sense of wonder
-**And** performance maintains 60fps desktop / 45fps mobile
+### Particle Styling
 
-**Given** memory management is critical for performance
-**When** the particle animation completes
-**Then** `will-change: auto` is set on all particles after animation
-**And** particles that are no longer animating have transforms cleared
-**And** ScrollTrigger cleanup is called if user navigates away
-**And** no memory leaks occur over 10-minute continuous scroll sessions
+**Given** particles need to be styled
+**When** I create `/src/components/TerritoryMap/Map.css`
+**Then** `.map-particle` has:
 
-**Given** low-end devices may struggle
-**When** the particle system detects poor performance (FPS < 30)
-**Then** particle count is dynamically reduced by 50%
-**And** animation complexity is simplified (no spiral, just fade-in)
-**And** a graceful fallback ensures the map still reveals
-
-**Given** anticipatory pin is needed for emotional buildup
-**When** user scrolls toward map section
-**Then** scroll gradually slows using `anticipatePin: 1`
-**And** background dims from soft black (#0A0A0A) to pure black (#000000)
-**And** particles fade in from blackness (not abrupt appearance)
-**And** the WHOA moment feels earned, not startling
-
-**Experiential Acceptance Criteria:**
-**Given** 5 users test this section
-**When** the particles coalesce
-**Then** 4/5 users should express surprise, wonder, or say "whoa"
-
-## Tasks / Subtasks
-
-- [ ] 0. Project setup and dependency verification (AC: 1, 2)
-  - [ ] 0.1 Verify Story 2.1 complete (TerritoryMap.html with zones, particle-container div)
-  - [ ] 0.2 Review Story 2.1 zone coordinates (SVG viewBox 1200x800)
-  - [ ] 0.3 Verify GSAP and MotionPath plugin installed (Story 1.2)
-  - [ ] 0.4 Confirm performance utilities available (isMobile, monitorPerformance)
-  - [ ] 0.5 Verify Zone 0-4 coordinates from Story 2.1:
-    - Zone 0: cx="100" cy="700" (20 particles / 5 mobile)
-    - Zone 1: cx="400" cy="550" (40 particles / 10 mobile)
-    - Zone 2: cx="650" cy="430" (50 particles / 12 mobile)
-    - Zone 3: cx="900" cy="320" (50 particles / 12 mobile)
-    - Zone 4: cx="1100" cy="180" (40 particles / 11 mobile)
-
-- [ ] 1. Create MapParticles class with particle generation (AC: 1, 3)
-  - [ ] 1.1 Create `/src/components/TerritoryMap/MapParticles.js` file
-  - [ ] 1.2 Define `MapParticleSystem` class with constructor
-  - [ ] 1.3 Accept container element and particle count parameters
-  - [ ] 1.4 Detect mobile: `particleCount = isMobile() ? 50 : 200`
-  - [ ] 1.5 Create `createParticles()` method to generate DOM elements
-  - [ ] 1.6 Create particles as div elements with class `map-particle`
-  - [ ] 1.7 Set random initial positions: `x: Math.random() * 100%, y: Math.random() * 100%`
-  - [ ] 1.8 Add particles to container with `appendChild`
-  - [ ] 1.9 Store particle references in array for animation
-
-- [ ] 2. Create particle CSS styling (AC: 2)
-  - [ ] 2.1 Create `/src/components/TerritoryMap/MapParticles.css` file
-  - [ ] 2.2 Style `.map-particle` with:
-    - `position: absolute`
-    - `width: 4px; height: 4px` (desktop)
-    - `background: radial-gradient(circle, var(--ocean-mint-glow) 0%, transparent 70%)`
-    - `border-radius: 50%`
-    - `will-change: transform, opacity`
-    - `pointer-events: none`
-  - [ ] 2.3 Add mobile media query (max-width: 768px):
-    - `width: 2px; height: 2px` (smaller on mobile)
-  - [ ] 2.4 Ensure GPU acceleration with `transform: translate3d(0,0,0)`
-  - [ ] 2.5 Import CSS in main.js: `import './components/TerritoryMap/MapParticles.css'`
-
-- [ ] 3. Define particle target positions (zone clusters) (AC: 6)
-  - [ ] 3.1 Create `ZONE_COORDINATES` constant object with SVG viewBox coordinates
-  - [ ] 3.2 Define zone centers (from Story 2.1 SVG):
-    ```javascript
-    const ZONE_COORDINATES = {
-      zone0: { x: 100, y: 700, particleCount: { desktop: 20, mobile: 5 } },
-      zone1: { x: 400, y: 550, particleCount: { desktop: 40, mobile: 10 } },
-      zone2: { x: 650, y: 430, particleCount: { desktop: 50, mobile: 12 } },
-      zone3: { x: 900, y: 320, particleCount: { desktop: 50, mobile: 12 } },
-      zone4: { x: 1100, y: 180, particleCount: { desktop: 40, mobile: 11 } }
-    };
-    ```
-  - [ ] 3.3 Create `assignParticleTargets()` method to distribute particles to zones
-  - [ ] 3.4 Add random offset (±40px) to zone centers for organic clustering
-  - [ ] 3.5 Store target positions in particle objects for animation
-
-- [ ] 4. Implement chaos → order formation animation (AC: 4, 5, 7)
-  - [ ] 4.1 Create `animateFormation()` method
-  - [ ] 4.2 Create GSAP timeline with ScrollTrigger
-  - [ ] 4.3 Configure ScrollTrigger:
-    - `trigger: ".territory-map"`
-    - `start: "top center"`
-    - `end: "center center"`
-    - `scrub: 2`
-    - `anticipatePin: 1`
-  - [ ] 4.4 Add background dimming animation (soft black → pure black)
-  - [ ] 4.5 Phase 1 - Chaos state: Set particles to `opacity: 0, scale: 0`
-  - [ ] 4.6 Phase 1 - Random positions: `x: -500 to 500, y: -500 to 500` (from center)
-  - [ ] 4.7 Phase 2 - Coalesce: Animate to `opacity: 1, scale: 1`
-  - [ ] 4.8 Phase 2 - Move particles to zone target positions
-  - [ ] 4.9 Set animation duration: `2s`
-  - [ ] 4.10 Set stagger: `amount: 1.5, from: "random"` (organic feel)
-  - [ ] 4.11 Set easing: `"power2.inOut"` (gentle motion)
-  - [ ] 4.12 Test animation timing and adjust for smooth WHOA moment
-
-- [ ] 5. Implement spiral motion path (optional enhancement) (AC: 7)
-  - [ ] 5.1 Import GSAP MotionPath plugin (if installed)
-  - [ ] 5.2 Define SVG path coordinates matching Story 2.1 journey path
-  - [ ] 5.3 Create Bezier curve path: Zone 0 → 1 → 2 → 3 → 4 (diagonal ascent)
-  - [ ] 5.4 Apply `motionPath` to particles with `path: bezierCurve, align: false`
-  - [ ] 5.5 If MotionPath not available, use simple `x, y` translation fallback
-  - [ ] 5.6 Test spiral visibility and particle clustering at zone endpoints
-
-- [ ] 6. Add performance monitoring and optimization (AC: 8, 9)
-  - [ ] 6.1 Wrap particle animation in `requestAnimationFrame` check
-  - [ ] 6.2 Monitor FPS using `monitorPerformance()` from Story 1.2
-  - [ ] 6.3 If FPS < 30 for 2+ seconds, trigger `reduceComplexity()`
-  - [ ] 6.4 Create `reduceComplexity()` method:
-    - Reduce particle count by 50% (remove excess DOM elements)
-    - Remove spiral motion path (use direct fade-in)
-    - Simplify stagger (faster animation)
-  - [ ] 6.5 After animation completes, set `will-change: auto` on all particles
-  - [ ] 6.6 Clear transform values after animation (memory cleanup)
-  - [ ] 6.7 Add ScrollTrigger cleanup on page navigation
-  - [ ] 6.8 Test memory usage over 10-minute scroll session
-
-- [ ] 7. Implement anticipatory pin and background dimming (AC: 4, 10)
-  - [ ] 7.1 Add `anticipatePin: 1` to ScrollTrigger configuration
-  - [ ] 7.2 Create background dimming timeline in `animateFormation()`
-  - [ ] 7.3 Animate `.territory-map` background from `#0A0A0A` to `#000000`
-  - [ ] 7.4 Sync dimming with particle appearance (particles emerge from darkness)
-  - [ ] 7.5 Test scroll slowdown (anticipatory pin should feel luxurious, not sluggish)
-  - [ ] 7.6 Verify transition from MapFraming (Story 2.0) to TerritoryMap is smooth
-
-- [ ] 8. Integrate MapParticles into main application (AC: 1)
-  - [ ] 8.1 Open `/src/main.js` and locate TerritoryMap integration (Story 2.1)
-  - [ ] 8.2 Import MapParticles.js: `import { MapParticleSystem } from './components/TerritoryMap/MapParticles.js'`
-  - [ ] 8.3 Import MapParticles.css (already done in task 2.5)
-  - [ ] 8.4 After TerritoryMap HTML append, initialize particle system:
-    ```javascript
-    const particleContainer = document.querySelector('.particle-container');
-    const particleSystem = new MapParticleSystem(particleContainer);
-    particleSystem.init();
-    ```
-  - [ ] 8.5 Verify particles exist in DOM (check browser DevTools)
-  - [ ] 8.6 Test particle system initialization on page load
-
-- [ ] 9. Test particle animation on desktop and mobile (AC: 7, 8)
-  - [ ] 9.1 Test on desktop (1920x1080):
-    - Verify 200 particles created
-    - Check particles coalesce smoothly from chaos to order
-    - Confirm WHOA moment feels stunning (not chaotic)
-    - Verify particles cluster at zone positions
-    - Check animation timing (2s duration feels right)
-  - [ ] 9.2 Test on mobile (375x667):
-    - Verify 50 particles created (performance optimization)
-    - Check particles are 2px size (not too large)
-    - Verify animation maintains 45fps+ performance
-    - Confirm mobile WHOA moment still impactful
-  - [ ] 9.3 Test on low-end devices:
-    - Simulate poor performance (devtools throttling)
-    - Verify `reduceComplexity()` triggers when FPS < 30
-    - Confirm fallback animation still reveals map
-  - [ ] 9.4 Test anticipatory pin:
-    - Scroll toward map section
-    - Verify gradual slowdown (anticipatePin: 1)
-    - Check background dimming (soft black → pure black)
-    - Confirm WHOA moment feels earned
-
-- [ ] 10. Create Playwright visual regression tests (AC: 1, 7)
-  - [ ] 10.1 Create `/tests/screenshots/story-2-2-visual.spec.ts` test file
-  - [ ] 10.2 Test desktop initial state:
-    - Screenshot before scroll (chaos state)
-    - Verify particles visible but scattered
-  - [ ] 10.3 Test desktop scrolled state:
-    - Scroll to `center center` (formation complete)
-    - Screenshot after particles coalesced
-    - Verify particles clustered at zone positions
-  - [ ] 10.4 Test mobile viewport (375x667):
-    - Test particle formation on mobile
-    - Verify particle count reduced (50 vs 200)
-    - Check particle size smaller (2px vs 4px)
-  - [ ] 10.5 Test performance:
-    - Measure FPS during particle animation
-    - Verify 60fps desktop / 45fps mobile baseline
-    - Check no frame drops below threshold
-  - [ ] 10.6 Run tests and verify all pass
-
-- [ ] 11. Document particle system for future stories (AC: 1)
-  - [ ] 11.1 Add inline comments in MapParticles.js explaining chaos → order animation
-  - [ ] 11.2 Document zone coordinate system for Story 2.3 (zone hovers)
-  - [ ] 11.3 Note particle cleanup strategies (will-change: auto)
-  - [ ] 11.4 Document performance fallback triggers (FPS < 30)
-
-## Dev Notes
-
-### Epic Context
-This is the **third story** in Epic 2: Territory Map WHOA Moment. Story 2.2 creates the particle coalescence animation that transforms from chaos to order, creating the stunning visual WHOA moment.
-
-**Critical Dependencies:**
-- Story 2.0 MUST be completed (MapFraming anticipatory pin)
-- Story 2.1 MUST be completed (TerritoryMap.html with zones, SVG coordinates)
-- Story 1.2 MUST be completed (GSAP infrastructure, performance utilities)
-
-**Story Sequence:**
-- Story 2.0: Pre-Map anticipation framing (COMPLETED)
-- Story 2.1: Territory Map structure (COMPLETED)
-- **Story 2.2: Particle coalescence system** (THIS STORY)
-- Story 2.3: Zone illumination and magnetic hovers (NEXT)
-
-**Why This Story Matters:**
-Without the particle coalescence, the Territory Map is just static HTML. This story:
-1. Creates the emotional WHOA moment (chaos → order = transformation)
-2. Uses particles as visual metaphor for learning journey
-3. Reveals the map in a cinematic, memorable way
-4. Sets up zone targeting for Story 2.3 (interactive hovers)
-
-### Technical Requirements
-
-#### Particle System Architecture:
-
-**MapParticles.js Class Structure:**
-```javascript
-// MapParticles.js
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { isMobile, monitorPerformance } from '../../utils/performance-optimizations.js';
-
-gsap.registerPlugin(ScrollTrigger);
-
-export class MapParticleSystem {
-  constructor(container) {
-    this.container = container;
-    this.particleCount = isMobile() ? 50 : 200;
-    this.particles = [];
-    this.timeline = null;
-  }
-
-  init() {
-    this.createParticles();
-    this.assignParticleTargets();
-    this.animateFormation();
-  }
-
-  createParticles() {
-    for (let i = 0; i < this.particleCount; i++) {
-      const particle = document.createElement('div');
-      particle.classList.add('map-particle');
-      particle.style.left = `${Math.random() * 100}%`;
-      particle.style.top = `${Math.random() * 100}%`;
-      this.container.appendChild(particle);
-      this.particles.push(particle);
-    }
-  }
-
-  assignParticleTargets() {
-    // Zone coordinates from Story 2.1 SVG (viewBox 1200x800)
-    const ZONE_COORDINATES = {
-      zone0: { x: 100, y: 700, count: isMobile() ? 5 : 20 },
-      zone1: { x: 400, y: 550, count: isMobile() ? 10 : 40 },
-      zone2: { x: 650, y: 430, count: isMobile() ? 12 : 50 },
-      zone3: { x: 900, y: 320, count: isMobile() ? 12 : 50 },
-      zone4: { x: 1100, y: 180, count: isMobile() ? 11 : 40 }
-    };
-
-    let particleIndex = 0;
-
-    // Distribute particles to zones
-    Object.entries(ZONE_COORDINATES).forEach(([zone, data]) => {
-      for (let i = 0; i < data.count && particleIndex < this.particles.length; i++) {
-        const particle = this.particles[particleIndex];
-        const offsetX = (Math.random() - 0.5) * 80; // ±40px offset
-        const offsetY = (Math.random() - 0.5) * 80;
-
-        particle.dataset.targetX = data.x + offsetX;
-        particle.dataset.targetY = data.y + offsetY;
-        particleIndex++;
-      }
-    });
-  }
-
-  animateFormation() {
-    // ScrollTrigger setup
-    ScrollTrigger.create({
-      trigger: '.territory-map',
-      start: 'top center',
-      end: 'center center',
-      scrub: 2,
-      anticipatePin: 1,
-      onUpdate: (self) => {
-        // Monitor performance
-        if (performance.now() % 1000 < 20) { // Every ~1 second
-          const fps = monitorPerformance();
-          if (fps < 30) {
-            this.reduceComplexity();
-          }
-        }
-      }
-    });
-
-    // Background dimming animation
-    gsap.to('.territory-map', {
-      backgroundColor: '#000000',
-      scrollTrigger: {
-        trigger: '.territory-map',
-        start: 'top center',
-        end: 'center center',
-        scrub: 2
-      }
-    });
-
-    // Particle chaos → order animation
-    this.timeline = gsap.timeline();
-
-    // Phase 1: Chaos (random positions)
-    this.timeline.set(this.particles, {
-      opacity: 0,
-      scale: 0,
-      x: (i) => (Math.random() - 0.5) * 1000, // -500 to 500px
-      y: (i) => (Math.random() - 0.5) * 1000
-    });
-
-    // Phase 2: Coalesce to zone positions
-    this.timeline.to(this.particles, {
-      opacity: 1,
-      scale: 1,
-      x: (i, p) => parseFloat(p.dataset.targetX) - window.innerWidth / 2,
-      y: (i, p) => parseFloat(p.dataset.targetY) - window.innerHeight / 2,
-      duration: 2,
-      stagger: {
-        amount: 1.5,
-        from: 'random'
-      },
-      ease: 'power2.inOut',
-      scrollTrigger: {
-        trigger: '.territory-map',
-        start: 'top center',
-        end: 'center center',
-        scrub: 2
-      },
-      onComplete: () => {
-        // Memory cleanup
-        this.particles.forEach(p => p.style.willChange = 'auto');
-      }
-    });
-  }
-
-  reduceComplexity() {
-    // Reduce particle count by 50%
-    const particlesToRemove = this.particles.splice(Math.floor(this.particles.length / 2));
-    particlesToRemove.forEach(p => p.remove());
-
-    // Simplify animation (remove chaos phase)
-    if (this.timeline) {
-      this.timeline.seek(1); // Skip to coalesce phase
-    }
-  }
-
-  destroy() {
-    if (this.timeline) {
-      this.timeline.kill();
-    }
-    this.particles.forEach(p => p.remove());
-    ScrollTrigger.getAll().forEach(trigger => trigger.kill());
-  }
-}
-```
-
-**Integration into main.js:**
-```javascript
-// In main.js (after TerritoryMap integration)
-import { MapParticleSystem } from './components/TerritoryMap/MapParticles.js';
-import './components/TerritoryMap/MapParticles.css';
-
-// After TerritoryMap HTML append
-const particleContainer = document.querySelector('.particle-container');
-if (particleContainer) {
-  const particleSystem = new MapParticleSystem(particleContainer);
-  particleSystem.init();
-}
-```
-
-#### CSS Styling:
-
-**MapParticles.css:**
 ```css
-/* MapParticles.css */
 .map-particle {
   position: absolute;
   width: 4px;
@@ -473,10 +64,9 @@ if (particleContainer) {
   border-radius: 50%;
   will-change: transform, opacity;
   pointer-events: none;
-  transform: translate3d(0, 0, 0); /* GPU acceleration */
+  opacity: 0; /* Initially hidden */
 }
 
-/* Mobile optimization - smaller particles */
 @media (max-width: 768px) {
   .map-particle {
     width: 2px;
@@ -485,415 +75,454 @@ if (particleContainer) {
 }
 ```
 
-#### Zone Coordinate System (Story 2.1 Integration):
+### Chaos → Order Animation (Zone 0-1 Wilderness Focus)
 
-**Particle Distribution Strategy:**
-- **Zone 0 (20/5 particles):** Sparse clustering - ghost state, beginning
-- **Zone 1 (40/10 particles):** Emerging curiosity
-- **Zone 2 (50/12 particles):** Forming understanding - most populated
-- **Zone 3 (50/12 particles):** Solid collaboration - most populated
-- **Zone 4 (40/11 particles):** Fully present - destination with glow
+**Given** I need the chaos → order animation for Zone 0-1
+**When** I implement `animateFormation()` method
+**Then** a GSAP timeline is created with ScrollTrigger:
 
-**Target Position Calculation:**
 ```javascript
-// Convert SVG viewBox coordinates to viewport
-const targetX = zoneData.x * (window.innerWidth / 1200);
-const targetY = zoneData.y * (window.innerHeight / 800);
-```
-
-### Architecture Compliance
-
-#### File Structure:
-```
-k2m-landing/
-├── src/
-│   ├── main.js                         # Entry point
-│   ├── components/
-│   │   └── TerritoryMap/               # Epic 2 (Territory Map)
-│   │       ├── MapFraming.html         # Story 2.0 - Pre-map anticipation
-│   │       ├── MapFraming.css          # Story 2.0 - Framing styles
-│   │       ├── MapFraming.js           # Story 2.0 - Anticipatory pin
-│   │       ├── TerritoryMap.html       # Story 2.1 - Map structure
-│   │       ├── TerritoryMap.css        # Story 2.1 - Map styles
-│   │       ├── MapParticles.js         # THIS STORY - Particle system
-│   │       └── MapParticles.css        # THIS STORY - Particle styles
-│   ├── utils/
-│   │   ├── gsap-config.js              # Story 1.2 - GSAP infrastructure
-│   │   ├── lenis-config.js             # Story 1.2 - Smooth scroll
-│   │   └── performance-optimizations.js # Story 1.2 - GPU, FPS helpers
-│   └── styles/
-│       └── token.css                   # Story 1.1 - Design tokens
-```
-
-**New Files for This Story:**
-- `/src/components/TerritoryMap/MapParticles.js` - Particle system class
-- `/src/components/TerritoryMap/MapParticles.css` - Particle styles
-
-**Files Modified:**
-- `/src/main.js` - Import and initialize MapParticles
-
-#### Import Pattern (Follow Story 2.1):
-```javascript
-// In main.js
-import { MapParticleSystem } from './components/TerritoryMap/MapParticles.js';
-import './components/TerritoryMap/MapParticles.css';
-
-// After TerritoryMap integration
-const particleContainer = document.querySelector('.particle-container');
-const particleSystem = new MapParticleSystem(particleContainer);
-particleSystem.init();
-```
-
-### Library/Framework Requirements
-
-#### GSAP MotionPath Plugin (Optional Enhancement):
-**For Spiral Motion Path (Optional):**
-- Install: `npm install @gsap/motionpath-plugin`
-- Import: `import { MotionPathPlugin } from '@gsap/motionpath-plugin'`
-- Register: `gsap.registerPlugin(MotionPathPlugin)`
-- Use: Apply `motionPath: { path: bezierCurve, align: false }` to particles
-
-**Fallback Without MotionPath:**
-- Use standard `x, y` translation to target positions
-- Still creates organic WHOA moment (particles cluster at zones)
-- More performance-friendly for mobile
-
-#### No Additional Dependencies Required:
-- **GSAP Core** (already installed in Story 1.2)
-- **ScrollTrigger** (already installed in Story 1.2)
-- **Performance utilities** (already created in Story 1.2)
-- **Design tokens** (already defined in Story 1.1)
-
-### Testing Requirements
-
-#### Visual Testing Checklist:
-
-1. **Particle System Initialization (Desktop):**
-   - [ ] 200 particles created on desktop
-   - [ ] Particles are 4px size (ocean mint gradient)
-   - [ ] Particles initially scattered (chaos state)
-   - [ ] Particles have `will-change: transform, opacity`
-   - [ ] Particles use GPU acceleration (translate3d)
-
-2. **Particle System Initialization (Mobile):**
-   - [ ] 50 particles created on mobile (performance optimization)
-   - [ ] Particles are 2px size (smaller on mobile)
-   - [ ] Animation maintains 45fps+ performance
-   - [ ] No frame drops during coalescence
-
-3. **Chaos → Order Animation:**
-   - [ ] Scroll triggers animation at `top center`
-   - [ ] Animation completes at `center center`
-   - [ ] Duration: 2 seconds (scrub: 2)
-   - [ ] Stagger: 1.5s random feel (organic)
-   - [ ] Easing: power2.inOut (gentle motion)
-   - [ ] Particles coalesce smoothly, not abruptly
-
-4. **Zone Clustering (Desktop):**
-   - [ ] Particles cluster at Zone 0 (20 particles around cx=100, cy=700)
-   - [ ] Particles cluster at Zone 1 (40 particles around cx=400, cy=550)
-   - [ ] Particles cluster at Zone 2 (50 particles around cx=650, cy=430)
-   - [ ] Particles cluster at Zone 3 (50 particles around cx=900, cy=320)
-   - [ ] Particles cluster at Zone 4 (40 particles around cx=1100, cy=180)
-   - [ ] Particles have random offset (±40px) from zone centers
-   - [ ] Clustering looks organic, not grid-like
-
-5. **Zone Clustering (Mobile):**
-   - [ ] Particles cluster at Zone 0 (5 particles)
-   - [ ] Particles cluster at Zone 1 (10 particles)
-   - [ ] Particles cluster at Zone 2 (12 particles)
-   - [ ] Particles cluster at Zone 3 (12 particles)
-   - [ ] Particles cluster at Zone 4 (11 particles)
-   - [ ] Mobile clusters visible on vertical stack layout
-
-6. **Anticipatory Pin and Background Dimming:**
-   - [ ] Scroll slows down approaching map (anticipatePin: 1)
-   - [ ] Background dims from #0A0A0A to #000000
-   - [ ] Particles emerge from darkness (opacity 0 → 1)
-   - [ ] WHOA moment feels earned, not abrupt
-   - [ ] Transition from MapFraming is smooth
-
-7. **Performance and Memory Management:**
-   - [ ] Animation maintains 60fps desktop baseline
-   - [ ] Animation maintains 45fps mobile baseline
-   - [ ] `will-change: auto` set after animation completes
-   - [ ] Transforms cleared after animation (memory cleanup)
-   - [ ] ScrollTrigger cleanup on navigation
-   - [ ] No memory leaks over 10-minute scroll session
-
-8. **Performance Fallback (Low-End Devices):**
-   - [ ] FPS monitoring active during animation
-   - [ ] When FPS < 30 for 2+ seconds, `reduceComplexity()` triggers
-   - [ ] Particle count reduced by 50%
-   - [ ] Animation simplified (no spiral, just fade-in)
-   - [ ] Map still reveals clearly despite fallback
-   - [ ] WHOA moment preserved (just simpler)
-
-9. **Spiral Motion Path (Optional Enhancement):**
-   - [ ] If MotionPath plugin installed, particles follow Bezier curve
-   - [ ] Spiral path visible (particles curve toward zones)
-   - [ ] Motion path matches Story 2.1 SVG journey path
-   - [ ] If MotionPath not available, x/y translation fallback works
-   - [ ] Both approaches create organic WHOA moment
-
-10. **Experiential Testing:**
-    - [ ] 5 users test particle coalescence
-    - [ ] 4/5 users express surprise, wonder, or say "whoa"
-    - [ ] Users understand chaos → order = transformation metaphor
-    - [ ] WHOA moment creates emotional impact
-    - [ ] Animation feels cinematic, not chaotic
-
-### Previous Story Intelligence
-
-**Story 2.1 Territory Map Structure (Foundation):**
-Story 2.1 created the HTML, CSS, and SVG structure for the Territory Map:
-- 5 zones positioned along diagonal journey path (absolute positioning)
-- SVG viewBox coordinates for zone markers (1200x800)
-- Particle container div with class `particle-container`
-- Zone coordinates: Zone 0 (100, 700) → Zone 4 (1100, 180)
-
-**Integration for Story 2.2:**
-1. Use `particle-container` div for particle injection
-2. Target SVG zone marker coordinates for particle clustering
-3. Respect absolute positioning layout (desktop) / vertical stack (mobile)
-4. Follow Vite import pattern (CSS + JS class instantiation)
-
-**Story 2.0 MapFraming (Anticipatory Pin Pattern):**
-Story 2.0 established the anticipatory pin pattern:
-- `anticipatePin: 1` for gradual scroll slowdown
-- Background dimming (soft black → pure black)
-- Emotional buildup before WHOA moment
-
-**Apply Same Pattern to Story 2.2:**
-1. Add `anticipatePin: 1` to ScrollTrigger configuration
-2. Animate background dimming synced with particle coalescence
-3. Ensure WHOA moment feels earned (not abrupt start)
-
-**Story 1.5 Performance (Mobile Optimization):**
-Story 1.5 taught us to always optimize for mobile:
-- Reduce particle count on mobile (50 vs 200 desktop)
-- Smaller particle size on mobile (2px vs 4px desktop)
-- Monitor FPS and trigger fallback when performance drops
-- Ensure 45fps+ mobile baseline
-
-**Story 1.2 Infrastructure (GSAP and Performance Utilities):**
-Story 1.2 created the GSAP infrastructure and performance utilities:
-- `isMobile()` detection function
-- `monitorPerformance()` FPS counter
-- GPU acceleration helpers (`enableGPU`, `disableGPU`)
-- ScrollTrigger configuration patterns
-
-**Apply to Story 2.2:**
-1. Use `isMobile()` to determine particle count (50 vs 200)
-2. Use `monitorPerformance()` to detect FPS drops
-3. Use GPU acceleration (`translate3d`, `will-change`)
-4. Follow ScrollTrigger patterns (scrub, anticipatePin)
-
-### Latest Tech Information
-
-#### GSAP ScrollTrigger Best Practices (2025):
-**Anticipatory Pin for Emotional Buildup:**
-```javascript
-ScrollTrigger.create({
-  trigger: '.territory-map',
-  start: 'top center',
-  end: 'center center',
-  scrub: 2,
-  anticipatePin: 1  // Gradual slowdown before pin
+const timeline = gsap.timeline({
+  scrollTrigger: {
+    trigger: ".territory-map",
+    start: "top center",
+    end: "center center",
+    scrub: 0.3, // FAST scrub for mystery → curiosity (Zone 0-1)
+    anticipatePin: 1
+  }
 });
 ```
 
-**Benefits:**
-- Creates emotional anticipation (not abrupt)
-- Luxurious scroll feel (Lenis smooth scroll)
-- User feels something significant coming
-- WHOA moment feels earned
+**And** the animation follows this emotional arc:
 
-#### Particle System Performance (2025):
-**Memory Management Strategies:**
+#### Phase 1: Pre-Reveal Anticipation (Disney Principle 1)
 ```javascript
-// During animation - optimize for GPU
-particle.style.willChange = 'transform, opacity';
-
-// After animation - cleanup memory
-particle.style.willChange = 'auto';
-particle.style.transform = 'none'; // Clear transforms
+// 0.3s pre-movement creates tension
+timeline.to(".map-particle", {
+  scale: 0.02,
+  duration: 0.3,
+  ease: "sine.inOut"
+});
 ```
 
-**Benefits:**
-- No memory leaks during extended scrolling
-- GPU acceleration during animation (smooth)
-- Memory cleanup after animation (efficient)
-- 60fps performance maintained
-
-#### Performance Fallback Patterns (2025):
-**Dynamic Complexity Reduction:**
+#### Phase 2: Sequential Coalescence (Disney Principle 4: STAGING)
 ```javascript
-if (monitorPerformance() < 30) {
-  reduceComplexity();
-}
+// Apply 80/20 Emotional Punctuation Rule
+const particles = document.querySelectorAll('.map-particle');
+const boldParticles = particles.slice(0, Math.floor(particles.length * 0.2)); // 20% bold
+const subtleParticles = particles.slice(Math.floor(particles.length * 0.2)); // 80% subtle
 
-reduceComplexity() {
-  // Remove excess particles
-  const toRemove = particles.splice(particles.length / 2);
-  toRemove.forEach(p => p.remove());
+// Subtle particles: Gentle coalescence
+timeline.to(subtleParticles, {
+  opacity: 1,
+  scale: 1,
+  x: (i, target) => target.targetX,
+  y: (i, target) => target.targetY,
+  duration: 0.6,
+  stagger: {
+    amount: 1.0,
+    from: "start" // SEQUENTIAL, not random (Disney's Staging)
+  },
+  ease: "power2.inOut" // Gentle motion
+});
 
-  // Simplify animation
-  timeline.seek(1); // Skip chaos phase
+// Bold particles: Dramatic arrival (emotional punctuation)
+timeline.fromTo(boldParticles, {
+  opacity: 0,
+  scale: 0,
+  x: (i, target) => target.initialX,
+  y: (i, target) => target.initialY
+}, {
+  opacity: 1,
+  scale: 1,
+  x: (i, target) => target.targetX,
+  y: (i, target) => target.targetY,
+  duration: 0.4, // Faster than subtle
+  stagger: {
+    amount: 0.3,
+    from: "center" // Explode from center
+  },
+  ease: "back.out(1.7)", // Overshoot for drama
+}, "-=0.5"); // Overlap by 0.5s (The Stitch Pattern)
+```
+
+### Text Crystallization Effect
+
+**Given** zone text needs to emerge from the mist
+**When** particles coalesce
+**Then** text crystallizes progressively:
+
+```javascript
+// Zone 0-1 text: Heavy blur → sharp
+timeline.fromTo(".zone-0-1 .zone-text", {
+  filter: "blur(12px)",
+  opacity: 0.3
+}, {
+  filter: "blur(0px)",
+  opacity: 1,
+  duration: 1.5,
+  ease: "power2.inOut",
+  stagger: 0.2
+}, "-=1.0"); // Overlap with particle animation
+```
+
+### Performance Safeguards
+
+**Given** low-end devices may struggle
+**When** the particle system initializes
+**Then** performance detection occurs:
+
+```javascript
+// Detect hardware capability
+const hardwareConcurrency = navigator.hardwareConcurrency || 2;
+const isLowEnd = hardwareConcurrency < 4 || isMobile;
+
+if (isLowEnd) {
+  // Reduce particle count by 50%
+  particleCount = Math.floor(particleCount * 0.5);
+
+  // Skip spiral motion, use direct interpolation
+  useSpiralMotion = false;
 }
 ```
 
-**Benefits:**
-- Works on low-end devices
-- Graceful degradation (map still reveals)
-- WHOA moment preserved (just simpler)
-- No broken animations
+**And** FPS monitoring is active:
+```javascript
+let fps = 60;
+let frameCount = 0;
+let lastTime = performance.now();
 
-### Project Context Reference
+function measureFPS() {
+  frameCount++;
+  const currentTime = performance.now();
 
-**Project Name:** k2m-edtech-program-
-**Epic:** Epic 2: Territory Map WHOA Moment
-**Story:** 2.2 - Build Particle Coalescence System
-**Target Audience:** Kenyan students interested in AI education
+  if (currentTime >= lastTime + 1000) {
+    fps = frameCount;
+    frameCount = 0;
+    lastTime = currentTime;
 
-**Emotional Journey (from animation strategy):**
-- **Act I (Hero):** Validation - "You're not alone"
-- **Act II (Territory Map):** Revelation - "Oh, THIS is where I am"
-  - **Pre-scene (Story 2.0):** Anticipation - "Something is about to shift..."
-  - **Map Structure (Story 2.1):** Foundation - 5 zones, learning journey visual
-  - **WHOA moment (This Story):** Particle coalescence - Chaos → order = transformation
-  - **Zone Interaction (Story 2.3):** Illumination and hovers
-- **Act III (Discord):** Belonging - "This is alive"
-- **Act IV (CTA):** Relief - "No pressure, just clarity"
+    // If FPS < 30 for 2+ seconds, reduce complexity
+    if (fps < 30 && performance.now() - startTime > 2000) {
+      simplifyAnimation();
+    }
+  }
 
-**Particle System Metaphor:**
-- **Chaos:** Where students start (confused, scattered)
-- **Order:** Where students arrive (clear, directed)
-- **Transformation:** Learning journey visual metaphor
-- **Coalescence:** Finding your place in the Territory Map
+  requestAnimationFrame(measureFPS);
+}
 
-**Color Palette:**
-- Ocean mint (#20B2AA, #40E0D0, #008B8B) - Particle glow
-- Pure black (#000000) - WHOA moment background
-- Radial gradient for particle depth effect
+function simplifyAnimation() {
+  // Kill spiral motion
+  gsap.killTweensOf(".map-particle");
 
-**Performance Goals:**
-- Desktop: 60fps consistent
-- Mobile: 45fps+ acceptable
-- Lighthouse Performance: 90+
-- Memory efficient (no leaks over 10-minute session)
+  // Simple fade-in fallback
+  gsap.to(".map-particle", {
+    opacity: 1,
+    duration: 0.3,
+    ease: "power1.out"
+  });
+}
+```
 
-**Critical Success Factors for This Story:**
-1. Stunning WHOA moment (4/5 users say "whoa")
-2. Smooth particle coalescence (not chaotic)
-3. Performance optimized (200 desktop, 50 mobile particles)
-4. Graceful fallback on low-end devices
-5. Anticipatory pin creates emotional buildup
-6. Memory cleanup prevents leaks
+### Accessibility Support
 
-**Next Stories After This One:**
-1. Story 2.3: Implement zone illumination and magnetic hovers (builds on particle positions)
+**Given** users may have motion sensitivities
+**When** `prefers-reduced-motion: reduce` is detected
+**Then** particles instantaneously appear at final positions:
 
-**Technical Dependencies:**
-- Story 1.1: Design tokens (ocean mint colors)
-- Story 1.2: GSAP infrastructure, performance utilities
-- Story 2.0: MapFraming anticipatory pin pattern
-- Story 2.1: TerritoryMap structure, zone coordinates, particle container
+```javascript
+const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+if (prefersReducedMotion.matches) {
+  // Instant appearance, no animation
+  gsap.set(".map-particle", {
+    opacity: 1,
+    scale: 1,
+    x: (i, target) => target.targetX,
+    y: (i, target) => target.targetY
+  });
+} else {
+  // Full animation sequence
+  animateFormation();
+}
+```
+
+**And** screen reader announcements are provided:
+```html
+<div class="territory-map" role="img" aria-label="Territory Map showing learning journey from confusion to confidence. Particles coalesce to form 5 zones representing different stages of AI proficiency.">
+```
+
+### Memory Management
+
+**Given** memory management is critical for performance
+**When** the particle animation completes
+**Then** cleanup occurs:
+
+```javascript
+cleanup() {
+  // Kill ScrollTrigger
+  if (this.scrollTrigger) {
+    this.scrollTrigger.kill();
+  }
+
+  // Clear will-change to release GPU resources
+  gsap.set(".map-particle", {
+    willChange: "auto"
+  });
+
+  // Clear transform values
+  gsap.set(".map-particle", {
+    clearProps: "transform, opacity"
+  });
+
+  // Remove particles from DOM
+  this.particles.forEach(p => p.remove());
+}
+```
+
+**And** no memory leaks occur over 10-minute continuous scroll sessions:
+- All GSAP timelines are properly killed
+- Event listeners are removed
+- Particles are removed from DOM
+- ScrollTrigger instances are cleaned up
+
+### Experiential Acceptance Criteria
+
+**Given** 5 users test this section
+**When** the particles coalesce
+**Then** 4/5 users should express surprise, wonder, or say "whoa"
+
+**Given** analytics tracking is installed (Story 0.2)
+**When** users scroll through the Territory Map
+**Then** the following metrics are tracked:
+- `map_formation_start`: When particle animation begins
+- `map_formation_complete`: When all particles reach targets
+- `map_time_spent`: Duration in Territory Map section
+- **Target**: 70% of users scroll to map completion
+- **Target**: Average time in section > 30 seconds
+
+## Tasks / Subtasks
+
+- [ ] Create MapParticleSystem class architecture (AC: Particle system initialization)
+  - [ ] Implement init() method with device detection
+  - [ ] Calculate target positions for all particles
+  - [ ] Create particle DOM elements with initial state
+  - [ ] Store target coordinates on each particle
+
+- [ ] Style particles with CSS (AC: Particle styling)
+  - [ ] Create .map-particle class with radial gradient
+  - [ ] Add mobile responsive styles (2px particles)
+  - [ ] Apply will-change for GPU acceleration
+  - [ ] Test particle visibility on black background
+
+- [ ] Implement chaos → order animation (AC: Chaos → Order animation)
+  - [ ] Create ScrollTrigger configuration with scrub: 0.3
+  - [ ] Add pre-reveal anticipation (0.3s scale pulse)
+  - [ ] Implement sequential coalescence (from: "start", not random)
+  - [ ] Apply 80/20 emotional punctuation (subtle + bold particles)
+  - [ ] Add overlap timing (-=0.5s for "The Stitch Pattern")
+  - [ ] Test animation feels smooth and organic
+
+- [ ] Add text crystallization effects (AC: Text crystallization)
+  - [ ] Animate blur: 12px → 0px for Zone 0-1 text
+  - [ ] Stagger text reveals by zone
+  - [ ] Overlap text animation with particle coalescence
+
+- [ ] Implement performance safeguards (AC: Performance safeguards)
+  - [ ] Add hardware capability detection
+  - [ ] Implement FPS monitoring
+  - [ ] Create fallback animation for low-end devices
+  - [ ] Test on mobile devices (45fps+ target)
+  - [ ] Test on desktop (60fps target)
+
+- [ ] Add accessibility support (AC: Accessibility support)
+  - [ ] Detect prefers-reduced-motion
+  - [ ] Implement instant-appear fallback
+  - [ ] Add ARIA labels for screen readers
+  - [ ] Test with screen reader (VoiceOver/NVDA)
+  - [ ] Test keyboard navigation through zones
+
+- [ ] Implement memory management (AC: Memory management)
+  - [ ] Create cleanup() method
+  - [ ] Kill ScrollTrigger instances
+  - [ ] Clear will-change properties
+  - [ ] Remove particles from DOM
+  - [ ] Test for memory leaks (10-minute scroll session)
+
+## Dev Notes
+
+### Critical Architecture Decisions
+
+**From Territory Map Scroll Experience Specification**:
+- This story implements **Zone 0-1 (Wilderness)** particle drift animation ONLY
+- Zone-specific techniques (snap, morph, mirror) are deferred to Stories 2.2b, 2.2c, 2.2d
+- Scrub value: 0.3 (fast, light) for mystery → curiosity emotion
+- Animation duration: 0.6s (subtle), 0.4s (bold) - NOT 2s as in original story
+
+**Why This Scope?**
+The Territory Map specification defines a "7-Zone Technique Palette" where each zone has unique choreography. Implementing all zones in Story 2.2 would violate Disney's Staging principle and create a monotone, robotic animation. By focusing on Zone 0-1 first, we establish the particle system infrastructure while maintaining emotional differentiation.
+
+### Zone-Specific Animation Reference
+
+**Future stories will implement:**
+
+| Story | Zone | Scrub | Animation | Emotion |
+|-------|------|-------|-----------|---------|
+| **2.2** | 0-1 | 0.3 | Particle Drift + Heavy Blur | Mystery → Curiosity |
+| 2.2b | 2 | 0.5 | Snap Transitions | Transactional efficiency |
+| 2.2c | 3 | 1.5 | Fluid Morphing | Dialogue and flow |
+| 2.2d | 4 | 2.0 + pin | Mirror Pause + Hold | Contemplative breakthrough |
+
+### GSAP Plugin Requirements
+
+**Required plugins:**
+- `gsap` (core, v3.12+)
+- `ScrollTrigger` (scroll-based animation)
+- **Optional but recommended**: `MotionPath` (for spiral motion, can be skipped for performance)
+
+### Particle Distribution Algorithm
+
+**Target position calculation:**
+```javascript
+// Assign particles to zones
+const particlesPerZone = Math.floor(particleCount / 7); // 7 zones total
+const zones = [
+  { id: 0, centerX: -200, centerY: -100, radius: 150 },
+  { id: 1, centerX: -50, centerY: -150, radius: 120 },
+  { id: 2, centerX: 100, centerY: -100, radius: 130 },
+  { id: 3, centerX: 150, centerY: 50, radius: 140 },
+  { id: 4, centerX: 0, centerY: 100, radius: 160 },
+  { id: 5, centerX: -150, centerY: 50, radius: 110 }, // Future zone
+  { id: 6, centerX: -250, centerY: 0, radius: 100 }  // Future zone
+];
+
+particles.forEach((particle, index) => {
+  const zoneIndex = Math.floor(index / particlesPerZone) % 7;
+  const zone = zones[zoneIndex];
+
+  // Random position within zone radius
+  const angle = Math.random() * Math.PI * 2;
+  const distance = Math.random() * zone.radius;
+
+  particle.targetX = zone.centerX + Math.cos(angle) * distance;
+  particle.targetY = zone.centerY + Math.sin(angle) * distance;
+
+  // Initial chaos position
+  particle.initialX = Math.random() * 2000 - 1000;
+  particle.initialY = Math.random() * 2000 - 1000;
+});
+```
+
+### Disney Principles Applied
+
+**From Scroll Choreography Bible:**
+
+1. **Anticipation (Principle 1)**: 0.3s pre-reveal scale pulse creates tension
+2. **Staging (Principle 4)**: Sequential reveals (`from: "start"`), not random chaos
+3. **Timing (Principle 3)**: Varied durations (0.6s subtle, 0.4s bold) create rhythm
+4. **Follow-Through (Principle 2)**: Overshoot on bold particles (`back.out(1.7)`)
+5. **Overlapping Action**: Text animation overlaps particle animation by 1.0s
+
+### GSAP Emotional Choreography Alignment
+
+**From GSAP Emotional Choreography Research:**
+
+- **Motion = Narrative**: Particles tell the story of transformation from chaos to order
+- **80/20 Rule**: 80% subtle particles (supporting), 20% bold particles (emotional punctuation)
+- **Staggered Reading Rhythm**: Sequential particle arrival creates "conversational" timing
+- **The Stitch Pattern**: Overlapping animations create flow, not hard cuts
+
+### Testing Strategy
+
+**Performance testing:**
+1. Use Chrome DevTools Performance tab to record 60fps target
+2. Test on physical devices (iPhone 12+, Samsung Galaxy S21+)
+3. Monitor memory usage in Task Manager during 10-minute scroll session
+4. Validate no memory leaks (heap snapshot before/after)
+
+**Experiential testing:**
+1. Recruit 5 users from target demographic
+2. Ask: "What did this animation make you feel?"
+3. Measure time spent in Territory Map section
+4. Track scroll depth to map completion
+
+**Accessibility testing:**
+1. Test with VoiceOver (iOS) and NVDA (Windows)
+2. Verify screen reader announces zone information
+3. Test keyboard navigation through zones
+4. Validate `prefers-reduced-motion` fallback works correctly
+
+### Project Structure Notes
+
+**File locations:**
+```
+/src/components/TerritoryMap/
+├── TerritoryMap.html (from Story 2.1)
+├── TerritoryMap.css (from Story 2.1)
+├── TerritoryMap.js (zone interactions, Story 2.3)
+├── MapParticles.js (THIS STORY)
+└── Map.css (THIS STORY - particle styles)
+```
+
+**Alignment with unified project structure:**
+- Follows component-based architecture defined in Story 1.1
+- Uses CSS variables from `/src/styles/token.css` (Story 1.1)
+- Integrates with GSAP config from `/src/utils/gsap-config.js` (Story 1.2)
+- Uses performance utilities from `/src/utils/performance-optimizations.js` (Story 1.2)
+
+### References
+
+**Primary sources:**
+- [Territory Map Scroll Experience Specification](/_bmad-output/implementation-artifacts/territory-map-scroll-experience-specification.md) - Complete 7-zone technique palette (lines 67-76, 81-133)
+- [Scroll Choreography Bible](/_bmad-output/scroll-choreography-bible.md) - Disney's 12 principles (lines 52-106, 361-397)
+- [GSAP Emotional Choreography Research](/_bmad-output/implementation-artifacts/gsap-emotional-choreography-research.md) - 80/20 rule, stagger patterns (lines 528-534, 147-166)
+- [GSAP Scroll Choreography Synthesis](/_bmad-output/implementation-artifacts/gsap-scroll-choreography-synthesis.md) - Unified framework (lines 460-510)
+
+**Epic story foundation:**
+- [Epic 2](/_bmad-output/planning-artifacts/epics.md#epic-2) - Territory Map WHOA Moment (lines 551-653)
+- [Story 2.2](/_bmad-output/planning-artifacts/epics.md#story-22) - Original story requirements (lines 652-738)
+
+**Previous story:**
+- [Story 2.1](/_bmad-output/implementation-artifacts/2-1-create-territory-map-svg-structure.md) - Map HTML structure and zone definitions
 
 ## Dev Agent Record
 
 ### Agent Model Used
 
-_Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)_
+Claude Sonnet 4.5 (claude-sonnet-4-5-20250929)
 
 ### Debug Log References
 
 ### Completion Notes List
 
-**Story Recreated: 2026-01-17 (Fresh Generation with Enhanced Context)**
+**Adversarial Review Applied:**
+This story has been regenerated following a comprehensive adversarial code review that identified 21 issues across 4 severity levels. All critical blockers and major gaps have been addressed:
 
-**Comprehensive Analysis Completed:**
-- ✅ Extracted requirements from Epic 2 (epics.md lines 652-738)
-- ✅ Applied integration patterns from Story 2.1 (Vite imports, zone coordinates)
-- ✅ Used anticipatory pin pattern from Story 2.0 (emotional buildup)
-- ✅ Incorporated performance patterns from Story 1.5 (mobile optimization)
-- ✅ Used design tokens from Story 1.1 (ocean mint particle glow)
-- ✅ Leveraged GSAP infrastructure from Story 1.2 (ScrollTrigger, performance utilities)
-- ✅ Confirmed Epic 2 scope: Zones 0-4 only (per git commit 28da64)
-- ✅ Created foundation for Story 2.3 (particle positions for zone hovers)
+**Fixed Issues:**
+1. ✅ Scope gap - Clarified as Zone 0-1 focus only
+2. ✅ Undefined targets - Added particle distribution algorithm
+3. ✅ Violates Disney's Staging - Changed to `from: "start"` sequential reveals
+4. ✅ Missing emotional punctuation - Added 80/20 subtle/bold particle split
+5. ✅ Inconsistent scrub values - Set scrub: 0.3 for Zone 0-1
+6. ✅ Missing zone techniques - Documented future stories for zones 2-4
+7. ✅ No text crystallization - Added blur → sharp text animation
+8. ✅ Insufficient particle count - Increased to 300 desktop / 105 mobile
+9. ✅ No performance safeguards - Added hardware detection + FPS monitoring
+10. ✅ Incomplete memory management - Added explicit cleanup() method
+11. ✅ No accessibility - Added prefers-reduced-motion + ARIA labels
+12. ✅ Weak testing criteria - Added quantifiable metrics (70% completion, 30s duration)
 
-**Technical Approach:**
-1. **Particle System Class:** MapParticleSystem with init(), createParticles(), animateFormation()
-2. **Particle Generation:** 200 desktop / 50 mobile particles as div elements
-3. **Zone Targeting:** Particles cluster at SVG coordinates (viewBox 1200x800)
-4. **Animation Timeline:** Chaos (random positions) → Order (zone clustering) over 2s
-5. **Performance:** GPU acceleration, memory cleanup, fallback on low-end devices
-6. **Anticipatory Pin:** Gradual scroll slowdown + background dimming for emotional buildup
+**File List**
 
-**Key Design Decisions:**
-- **Particle Count:** 200 desktop / 50 mobile (performance optimization)
-- **Particle Size:** 4px desktop / 2px mobile (visibility vs performance)
-- **Zone Distribution:** Proportional to zone "weight" (Zone 2,3 most populated)
-- **Animation Timing:** 2s duration, 1.5s stagger random feel (organic)
-- **Easing:** power2.inOut (gentle motion, not jarring)
-- **Background Dimming:** Soft black → pure black (WHOA moment isolation)
-- **Memory Cleanup:** will-change: auto after animation (prevent leaks)
+**To be created:**
+- `/src/components/TerritoryMap/MapParticles.js`
+- `/src/components/TerritoryMap/Map.css`
 
-**Performance Considerations:**
-- GPU acceleration (translate3d, will-change)
-- Monitor FPS during animation
-- Reduce complexity when FPS < 30
-- Remove 50% of particles on low-end devices
-- Memory cleanup after animation (will-change: auto)
-- ScrollTrigger cleanup on navigation
+**To be modified:**
+- `/src/components/TerritoryMap/TerritoryMap.html` (from Story 2.1) - Add particle container
+- `/src/components/TerritoryMap/TerritoryMap.css` (from Story 2.1) - Add particle container styles
 
-**Animation Flow:**
-1. **Phase 1 (Chaos):** Particles scattered randomly (opacity 0, scale 0)
-2. **Background Dimming:** Soft black → pure black
-3. **Phase 2 (Coalesce):** Particles move to zone positions (opacity 1, scale 1)
-4. **Memory Cleanup:** will-change: auto after animation completes
-
-**Testing Strategy:**
-- Playwright visual regression tests (before/after scroll)
-- Desktop and mobile viewport testing
-- Performance monitoring (60fps desktop / 45fps mobile)
-- Memory leak testing (10-minute scroll session)
-- Experiential testing (4/5 users say "whoa")
-
-**Story Context:**
-- Third story in Epic 2
-- Creates the emotional WHOA moment (chaos → order)
-- Uses particles as transformation metaphor
-- Bridges MapFraming anticipation to zone interaction
-- Critical for user emotional engagement
-
-### File List
-
-**New Files to Create:**
-- `k2m-landing/src/components/TerritoryMap/MapParticles.js` - Particle system class
-- `k2m-landing/src/components/TerritoryMap/MapParticles.css` - Particle styles
-- `k2m-landing/tests/screenshots/story-2-2-visual.spec.ts` - Playwright visual tests
-- `_bmad-output/implementation-artifacts/2-2-build-particle-coalescence-system.md` - This story file
-
-**Files to Modify:**
-- `k2m-landing/src/main.js` - Import and initialize MapParticles
-
-### Change Log
-
-**2026-01-17 - Story Recreation (Bob - Scrum Master):**
-- Regenerated story file from Epic 2 requirements with comprehensive context
-- Requirements extracted from Epic 2 (epics.md lines 652-738)
-- Integration patterns from Story 2.1 (zone coordinates, particle container)
-- Anticipatory pin pattern from Story 2.0 (emotional buildup)
-- Performance patterns from Story 1.5 (mobile optimization)
-- Design tokens from Story 1.1 (ocean mint particle glow)
-- GSAP infrastructure from Story 1.2 (ScrollTrigger, performance utilities)
-- Confirmed Epic 2 scope: Zones 0-4 only (per git commit 28da64)
-- Technical approach: Chaos → order animation with zone clustering
-- Particle distribution: 200 desktop / 50 mobile (proportional to zone weight)
-- Animation: 2s duration, 1.5s stagger, power2.inOut easing (organic feel)
-- Performance: GPU acceleration, memory cleanup, fallback on low-end devices
-- Memory management: will-change: auto after animation, transform cleanup
-- Experiential goal: 4/5 users say "whoa" (WHOA moment validation)
-- YOLO mode execution (no user elicitation)
-- Status: ready-for-dev
+**Dependencies:**
+- GSAP v3.12+ (already installed via Story 1.2)
+- ScrollTrigger plugin (already installed via Story 1.2)
+- CSS variables from `/src/styles/token.css` (already created via Story 1.1)
+- Performance utilities from `/src/utils/performance-optimizations.js` (already created via Story 1.2)
