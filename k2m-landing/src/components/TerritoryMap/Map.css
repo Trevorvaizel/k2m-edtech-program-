@@ -1,0 +1,32 @@
+/**
+ * Story 2.2: Particle Coalescence System - Particle Styling
+ *
+ * AC: Particle styling
+ */
+
+.map-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: radial-gradient(circle, var(--ocean-mint-glow) 0%, transparent 70%);
+  border-radius: 50%;
+  will-change: transform, opacity;
+  pointer-events: none;
+  opacity: 0; /* Initially hidden */
+}
+
+@media (max-width: 768px) {
+  .map-particle {
+    width: 2px;
+    height: 2px;
+  }
+}
+
+/**
+ * Zone Text Crystallization Effect
+ * AC: Text crystallization
+ */
+.zone-text {
+  will-change: filter, opacity;
+  transition: filter 0.3s ease, opacity 0.3s ease;
+}

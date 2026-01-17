@@ -1,6 +1,6 @@
 # Story 2.2: Build Particle Coalescence System
 
-Status: ready-for-dev
+Status: in-progress
 
 ## Story
 

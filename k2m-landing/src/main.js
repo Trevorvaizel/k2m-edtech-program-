@@ -45,7 +45,10 @@ import { initHeroAnimations } from './components/Hero/Hero.js';
 // Import and initialize MapFraming animations
 import { initMapFramingAnimations } from './components/TerritoryMap/MapFraming.js';
 
-// Initialize Hero and MapFraming animations after page load
+// Import and initialize MapParticles for Story 2.2
+import { MapParticleSystem } from './components/TerritoryMap/MapParticles.js';
+
+// Initialize Hero, MapFraming, and MapParticles after page load
 window.addEventListener('load', () => {
   try {
     initHeroAnimations();
@@ -59,6 +62,15 @@ window.addEventListener('load', () => {
     console.log('✅ MapFraming animations initialized');
   } catch (error) {
     console.error('❌ Error initializing MapFraming animations:', error);
+  }
+
+  // Initialize MapParticleSystem for Story 2.2
+  try {
+    const particleSystem = new MapParticleSystem();
+    particleSystem.init();
+    console.log('✅ MapParticles initialized');
+  } catch (error) {
+    console.error('❌ Error initializing MapParticles:', error);
   }
 });
 

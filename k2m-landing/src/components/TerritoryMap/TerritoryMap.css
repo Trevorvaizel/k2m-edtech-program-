@@ -1,6 +1,9 @@
 /* TerritoryMap.css - Awwwards-Level Spatial Storytelling */
 /* Based on Party Mode Decision 2026-01-16: Absolute positioning along journey path */
 
+/* Import Map.css for particle styling (Story 2.2) */
+@import './Map.css';
+
 /* Section container - Pure black background for WHOA moment */
 .territory-map {
   position: relative;
