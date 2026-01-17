@@ -28,11 +28,39 @@ test.describe('Story 2.2 - Particle Coalescence System Tests', () => {
       if (map) map.scrollIntoView({ block: 'center' });
     });
 
-    await page.waitForTimeout(500);
+    // Wait for page load and particle initialization
+    await page.waitForLoadState('networkidle');
+    await page.waitForTimeout(2000); // Give particles time to initialize
+
+    // Debug: Check if TerritoryMap section exists
+    const territoryMapExists = await page.evaluate(() => {
+      return document.querySelector('.territory-map') !== null;
+    });
+    console.log('TerritoryMap section exists:', territoryMapExists);
+
+    // Debug: Check if particle container exists
+    const containerExists = await page.evaluate(() => {
+      return document.querySelector('.particle-container') !== null;
+    });
+    console.log('Particle container exists:', containerExists);
+
+    // Debug: Check if particle system exists
+    const hasParticleSystem = await page.evaluate(() => {
+      return typeof window.mapParticleSystem !== 'undefined';
+    });
+    console.log('Particle system exists:', hasParticleSystem);
+
+    // Debug: Check particle container children
+    const childCount = await page.evaluate(() => {
+      const container = document.querySelector('.particle-container');
+      return container ? container.children.length : 0;
+    });
+    console.log('Particle container children count:', childCount);
 
     // Wait for particles to be created
     const particles = page.locator('.map-particle');
     const count = await particles.count();
+    console.log('Particle count:', count);
 
     // Desktop should have 300 particles (15 per zone × 7 zones)
     expect(count).toBe(300);
@@ -122,24 +150,24 @@ test.describe('Story 2.2 - Particle Coalescence System Tests', () => {
 
     // Verify targetX and targetY are stored
     const targetX = await firstParticle.evaluate((el) => {
-      return (el as any).targetX;
+      return el.targetX;
     });
     expect(targetX).not.toBeUndefined();
 
     const targetY = await firstParticle.evaluate((el) => {
-      return (el as any).targetY;
+      return el.targetY;
     });
     expect(targetY).not.toBeUndefined();
 
     // Verify initial positions are in chaos range (-1000 to 1000)
     const initialX = await firstParticle.evaluate((el) => {
-      return (el as any).initialX;
+      return el.initialX;
     });
     expect(initialX).toBeGreaterThanOrEqual(-1000);
     expect(initialX).toBeLessThanOrEqual(1000);
 
     const initialY = await firstParticle.evaluate((el) => {
-      return (el as any).initialY;
+      return el.initialY;
     });
     expect(initialY).toBeGreaterThanOrEqual(-1000);
     expect(initialY).toBeLessThanOrEqual(1000);
@@ -260,14 +288,14 @@ test.describe('Story 2.2 - Particle Coalescence System Tests', () => {
 
     // Check that GSAP ScrollTrigger is registered
     const scrollTriggerExists = await page.evaluate(() => {
-      return typeof (window as any).gsap !== 'undefined' &&
-             typeof (window as any).ScrollTrigger !== 'undefined';
+      return typeof window.gsap !== 'undefined' &&
+             typeof window.ScrollTrigger !== 'undefined';
     });
     expect(scrollTriggerExists).toBe(true);
 
     // Verify ScrollTrigger instance exists for particle animation
     const hasScrollTrigger = await page.evaluate(() => {
-      const triggers = (window as any).ScrollTrigger?.getAll();
+      const triggers = window.ScrollTrigger?.getAll();
       return triggers && triggers.length > 0;
     });
     expect(hasScrollTrigger).toBe(true);
@@ -287,7 +315,7 @@ test.describe('Story 2.2 - Particle Coalescence System Tests', () => {
           removeEventListener: () => {},
           dispatchEvent: () => {}
         };
-      }) as any;
+      });
     });
 
     await page.goto('/');
@@ -350,7 +378,7 @@ test.describe('Story 2.2 - Particle Coalescence System Tests', () => {
 
     // Get initial ScrollTrigger count
     const initialTriggers = await page.evaluate(() => {
-      return (window as any).ScrollTrigger?.getAll()?.length || 0;
+      return window.ScrollTrigger?.getAll()?.length || 0;
     });
 
     // Navigate away from TerritoryMap
@@ -362,7 +390,7 @@ test.describe('Story 2.2 - Particle Coalescence System Tests', () => {
 
     // Check cleanup method exists
     const cleanupExists = await page.evaluate(() => {
-      return typeof (window as any).mapParticleSystem?.cleanup === 'function';
+      return typeof window.mapParticleSystem?.cleanup === 'function';
     });
     expect(cleanupExists).toBe(true);
   });
@@ -492,11 +520,10 @@ test.describe('Story 2.2 - Particle Coalescence System Tests', () => {
     // Check particle distribution
     const distribution = await page.evaluate(() => {
       const particles = document.querySelectorAll('.map-particle');
-      const zoneCounts: Record<number, number> = {};
+      const zoneCounts = {};
 
       particles.forEach((particle) => {
-        const p = particle as any;
-        const zoneIndex = p.zoneIndex;
+        const zoneIndex = particle.zoneIndex;
 
         if (!zoneCounts[zoneIndex]) {
           zoneCounts[zoneIndex] = 0;

@@ -1,8 +1,6 @@
-import gsap from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { gsap, ScrollTrigger } from '../../utils/gsap-config.js';
 
-// Register ScrollTrigger plugin
-gsap.registerPlugin(ScrollTrigger);
+// ScrollTrigger is already registered in gsap-config.js
 
 /**
  * MapParticleSystem - Chaos → Order particle animation for Territory Map
