@@ -12,21 +12,36 @@
 ┌────────────────────────────────────────────────────────────┐
 │                   THE K2M NORTH STAR                       │
 │                                                            │
-│  "AI is a chance for us to finally wield intelligence     │
-│   and achieve more than we ever could."                   │
+│                 "THINKING WITH AI"                         │
+│        Thinking in the Age of Democratized Intelligence    │
 │                                                            │
-│  MISSION: Democratize expertise through AI as an          │
-│           extension of consciousness                       │
+│  ──────────────────────────────────────────────────────  │
 │                                                            │
-│  METHOD: Cognitive science pedagogy + thinking WITH AI    │
+│  THE ERA: Intelligence has been democratized. For the     │
+│           first time in history, mastery isn't gated by   │
+│           geography, wealth, or credentials—it's gated    │
+│           by how you THINK.                               │
 │                                                            │
-│  MOVEMENT: Everyone should have access to amplified       │
-│            intelligence                                    │
+│  THE MISSION: Teach students to think WITH AI in this     │
+│               new age—to integrate it into their          │
+│               cognitive process, not just bolt it onto    │
+│               their work.                                 │
+│                                                            │
+│  THE METHOD: Cartographer's Manifesto (second-order       │
+│              thinking) + Territory Map (Zone 0→4          │
+│              perceptual shifts) = Students who can        │
+│              think strategically with amplified           │
+│              intelligence.                                │
+│                                                            │
+│  THE MOVEMENT: Everyone should have access to thinking    │
+│                with AI, not just using AI tools.          │
+│                                                            │
 └────────────────────────────────────────────────────────────┘
 ```
 
-This document is organized into **6 Layers**, each building on the previous:
+This document is organized into **7 Layers**, each building on the previous:
 
+- **Layer -2**: THE CORE CONCEPT (The Organizing Principle)
 - **Layer -1**: JTBD × Linguistic Altitude Map (Foundation Before Foundation)
 - **Layer 0**: Voice & Identity (Foundation)
 - **Layer 1**: Resonance Architecture (Brand Building)
@@ -34,7 +49,248 @@ This document is organized into **6 Layers**, each building on the previous:
 - **Layer 3**: Ethical Guardrails (Attention Respect)
 - **Layer 4**: Segmentation & Trust (Audience Adaptation)
 
-**CRITICAL INSIGHT:** Layer -1 comes FIRST. You must map your audience's JTBD altitude BEFORE you write any copy. Your philosophy can be high-altitude. Your copy must match the JTBD altitude.
+**CRITICAL INSIGHT:** Layer -2 establishes THE IDEA that organizes everything else. Layer -1 shows you how to express that idea at different altitudes. Your philosophy can be high-altitude. Your copy must match the JTBD altitude.
+
+---
+
+# LAYER -2: THE CORE CONCEPT
+
+**The Organizing Principle That Makes Everything Else Coherent**
+
+*"Before strategy, before tactics, before copy—there is ONE IDEA."*
+
+---
+
+## 🎯 THE IDEA
+
+```
+┌──────────────────────────────────────────────────────────┐
+│                                                          │
+│                   "THINKING WITH AI"                     │
+│                                                          │
+│         Thinking in the Age of Democratized              │
+│                  Intelligence                            │
+│                                                          │
+└──────────────────────────────────────────────────────────┘
+```
+
+This is not your mission statement.
+This is not your value proposition.
+This is not your tagline.
+
+**This is the ORGANIZING PRINCIPLE that makes everything else coherent.**
+
+---
+
+## 🌊 WHAT THIS MEANS
+
+### The Era Shift
+
+We've entered an age where **intelligence itself has been democratized.**
+
+For the first time in human history:
+- Expertise is no longer gated by geography, wealth, or years of study
+- Anyone with a phone can access intelligence that used to require PhDs
+- Mastery is no longer about what you know—it's about how you THINK
+
+### The Transformation
+
+This isn't about learning to **use** a tool.
+It's about learning to **THINK** differently when intelligence becomes amplifiable.
+
+The students who learn to integrate AI into their cognitive process—not just bolt it onto their work—will have an unfair advantage in every domain for the rest of their lives.
+
+### The Differentiation
+
+```
+┌────────────────────────────────────────────────────────┐
+│  EVERYONE ELSE              K2M                        │
+│  ─────────────              ───                        │
+│                                                        │
+│  "Learn to use AI"    →    "Learn to think with AI"   │
+│  "AI tools training"  →    "Cognitive transformation"  │
+│  "Master ChatGPT"     →    "Build thinking habits"    │
+│  "Prompt engineering" →    "Mental models for AI"     │
+│  "Get AI skills"      →    "Think in the AI age"      │
+│                                                        │
+│  Tool dependency      →    Cognitive amplification     │
+│  Surface-level        →    Second-order thinking       │
+│  Fragile skills       →    Compounding judgment        │
+│                                                        │
+└────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🗺️ HOW IT MANIFESTS (The Three Expressions)
+
+The same core concept expressed at different altitudes:
+
+### Level 5: Philosophy (For Believers, Manifestos, Internal Vision)
+
+> **"We're teaching students to think in the age of democratized intelligence. AI isn't a tool you bolt onto your work—it's an extension of how you think. Those who learn to integrate it into their cognitive process will have an unfair advantage in every domain for the rest of their lives."**
+
+**Use for:**
+- Brand manifestos
+- Fellow educators who share the vision
+- Internal team alignment
+- After someone is already bought in
+
+### Level 3: Framework (For Parents, Principals, Warm Audiences)
+
+> **"We teach students to think WITH AI, not just copy FROM it. They build mental models for when and how to integrate AI strategically. That's a skill that compounds across their entire university and career trajectory."**
+
+**Use for:**
+- Parent conversion content
+- Principal pitches
+- Method explanations
+- Value proposition statements
+
+### Level 1: Concrete (For Students, Cold Audiences, First Contact)
+
+> **"Stop feeling confused when you use AI. Learn WHY it works sometimes and fails other times. Copy-pasters get stuck in internships. Thinkers get hired. Build thinking habits that follow you forever."**
+
+**Use for:**
+- Student-facing hero sections
+- Cold outreach
+- Social media hooks
+- First-touch content
+
+---
+
+## 💡 THE CASCADING PRINCIPLE
+
+Every element of K2M flows from this one idea:
+
+```
+              THINKING WITH AI
+                     │
+        ┌────────────┴────────────┐
+        │                         │
+        ▼                         ▼
+   PEDAGOGY                   OUTCOMES
+   (How we teach)             (What students gain)
+   ────────────               ─────────────────
+   Cartographer's             • Think clearly with/without AI
+   Manifesto                  • Integrate AI strategically
+   (Second-order              • Build compounding judgment
+    thinking)                 • Navigate uncertainty
+        │                         │
+        ▼                         ▼
+   CURRICULUM                 DIFFERENTIATION
+   (What we teach)            (Why we're different)
+   ─────────────              ────────────────────
+   Territory Map              NOT: "How to use AI tools"
+   Zone 0→4                   BUT: "How to THINK in the
+   (Perceptual shifts)             age of democratized
+                                   intelligence"
+        │                         │
+        └────────────┬────────────┘
+                     │
+                     ▼
+              EVERYTHING ELSE
+              ────────────────
+              • Voice & tone
+              • Copy at all altitudes
+              • Conversion mechanics
+              • Student experience
+              • Facilitator training
+```
+
+---
+
+## 🎨 THE COPY LITMUS TEST
+
+Before you write ANYTHING, ask:
+
+> **"Does this communicate that we're teaching THINKING WITH AI, not just using AI tools?"**
+
+**Examples:**
+
+| Copy | Does it pass? | Why/Why not |
+|------|--------------|-------------|
+| "Learn to use ChatGPT effectively" | ❌ NO | Tool-focused, not thinking-focused |
+| "Master AI prompts in 6 weeks" | ❌ NO | Skill-based, not cognitive transformation |
+| "Copy-pasters get stuck. Thinkers thrive." | ✅ YES | Thinking differentiation, concrete benefit |
+| "Build invisible writing muscles" | ✅ YES | Cognitive skill, not tool skill |
+| "Learn to think WITH AI, not just copy FROM it" | ✅ YES | Perfect articulation of core concept |
+| "AI tools for students" | ❌ NO | Tools, not thinking |
+| "Stop feeling confused when you use AI" | ✅ YES | Cognitive clarity, understanding WHY |
+| "Get AI certified" | ❌ NO | Credential-focused, not transformation |
+
+---
+
+## 🔥 THE COMPETITIVE MOAT
+
+Once you OWN "thinking with AI," everything shifts:
+
+1. **Every competitor looks shallow**
+   - Their "AI bootcamp" = surface-level tool training
+   - Your "thinking in the age of democratized intelligence" = deep cognitive transformation
+
+2. **Your curriculum has philosophical coherence**
+   - Not a random collection of "AI tips"
+   - A systematic pedagogy for cognitive amplification
+
+3. **Your marketing writes itself**
+   - Every piece of content ladders back to the same core idea
+   - Different altitudes for different audiences, same foundation
+
+4. **You attract believers, not just buyers**
+   - Parents who want thinkers, not button-pushers
+   - Principals who want AI-native graduates
+   - Students who want to understand, not just complete
+
+---
+
+## 🧭 THE NORTH STAR TEST
+
+Every decision should pass this test:
+
+> **"Does this help students learn to THINK WITH AI in the age of democratized intelligence?"**
+
+**Examples:**
+
+| Decision | Helps students think with AI? | Keep or Cut? |
+|----------|------------------------------|--------------|
+| Week 1: Teach "invisible writing" BEFORE AI | ✅ YES - Builds thinking foundation | **KEEP** |
+| Add session on "100 ChatGPT prompts" | ❌ NO - Tool tips, not thinking | **CUT** |
+| Cohort structure with peer dialogue | ✅ YES - Thinking through conversation | **KEEP** |
+| Certificate in "AI Literacy" | ❌ NO - Sounds like tool training | **REFRAME** |
+| Teaching mental models for when to use AI | ✅ YES - Strategic thinking framework | **KEEP** |
+| "Quick wins" prompts library | ❌ NO - Dependency, not thinking | **CUT** |
+| Facilitator asks "How were you thinking?" | ✅ YES - Metacognition, not answers | **KEEP** |
+
+---
+
+## 📚 FOUNDATIONAL DOCUMENTS
+
+For the full exploration of this concept:
+
+- **[Core Concept Deep Dive](_bmad-output/k2m-core-concept-thinking-with-ai.md)** — Complete articulation with examples
+- **[Cartographer Alignment](_bmad-output/thinking-with-ai-synthesis-cartographer-alignment.md)** — How this relates to original pedagogy
+- **[Cascade Integration Plan](_bmad-output/thinking-with-ai-cascade-integration-plan.md)** — How this flows through all documents
+
+---
+
+## 💎 THE MASTER PRINCIPLE
+
+```
+┌────────────────────────────────────────────────────────┐
+│                                                        │
+│  "Thinking with AI" is not a marketing tagline.       │
+│                                                        │
+│  It's the organizing principle that makes:            │
+│  • Your pedagogy coherent (Cartographer's Manifesto)  │
+│  • Your curriculum purposeful (Territory Map)         │
+│  • Your brand differentiated (vs. tool training)      │
+│  • Your copy consistent (across all altitudes)        │
+│  • Your movement authentic (revolutionary hope)       │
+│                                                        │
+│  Everything you do should ladder back to this idea.   │
+│                                                        │
+└────────────────────────────────────────────────────────┘
+```
 
 ---
 
