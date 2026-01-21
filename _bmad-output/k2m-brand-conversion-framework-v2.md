@@ -1,4 +1,4 @@
-# 🧭 The K2M Brand-Conversion Framework V2.0
+# 🧭 The K2M Brand-Conversion Framework V2.0 — INTEGRATED EDITION
 
 **A Revolutionary Hope Playbook for Building Movements That Convert**
 
@@ -25,13 +25,770 @@
 └────────────────────────────────────────────────────────────┘
 ```
 
-This document is organized into **5 Layers**, each building on the previous:
+This document is organized into **6 Layers**, each building on the previous:
 
-- **Layer 0**: Foundation (Voice & Identity)
+- **Layer -1**: JTBD × Linguistic Altitude Map (Foundation Before Foundation)
+- **Layer 0**: Voice & Identity (Foundation)
 - **Layer 1**: Resonance Architecture (Brand Building)
 - **Layer 2**: Conversion Mechanics (The 5 Gears)
 - **Layer 3**: Ethical Guardrails (Attention Respect)
 - **Layer 4**: Segmentation & Trust (Audience Adaptation)
+
+**CRITICAL INSIGHT:** Layer -1 comes FIRST. You must map your audience's JTBD altitude BEFORE you write any copy. Your philosophy can be high-altitude. Your copy must match the JTBD altitude.
+
+---
+
+# LAYER -1: JTBD × LINGUISTIC ALTITUDE MAP
+
+**The Missing Layer: Respecting the JTBD Through Abstraction Altitude**
+
+*"Same mission. Different altitudes. Know who you're speaking to."*
+
+## 🎯 THE CORE PRINCIPLE
+
+> **Your philosophy can be high-altitude. Your copy must match the JTBD altitude.**
+
+You can BELIEVE in "democratization of expertise" (Level 5 abstraction).
+
+But when writing to a **student who just needs to not feel stupid in Week 1** (Level 1 JTBD), you speak Level 1 language.
+
+**This is not dumbing down. This is RESPECTING ATTENTION.**
+
+---
+
+## 📊 THE THREE-PERSONA ALTITUDE MAP
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│         JTBD ALTITUDE × LINGUISTIC ABSTRACTION MAP           │
+└──────────────────────────────────────────────────────────────┘
+
+ALTITUDE 1: STUDENTS (Ground Level - Immediate Concrete)
+═══════════════════════════════════════════════════════════
+
+JTBD (from research):
+"Help me feel ready for university before I get there and
+ realize everyone else already knows things I don't."
+
+Emotional Territory:
+• Anxiety (75% report anxiety entering university)
+• Fear of looking stupid
+• Pressure to justify gap year
+• "Everyone else already knows"
+
+Linguistic Altitude: LEVEL 1-2 (Concrete → Pattern)
+───────────────────────────────────────────────────
+
+WHAT THEY NEED TO HEAR:
+
+Level 1 (Concrete Problem):
+✅ "Copy-pasters get stuck. Thinkers get hired."
+✅ "You've done it: Ctrl+C, Ctrl+V, submit."
+✅ "Stop feeling confused when you use AI."
+✅ "Sometimes AI works. Sometimes it doesn't. You don't know why."
+
+Level 2 (Visible Pattern):
+✅ "The habits you form now follow you forever."
+✅ "Students who thrive build invisible writing muscles."
+✅ "You start noticing why AI works sometimes and fails other times."
+
+WHAT THEY DON'T NEED (TOO HIGH):
+❌ "AI is the democratization of expertise"
+❌ "Navigate the AI landscape"
+❌ "Extension of consciousness"
+❌ "Territory cartography and perception zones"
+
+WHY: They don't need the MAP. They need to know IT WORKS FOR THEM.
+
+────────────────────────────────────────────────────────
+
+ALTITUDE 2: PARENTS (Medium - Protective/Proof)
+═══════════════════════════════════════════════════════════
+
+JTBD (from research):
+"Give my child what the Nairobi kids already have, so they
+ walk into university ready to compete."
+
+Emotional Territory:
+• Worry (70% worried about AI)
+• Fear of wasting money (15K bootcamp quit after 2 days)
+• Need for visible proof ("I'd see the change")
+• Social pressure (church groups, WhatsApp networks)
+
+Linguistic Altitude: LEVEL 2-3 (Pattern → Framework)
+───────────────────────────────────────────────────
+
+WHAT THEY NEED TO HEAR:
+
+Level 2 (Pattern Recognition):
+✅ "Other parents are paying 15K for bootcamps their kids quit.
+    This one's different."
+✅ "The difference? 200 students learning together won't let them quit."
+✅ "By Week 6, your child will demonstrate what they've learned."
+
+Level 3 (Framework/System):
+✅ "The cohort structure keeps them accountable."
+✅ "K2M builds invisible writing muscles through structured practice."
+✅ "This closes the gap between your child and Nairobi kids."
+
+WHAT THEY DON'T NEED (TOO HIGH):
+❌ "AI as extension of consciousness"
+❌ "Democratizing expertise through cognitive science"
+❌ "Revolutionary hope for amplified intelligence"
+
+WHY: They need SAFETY + PROOF, not philosophy.
+
+────────────────────────────────────────────────────────
+
+ALTITUDE 3: PRINCIPALS (High - Institutional/Competitive)
+═══════════════════════════════════════════════════════════
+
+JTBD (from research):
+"Have something to tell parents at admissions meetings that
+ makes us look modern and keeps enrollment stable."
+
+Emotional Territory:
+• Competitive pressure (enrollment down 12%)
+• Vendor burnout (150K STEM program disappeared)
+• Need for "proof from schools like mine"
+• Want marketable differentiator
+
+Linguistic Altitude: LEVEL 3-4 (Framework → Transformation)
+───────────────────────────────────────────────────────────
+
+WHAT THEY NEED TO HEAR:
+
+Level 3 (System/Framework):
+✅ "Turnkey AI preparation: We run it, you get the credit."
+✅ "15 schools already running K2M for their Form 4 graduates."
+✅ "92% completion rate vs. 5% for typical online courses."
+
+Level 4 (Transformation/Outcomes):
+✅ "Students demonstrate practical AI skills employers want."
+✅ "Your students learn to think WITH AI, not just copy FROM it."
+✅ "This is the answer when parents ask 'Do you teach AI?'"
+
+CONDITIONAL: Can use Level 5 (Philosophy) IF:
+• Elite international school (like Dr. Ndung'u)
+• Tech-literate principal (like Dr. Mutiso)
+• Already bought into mission
+
+✅ "We're democratizing AI expertise so all students—rural,
+    urban, technical, creative—can compete."
+
+WHY: They need COMPETITIVE POSITIONING + OUTCOMES, but SOME
+     can handle higher philosophy if already aligned.
+
+───────────────────────────────────────────────────────────
+
+YOUR PHILOSOPHICAL LANGUAGE (Level 5):
+Use this INTERNALLY, in MANIFESTOS, with BELIEVERS
+
+"AI is the democratization of expertise—an extension of
+ consciousness that makes mastery accessible to all."
+
+WHERE TO USE:
+• Internal documents
+• Brand manifesto
+• Fellow educators who share the vision
+• After someone is already bought in
+
+WHERE NOT TO USE:
+• Cold student-facing copy
+• Parent conversion content
+• First-touch principal pitches
+```
+
+---
+
+## 🗺️ THE LINGUISTIC ABSTRACTION LADDER (FULL MAP)
+
+```
+┌──────────────────────────────────────────────────────────┐
+│  THE 5-LEVEL ABSTRACTION LADDER FOR K2M                  │
+├──────────────────────────────────────────────────────────┤
+│                                                          │
+│  LEVEL 5: PHILOSOPHY (Timeless Principle)                │
+│  ════════════════════════════════════════                │
+│  "AI is the democratization of expertise—an extension    │
+│   of consciousness."                                     │
+│                                                          │
+│  USE FOR: Manifesto, brand building, believers           │
+│  AUDIENCE: No one on first contact                       │
+│                                                          │
+│  ────────────────────────────────────────────────        │
+│                                                          │
+│  LEVEL 4: TRANSFORMATION (What Becomes Possible)         │
+│  ════════════════════════════════════════════            │
+│  "Build skills that compound across your entire career." │
+│  "Students learn to think WITH AI, not just copy."       │
+│                                                          │
+│  USE FOR: Warm content, principals, vision pieces        │
+│  AUDIENCE: Principals (sometimes), engaged students      │
+│                                                          │
+│  ────────────────────────────────────────────────        │
+│                                                          │
+│  LEVEL 3: FRAMEWORK (System/Structure)                   │
+│  ════════════════════════════════════════════            │
+│  "Invisible writing is the ability to think clearly      │
+│   without external support."                             │
+│  "The cohort structure keeps students accountable."      │
+│                                                          │
+│  USE FOR: Method content, parent conversion              │
+│  AUDIENCE: Parents, principals, warm students            │
+│                                                          │
+│  ────────────────────────────────────────────────        │
+│                                                          │
+│  LEVEL 2: PATTERN (Observable Truth)                     │
+│  ════════════════════════════════════════════            │
+│  "Copy-pasters get stuck in internships. Thinkers thrive."│
+│  "The habits you form now follow you forever."           │
+│                                                          │
+│  USE FOR: Student conversion, parent awareness           │
+│  AUDIENCE: Students, parents (primary language)          │
+│                                                          │
+│  ────────────────────────────────────────────────        │
+│                                                          │
+│  LEVEL 1: GROUND (Immediate Concrete)                    │
+│  ════════════════════════════════════════════            │
+│  "You've done it: Ctrl+C, Ctrl+V, submit assignment."    │
+│  "Stop feeling confused when you use AI."                │
+│  "Sometimes AI works. Sometimes it doesn't."             │
+│                                                          │
+│  USE FOR: Hooks, cold students, first contact            │
+│  AUDIENCE: Students (always start here)                  │
+│                                                          │
+└──────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 💡 THE GOLDEN RULE
+
+```
+START LOW, END HIGH
+
+┌────────────────────────────────────────────┐
+│  CORRECT SEQUENCING:                       │
+│                                            │
+│  Touch 1 → Level 1-2 (Concrete/Pattern)    │
+│  Touch 2 → Level 2-3 (Pattern/Framework)   │
+│  Touch 3 → Level 3-4 (Framework/Transform) │
+│  Touch 4 → Level 4-5 (Transform/Philosophy)│
+│                                            │
+│  EARN THE RIGHT TO GO HIGHER               │
+└────────────────────────────────────────────┘
+
+WRONG SEQUENCING:
+Starting with "AI is democratization of expertise"
+to a cold student = Instant scroll-past
+```
+
+---
+
+## 📝 WRITING RULES BY PERSONA
+
+### FOR STUDENTS (Level 1-2)
+
+**Opening Lines (Level 1 - Concrete):**
+```
+✅ "You've done it. Ctrl+C, Ctrl+V, submit."
+✅ "Sometimes AI works. Sometimes it doesn't. You don't know why."
+✅ "Everyone acts like this tech stuff is obvious."
+✅ "You show up to university. Day one. Then someone mentions
+    ChatGPT and you realize everyone else already knows."
+
+❌ "Navigate the AI landscape with future-proof skills."
+❌ "Transform your cognitive relationship with AI."
+```
+
+**Body Copy (Level 2 - Pattern):**
+```
+✅ "The students who thrive? They built invisible writing
+    muscles—the ability to think without looking at notes."
+✅ "Copy-pasters get stuck. Thinkers get hired."
+✅ "Habits follow you forever. Start the right ones today."
+
+❌ "Through our territory cartography system..."
+❌ "Experience perception shifts across learning zones."
+```
+
+**CTA (Level 2 - Pattern + Concrete Action):**
+```
+✅ "Join 200 students learning together before university starts."
+✅ "Ready to stop copying and start thinking? Apply to K2M."
+
+❌ "Embark on your AI mastery journey today."
+```
+
+---
+
+### FOR PARENTS (Level 2-3)
+
+**Opening Lines (Level 2 - Pattern):**
+```
+✅ "Other parents are paying 15K for bootcamps their kids quit
+    after 2 days. This one's different."
+✅ "You lie awake wondering if they're ready. You've done
+    everything you can. But the world they're entering isn't
+    the one you knew."
+✅ "70% of Kenyan parents share this worry. You want to help,
+    but you don't fully understand AI yourself."
+
+❌ "Democratize expertise for your child."
+❌ "AI as cognitive extension for the next generation."
+```
+
+**Body Copy (Level 3 - Framework):**
+```
+✅ "K2M is different because it's not another video course
+    your child will abandon. It's 200 students learning
+    together. Daily practice. Real accountability."
+✅ "The cohort structure keeps them accountable. When your
+    child sees others showing up, they show up too."
+✅ "By Week 6, your child will demonstrate what they've learned.
+    Not a certificate—actual ability you can see."
+
+❌ "Through our revolutionary hope pedagogy..."
+❌ "We extend consciousness through structured..."
+```
+
+**CTA (Level 3 - Framework + Proof):**
+```
+✅ "Prepare my child for university"
+✅ "Give them the advantage Nairobi kids have"
+✅ "Join 200 families preparing together"
+
+❌ "Enable cognitive transformation"
+```
+
+---
+
+### FOR PRINCIPALS (Level 3-4)
+
+**Opening Lines (Level 3 - Framework):**
+```
+✅ "Parents are asking: 'Do you teach AI?' Now you'll have
+    an answer backed by proof."
+✅ "15 schools already running K2M for their Form 4 graduates.
+    92% completion rate."
+✅ "Turnkey AI preparation: We run it, you get the credit."
+
+❌ "Join the movement to democratize AI expertise."
+❌ "Revolutionary hope for education transformation."
+```
+
+**Body Copy (Level 4 - Transformation):**
+```
+✅ "What you can tell parents: 'Our students learn AI before
+    university through the K2M program. Last year, 92%
+    completed the full 6 weeks and demonstrated practical
+    AI skills.'"
+✅ "Students learn to think WITH AI, not just copy FROM it.
+    That's the differentiator employers want."
+✅ "Other schools in your area have robotics labs, coding clubs.
+    Whether those work is beside the point—they look modern.
+    What do you have to show?"
+
+Can go Level 5 IF already bought in:
+✅ "We're democratizing AI expertise so all students—rural,
+    urban, technical, creative—can compete on equal footing."
+```
+
+**CTA (Level 3-4):**
+```
+✅ "Request a pilot proposal"
+✅ "See schools using K2M"
+✅ "Talk to a school like yours"
+✅ "Schedule a 15-minute call"
+```
+
+---
+
+## 🎭 THE COPY TRANSLATION TABLE
+
+**Your Philosophy → Persona-Specific Language**
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  TRANSLATION TABLE: Same Truth, Different Altitudes     │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  YOUR PHILOSOPHY (Level 5):                             │
+│  "AI is the democratization of expertise—an extension   │
+│   of consciousness."                                    │
+│                                                         │
+│  ───────────────────────────────────────────────────    │
+│                                                         │
+│  FOR STUDENTS (Level 1-2):                              │
+│  "Finally wield intelligence the way experts do."       │
+│  "Stop guessing. Start feeling in control."             │
+│                                                         │
+│  FOR PARENTS (Level 2-3):                               │
+│  "Give your child what Nairobi kids already have."      │
+│  "Close the gap. Make them ready to compete."           │
+│                                                         │
+│  FOR PRINCIPALS (Level 3-4):                            │
+│  "Students learn to think WITH AI, not just copy."      │
+│  "Practical AI skills employers actually want."          │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────┐
+│  YOUR PHILOSOPHY (Level 5):                             │
+│  "Habits follow you forever. Invisible writing is the   │
+│   foundation of all great thinking."                    │
+│                                                         │
+│  ───────────────────────────────────────────────────    │
+│                                                         │
+│  FOR STUDENTS (Level 1-2):                              │
+│  "The habits you form now follow you forever. Start     │
+│   the right ones today."                                │
+│  "Build invisible writing muscles—think clearly without │
+│   looking at notes."                                    │
+│                                                         │
+│  FOR PARENTS (Level 2-3):                               │
+│  "Your child will develop skills that compound across   │
+│   their entire career."                                 │
+│  "These habits follow them through university, internships│
+│   and jobs."                                            │
+│                                                         │
+│  FOR PRINCIPALS (Level 3-4):                            │
+│  "Students develop thinking skills that transfer across │
+│   disciplines—not just AI skills that become obsolete." │
+│  "Employers want clear thinkers, not prompt engineers." │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🧪 THE ALTITUDE TEST
+
+**Before publishing ANY copy, run this test:**
+
+```
+┌─────────────────────────────────────────────────────┐
+│  ALTITUDE CHECKLIST                                 │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  1. WHO AM I WRITING TO?                            │
+│     [ ] Student (cold)                              │
+│     [ ] Student (warm)                              │
+│     [ ] Parent (cold)                               │
+│     [ ] Parent (warm)                               │
+│     [ ] Principal                                   │
+│     [ ] Believer/Manifesto audience                 │
+│                                                     │
+│  2. WHAT'S THEIR JTBD ALTITUDE?                     │
+│     [ ] Level 1-2 (Concrete/Pattern)                │
+│     [ ] Level 2-3 (Pattern/Framework)               │
+│     [ ] Level 3-4 (Framework/Transformation)        │
+│     [ ] Level 4-5 (Transformation/Philosophy)       │
+│                                                     │
+│  3. DOES MY LANGUAGE MATCH THEIR ALTITUDE?          │
+│     [ ] Yes - publish                               │
+│     [ ] No - revise down                            │
+│                                                     │
+│  4. THE GRANDMA TEST:                               │
+│     "Could a grandmother who doesn't know AI        │
+│      understand this sentence?"                     │
+│     [ ] Yes (good for Students/Parents)             │
+│     [ ] No (too high - revise down)                 │
+│                                                     │
+│  5. THE "I CAN'T UNSEE IT" TEST:                    │
+│     After reading, do they say:                     │
+│     [ ] "I can't unsee what you pointed at" (WIN)   │
+│     [ ] "That was interesting" (FAIL - too abstract)│
+│                                                     │
+└─────────────────────────────────────────────────────┘
+```
+
+---
+
+## 📐 VISUAL MAPPING DIAGRAM
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  JTBD × LINGUISTIC ALTITUDE × CONTENT TYPE MAPPING           │
+└──────────────────────────────────────────────────────────────┘
+
+        ABSTRACTION ALTITUDE
+              ▲
+       Level 5│
+    Philosophy│                    🎭 Manifesto
+              │
+       Level 4│              📊 Principal    🧭 Vision
+  Transformation│               Conversion      Content
+              │
+       Level 3│         👔 Principal       📚 Method
+     Framework│          Awareness         Content
+              │
+       Level 2│    👪 Parent      👨‍🎓 Student
+      Pattern │    Conversion      (Warm)
+              │
+       Level 1│         👨‍🎓 Student (Cold)
+    Concrete  │          Conversion
+              │
+              └─────────────────────────────────►
+                     JTBD ALTITUDE
+
+              Student    Parent    Principal
+            (Immediate) (Protective) (Institutional)
+
+READING THE MAP:
+• Students (cold) = Level 1 language only
+• Students (warm) = Level 2 language
+• Parents = Level 2-3 language
+• Principals = Level 3-4 language
+• Manifesto = Level 5 language (believers only)
+```
+
+---
+
+## 🎯 PRACTICAL WORKFLOW
+
+### Step-by-Step: Writing Copy That Respects JTBD Altitude
+
+```
+STEP 1: IDENTIFY THE JTBD
+───────────────────────────
+Ask: "Who am I writing to and what job are they hiring for?"
+
+Example:
+• Persona: Student (gap year, anxious)
+• JTBD: "Stop feeling confused and be ready for university"
+• Altitude: Level 1-2 (Concrete/Pattern)
+
+STEP 2: EXTRACT THE TRUTH
+──────────────────────────
+What's the JTBD truth from research?
+
+Example:
+• "75% anxiety entering university"
+• "Everyone else already knows things I don't"
+• "Copy-pasting creates dependency"
+
+STEP 3: FIND THE FELT TENSION
+──────────────────────────────
+What's the immediate, concrete pain?
+
+Example:
+• "Sometimes AI works, sometimes it doesn't"
+• "You don't know why it fails"
+• "You're afraid to ask because everyone else seems to get it"
+
+STEP 4: WRITE AT THE RIGHT ALTITUDE
+────────────────────────────────────
+Match language to persona altitude
+
+❌ Level 5 (Too high):
+"AI is the democratization of expertise"
+
+❌ Level 4 (Still too high):
+"Transform your cognitive relationship with AI"
+
+✅ Level 2 (Right altitude for students):
+"Copy-pasters get stuck. Thinkers thrive."
+
+✅ Level 1 (Hook - ground level):
+"Sometimes AI works. Sometimes it doesn't. You don't know why."
+
+STEP 5: TEST
+────────────
+Run through checklist:
+[ ] Would grandma understand this? (for students/parents)
+[ ] Does it create "I can't unsee it"?
+[ ] Does it sound like a conversation, not an announcement?
+```
+
+---
+
+## 🔄 BEFORE/AFTER EXAMPLES
+
+### Example 1: Student Conversion Copy
+
+**BEFORE (Too High - Level 4-5):**
+```
+"Navigate the AI landscape and transform your cognitive
+ relationship with technology through our revolutionary
+ approach to democratized expertise."
+
+ALTITUDE: Level 4-5
+PROBLEM: Student JTBD is Level 1-2. This is 3 levels too high.
+RESULT: Sounds like marketing slop. Student scrolls past.
+```
+
+**AFTER (Right Altitude - Level 1-2):**
+```
+"Sometimes AI works. Sometimes it doesn't. You don't know why.
+
+You've done it: Ctrl+C, Ctrl+V, submit assignment. It feels
+productive. But you're not learning.
+
+Copy-pasters get stuck in internships. Thinkers get hired.
+
+The difference? Invisible writing muscles—the ability to think
+without looking at notes.
+
+Join 200 students building these habits before university starts."
+
+ALTITUDE: Level 1 (hook) → Level 2 (pattern)
+ALIGNMENT: Matches student JTBD perfectly
+RESULT: "I can't unsee this. That's me."
+```
+
+---
+
+### Example 2: Parent Conversion Copy
+
+**BEFORE (Too High - Level 5):**
+```
+"Empower your child through the democratization of AI expertise
+ as we extend human consciousness through revolutionary pedagogy."
+
+ALTITUDE: Level 5
+PROBLEM: Parent JTBD is Level 2-3. This is 2+ levels too high.
+RESULT: Sounds like buzzwords. Parent doesn't trust it.
+```
+
+**AFTER (Right Altitude - Level 2-3):**
+```
+"You lie awake wondering if they're ready.
+
+You've paid for everything. School fees. Textbooks. That coding
+bootcamp they quit after 2 days.
+
+70% of Kenyan parents share this worry. Your child is walking
+into a world where AI changes everything—and you don't even
+understand it yourself.
+
+Here's what's different about K2M:
+
+The cohort structure. 200 students learning together. When your
+child sees others showing up, they show up too. No more quitting
+after 2 days.
+
+By Week 6, you'll see visible proof. Not a certificate—actual
+ability you can watch them demonstrate.
+
+3,500 KES. Less than that bootcamp. Less than four years of
+worrying they're not ready.
+
+Join 200 families preparing their children together."
+
+ALTITUDE: Level 2 (pattern) → Level 3 (framework)
+ALIGNMENT: Matches parent JTBD (proof, belonging, safety)
+RESULT: "This speaks to me. I trust this."
+```
+
+---
+
+### Example 3: Principal B2B Copy
+
+**BEFORE (Too High - Level 5):**
+```
+"Partner with us to democratize AI expertise and extend human
+ consciousness through revolutionary hope pedagogy."
+
+ALTITUDE: Level 5
+PROBLEM: Principal JTBD is Level 3-4. This is abstract philosophy.
+RESULT: Sounds fluffy. Principal needs outcomes, not philosophy.
+```
+
+**AFTER (Right Altitude - Level 3-4):**
+```
+"Parents are asking: 'Do you teach AI?'
+
+You know the question. It comes up at every admissions tour.
+
+Other schools have robotics labs, coding clubs. Whether those
+actually work is beside the point—they look modern.
+
+What do you have to show?
+
+K2M gives you a credible answer without the headache:
+
+• We run the 6-week cohort (curriculum, facilitation, tracking)
+• You get completion data for your admissions materials
+• 92% completion rate (vs. 5% for typical online courses)
+
+What you can tell parents:
+
+'Our students learn AI before university through K2M. Last year,
+ 92% of participants completed the full 6 weeks and demonstrated
+ practical AI skills employers want.'
+
+15 schools are already running K2M. Is yours next?
+
+Request pilot proposal: [LINK]"
+
+ALTITUDE: Level 3 (framework) → Level 4 (transformation)
+ALIGNMENT: Matches principal JTBD (competitive, proof, easy)
+RESULT: "This solves my problem. Let's talk."
+```
+
+---
+
+## 💎 THE MASTER PRINCIPLE
+
+```
+┌──────────────────────────────────────────────────────┐
+│                                                      │
+│  YOU CAN BELIEVE AT LEVEL 5                          │
+│                                                      │
+│  BUT YOU MUST SPEAK AT THE LEVEL OF THE JTBD        │
+│                                                      │
+│  This is not dumbing down.                           │
+│  This is respecting attention.                       │
+│  This is honoring the altitude of the job.           │
+│                                                      │
+└──────────────────────────────────────────────────────┘
+```
+
+**Your mission IS "democratization of expertise."**
+
+But to a student who just needs to feel ready for Week 1:
+
+"Democratization" is noise.
+"Stop feeling confused" is signal.
+
+**Same outcome. Different door.**
+
+---
+
+## 📋 LAYER -1 QUICK REFERENCE CARD
+
+```
+┌─────────────────────────────────────────────────────┐
+│  JTBD ALTITUDE CHEAT SHEET                          │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  STUDENTS (Level 1-2):                              │
+│  • Concrete first ("Ctrl+C, Ctrl+V")               │
+│  • Pattern second ("Copy-pasters get stuck")        │
+│  • NO philosophy on first touch                     │
+│                                                     │
+│  PARENTS (Level 2-3):                               │
+│  • Pattern first ("Other parents paying 15K")       │
+│  • Framework second ("Cohort structure works")      │
+│  • Proof always ("You'll see the change")           │
+│                                                     │
+│  PRINCIPALS (Level 3-4):                            │
+│  • Framework first ("Turnkey solution")             │
+│  • Transformation second ("Students think WITH AI") │
+│  • Outcomes always ("92% completion rate")          │
+│                                                     │
+│  BELIEVERS (Level 5):                               │
+│  • Philosophy first ("Democratization of expertise")│
+│  • Use in manifestos, brand building only           │
+│                                                     │
+│  THE TEST:                                          │
+│  "I can't unsee it" = Right altitude                │
+│  "That was interesting" = Too high                  │
+│                                                     │
+└─────────────────────────────────────────────────────┘
+```
 
 ---
 
@@ -73,6 +830,16 @@ This document is organized into **5 Layers**, each building on the previous:
 │                                                         │
 └─────────────────────────────────────────────────────────┘
 ```
+
+**CRITICAL INTEGRATION WITH LAYER -1:**
+
+Your Revolutionary Hope tone operates at Level 5 (Philosophy). When writing conversion copy:
+
+- **For Students (Level 1-2):** Translate hope to concrete capability ("Stop guessing. Start feeling in control.")
+- **For Parents (Level 2-3):** Translate hope to proof + safety ("You'll see the change by Week 6.")
+- **For Principals (Level 3-4):** Translate hope to outcomes ("Students demonstrate practical AI skills.")
+
+**The emotion stays consistent. The altitude adjusts.**
 
 ### 0.2 K2M Voice Positioning Map
 
@@ -122,6 +889,13 @@ YOUR POSITIONING:
 "The Cognitive Science-Based Movement for AI-Extended Thinking"
 ```
 
+**LAYER -1 INTEGRATION:**
+
+This positioning is Level 5 (Philosophy). When converting:
+- **Students need:** "Stop copying, start thinking" (Level 1-2)
+- **Parents need:** "Skills that follow them forever" (Level 2-3)
+- **Principals need:** "Students learn to think WITH AI" (Level 3-4)
+
 ### 0.3 The K2M Linguistic Fingerprint
 
 **YOUR COINED TERMS (Brand IP):**
@@ -130,21 +904,25 @@ YOUR POSITIONING:
    - What it means: The ability to think clearly without external scaffolding
    - Why it matters: Differentiates from "writing skills" or "AI prompting"
    - How to use: In every piece of content, at least once
+   - **Layer -1 Note:** This works at ALL altitudes—students, parents, principals all understand it
 
 2. **"Extension of consciousness"**
    - What it means: AI as amplification, not replacement
    - Why it matters: Philosophical positioning vs. "AI tools"
    - How to use: In manifesto-level content, vision pieces
+   - **Layer -1 Note:** Level 5 only. Don't use in student/parent conversion copy
 
 3. **"Democratization of expertise"**
    - What it means: Making mastery accessible to all
    - Why it matters: Mission-driven, justice framing
    - How to use: In conversion copy, application prompts
+   - **Layer -1 Note:** Level 5. Translate to "Give your child what Nairobi kids have" for parents
 
 4. **"Wield intelligence"**
    - What it means: Active, powerful relationship with AI
    - Why it matters: User-as-hero, empowerment language
    - How to use: In hooks, headlines, CTAs
+   - **Layer -1 Note:** Works at Level 2-3. Students understand "wield" if preceded by concrete examples
 
 **YOUR METAPHOR SYSTEM:**
 
@@ -158,24 +936,31 @@ YOUR POSITIONING:
 │  • "Navigating the landscape of AI cognition"      │
 │  • "Charting paths others can follow"              │
 │  • USE: When positioning yourself as guide         │
+│  • LAYER -1: Level 4-5 only (too abstract for      │
+│              students/parents on first touch)       │
 │                                                     │
 │  💪 MUSCLE-BUILDING                                 │
 │  • "Invisible writing muscles"                     │
 │  • "Cognitive strength training"                   │
 │  • "Mental fitness"                                │
 │  • USE: When describing skill development          │
+│  • LAYER -1: Works at ALL levels (concrete +       │
+│              universally understood)                │
 │                                                     │
 │  🧠 CONSCIOUSNESS EXTENSION                         │
 │  • "Augmented thinking"                            │
 │  • "Amplified intelligence"                        │
 │  • "Expanded cognitive capacity"                   │
 │  • USE: When explaining AI relationship            │
+│  • LAYER -1: Level 4-5 only (manifesto content)    │
 │                                                     │
 │  🌍 DEMOCRATIZATION                                 │
 │  • "Opening gates"                                 │
 │  • "Breaking barriers"                             │
 │  • "Universal access"                              │
 │  • USE: When framing mission/justice               │
+│  • LAYER -1: Level 5 internally, translate down    │
+│              to concrete benefits for conversion    │
 │                                                     │
 └─────────────────────────────────────────────────────┘
 ```
@@ -188,6 +973,8 @@ YOUR POSITIONING:
 
 ✅ K2M Asks:
 "What if you could wield intelligence the way experts do?"
+[LAYER -1: This is Level 3-4. For students, use:
+ "What if you could stop feeling confused when you use AI?"]
 
 ---
 
@@ -196,6 +983,7 @@ YOUR POSITIONING:
 
 ✅ K2M Asks:
 "What if thinking clearly was your unfair advantage?"
+[LAYER -1: This works at Level 2-3 for students/parents]
 
 ---
 
@@ -204,6 +992,7 @@ YOUR POSITIONING:
 
 ✅ K2M Asks:
 "What habits are you building that will follow you forever?"
+[LAYER -1: This works at Level 2 for ALL personas]
 ```
 
 ### 0.4 The Voice Filter Checklist
@@ -218,6 +1007,12 @@ YOUR POSITIONING:
 [ ] Aligns with democratization mission
 [ ] Would I send this to someone I'm trying to inspire?
 [ ] If I removed the logo, would they know it's K2M?
+
+NEW FROM LAYER -1:
+[ ] Have I identified the persona (Student/Parent/Principal)?
+[ ] Have I matched the JTBD altitude (Level 1-2/2-3/3-4)?
+[ ] Does this pass the Altitude Test?
+[ ] Would the target persona say "I can't unsee it"?
 ```
 
 ---
@@ -271,6 +1066,12 @@ YOUR POSITIONING:
    LOW CONVERSION → HIGH CONVERSION
 ```
 
+**LAYER -1 INTEGRATION:**
+
+- **Quadrant 1 (Manifesto):** Level 5 language. For believers only.
+- **Quadrant 2 (Sweet Spot):** Level 2-4 language. Adjust per persona.
+- **Quadrant 4 (Short-term):** Level 1-2 for students, 2-3 for parents, 3-4 for principals.
+
 ### The 4 Types of Content You Need
 
 ```
@@ -278,7 +1079,7 @@ YOUR POSITIONING:
 │  TYPE 1: MANIFESTO CONTENT (20% of output)                  │
 ├─────────────────────────────────────────────────────────────┤
 │  Purpose: Attract believers, build movement                 │
-│  Abstraction: Very high                                     │
+│  Abstraction: Very high (Level 5)                           │
 │  CTA: None or very soft ("follow for more")                 │
 │  Emotion: Wonder + Mission                                  │
 │                                                             │
@@ -291,13 +1092,16 @@ YOUR POSITIONING:
 │                    YouTube videos, podcast episodes         │
 │                                                             │
 │  Success metric: Shares, comments, "this changed my view"   │
+│                                                             │
+│  LAYER -1 NOTE: This is Level 5 only. Not for cold          │
+│                 student/parent conversion.                  │
 └─────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────┐
 │  TYPE 2: METHOD CONTENT (50% of output)                     │
 ├─────────────────────────────────────────────────────────────┤
 │  Purpose: Show there's a system, build credibility          │
-│  Abstraction: Medium (frameworks, cognitive science)        │
+│  Abstraction: Medium (Level 2-4, adjust per persona)        │
 │  CTA: Soft ("learn more," "see the full framework")         │
 │  Emotion: Curiosity + Hope                                  │
 │                                                             │
@@ -309,13 +1113,18 @@ YOUR POSITIONING:
 │  Where to publish: LinkedIn posts, blog, newsletter         │
 │                                                             │
 │  Success metric: Engagement + micro-commitments (quiz, DL)  │
+│                                                             │
+│  LAYER -1 NOTE: Adjust altitude per persona:                │
+│  • Students: Level 2-3                                      │
+│  • Parents: Level 2-3                                       │
+│  • Principals: Level 3-4                                    │
 └─────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────┐
 │  TYPE 3: CONVERSION CONTENT (20% of output)                 │
 ├─────────────────────────────────────────────────────────────┤
 │  Purpose: Harvest ready buyers, drive applications          │
-│  Abstraction: Low (concrete problems, immediate solutions)  │
+│  Abstraction: Low (Level 1-3, persona-specific)             │
 │  CTA: Strong ("Apply now," "Join cohort")                   │
 │  Emotion: Urgency + Empowerment                             │
 │                                                             │
@@ -328,13 +1137,18 @@ YOUR POSITIONING:
 │                                                             │
 │  Success metric: Click-through, applications started        │
 │  Uses: 5-Gear Framework (Layer 2)                           │
+│                                                             │
+│  LAYER -1 NOTE: CRITICAL altitude matching:                 │
+│  • Students: Start Level 1, move to Level 2                 │
+│  • Parents: Start Level 2, move to Level 3                  │
+│  • Principals: Start Level 3, move to Level 4               │
 └─────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────┐
 │  TYPE 4: MICRO-COMMITMENT CONTENT (10% of output)           │
 ├─────────────────────────────────────────────────────────────┤
 │  Purpose: Lower barrier, collect leads, build list          │
-│  Abstraction: Very low (actionable, immediate value)        │
+│  Abstraction: Very low (Level 1-2)                          │
 │  CTA: Micro ("Take quiz," "Download framework")             │
 │  Emotion: Curiosity + Capability                            │
 │                                                             │
@@ -346,6 +1160,9 @@ YOUR POSITIONING:
 │  Where to publish: Social ads, pop-ups, content upgrades    │
 │                                                             │
 │  Success metric: Completion rate, email capture             │
+│                                                             │
+│  LAYER -1 NOTE: Always Level 1-2 for ALL personas.          │
+│                 Micro-commitments must be concrete.         │
 └─────────────────────────────────────────────────────────────┘
 
 PORTFOLIO BALANCE:
@@ -392,6 +1209,10 @@ PORTFOLIO BALANCE:
 │  THE RULE:                                               │
 │  This is GIVE, not ASK. Pure generosity builds brand.    │
 │                                                          │
+│  LAYER -1 NOTE:                                          │
+│  This is Level 5 content. Do NOT send to cold students   │
+│  or parents as first touch. Save for believers.          │
+│                                                          │
 └──────────────────────────────────────────────────────────┘
 ```
 
@@ -401,6 +1222,8 @@ PORTFOLIO BALANCE:
 
 ### The K2M Conversion Journey
 
+**LAYER -1 INTEGRATION: Each touch now has altitude guidance**
+
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │        THE K2M 4-TOUCH CONVERSION ARCHITECTURE               │
@@ -409,14 +1232,22 @@ PORTFOLIO BALANCE:
 TOUCH 1: PHILOSOPHICAL ATTRACTION
 ┌────────────────────────────────────────┐
 │ Content Type: Manifesto                │
-│ Abstraction: Very High                 │
+│ Abstraction: Very High (Level 4-5)     │
 │ Goal: "This person SEES something"     │
 │ Emotion: Wonder + Recognition          │
 │ CTA: None (or "follow for more")       │
 │                                        │
-│ Example:                               │
-│ "The Cartographer's Manifesto:         │
-│  AI as Democratization of Expertise"   │
+│ LAYER -1 ALTITUDE ADJUSTMENT:          │
+│ • Students: Use Level 2, NOT Level 5   │
+│   "Copy-pasters get stuck" (pattern)   │
+│ • Parents: Use Level 2-3               │
+│   "Other parents paying 15K..." (proof)│
+│ • Principals: Can use Level 4          │
+│   "Students learn to think WITH AI"    │
+│                                        │
+│ Example (STUDENTS - Level 2):          │
+│ "Copy-pasters get stuck. Thinkers      │
+│  thrive. You've felt this. Here's why."│
 │                                        │
 │ What They Think:                       │
 │ "Wow, I've never thought about it      │
@@ -428,14 +1259,23 @@ TOUCH 1: PHILOSOPHICAL ATTRACTION
 TOUCH 2: METHODOLOGICAL CURIOSITY
 ┌────────────────────────────────────────┐
 │ Content Type: Cognitive Science Essay │
-│ Abstraction: Medium                    │
+│ Abstraction: Medium (Level 2-4)        │
 │ Goal: "There's a METHOD to this"       │
 │ Emotion: Curiosity + Hope              │
 │ CTA: Soft ("see framework" or "quiz")  │
 │                                        │
-│ Example:                               │
+│ LAYER -1 ALTITUDE ADJUSTMENT:          │
+│ • Students: Level 2-3                  │
+│   "Here's how invisible writing works" │
+│ • Parents: Level 2-3                   │
+│   "The cohort structure explained"     │
+│ • Principals: Level 3-4                │
+│   "How we deliver 92% completion"      │
+│                                        │
+│ Example (STUDENTS - Level 2-3):        │
 │ "Why Copy-Pasters Get Stuck:           │
-│  A Cognitive Science Analysis"         │
+│  You copy prompts, but you don't know  │
+│  WHY they work. Here's the pattern."   │
 │                                        │
 │ What They Think:                       │
 │ "Interesting. There's actually         │
@@ -447,14 +1287,23 @@ TOUCH 2: METHODOLOGICAL CURIOSITY
 TOUCH 3: PRACTICAL CAPABILITY
 ┌────────────────────────────────────────┐
 │ Content Type: Framework/Tool           │
-│ Abstraction: Low                       │
+│ Abstraction: Low (Level 1-3)           │
 │ Goal: "I can DO this"                  │
 │ Emotion: Empowerment + Capability      │
 │ CTA: Medium ("try this," "practice")   │
 │                                        │
-│ Example:                               │
+│ LAYER -1 ALTITUDE ADJUSTMENT:          │
+│ • Students: Level 1-2 (concrete)       │
+│   "Try this 3-step process. See what   │
+│    happens when you use it."           │
+│ • Parents: Level 2-3 (proof)           │
+│   "Watch your child try this framework"│
+│ • Principals: Level 3-4 (outcomes)     │
+│   "Here's the curriculum structure"    │
+│                                        │
+│ Example (STUDENTS - Level 1-2):        │
 │ "The 3-Step Invisible Writing          │
-│  Framework (With Practice Prompts)"    │
+│  Framework: Try it. See it work."      │
 │                                        │
 │ What They Think:                       │
 │ "This is actionable. I can actually    │
@@ -466,12 +1315,23 @@ TOUCH 3: PRACTICAL CAPABILITY
 TOUCH 4: CONVERSION READINESS
 ┌────────────────────────────────────────┐
 │ Content Type: Cohort Application       │
-│ Abstraction: Concrete                  │
+│ Abstraction: Concrete (Level 1-3)      │
 │ Goal: "I NEED this transformation"     │
 │ Emotion: Commitment + Urgency          │
 │ CTA: Strong ("Apply now")              │
 │                                        │
-│ Example:                               │
+│ LAYER -1 ALTITUDE ADJUSTMENT:          │
+│ • Students: Level 1-2                  │
+│   "Join 200 students. Stop copying.    │
+│    Start thinking. Apply today."       │
+│ • Parents: Level 2-3                   │
+│   "Prepare your child for university.  │
+│    Join 200 families."                 │
+│ • Principals: Level 3-4                │
+│   "Request pilot proposal. 15 schools  │
+│    already running K2M."               │
+│                                        │
+│ Example (STUDENTS - Level 1-2):        │
 │ "Join 47 Students Building Invisible   │
 │  Writing Muscles This Spring"          │
 │                                        │
@@ -487,22 +1347,32 @@ KEY INSIGHT:
 Most people don't convert on Touch 1.
 They need to see your PHILOSOPHY → METHOD → CAPABILITY
 before they trust you with their COMMITMENT.
+
+LAYER -1 KEY INSIGHT:
+Touch 1-4 MUST adjust altitude per persona.
+Students need Level 1-2 language throughout.
+Principals can handle Level 3-4.
 ```
 
 ### Touch Sequencing Rules
+
+**WITH LAYER -1 ALTITUDE INTEGRATION**
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │  THE SEQUENCING PRINCIPLES                              │
 ├─────────────────────────────────────────────────────────┤
 │                                                         │
-│  RULE 1: Start High, End Low (Abstraction)              │
-│  • Touch 1: High philosophy                             │
-│  • Touch 2: Medium frameworks                           │
-│  • Touch 3: Low (concrete tools)                        │
-│  • Touch 4: Concrete action                             │
+│  RULE 1: Start Low, End High (Abstraction)              │
+│  • Touch 1: ADJUST PER PERSONA                          │
+│    - Students: Level 1-2                                │
+│    - Parents: Level 2-3                                 │
+│    - Principals: Level 3-4                              │
+│  • Touch 2: Move up 1 level                             │
+│  • Touch 3: Move up 1 more level                        │
+│  • Touch 4: Can reach Level 4-5 if earned              │
 │                                                         │
-│  WHY: You earn the right to ask by first giving value   │
+│  WHY: You earn the right to go higher                   │
 │                                                         │
 │  RULE 2: Build Emotional Momentum                       │
 │  • Touch 1: Wonder ("Whoa!")                            │
@@ -520,6 +1390,11 @@ before they trust you with their COMMITMENT.
 │  • Warm audience: Start at Touch 2 or 3                 │
 │  • Hot audience: Jump straight to Touch 4               │
 │                                                         │
+│  LAYER -1 RULE 5: Altitude Stays Persona-Consistent     │
+│  • Don't suddenly jump to Level 5 language for students │
+│  • Parents can reach Level 3-4 by Touch 4               │
+│  • Principals can reach Level 4-5 by Touch 4            │
+│                                                         │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -528,6 +1403,8 @@ before they trust you with their COMMITMENT.
 ## MODULE 1C: Emotional Conversion Map
 
 ### Revolutionary Hope: How This Emotion Converts
+
+**WITH LAYER -1 ALTITUDE TRANSLATION**
 
 ```
 ┌──────────────────────────────────────────────────────────┐
@@ -538,16 +1415,24 @@ before they trust you with their COMMITMENT.
 │                                                          │
 │  HOW IT CONVERTS:                                        │
 │  1. Future Pacing (show the possible)                    │
-│     "Imagine wielding intelligence the way experts do"   │
+│     Level 5: "Imagine wielding intelligence like experts"│
+│     Level 2: "Imagine feeling in control when you use AI"│
+│     Level 1: "Imagine AI working every time you try it" │
 │                                                          │
 │  2. Identity Transformation (who they become)            │
-│     "Become a thinker, not a copy-paster"                │
+│     Level 5: "Become a consciousness-extended thinker"   │
+│     Level 2: "Become a thinker, not a copy-paster"       │
+│     Level 1: "Stop copying. Start thinking."             │
 │                                                          │
 │  3. Inevitability (the future is coming)                 │
-│     "AI is democratizing expertise. Will you wield it?"  │
+│     Level 5: "AI democratizes expertise. Will you wield?"│
+│     Level 3: "AI changes everything. Will you be ready?" │
+│     Level 1: "Everyone will use AI. Will you use it well?"│
 │                                                          │
 │  4. Aspiration (the peak they can reach)                 │
-│     "Build skills that compound across your career"      │
+│     Level 5: "Build skills that compound across career"  │
+│     Level 2: "Build habits that follow you forever"      │
+│     Level 1: "Build skills that work right away"         │
 │                                                          │
 │  GEARS TO EMPHASIZE:                                     │
 │  • Gear 1: Low friction (hope requires easy first step)  │
@@ -562,6 +1447,8 @@ before they trust you with their COMMITMENT.
 ```
 
 ### Emotional Arc Design
+
+**WITH LAYER -1 EXAMPLES PER PERSONA**
 
 Every piece of conversion content should follow this arc:
 
@@ -580,7 +1467,17 @@ STAGE 1: RECOGNITION (First 3 seconds)
 ─────────────────────────────────────
 Emotion: "Someone finally gets it"
 Technique: Mirror their current pain/frustration
-Example: "You've done it. Ctrl+C, Ctrl+V, submit."
+
+LAYER -1 EXAMPLES:
+
+Students (Level 1):
+✅ "You've done it. Ctrl+C, Ctrl+V, submit."
+
+Parents (Level 2):
+✅ "You lie awake wondering if they're ready."
+
+Principals (Level 3):
+✅ "Parents are asking: 'Do you teach AI?'"
 
 Hook Formula:
 • State the status quo they're living
@@ -591,28 +1488,53 @@ STAGE 2: POSSIBILITY (Middle section)
 ──────────────────────────────────────
 Emotion: "There's another way"
 Technique: Reveal the alternative future
-Example: "The students who thrive built invisible writing
-          muscles—the ability to think without notes."
+
+LAYER -1 EXAMPLES:
+
+Students (Level 2):
+✅ "The students who thrive built invisible writing
+    muscles—the ability to think without notes."
+
+Parents (Level 3):
+✅ "The cohort structure keeps them accountable.
+    200 students learning together won't let them quit."
+
+Principals (Level 4):
+✅ "Students learn to think WITH AI, not just copy FROM it.
+    That's the differentiator employers want."
 
 Transformation Formula:
-• Show the contrast (copy-paster vs. thinker)
+• Show the contrast (before vs. after)
 • Paint the vision (what becomes possible)
-• Use your philosophical language (extension of consciousness)
+• Use altitude-appropriate language
 
 STAGE 3: EMPOWERMENT (Call to action)
 ──────────────────────────────────────
 Emotion: "I can do this. I'm ready."
 Technique: Make the path clear + make them the hero
-Example: "47 spots in our spring cohort. Ready to build
-          invisible writing muscles? Apply to K2M."
+
+LAYER -1 EXAMPLES:
+
+Students (Level 1-2):
+✅ "47 spots in our spring cohort. Ready to build
+    invisible writing muscles? Apply to K2M."
+
+Parents (Level 2-3):
+✅ "Join 200 families preparing their children for
+    university. Apply today."
+
+Principals (Level 3-4):
+✅ "Request a pilot proposal. 15 schools already
+    running K2M. Is yours next?"
 
 CTA Formula:
 • Lower the barrier (quiz, sample, apply)
 • Make them the active agent ("you decide," "you choose")
-• Connect to mission ("join the movement")
+• Connect to mission (at appropriate altitude)
 
 ┌────────────────────────────────────────────────────┐
 │  FULL EXAMPLE: EMOTIONAL ARC IN ACTION             │
+│  (STUDENTS - Level 1-2)                            │
 ├────────────────────────────────────────────────────┤
 │                                                    │
 │  RECOGNITION:                                      │
@@ -636,6 +1558,8 @@ CTA Formula:
 
 ### When to Use Different Emotions
 
+**WITH LAYER -1 ALTITUDE SPECIFICATIONS**
+
 ```
 ┌──────────────────────────────────────────────────────────┐
 │  EMOTION-TO-CONTENT MAPPING                              │
@@ -645,31 +1569,52 @@ CTA Formula:
 │  • Introducing your vision (Touch 1)                     │
 │  • Painting future possibilities                         │
 │  • Building long-term brand resonance                    │
-│  • Example: "AI is the democratization of expertise"     │
+│                                                          │
+│  LAYER -1:                                               │
+│  • Students: "Stop feeling confused" (Level 1-2)         │
+│  • Parents: "Your child will be ready" (Level 2-3)       │
+│  • Principals: "Students demonstrate AI skills" (L 3-4)  │
+│  • Believers: "AI democratizes expertise" (Level 5)      │
 │                                                          │
 │  Use CURIOSITY when:                                     │
 │  • Sharing methodology (Touch 2)                         │
 │  • Explaining cognitive science                          │
 │  • Driving micro-commitments (quizzes, frameworks)       │
-│  • Example: "Why do copy-pasters get stuck? Science."    │
+│                                                          │
+│  LAYER -1:                                               │
+│  • Students: "Why do copy-pasters get stuck?" (Level 2)  │
+│  • Parents: "How does the cohort work?" (Level 2-3)      │
+│  • Principals: "How do we achieve 92%?" (Level 3)        │
 │                                                          │
 │  Use EMPOWERMENT when:                                   │
 │  • Giving tools/frameworks (Touch 3)                     │
 │  • Making capability feel accessible                     │
 │  • Building confidence before conversion                 │
-│  • Example: "Here's the 3-step framework. Try it."       │
+│                                                          │
+│  LAYER -1:                                               │
+│  • Students: "Try this. See it work." (Level 1)          │
+│  • Parents: "Watch them demonstrate it" (Level 2)        │
+│  • Principals: "Here's the full curriculum" (Level 3)    │
 │                                                          │
 │  Use COMMITMENT when:                                    │
 │  • Conversion content (Touch 4)                          │
 │  • Application prompts                                   │
 │  • Joining the cohort                                    │
-│  • Example: "Apply now. Build invisible writing muscles."│
+│                                                          │
+│  LAYER -1:                                               │
+│  • Students: "Apply now. Join 200 students." (Level 1-2) │
+│  • Parents: "Prepare your child. Join 200 families" (L2) │
+│  • Principals: "Request pilot. 15 schools ready" (L 3)   │
 │                                                          │
 │  Use WONDER when:                                        │
 │  • Manifesto-level content                               │
 │  • Big philosophical reveals                             │
 │  • Movement-building moments                             │
-│  • Example: "What if consciousness could be extended?"   │
+│                                                          │
+│  LAYER -1:                                               │
+│  • Believers ONLY: "What if consciousness could be       │
+│    extended?" (Level 5)                                  │
+│  • Don't use for cold students/parents/principals        │
 │                                                          │
 └──────────────────────────────────────────────────────────┘
 ```
@@ -678,14 +1623,16 @@ CTA Formula:
 
 # LAYER 2: CONVERSION MECHANICS
 
-## MODULE 2: The 5-Gear Staircase (From V1.0)
+## MODULE 2: The 5-Gear Staircase
 
 *[Your original 5-Gear system remains intact here]*
 *[Gear 1: Friction, Gear 2: Entry, Gear 3: Cognitive Load, etc.]*
 
-**BUT NOW, each gear is filtered through Revolutionary Hope:**
+**LAYER -1 INTEGRATION: Each gear now adjusts per persona altitude**
 
 ### Gear 1: Friction (Revolutionary Hope Edition)
+
+**WITH LAYER -1 ALTITUDE ADJUSTMENT**
 
 ```
 ORIGINAL GEAR 1: "Create smallest possible step"
@@ -696,9 +1643,31 @@ Use: "Curious if you're a copier or thinker? Find out in 47 seconds."
 
 WHY: Hope-driven brands invite, they don't pressure.
 Micro-commitments should feel like discovery, not urgency.
+
+LAYER -1 PERSONA ADJUSTMENTS:
+
+STUDENTS (Level 1):
+✅ "Take 2-minute quiz. See if you're a copier or thinker."
+✅ "Try this 1 prompt. See what happens."
+❌ "Begin your AI transformation journey" (too high)
+
+PARENTS (Level 2):
+✅ "See if K2M is right for your child (2-min assessment)"
+✅ "Watch 47-second explainer video"
+❌ "Explore our pedagogical philosophy" (too high)
+
+PRINCIPALS (Level 3):
+✅ "Request 1-page pilot proposal"
+✅ "Talk to a school like yours (15-min call)"
+❌ "Embark on institutional transformation" (too high)
+
+THE RULE: Friction removal must match JTBD altitude.
+Lower altitude = more concrete micro-commitment.
 ```
 
 ### Gear 5: Mental Timeline (Revolutionary Hope Edition)
+
+**WITH LAYER -1 ALTITUDE ADJUSTMENT**
 
 ```
 ORIGINAL GEAR 5: "Create urgency"
@@ -710,45 +1679,129 @@ Use: "47 spots in spring cohort. Every week you wait,
 
 WHY: Revolutionary Hope uses inevitability over scarcity.
 "The future is coming. Will you be ready?" > "Buy now or lose out!"
+
+LAYER -1 PERSONA ADJUSTMENTS:
+
+STUDENTS (Level 1-2):
+✅ "University starts in 4 months. You have time to prepare—
+    or show up unprepared like everyone else."
+✅ "Every day you wait, someone else builds the habits
+    that follow them forever."
+❌ "Transform your consciousness before it's too late" (too high + manipulative)
+
+PARENTS (Level 2-3):
+✅ "200 families are preparing their children. Will yours
+    be one of them?"
+✅ "Other parents paid 15K for bootcamps their kids quit.
+    This costs less. Works better."
+❌ "Secure cognitive advantage in revolutionary pedagogy" (too high)
+
+PRINCIPALS (Level 3-4):
+✅ "15 schools already running K2M for admissions messaging.
+    Next admissions cycle starts soon. Is yours next?"
+✅ "Parents will ask 'Do you teach AI?' at every tour.
+    What will you say?"
+❌ "Join the movement to democratize expertise" (too philosophical for B2B)
+
+THE RULE: Inevitability > scarcity. But adjust altitude.
+Students need concrete consequences (Level 1-2).
+Parents need social proof + outcomes (Level 2-3).
+Principals need competitive positioning (Level 3-4).
 ```
 
 **See Full Gear Documentation in Original Framework V1.0**
 
+**LAYER -1 CRITICAL NOTE:**
+
+ALL 5 Gears must now be filtered through:
+1. Revolutionary Hope tone (Layer 0)
+2. JTBD Altitude (Layer -1)
+
+Before applying any gear, ask:
+- Who is this for? (Persona)
+- What's their JTBD altitude? (Level 1-2, 2-3, 3-4, or 5)
+- Does my language match their altitude?
+
 ---
 
-## MODULE 3: Abstraction Ladder (From V1.0)
+## MODULE 3: Abstraction Ladder
 
 *[Your original Abstraction Ladder remains intact]*
 
-**NEW ADDITION: K2M Abstraction Examples**
+**NEW LAYER -1 INTEGRATION: K2M Abstraction Examples Per Persona**
 
 ```
 LEVEL 5 (Peak Philosophy):
 "AI is the democratization of expertise—an extension
 of consciousness that makes mastery accessible to all."
+
 → Use in: Manifesto, vision content
+→ Audience: Believers, fellow educators (already aligned)
+→ NEVER use for: Cold students, parents, principals
 
 LEVEL 4 (Transformation):
 "When you build invisible writing muscles, you don't
 just succeed in school—you build skills that compound
 across your entire career."
-→ Use in: Method content, cognitive science essays
+
+→ Use in: Warm content for principals, engaged students
+→ Audience: Principals (vision pieces), students (Touch 3-4)
+→ Translation for parents: "Skills that follow them forever"
 
 LEVEL 3 (Framework):
 "Invisible writing is the ability to think clearly
 without external support. It's built through deliberate
 practice with cognitive frameworks."
-→ Use in: Educational content, explainers
+
+→ Use in: Method content, parent conversion
+→ Audience: Parents (conversion), principals (awareness),
+           warm students (Touch 2-3)
+→ Translation for cold students: "Think without looking at notes"
 
 LEVEL 2 (Pattern):
 "Copy-pasters get stuck in internships. Thinkers
 get hired. The difference? Invisible writing muscles."
-→ Use in: Social posts, conversion content
+
+→ Use in: Student conversion, parent awareness
+→ Audience: Students (Touch 1-2), parents (Touch 1-2)
+→ This is PRIMARY language for both personas
 
 LEVEL 1 (Ground):
 "You've done it: Ctrl+C, Ctrl+V, submit assignment.
 It feels productive. But you're not learning."
-→ Use in: Hooks, opening lines, ads
+
+→ Use in: Hooks, cold students, first contact
+→ Audience: Students (Touch 1), all cold audiences
+→ This is where EVERY student-facing piece must START
+
+────────────────────────────────────────────────────
+
+PERSONA-SPECIFIC ABSTRACTION RANGES:
+
+STUDENTS:
+• Touch 1: Start Level 1 (always)
+• Touch 2: Can reach Level 2
+• Touch 3: Can reach Level 2-3
+• Touch 4: Can reach Level 3 (if earned)
+• Never use Level 4-5 unless they're already believers
+
+PARENTS:
+• Touch 1: Start Level 2
+• Touch 2: Can reach Level 2-3
+• Touch 3: Can reach Level 3
+• Touch 4: Can reach Level 3-4 (if earned)
+• Never use Level 5 unless already aligned
+
+PRINCIPALS:
+• Touch 1: Start Level 3
+• Touch 2: Can reach Level 3-4
+• Touch 3: Can reach Level 4
+• Touch 4: Can reach Level 4-5 (if already bought in)
+• Can use Level 5 if elite/tech-literate/mission-aligned
+
+THE GOLDEN RULE:
+START AT THEIR JTBD ALTITUDE.
+EARN THE RIGHT TO GO HIGHER.
 ```
 
 ---
@@ -758,6 +1811,8 @@ It feels productive. But you're not learning."
 ## MODULE 4: The Attention Respect Covenant
 
 ### The K2M Ethics Pledge
+
+**WITH LAYER -1 INTEGRATION**
 
 ```
 ┌──────────────────────────────────────────────────────────┐
@@ -792,106 +1847,44 @@ It feels productive. But you're not learning."
 │     □ Will I be proud of this in 5 years?                │
 │     □ Does this serve the mission or just the quarter?   │
 │                                                          │
+│  NEW FROM LAYER -1:                                      │
+│                                                          │
+│  6. JTBD Altitude Respect                                │
+│     □ Have I identified their JTBD altitude?             │
+│     □ Am I speaking AT their level (not mine)?           │
+│     □ Would they say "I can't unsee it" (not "interesting")?│
+│     □ Am I using Level 5 language on cold students?      │
+│       (If yes, STOP. Revise down.)                       │
+│                                                          │
 └──────────────────────────────────────────────────────────┘
 ```
 
 ### The 70-30 Rule (Give vs. Ask)
 
-```
-┌──────────────────────────────────────────────────────────┐
-│  THE 70-30 CONTENT PORTFOLIO RULE                        │
-├──────────────────────────────────────────────────────────┤
-│                                                          │
-│  70% OF YOUR CONTENT: GIVE                               │
-│  ═══════════════════════════════════                     │
-│  • Pure philosophy (no CTA)                              │
-│  • Free frameworks                                       │
-│  • Cognitive science education                           │
-│  • Generous insights                                     │
-│                                                          │
-│  Examples:                                               │
-│  - "Here's why copy-pasters get stuck [cognitive         │
-│     science deep dive]. No ask, just value."             │
-│  - "Download this free framework. Use it however         │
-│     you want. I'm just glad it helps."                   │
-│                                                          │
-│  PURPOSE: Build brand equity, earn trust                 │
-│                                                          │
-│  ────────────────────────────────────────────────        │
-│                                                          │
-│  30% OF YOUR CONTENT: ASK                                │
-│  ═══════════════════════════                             │
-│  • Conversion-optimized posts                            │
-│  • Application prompts                                   │
-│  • Cohort announcements                                  │
-│  • Micro-commitment requests                             │
-│                                                          │
-│  Examples:                                               │
-│  - "47 spots in spring cohort. Apply to join."           │
-│  - "Take this 2-minute quiz to find out if you're        │
-│     a copier or thinker."                                │
-│                                                          │
-│  PURPOSE: Harvest the trust you've built                 │
-│                                                          │
-│  ────────────────────────────────────────────────        │
-│                                                          │
-│  THE PRINCIPLE:                                          │
-│  "The best brands give more than they ask.               │
-│   When you DO ask, people are ready to say yes."         │
-│                                                          │
-└──────────────────────────────────────────────────────────┘
-```
+*[Original 70-30 rule remains intact]*
+
+**LAYER -1 NOTE:**
+
+- The 70% GIVE content can be Level 4-5 (manifesto, philosophy)
+- The 30% ASK content MUST match JTBD altitude (Level 1-3 typically)
+- Don't confuse "giving" with "using high-altitude language on wrong audience"
+- Giving to students = Level 1-2 valuable content, not Level 5 philosophy they can't use
 
 ### When NOT to Convert
 
+*[Original "When NOT to Convert" section remains intact]*
+
+**LAYER -1 NOTE:**
+
+Add to the "NO-CTA" framework:
+
 ```
-┌──────────────────────────────────────────────────────────┐
-│  THE STRATEGIC NO-CTA FRAMEWORK                          │
-├──────────────────────────────────────────────────────────┤
-│                                                          │
-│  PUBLISH WITH NO CTA WHEN:                               │
-│                                                          │
-│  1. Right After Conversion Content                       │
-│     Don't be pushy. Give freely after asking.            │
-│                                                          │
-│  2. Building Pure Brand Equity                           │
-│     Some content exists only to inspire/educate.         │
-│                                                          │
-│  3. Your Philosophy Is Too Good to Dilute                │
-│     The Manifesto doesn't need a "buy now" button.       │
-│                                                          │
-│  4. You Want Sharing, Not Conversion                     │
-│     CTAs kill sharing. No-CTA content spreads.           │
-│                                                          │
-│  5. Establishing Credibility                             │
-│     "I give before I ask" builds trust.                  │
-│                                                          │
-│  6. Cold Audience Not Ready Yet                          │
-│     They don't know you. Don't ask on first date.        │
-│                                                          │
-│  ────────────────────────────────────────────────        │
-│                                                          │
-│  EXAMPLE: NO-CTA CONTENT                                 │
-│                                                          │
-│  "Habits follow you forever.                             │
-│                                                          │
-│   That's the real lesson—not what you learned today,     │
-│   but what you practiced.                                │
-│                                                          │
-│   Most students study for exams.                         │
-│   Smart ones study for life."                            │
-│                                                          │
-│   [END. No link. No ask. Just wisdom.]                   │
-│                                                          │
-│  ────────────────────────────────────────────────        │
-│                                                          │
-│  WHY THIS WORKS:                                         │
-│  • Audience doesn't feel "sold to"                       │
-│  • When you DO ask, they're primed to say yes            │
-│  • Builds brand as generous, not hungry                  │
-│  • Creates future conversion equity                      │
-│                                                          │
-└──────────────────────────────────────────────────────────┘
+PUBLISH WITH NO CTA WHEN:
+7. Testing JTBD Altitude Fit
+   You're unsure if your altitude matches their JTBD.
+   Publish with no CTA, observe engagement.
+   If they say "I can't unsee it" = right altitude, add CTA next time.
+   If they say "interesting" = too high, revise down.
 ```
 
 ---
@@ -899,6 +1892,8 @@ It feels productive. But you're not learning."
 # LAYER 4: SEGMENTATION & TRUST
 
 ## MODULE 5: Audience Temperature System
+
+**WITH LAYER -1 ALTITUDE INTEGRATION**
 
 ```
 ┌──────────────────────────────────────────────────────────┐
@@ -916,6 +1911,15 @@ CONTENT STRATEGY:
 • 10% Micro-commitments (quiz, download)
 • 0% Hard conversion (too early)
 
+LAYER -1 ALTITUDE RULES:
+• Students: MUST start Level 1 (concrete)
+  "Sometimes AI works. Sometimes it doesn't. You don't know why."
+• Parents: MUST start Level 2 (pattern)
+  "Other parents paying 15K for bootcamps their kids quit."
+• Principals: Can start Level 3 (framework)
+  "Parents are asking: 'Do you teach AI?'"
+• NEVER use Level 4-5 for cold audiences
+
 GEAR EMPHASIS:
 • Gear 1-2: MAXIMUM (lower all barriers)
 • Gear 3: CRITICAL (must hook in <2 seconds)
@@ -926,9 +1930,10 @@ EMOTIONAL TONE:
 • "I've never thought about it this way"
 
 EXAMPLES:
-✅ "What if AI is the democratization of expertise?"
-✅ "Curious: Are you a copier or a thinker? [2-min quiz]"
-❌ "Join now! Only 10 spots left!"
+✅ Students (L1): "You've done it: Ctrl+C, Ctrl+V, submit."
+✅ Parents (L2): "You lie awake wondering if they're ready."
+✅ Principals (L3): "What will you tell parents at admissions tours?"
+❌ ANY PERSONA: "Democratize AI expertise through consciousness extension"
 
 ────────────────────────────────────────────────────
 
@@ -944,6 +1949,15 @@ CONTENT STRATEGY:
 • 40% Practical tools (Touch 3)
 • 20% Conversion content (Touch 4)
 
+LAYER -1 ALTITUDE RULES:
+• Students: Can reach Level 2-3 (pattern → framework)
+  "Here's how invisible writing works. Try this framework."
+• Parents: Can reach Level 2-3 (pattern → framework)
+  "The cohort structure explained. Here's proof it works."
+• Principals: Can reach Level 3-4 (framework → transformation)
+  "How we achieve 92% completion. What you can tell parents."
+• Can use Level 4 if they've engaged 3+ times
+
 GEAR EMPHASIS:
 • Gear 1-2: MEDIUM (some barrier OK)
 • Gear 3: Important but not critical
@@ -954,9 +1968,12 @@ EMOTIONAL TONE:
 • "I can actually do this"
 
 EXAMPLES:
-✅ "Remember invisible writing? Here's the framework."
-✅ "You asked how it works—here's the cognitive science."
-✅ "Spring cohort opens Monday. Interested?"
+✅ Students (L2-3): "Copy-pasters get stuck. Here's the framework
+   for building invisible writing muscles."
+✅ Parents (L2-3): "Remember how bootcamps fail? Here's why
+   cohort structure works differently."
+✅ Principals (L3-4): "You asked how it works—here's the
+   curriculum structure and completion data."
 
 ────────────────────────────────────────────────────
 
@@ -972,6 +1989,15 @@ CONTENT STRATEGY:
 • 20% Social proof (others like them)
 • 70% Conversion (clear path)
 
+LAYER -1 ALTITUDE RULES:
+• Students: Can reach Level 3 (framework)
+  "You've seen how it works. Ready to join 200 students?"
+• Parents: Can reach Level 3-4 (framework → transformation)
+  "You've seen the proof. Ready to prepare your child?"
+• Principals: Can reach Level 4-5 (transformation → philosophy)
+  "You've seen the data. Let's talk about your pilot."
+• Can use Level 5 IF they've explicitly engaged with manifesto
+
 GEAR EMPHASIS:
 • Gear 1-2: LOW (they're ready, don't slow them down)
 • Gear 3: Confirmation, not conversion
@@ -982,248 +2008,96 @@ EMOTIONAL TONE:
 • "This is the right decision"
 
 EXAMPLES:
-✅ "You're ready. 47 spots left. Apply here: [link]"
-✅ "3 students like you got offers at [companies]."
-✅ "Cohort closes Friday. Secure your spot now."
+✅ Students (L2-3): "You're ready. 47 spots left. Apply here: [link]"
+✅ Parents (L3): "Join 200 families preparing their children.
+   Application closes Friday."
+✅ Principals (L4): "15 schools already running K2M. Request
+   pilot proposal: [link]"
 
 ────────────────────────────────────────────────────
 
 BIGGEST MISTAKE:
-Using HOT audience tactics (high urgency, aggressive CTA)
-on COLD audiences (need trust first) = Brand damage
+Using HOT audience tactics (high urgency, aggressive CTA, Level 4-5 language)
+on COLD audiences (need trust first, Level 1-2 language) = Brand damage
+
+LAYER -1 BIGGEST MISTAKE:
+Using Level 5 philosophy language ("democratization of expertise")
+on cold students who need Level 1 concrete language ("stop feeling confused")
+= Instant scroll-past
 ```
 
 ---
 
 ## MODULE 6: Platform Attention Matrix
 
-```
-┌──────────────────────────────────────────────────────────┐
-│  PLATFORM-SPECIFIC GEAR ADJUSTMENTS                      │
-└──────────────────────────────────────────────────────────┘
+*[Original platform-specific guidance remains intact]*
 
+**LAYER -1 INTEGRATION:**
+
+```
 LINKEDIN (Speed-scrolling, professional context)
 ═════════════════════════════════════════════════
-Attention Span: 2-3 seconds
-Context: Public, professional, thought leadership
 
-GEAR SETTINGS:
-• Gear 3: CRITICAL (must hook immediately)
-  Hook formula: "Copy-pasters get stuck. Thinkers thrive."
-
-• Gear 4: Emoji + scannable (visual anchors)
-  Use: 🔥 THE HOOK, ⚠️ THE TRAP, ✨ THE SHIFT
-
-• Gear 5: Light urgency (feels salesy otherwise)
-  Instead of: "Buy now!"
-  Use: "Spring cohort opens soon. Interested?"
-
-LENGTH: 150-300 words max
-FORMAT: Scannable paragraphs, bolded key phrases
-CTA: Soft ("learn more," "take quiz") unless hot audience
-
-────────────────────────────────────────────────────
+LAYER -1 ALTITUDE ADJUSTMENT:
+• Opening line MUST match persona altitude
+• Students: "You've done it: Ctrl+C, Ctrl+V" (Level 1)
+• Parents: "You lie awake wondering..." (Level 2)
+• Principals: "Parents are asking..." (Level 3)
+• Believers: "AI democratizes expertise" (Level 5 - for followers only)
 
 EMAIL (Intentional reading, private relationship)
 ═════════════════════════════════════════════════
-Attention Span: 30-60 seconds (they opened it!)
-Context: 1:1, permission-based, intimate
 
-GEAR SETTINGS:
-• Gear 3: Important but not critical (they opted in)
-  Can start with story, not just hook
-
-• Gear 4: More text OK, narrative-driven
-  Use: Story structure, longer arcs
-
-• Gear 5: Stronger urgency OK (personal relationship)
-  "You asked about this. Here's the answer + next step."
-
-LENGTH: 300-600 words OK
-FORMAT: Story → insight → CTA
-CTA: Medium to strong (they expect it)
-
-────────────────────────────────────────────────────
+LAYER -1 ALTITUDE ADJUSTMENT:
+• Can go 1 level higher than social (they opted in)
+• Students: Can start Level 2 (pattern)
+• Parents: Can start Level 2-3 (pattern → framework)
+• Principals: Can start Level 3-4 (framework → transformation)
 
 LANDING PAGE (Intent-driven, researching)
 ═════════════════════════════════════════
-Attention Span: Varied (scanning vs. reading)
-Context: Problem-solving mode, comparison shopping
 
-GEAR SETTINGS:
-• Gear 1-2: MAXIMUM (they need to explore before committing)
-  Hero: Hook + Quiz
-  Section 2: Method explanation
-  Section 3: Sample framework
-
-• Gear 3: Above fold (first screen)
-
-• Gear 4: Hierarchical sections
-  Hero → Features → Method → Social Proof → FAQ → CTA
-
-• Gear 5: Strong CTA (they're here to decide)
-  Multiple CTAs throughout
-  Scarcity if real (cohort size)
-
-LENGTH: 1500-3000 words (skimmable!)
-FORMAT: Sections, clear hierarchy, visuals
-CTA: Strong + repeated
-
-────────────────────────────────────────────────────
-
-TWITTER/X (Micro-attention, virality-driven)
-═══════════════════════════════════════════
-Attention Span: <1 second
-Context: Public, fast-moving, share-focused
-
-GEAR SETTINGS:
-• Gear 3: ONLY THING THAT MATTERS
-  Hook must work in isolation
-
-• Gear 5: Immediacy (link or nothing)
-  "Copy-pasters get stuck. Thinkers thrive. [link]"
-
-LENGTH: 1-2 lines max (280 chars)
-FORMAT: Hook → link
-CTA: Implicit (the link IS the CTA)
-
-────────────────────────────────────────────────────
-
-YOUTUBE/LONG-FORM (Deep engagement, lean-back)
-═══════════════════════════════════════════════
-Attention Span: 10-30 minutes (IF you hook them)
-Context: Educational, entertainment, immersive
-
-GEAR SETTINGS:
-• Gear 3: First 10 seconds (thumbnail + opening line)
-
-• Gears 1-4: Throughout the video
-  Hook → Story → Method → Philosophy → CTA
-
-• Gear 5: End-screen CTA + description
-
-LENGTH: 10-45 minutes
-FORMAT: Story-driven, visual, conversational
-CTA: Soft during, stronger at end
+LAYER -1 ALTITUDE ADJUSTMENT:
+• Hero section: Match persona altitude EXACTLY
+• Students: Level 1 hook, Level 2 body
+• Parents: Level 2 hook, Level 3 body
+• Principals: Level 3 hook, Level 4 body
+• Can include Level 5 "manifesto" section at bottom (optional)
 ```
 
 ---
 
 ## MODULE 7: Trust Layering System
 
-```
-┌──────────────────────────────────────────────────────────┐
-│  THE 5 TRUST SIGNALS TO WEAVE INTO CONVERSION CONTENT    │
-└──────────────────────────────────────────────────────────┘
+*[Original trust signals remain intact]*
 
+**LAYER -1 INTEGRATION:**
+
+```
 TRUST SIGNAL 1: Vulnerable Authority
 ═══════════════════════════════════════
-What: Show expertise through struggle, not perfection
-Why: Makes you relatable + credible
-
-❌ DON'T: "I'm an expert in AI education"
-✅ DO: "I spent 8 years studying why brilliant students
-        get stuck in internships. Here's what I found."
-
-WHERE TO USE:
-• Manifesto content (origin story)
-• Method content (how you learned this)
-• About page, bio
-
-────────────────────────────────────────────────────
+LAYER -1 ADJUSTMENT:
+• Students (L1-2): "I studied why students get stuck in internships."
+• Parents (L2-3): "I spent 8 years understanding why bootcamps fail."
+• Principals (L3-4): "I analyzed 847 student outcomes over 3 years."
+• Believers (L5): "I've dedicated my career to democratizing expertise."
 
 TRUST SIGNAL 2: Specific Social Proof
 ═══════════════════════════════════════
-What: Concrete results, named outcomes
-Why: Specificity beats vague testimonials
-
-❌ DON'T: "Students love our program!"
-✅ DO: "3 students from last cohort got offers at
-        Microsoft, Goldman, and SpaceX."
-
-❌ DON'T: "Highly rated course"
-✅ DO: "127 students completed. 94% report improved
-        thinking clarity within 3 weeks."
-
-WHERE TO USE:
-• Landing pages (social proof section)
-• Conversion posts (before CTA)
-• Hot audience emails
-
-────────────────────────────────────────────────────
-
-TRUST SIGNAL 3: Transparent Methodology
-═══════════════════════════════════════
-What: Show HOW it works, not just THAT it works
-Why: Reduces skepticism, builds confidence
-
-❌ DON'T: "Our secret framework"
-✅ DO: "Here's exactly how it works: [3-step process]
-        rooted in cognitive load theory."
-
-WHERE TO USE:
-• Method content (cognitive science explanations)
-• Landing page (how it works section)
-• FAQ ("Is this legit?")
-
-────────────────────────────────────────────────────
+LAYER -1 ADJUSTMENT:
+• Students (L1-2): "3 students got offers at Microsoft, Goldman, SpaceX."
+• Parents (L2-3): "200 students completed. 92% report improved confidence."
+• Principals (L3-4): "15 schools running K2M. 92% completion vs. 5% typical."
 
 TRUST SIGNAL 4: Anti-Hype Honesty
 ═══════════════════════════════════
-What: Set realistic expectations, filter out bad fits
-Why: Shows integrity, builds trust with right people
-
-❌ DON'T: "This will change your life!"
-✅ DO: "This is for students ready to stop copying and
-        start thinking. If that's not you, no worries—
-        this cohort isn't for everyone."
-
-❌ DON'T: "Get hired in 30 days guaranteed!"
-✅ DO: "This builds thinking skills that take time.
-        Most see results in 3-6 weeks of practice."
-
-WHERE TO USE:
-• Conversion content (after the pitch)
-• Landing page (below the fold)
-• Application page ("Is this for me?")
-
-────────────────────────────────────────────────────
-
-TRUST SIGNAL 5: Proof of Work
-═══════════════════════════════
-What: Show the depth of your research/experience
-Why: Establishes authority without bragging
-
-❌ DON'T: "I know about education"
-✅ DO: "I analyzed 847 student writing samples over
-        3 years. 67% showed copy-paste patterns that
-        correlated with internship struggles."
-
-WHERE TO USE:
-• Manifesto (your journey)
-• Cognitive science essays (research depth)
-• Method content (where insights come from)
-
-────────────────────────────────────────────────────
-
-WHERE TO PLACE TRUST SIGNALS:
-═══════════════════════════════
-
-EARLY CONTENT (Touch 1-2):
-• Light credibility (don't oversell)
-• Vulnerable authority
-• Proof of work
-
-CONVERSION CONTENT (Touch 3-4):
-• Stronger proof (they're deciding)
-• Specific social proof
-• Transparent methodology
-• Anti-hype honesty
-
-POST-CONVERSION:
-• Maximum transparency (reinforce decision)
-• Behind-the-scenes process
-• Ongoing results tracking
+LAYER -1 ADJUSTMENT:
+• Students (L1-2): "This is for students ready to stop copying.
+  If that's not you, no worries."
+• Parents (L2-3): "This builds skills that take 3-6 weeks of practice.
+  Not a quick fix."
+• Principals (L3-4): "This is a 6-week cohort with facilitation required.
+  Not a plug-and-play video course."
 ```
 
 ---
@@ -1232,21 +2106,35 @@ POST-CONVERSION:
 
 ## Before Publishing ANY Content
 
+**FULLY INTEGRATED WITH LAYER -1**
+
 ```
 ┌──────────────────────────────────────────────────────────┐
 │  THE K2M CONTENT PRE-FLIGHT CHECKLIST                    │
 ├──────────────────────────────────────────────────────────┤
 │                                                          │
+│  LAYER -1: JTBD × LINGUISTIC ALTITUDE (NEW - CHECK FIRST)│
+│  □ Who am I writing to? (Student/Parent/Principal)       │
+│  □ What's their JTBD? (Immediate/Protective/Institutional)│
+│  □ What's their altitude? (Level 1-2 / 2-3 / 3-4 / 5?)   │
+│  □ Does my opening line match their altitude?            │
+│  □ Have I translated Level 5 philosophy to their level?  │
+│  □ Would they say "I can't unsee it" (not "interesting")?│
+│  □ Passes Altitude Test checklist?                       │
+│  □ Passes Grandma Test (for students/parents)?           │
+│                                                          │
 │  LAYER 0: VOICE & IDENTITY                               │
 │  □ Does this sound like K2M? (Revolutionary Hope)        │
 │  □ Uses at least ONE coined term or metaphor             │
 │  □ Passes the "voice filter" (Module 0.4)                │
+│  □ Emotion matches persona altitude?                     │
 │                                                          │
 │  LAYER 1: RESONANCE                                      │
 │  □ Which content type is this? (Manifesto/Method/        │
 │    Conversion/Micro-commitment)                          │
 │  □ Which touch in the journey? (1/2/3/4)                 │
 │  □ Does emotional arc match content type?                │
+│  □ Does touch number match persona altitude?             │
 │                                                          │
 │  LAYER 2: CONVERSION MECHANICS                           │
 │  □ Gear 1 (Friction): Can they engage in <3 seconds?     │
@@ -1254,13 +2142,15 @@ POST-CONVERSION:
 │  □ Gear 3 (Cognitive Load): Hook works in <3 seconds?    │
 │  □ Gear 4 (Visual Hierarchy): Scannable?                 │
 │  □ Gear 5 (Mental Timeline): Why act NOW?                │
-│  □ Abstraction: Starts concrete → ends philosophical?    │
+│  □ Abstraction: Starts at persona altitude?              │
+│  □ All gears adjusted for persona altitude?              │
 │                                                          │
 │  LAYER 3: ETHICS                                         │
 │  □ Passes Attention Respect Covenant (Module 4)          │
 │  □ Urgency is authentic (not manufactured)               │
 │  □ 70-30 rule: Is this balanced with giving?             │
 │  □ Would I be proud of this in 5 years?                  │
+│  □ Am I respecting their JTBD altitude?                  │
 │                                                          │
 │  LAYER 4: SEGMENTATION                                   │
 │  □ Audience temperature: Cold/Warm/Hot?                  │
@@ -1268,11 +2158,13 @@ POST-CONVERSION:
 │  □ Platform: LinkedIn/Email/Landing/Other?               │
 │  □ Platform-specific adjustments made?                   │
 │  □ Trust signals appropriate for stage?                  │
+│  □ Altitude appropriate for temperature?                 │
 │                                                          │
 │  FINAL CHECK                                             │
 │  □ Aligns with democratization mission                   │
 │  □ Empowers rather than manipulates                      │
 │  □ Builds brand + converts (not just converts)           │
+│  □ Altitude matches JTBD (most critical check)           │
 │  □ Ready to publish                                      │
 │                                                          │
 └──────────────────────────────────────────────────────────┘
@@ -1280,11 +2172,12 @@ POST-CONVERSION:
 
 ---
 
-# VISUAL SUMMARY: THE COMPLETE SYSTEM
+# VISUAL SUMMARY: THE COMPLETE INTEGRATED SYSTEM
 
 ```
 ┌────────────────────────────────────────────────────────────────┐
 │         THE K2M BRAND-CONVERSION INTEGRATED SYSTEM             │
+│                    (6-Layer Architecture)                      │
 └────────────────────────────────────────────────────────────────┘
 
                     🌟 NORTH STAR 🌟
@@ -1296,10 +2189,22 @@ POST-CONVERSION:
    (Brand Building)                  (Revenue)
         │                                 │
         │                                 │
-   ┌────▼─────┐                     ┌─────▼────┐
-   │ Manifesto│                     │ 5-Gear   │
-   │ System   │                     │ System   │
-   └────┬─────┘                     └─────┬────┘
+        │         LAYER -1 FILTER         │
+        │    ┌─────────────────────┐      │
+        │    │ JTBD × LINGUISTIC   │      │
+        │    │ ALTITUDE MAPPING    │      │
+        │    │                     │      │
+        │    │ • Students: L1-2    │      │
+        │    │ • Parents: L2-3     │      │
+        │    │ • Principals: L3-4  │      │
+        │    │ • Believers: L5     │      │
+        │    └─────────┬───────────┘      │
+        │              │                  │
+        │              ▼                  │
+   ┌────▼─────┐   LAYER 0-4          ┌───▼──────┐
+   │ Manifesto│   FILTERED BY        │ 5-Gear   │
+   │ System   │   ALTITUDE           │ System   │
+   └────┬─────┘                      └────┬─────┘
         │                                 │
         │         INTEGRATED              │
         └──────────────┬──────────────────┘
@@ -1308,17 +2213,18 @@ POST-CONVERSION:
             ┌──────────▼──────────┐
             │ CONTENT PORTFOLIO   │
             ├─────────────────────┤
-            │ 20% Manifesto       │
-            │ 50% Method          │
-            │ 20% Conversion      │
-            │ 10% Micro-commit    │
+            │ 20% Manifesto (L5)  │
+            │ 50% Method (L2-4)   │
+            │ 20% Conversion (L1-3)│
+            │ 10% Micro (L1-2)    │
             └──────────┬──────────┘
                        │
         ┌──────────────┼──────────────┐
         │              │              │
    ┌────▼────┐   ┌─────▼─────┐  ┌────▼────┐
    │ Touch 1 │   │  Touch 2  │  │Touch 3-4│
-   │Philosophy│  │  Method   │  │Conversion│
+   │ALTITUDE │   │ ALTITUDE  │  │ALTITUDE │
+   │ADJUSTED │   │ ADJUSTED  │  │ADJUSTED │
    └─────────┘   └───────────┘  └─────────┘
         │              │              │
         └──────────────┴──────────────┘
@@ -1326,35 +2232,62 @@ POST-CONVERSION:
                   CONVERSION
 
 KEY PRINCIPLES:
-• Philosophy attracts believers
-• Method builds credibility
-• Gears optimize conversion
-• Ethics protect brand
-• Segmentation respects audience
+• Layer -1 comes FIRST (map altitude before writing)
+• Philosophy attracts believers (Level 5)
+• Method builds credibility (Level 2-4, persona-adjusted)
+• Gears optimize conversion (altitude-aware)
+• Ethics protect brand (including altitude respect)
+• Segmentation respects audience (altitude + temperature)
+
+WORKFLOW:
+1. Identify persona (Student/Parent/Principal/Believer)
+2. Map their JTBD altitude (Level 1-2, 2-3, 3-4, or 5)
+3. Write at their altitude (not yours)
+4. Apply Layers 0-4 (voice, resonance, gears, ethics, segmentation)
+5. Check: Would they say "I can't unsee it"?
+6. Publish
 ```
 
 ---
 
-# APPENDIX: QUICK REFERENCE CARDS
+# APPENDIX: INTEGRATED QUICK REFERENCE CARDS
 
-## Card 1: Revolutionary Hope Tone Guide
+## Card 1: Revolutionary Hope Tone Guide (WITH ALTITUDE)
 
 ```
 ┌─────────────────────────────────────────┐
 │  REVOLUTIONARY HOPE QUICK REFERENCE     │
 ├─────────────────────────────────────────┤
 │                                         │
-│  SIGNATURE PHRASES:                     │
+│  SIGNATURE PHRASES (LEVEL 5):           │
 │  • "Finally wield intelligence"         │
 │  • "Extension of consciousness"         │
 │  • "Democratization of expertise"       │
 │  • "Invisible writing muscles"          │
 │                                         │
+│  TRANSLATE TO STUDENTS (LEVEL 1-2):     │
+│  • "Finally feel in control"            │
+│  • "Think clearly with AI"              │
+│  • "Everyone can learn this"            │
+│  • "Build thinking muscles"             │
+│                                         │
+│  TRANSLATE TO PARENTS (LEVEL 2-3):      │
+│  • "Give your child the advantage"      │
+│  • "Learn to think WITH AI"             │
+│  • "Make them ready to compete"         │
+│  • "Build skills that last forever"     │
+│                                         │
+│  TRANSLATE TO PRINCIPALS (LEVEL 3-4):   │
+│  • "Students demonstrate AI skills"     │
+│  • "Think WITH AI, not copy FROM it"    │
+│  • "Answer 'Do you teach AI?'"          │
+│  • "Develop transferable thinking skills"│
+│                                         │
 │  AVOID:                                 │
 │  • Fear-based urgency                   │
 │  • Aggressive scarcity                  │
 │  • Generic "AI tools" language          │
-│  • "Get rich quick" vibes               │
+│  • Using Level 5 on cold audiences      │
 │                                         │
 │  EMOTION MIX:                           │
 │  60% Hope + Empowerment                 │
@@ -1364,7 +2297,7 @@ KEY PRINCIPLES:
 └─────────────────────────────────────────┘
 ```
 
-## Card 2: Content Type Selector
+## Card 2: Content Type Selector (WITH ALTITUDE)
 
 ```
 ┌─────────────────────────────────────────┐
@@ -1372,18 +2305,28 @@ KEY PRINCIPLES:
 ├─────────────────────────────────────────┤
 │                                         │
 │  Need to build brand? → MANIFESTO       │
-│  Need to show method? → COGNITIVE SCI   │
-│  Need to convert? → 5-GEAR CONTENT      │
-│  Need to generate leads? → MICRO-COMMIT │
+│  (Level 5 - believers only)             │
 │                                         │
-│  Cold audience? → Manifesto/Method      │
-│  Warm audience? → Method/Tools          │
-│  Hot audience? → Conversion             │
+│  Need to show method? → COGNITIVE SCI   │
+│  (Level 2-4 - adjust per persona)       │
+│                                         │
+│  Need to convert? → 5-GEAR CONTENT      │
+│  (Level 1-3 - persona-specific)         │
+│                                         │
+│  Need to generate leads? → MICRO-COMMIT │
+│  (Level 1-2 - all personas)             │
+│                                         │
+│  Cold students? → Level 1-2             │
+│  Cold parents? → Level 2-3              │
+│  Cold principals? → Level 3-4           │
+│                                         │
+│  Warm audience? → Move up 1 level       │
+│  Hot audience? → Can reach Level 3-5    │
 │                                         │
 └─────────────────────────────────────────┘
 ```
 
-## Card 3: The 70-30 Rule Tracker
+## Card 3: The 70-30 Rule Tracker (WITH ALTITUDE CHECK)
 
 ```
 ┌─────────────────────────────────────────┐
@@ -1391,43 +2334,116 @@ KEY PRINCIPLES:
 ├─────────────────────────────────────────┤
 │                                         │
 │  GIVE (70%):                            │
-│  □ Manifesto post                       │
-│  □ Cognitive science essay              │
-│  □ Free framework                       │
-│  □ No-CTA philosophy drop               │
+│  □ Manifesto post (Level 5 - believers) │
+│  □ Cognitive science essay (L2-4)       │
+│  □ Free framework (L1-3, persona-adj)   │
+│  □ No-CTA philosophy drop (L5)          │
 │                                         │
 │  ASK (30%):                             │
-│  □ Conversion post                      │
-│  □ Quiz/micro-commitment                │
+│  □ Conversion post (L1-3, persona-adj)  │
+│  □ Quiz/micro-commitment (L1-2)         │
+│                                         │
+│  ALTITUDE CHECK:                        │
+│  □ Students: Used L1-2? ✓ / ✗           │
+│  □ Parents: Used L2-3? ✓ / ✗            │
+│  □ Principals: Used L3-4? ✓ / ✗         │
+│  □ Avoided L5 on cold audiences? ✓ / ✗  │
 │                                         │
 │  BALANCE: ___% Give / ___% Ask          │
 │                                         │
 └─────────────────────────────────────────┘
 ```
 
+## Card 4: JTBD Altitude Cheat Sheet (MASTER REFERENCE)
+
+```
+┌─────────────────────────────────────────────────────┐
+│  JTBD ALTITUDE MASTER CHEAT SHEET                   │
+├─────────────────────────────────────────────────────┤
+│                                                     │
+│  STUDENTS (Level 1-2):                              │
+│  ✅ "Ctrl+C, Ctrl+V" (concrete)                     │
+│  ✅ "Copy-pasters get stuck" (pattern)              │
+│  ❌ "Democratize expertise" (too high)              │
+│  ❌ "Navigate AI landscape" (too high)              │
+│                                                     │
+│  PARENTS (Level 2-3):                               │
+│  ✅ "Other parents paying 15K" (pattern)            │
+│  ✅ "Cohort structure works" (framework)            │
+│  ❌ "Extension of consciousness" (too high)         │
+│  ❌ "Revolutionary pedagogy" (too high)             │
+│                                                     │
+│  PRINCIPALS (Level 3-4):                            │
+│  ✅ "Turnkey solution" (framework)                  │
+│  ✅ "Students think WITH AI" (transformation)       │
+│  ❌ "Join the movement" (too philosophical for B2B) │
+│  ✅ Can use L5 IF already aligned                   │
+│                                                     │
+│  BELIEVERS (Level 5):                               │
+│  ✅ "Democratization of expertise" (philosophy)     │
+│  ✅ Use in manifestos, brand building               │
+│  ❌ Don't use on cold audiences                     │
+│                                                     │
+│  THE MASTER TEST:                                   │
+│  "I can't unsee it" = Right altitude ✅             │
+│  "That was interesting" = Too high ❌               │
+│                                                     │
+│  THE GOLDEN RULE:                                   │
+│  You can BELIEVE at Level 5.                        │
+│  You must SPEAK at the JTBD altitude.               │
+│                                                     │
+└─────────────────────────────────────────────────────┘
+```
+
 ---
 
-**END OF FRAMEWORK V2.0**
+**END OF INTEGRATED FRAMEWORK V2.0**
 
-*"Philosophy attracts believers. Method builds credibility. Gears optimize conversion. Ethics protect the brand. Together, they build movements that last."*
+*"Philosophy attracts believers. Method builds credibility. Gears optimize conversion. Ethics protect the brand. Altitude respects the JTBD. Together, they build movements that last."*
 
 ---
 
 **Document Details:**
-- Created by: Sophia, Master Storyteller
+- Created by: Sophia, Master Storyteller (with massive thanks to Trevor for catching the JTBD altitude gap)
 - Date: 2026-01-21
-- Version: 2.0 (Revolutionary Hope Edition)
+- Version: 2.0 INTEGRATED (6-Layer Architecture)
 - Mission: Democratize expertise through AI as extension of consciousness
-- Status: Ready for implementation
+- Status: Complete and ready for implementation
+- Integration: Layer -1 (JTBD × Linguistic Altitude Map) now foundational to all other layers
 
 ---
 
 ## Next Steps
 
-1. **Read The Cartographer's Manifesto** (if not already written, create it)
-2. **Audit existing content** against this framework
-3. **Create content calendar** using 70-30 rule
-4. **Test one piece per content type** (Manifesto, Method, Conversion, Micro)
-5. **Iterate based on resonance + conversion metrics**
+**WORKFLOW: Always start with Layer -1**
 
-The revolution begins with the first word. 🎭✨
+1. **Before writing ANY copy:**
+   - Identify persona (Student/Parent/Principal/Believer)
+   - Map their JTBD altitude (Level 1-2, 2-3, 3-4, or 5)
+   - Use Layer -1 Translation Table to adjust language
+
+2. **Then apply Layers 0-4:**
+   - Layer 0: Voice filter (Revolutionary Hope at appropriate altitude)
+   - Layer 1: Content type + Touch sequencing (altitude-adjusted)
+   - Layer 2: 5 Gears (altitude-aware application)
+   - Layer 3: Ethics check (including altitude respect)
+   - Layer 4: Segmentation (temperature + altitude)
+
+3. **Test every piece:**
+   - Run through Altitude Checklist
+   - Check for "I can't unsee it" response (not "interesting")
+   - Verify Grandma Test (for students/parents)
+
+4. **Audit existing content:**
+   - Review all student-facing copy: Is it Level 1-2?
+   - Review all parent-facing copy: Is it Level 2-3?
+   - Review all principal-facing copy: Is it Level 3-4?
+   - Move Level 5 content to manifesto/believers-only channels
+
+5. **Create persona-specific content calendar:**
+   - Students: 90% Level 1-2, 10% Level 3 (warm only)
+   - Parents: 80% Level 2-3, 20% Level 3-4 (warm only)
+   - Principals: 70% Level 3-4, 30% Level 4-5 (aligned only)
+   - Believers: 100% Level 5 (manifesto content)
+
+The revolution begins with the first word—at the right altitude.
