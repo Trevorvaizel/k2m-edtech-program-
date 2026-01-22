@@ -247,6 +247,101 @@ WHAT THIS TAUGHT ME: [Reflection on thinking growth]
 
 ---
 
+### Guardrail #10: Brand Voice & Altitude Compliance
+
+**Purpose:** Ensures all content respects the "Thinking WITH AI" positioning and JTBD altitude system
+
+**From Brand Framework v3 (Decision 17):**
+
+**Core Brand Positioning:**
+- **"Think WITH AI, not copy FROM it"** - This is the non-negotiable positioning statement
+- **NOT:** "Learn to use AI tools" / "Master ChatGPT" / "Prompt engineering"
+- **IS:** "Build thinking habits" / "Mental models for AI" / "Think in the AI age"
+
+**The Dual Pillars:**
+- **Pillar 1: Democratized Intelligence** - AI makes powerful thinking available to everyone
+- **Pillar 2: Democratized Expertise** - AI collapses knowledge gaps across domains
+- **The Unifying Skill:** Thinking WITH AI unlocks BOTH pillars
+
+**JTBD Altitude System (Layer -1):**
+
+**Level 1 (Ground - Immediate Concrete):**
+- **Target:** Cold students
+- **Language:** "You've done it: Ctrl+C, Ctrl+V" / "Sometimes AI works, sometimes it doesn't"
+- **Emotion:** Recognition ("I feel this")
+- **Use:** Hooks, first-touch content
+
+**Level 2 (Pattern - Observable Truth):**
+- **Target:** Warm students, parents
+- **Language:** "Copy-pasters get stuck. Thinkers thrive." / "The habits you form now follow you forever"
+- **Emotion:** Pattern recognition
+- **Use:** Student body copy, parent awareness
+
+**Level 3 (Framework - System/Structure):**
+- **Target:** Parents, principals, engaged students
+- **Language:** "Mental models for WHEN/HOW/WHY to use AI" / "The cohort structure keeps them accountable"
+- **Emotion:** Curiosity about the system
+- **Use:** Method content, parent conversion
+
+**Level 4 (Transformation - What Becomes Possible):**
+- **Target:** Principals, warm audiences
+- **Language:** "Students learn to think WITH AI, not just copy FROM it" / "Skills that compound across career"
+- **Emotion:** Aspiration to transformation
+- **Use:** Principal pitches, vision content
+
+**Level 5 (Philosophy - Timeless Principle):**
+- **Target:** Believers, manifesto audience, internal alignment
+- **Language:** "AI is the democratization of expertise" / "Extension of consciousness"
+- **Emotion:** Wonder, mission-alignment
+- **Use:** Brand manifesto, fellow educators, AFTER someone is already bought in
+
+**Brand Voice Rules:**
+
+1. **Revolutionary Hope Tone** (60% hope + empowerment, 30% justice + access, 10% wonder + discovery)
+   - Linguistic DNA: "Finally" / "Wield" / "Achieve more" / "Extension of"
+   - AVOID: Fear-based urgency, scarcity tactics, manipulation
+   - **Altitude translation:** Hope must feel attainable, not abstract
+     - Level 1: "Stop feeling confused when you use AI"
+     - Level 2: "The habits that follow you forever"
+     - Level 5: "Wield intelligence like experts"
+
+2. **Emotional Core:** Hope + Empowerment (NOT fear or pressure)
+   - Aspiration-driven, not anxiety-driven
+   - "When you're ready, we're here" (invitational, not aggressive)
+
+3. **Coined Terms (Brand IP) - Must Use Correctly:**
+   - "Mental models for WHEN/HOW/WHY to use AI" - Use at Level 2-3, not Level 1
+   - "Think WITH AI, not copy FROM it" - Universal, works at all levels
+   - "Strategic AI integration" - Level 2-4 only
+   - "Extension of consciousness" - Level 5 ONLY (manifesto content)
+   - "Democratization of expertise" - Level 5 internally, translate to "Give your child what Nairobi kids have" for parents
+
+4. **The Golden Rule:** START LOW, END HIGH
+   - Touch 1 → Level 1-2 (Concrete/Pattern)
+   - Touch 2 → Level 2-3 (Pattern/Framework)
+   - Touch 3 → Level 3-4 (Framework/Transform)
+   - Touch 4 → Level 4-5 (Transform/Philosophy)
+   - **EARN the right to go higher**
+
+**Voice Filter Checklist:**
+- [ ] Does this sound like K2M? (Revolutionary Hope tone)
+- [ ] Uses at least ONE coined term correctly
+- [ ] Balances rigor + empathy
+- [ ] Empowers rather than fear-mongers
+- [ ] Aligns with democratization mission
+- [ ] **NEW:** Matches JTBD altitude for target persona
+- [ ] **NEW:** Would target persona say "I can't unsee it"?
+
+**Guardrail:** Every piece of content—student-facing, parent-facing, principal-facing, internal—MUST:
+1. Reinforce "Think WITH AI" positioning (not "use AI tools")
+2. Match the JTBD altitude of the target audience
+3. Use Revolutionary Hope tone (hope + empowerment, not fear)
+4. Earn higher altitudes through multiple touches
+
+**V3 Integration Reference:** See `_bmad-output/k2m-edtech-brand-artifacts/k2m-brand-conversion-framework-v3.md` for complete brand framework including Layer -2 (Core Concept), Layer -1 (JTBD Altitude), and Layer 0 (Voice Signature).
+
+---
+
 ## GUARDRAIL COMPLIANCE FOR V2 COMPONENTS
 
 ### Epic 2 (6-Week Design & Zone Nodes):
@@ -278,9 +373,9 @@ WHAT THIS TAUGHT ME: [Reflection on thinking growth]
 
 ## SUMMARY: FOUNDATION LOCKED
 
-**Total Guardrails Preserved:** 9
+**Total Guardrails Preserved:** 10
 - 5 from v1 (100% retention rate)
-- 4 new for v2 (agent model, node quality, discord safety, artifact authenticity)
+- 4 new for v2 (agent model, node quality, discord safety, artifact authenticity, brand voice & altitude)
 
 **Purpose Tags:**
 - **Identity Protection:** Guardrails #1, #2
@@ -289,6 +384,7 @@ WHAT THIS TAUGHT ME: [Reflection on thinking growth]
 - **Value Proposition:** Guardrails #5
 - **Framework Purity:** Guardrails #6, #9
 
+**Brand Integrity:** Guardrail #10
 **Compliance Rate:** 100% - All Epic 2-7 components must reference and comply with these guardrails.
 
 ---

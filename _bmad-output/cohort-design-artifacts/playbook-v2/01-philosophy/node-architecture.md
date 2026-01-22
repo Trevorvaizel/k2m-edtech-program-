@@ -357,3 +357,81 @@ Every node must pass these checks before inclusion:
 ---
 
 **Next Story:** 1.4 - Define the 4 Habits branding (interface layer - visible, tangible, graduation-proof)
+
+---
+
+## BRAND LANGUAGE EXAMPLES PER NODE (From Brand Framework v3)
+
+Each node should use altitude-appropriate language from the Brand Framework v3.
+
+### Zone 0→1 Nodes (Wonder) - Use Level 1-2 Language
+
+**Node 0.1 "AI is not sci-fi":**
+- Level 1 hook: "You've been using AI for years without knowing it"
+- Level 2 pattern: "Spotify playlists. Netflix recommendations. These are AI you already use"
+
+**Node 0.2 "People like me use this":**
+- Level 1 hook: "Students like you. Parents like yours. Already using AI"
+- Level 2 pattern: "AI isn't just for tech people. It's for everyone"
+
+**Node 0.3 "I could try this":**
+- Level 1 hook: "Try asking AI for a joke. Or a recipe. Nothing scary"
+- Level 2 pattern: "Start small. No pressure. See what happens"
+
+**Node 0.4 "It's actually fun":**
+- Level 1 hook: "AI wrote a poem about my cat"
+- Level 2 pattern: "Play first. Serious learning comes later"
+
+### Zone 1→2 Nodes (Trust) - Use Level 2 Language
+
+**Node 1.1 "It works for MY tasks":**
+- Level 2: "See how AI responds when you explain YOUR situation"
+
+**Node 1.2 "Wins accumulate":**
+- Level 2: "Small wins add up. You're building momentum"
+
+**Node 1.3 "Errors are recoverable":**
+- Level 2: "Mistakes aren't failures. They're learning steps"
+
+**Node 1.4 "Habit formation":**
+- Level 2: "You just reached for AI automatically. That's a habit"
+
+### Zone 2→3 Nodes (Converse) - Use Level 2-3 Language
+
+**Node 2.1 "Context changes everything":**
+- Level 2: "Watch what happens when you add context"
+- Level 3: "AI responds to YOUR specific situation"
+
+**Node 2.2 "AI is conversation":**
+- Level 2: "Don't just prompt—talk back"
+- Level 3: "AI becomes your thinking partner"
+
+**Node 2.3 "Explaining clarifies":**
+- Level 2: "When you explain to AI, you understand better"
+- Level 3: "Explaining clarifies YOUR thinking"
+
+**Node 2.4 "Iterative refinement":**
+- Level 2: "Each exchange sharpens your understanding"
+- Level 3: "Conversation refines toward precision"
+
+### Zone 3→4 Nodes (Direct) - Use Level 3-4 Language
+
+**Node 3.1 "First draft is raw material":**
+- Level 3: "AI generates → You refine"
+- Level 4: "You're the director. AI provides raw material"
+
+**Node 3.2 "I have opinions":**
+- Level 3: "You're developing taste"
+- Level 4: "You now have standards for quality"
+
+**Node 3.3 "Direction techniques":**
+- Level 3: "Learn to steer AI toward what you want"
+- Level 4: "Directing AI is a skill you now have"
+
+**Node 3.4 "I made this":**
+- Level 3: "From AI draft to your voice"
+- Level 4: "You're the author. AI assisted"
+
+**Key Rule:** Never use Level 5 language ("democratization," "consciousness extension") in node content. Save for manifesto-level philosophy.
+
+**V3 Framework Reference:** See `_bmad-output/k2m-edtech-brand-artifacts/k2m-brand-conversion-framework-v3.md` for complete altitude system, revolutionary hope tone, and coined terms usage.

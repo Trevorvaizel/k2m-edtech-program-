@@ -329,3 +329,96 @@ After self-assessment, require:
 **Philosophy & Framework Module: COMPLETE**
 
 **Next Epic:** Epic 2 - 6-Week Design & Zone Nodes (Module 3)
+
+---
+
+## "THINK WITH AI" POSITIONING (From Brand Framework v3)
+
+**Core Brand Statement (Decision 17):**
+
+The 4 Habits are the practical expression of K2M's core differentiator: **"Think WITH AI, not copy FROM it."**
+
+**What This Means:**
+
+**We DON'T teach:**
+- ❌ "How to use ChatGPT" / "Master prompts" / "Prompt engineering"
+- ❌ "100 ChatGPT tips" / "AI tool training" / "Certification in AI literacy"
+
+**We DO teach:**
+- ✅ "Mental models for WHEN/HOW/WHY to use AI strategically"
+- ✅ "Thinking habits that compound across your entire career"
+- ✅ "How to think WITH AI, not just copy FROM it"
+- ✅ "Building judgment that transfers, not skills that obsolete"
+
+**The Dual Pillars + 4 Habits Integration:**
+
+### Democratized Intelligence (Habits 1 & 2)
+**What it means:** AI makes powerful thinking available to everyone
+- **Habit 1 (Pause before asking):** Clarifies what you want to think about
+- **Habit 2 (Explain context first):** Frames your thinking for better responses
+- **Result:** "I can think through complex problems now"
+
+**Graduation Proof Statement:**
+> "I earned the ⏸️ PAUSE and 🎯 CONTEXT badges. I now know HOW to think clearly with AI."
+
+### Democratized Expertise (Habits 3 & 4)
+**What it means:** AI collapses knowledge gaps across domains
+- **Habit 3 (Change one thing at a time):** Refines knowledge through experimentation
+- **Habit 4 (Use AI before decisions):** Accesses knowledge to inform choices
+- **Result:** "I can access knowledge I don't have"
+
+**Graduation Proof Statement:**
+> "I earned the 🔄 ITERATE and 🧠 THINKING PARTNER badges. I can now tap expertise on demand."
+
+**The Unifying Skill: Thinking WITH AI = Both Pillars Together**
+
+> **"I earned all 4 badges. I can now think clearly AND access expertise. I'm someone who thinks WITH AI."**
+
+**Brand Voice Rules (Revolutionary Hope Tone):**
+
+When talking about the 4 Habits:
+- **Use hope + empowerment**, not fear or pressure
+- **Linguistic DNA:** "Finally" / "Wield" / "Achieve more" / "Follow you forever"
+- **AVOID:** "Get left behind" / "Don't miss out" / "Competitive advantage" (fear-based)
+- **INSTEAD:** "Skills that follow you forever" / "Think clearly with/without AI" / "Build compounding judgment"
+
+**Altitude-Appropriate Language:**
+
+**For Students (Level 1-2):**
+- "Stop copying. Start thinking."
+- "The habits you form now follow you forever."
+- "Copy-pasters get stuck. Thinkers thrive."
+
+**For Parents (Level 2-3):**
+- "Your child will develop skills that compound across their entire career."
+- "These habits transfer to university, internships, and jobs."
+- "By Week 6, you'll see visible proof—not a certificate, actual ability."
+
+**For Principals (Level 3-4):**
+- "Students learn to think WITH AI, not just copy FROM it."
+- "The 4 Habits are thinking skills that transfer across disciplines."
+- "Employers want clear thinkers, not prompt engineers."
+
+**Internal Philosophy (Level 5):**
+- "We're democratizing AI expertise so all students can compete."
+- "AI is the democratization of intelligence AND expertise."
+- "The 4 Habits unlock both pillars: better thinking AND better knowledge access."
+
+**Key Differentiation Statement:**
+
+When anyone asks "What makes K2M different?", the answer is the 4 Habits:
+
+> **"We don't teach AI tools. We teach thinking habits. Copy-pasters get stuck. Thinkers thrive. The 4 Habits—Pause, Context, Iterate, Think First—are skills that follow students forever, through university, internships, and jobs. Tools change. Habits transfer."**
+
+**V3 Framework Reference:** See `_bmad-output/k2m-edtech-brand-artifacts/k2m-brand-conversion-framework-v3.md` for complete "Think WITH AI" positioning, revolutionary hope tone, and coined terms.
+
+**Marketing Language Samples (Epic 7 will expand):**
+
+**Student Hook (Level 1):**
+"You've done it: Ctrl+C, Ctrl+V, submit. It feels productive. But you're not learning. Copy-pasters get stuck in internships. Thinkers thrive. The difference? The 4 Habits that build thinking skills following you forever."
+
+**Parent Value Prop (Level 2-3):**
+"The 4 Habits are what your child actually gains. Not 'AI skills' that obsolete next year. Thinking habits that compound across their entire career. By Week 6, you'll see visible proof."
+
+**Principal Pitch (Level 3-4):**
+"K2M teaches students to think WITH AI, not just copy FROM it. The 4 Habits—Pause, Context, Iterate, Think First—are the foundation. These aren't just AI skills. They're thinking skills that transfer to every discipline. That's the differentiator employers want."

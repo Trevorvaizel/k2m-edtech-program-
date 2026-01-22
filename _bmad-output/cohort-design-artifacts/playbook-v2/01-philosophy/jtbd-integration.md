@@ -290,3 +290,79 @@ If no → It's out.
 ---
 
 **Next Story:** 1.3 - Document node-based learning architecture (structural layer)
+
+---
+
+## JTBD ALTITUDE SYSTEM (From Brand Framework v3)
+
+**Integration with Brand Framework v3 (Decision 17):**
+
+The philosophy we've documented must be expressed at different **abstraction altitudes** depending on the audience. This is not "dumbing down" - it's **respecting attention**.
+
+**The 5-Level Altitude System:**
+
+### Level 1 (Ground - Immediate Concrete)
+- **Target:** Cold students (first touch)
+- **Language examples:**
+  - "You've done it: Ctrl+C, Ctrl+V, submit"
+  - "Sometimes AI works. Sometimes it doesn't."
+  - "Stop feeling confused when you use AI"
+- **Emotion:** Recognition ("I feel this")
+- **Use for:** Zone 0-1 nodes, hooks, first-week content
+
+### Level 2 (Pattern - Observable Truth)
+- **Target:** Warm students, parents
+- **Language examples:**
+  - "Copy-pasters get stuck. Thinkers thrive."
+  - "The habits you form now follow you forever"
+  - "Learn WHEN to use AI and WHEN to think independently"
+- **Emotion:** Pattern recognition
+- **Use for:** Zone 1-2 nodes, student body copy, parent awareness
+
+### Level 3 (Framework - System/Structure)
+- **Target:** Parents, principals, engaged students
+- **Language examples:**
+  - "Mental models for WHEN/HOW/WHY to use AI"
+  - "The cohort structure keeps them accountable"
+  - "K2M teaches strategic AI integration"
+- **Emotion:** Curiosity about the system
+- **Use for:** Zone 2-3 nodes, method content, parent conversion
+
+### Level 4 (Transformation - What Becomes Possible)
+- **Target:** Principals, warm audiences
+- **Language examples:**
+  - "Students learn to think WITH AI, not just copy FROM it"
+  - "Skills that compound across entire career"
+  - "Build mental models that transfer to university"
+- **Emotion:** Aspiration to transformation
+- **Use for:** Zone 3-4 nodes, principal pitches, vision content
+
+### Level 5 (Philosophy - Timeless Principle)
+- **Target:** Believers, manifesto audience, internal alignment
+- **Language examples:**
+  - "AI is the democratization of expertise"
+  - "Extension of consciousness"
+  - "Revolutionary hope for amplified intelligence"
+- **Emotion:** Wonder, mission-alignment
+- **Use for:** Internal philosophy documents, brand manifesto, AFTER someone is already bought in
+
+**The Golden Rule: START LOW, END HIGH**
+
+For any content sequence:
+- Touch 1 → Level 1-2 (Concrete/Pattern)
+- Touch 2 → Level 2-3 (Pattern/Framework)
+- Touch 3 → Level 3-4 (Framework/Transform)
+- Touch 4 → Level 4-5 (Transform/Philosophy)
+- **EARN the right to go higher**
+
+**Key Principle:** Your philosophy can be Level 5. Your copy must match the JTBD altitude.
+
+**Altitude Translation Examples:**
+
+| Philosophy (Level 5) | Students (Level 1-2) | Parents (Level 2-3) | Principals (Level 3-4) |
+|---------------------|----------------------|---------------------|------------------------|
+| "AI democratizes expertise" | "Access knowledge you don't have—yet" | "Give your child what Nairobi kids have" | "Students access expertise across disciplines" |
+| "Extension of consciousness" | "Think through complex problems now" | "Your child will develop lasting skills" | "Students build thinking that transfers" |
+| "Mental models for strategic AI use" | "Learn WHEN to use AI and WHEN to think independently" | "Skills that follow them through university" | "Mental models for WHEN/HOW/WHY to use AI" |
+
+**V3 Framework Reference:** See `_bmad-output/k2m-edtech-brand-artifacts/k2m-brand-conversion-framework-v3.md` for complete JTBD altitude system, copy translation tables, and persona-specific language examples.
