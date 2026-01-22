@@ -15,7 +15,7 @@ total_stories: 35
 epics:
   - id: "epic-0"
     title: "Foundation & Decision Lock"
-    status: "in_progress"
+    status: "completed"
     stories:
       - id: "0.1"
         title: "Create consolidated requirements document"
@@ -23,11 +23,11 @@ epics:
         output: "_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md"
       - id: "0.2"
         title: "Create sprint-status.yaml tracking file"
-        status: "in_progress"
+        status: "completed"
         output: "_bmad-output/cohort-design-artifacts/sprint-status.yaml"
       - id: "0.3"
         title: "Set up output folder structure"
-        status: "pending"
+        status: "completed"
         output: "_bmad-output/cohort-design-artifacts/playbook-v2/"
 
   - id: "epic-1"
@@ -223,10 +223,10 @@ epics:
 
 # Progress Summary
 progress:
-  completed_stories: 1
-  in_progress_stories: 1
-  pending_stories: 33
-  completion_percentage: 3
+  completed_stories: 3
+  in_progress_stories: 0
+  pending_stories: 32
+  completion_percentage: 9
 
 # Decision Tracking
 decisions_implemented:
@@ -293,6 +293,10 @@ decisions_implemented:
   - decision_id: 16
     title: "Manual Workflows for Cohort 1"
     implemented_in: ["epic-5"]
+    status: "pending"
+  - decision_id: 17
+    title: "Dual-Pillar Brand Foundation (Democratized Intelligence + Expertise)"
+    implemented_in: ["epic-1", "epic-2", "epic-3", "epic-4", "epic-6"]
     status: "pending"
 
 # Last Updated

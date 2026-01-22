@@ -32,6 +32,47 @@ A complete, shippable Cohort Playbook v2 that includes:
 | Playbook v1 | `_bmad-output/COMPLETE-COHORT-OPERATIONAL-PLAYBOOK/` | Current system to update |
 | Cartographer's Manifesto | `docs/cartographers_manifesto/` | Philosophy foundation |
 | AI Territory Map | `docs/ai_proficiency_territory_map/` | Zone framework |
+| Brand Conversion Framework V3 | `_bmad-output/k2m-edtech-brand-artifacts/k2m-brand-conversion-framework-v3.md` | Voice/altitude guidance for all content |
+
+---
+
+## Core Brand Philosophy: The Dual Pillars
+
+### Decision 17: Dual-Pillar Brand Foundation
+**Status:** APPROVED
+**Summary:** K2M's brand rests on two complementary concepts that together define the opportunity AI creates
+
+**Pillar 1: Democratized Intelligence**
+- AI makes powerful *thinking capabilities* available to everyone
+- Previously, sophisticated reasoning required years of training or innate talent
+- Now anyone can access structured thinking, analysis, synthesis
+- *Student experience:* "I can think through complex problems now"
+
+**Pillar 2: Democratized Expertise**
+- AI collapses the *knowledge gap* across domains
+- Previously, expertise required years of study in specific fields
+- Now anyone can tap into specialized knowledge instantly
+- *Student experience:* "I can access knowledge I don't have"
+
+**The Unifying Skill: Thinking WITH AI**
+- This is what K2M teaches - the capability that unlocks both pillars
+- Not just using AI, but developing a *thinking partnership*
+- The 4 Habits are the practical expression of this skill
+
+**Application Across Content:**
+
+| Content Type | How Both Pillars Apply |
+|--------------|------------------------|
+| Zone Nodes | Each node can emphasize intelligence (thinking) or expertise (knowledge) aspects |
+| CIS Agents | Framer/Challenger = intelligence; Explorer/Synthesizer = expertise |
+| Daily Prompts | Alternate between "think better" and "know more" angles |
+| NotebookLM Pods | Frame each zone shift in terms of both capabilities gained |
+| Artifact | Demonstrate both enhanced thinking AND accessed expertise |
+
+**Why Both Matter:**
+- Intelligence alone = powerful thinking but limited scope
+- Expertise alone = broad knowledge but shallow application
+- Together = students become genuinely more capable across any domain
 
 ---
 
