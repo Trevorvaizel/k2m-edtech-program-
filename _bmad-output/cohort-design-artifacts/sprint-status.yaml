@@ -1,0 +1,300 @@
+# Sprint Status: Cohort Playbook v2 Creation
+# Created: 2026-01-22
+# Source: cohort-playbook-v2-requirements.md
+
+project_name: "K2M Cohort Playbook v2"
+requirements_doc: "_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md"
+output_folder: "_bmad-output/cohort-design-artifacts/playbook-v2"
+
+# Sprint Overview
+sprint_goal: "Create complete, shippable Cohort Playbook v2 with all support documents"
+total_epics: 7
+total_stories: 35
+
+# Epic Status Tracking
+epics:
+  - id: "epic-0"
+    title: "Foundation & Decision Lock"
+    status: "in_progress"
+    stories:
+      - id: "0.1"
+        title: "Create consolidated requirements document"
+        status: "completed"
+        output: "_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md"
+      - id: "0.2"
+        title: "Create sprint-status.yaml tracking file"
+        status: "in_progress"
+        output: "_bmad-output/cohort-design-artifacts/sprint-status.yaml"
+      - id: "0.3"
+        title: "Set up output folder structure"
+        status: "pending"
+        output: "_bmad-output/cohort-design-artifacts/playbook-v2/"
+
+  - id: "epic-1"
+    title: "Philosophy & Framework (Module 2)"
+    status: "pending"
+    stories:
+      - id: "1.1"
+        title: "Review and preserve core guardrails from v1"
+        status: "pending"
+        output: "playbook-v2/01-philosophy/guardrails-preserved.md"
+      - id: "1.2"
+        title: "Integrate JTBD identity transformation focus"
+        status: "pending"
+        output: "playbook-v2/01-philosophy/jtbd-integration.md"
+      - id: "1.3"
+        title: "Document node-based learning architecture"
+        status: "pending"
+        output: "playbook-v2/01-philosophy/node-architecture.md"
+      - id: "1.4"
+        title: "Define the 4 Habits branding"
+        status: "pending"
+        output: "playbook-v2/01-philosophy/four-habits-brand.md"
+
+  - id: "epic-2"
+    title: "6-Week Design & Zone Nodes (Module 3)"
+    status: "pending"
+    stories:
+      - id: "2.1"
+        title: "Define Week 1 (Wonder) complete design + nodes"
+        status: "pending"
+        output: "playbook-v2/02-weekly-design/week-1-wonder.md"
+      - id: "2.2"
+        title: "Define Week 2 (Trust) complete design + nodes"
+        status: "pending"
+        output: "playbook-v2/02-weekly-design/week-2-trust.md"
+      - id: "2.3"
+        title: "Define Week 3 (Converse) complete design + nodes"
+        status: "pending"
+        output: "playbook-v2/02-weekly-design/week-3-converse.md"
+      - id: "2.4"
+        title: "Define Week 4 (Direct) complete design + nodes"
+        status: "pending"
+        output: "playbook-v2/02-weekly-design/week-4-direct.md"
+      - id: "2.5"
+        title: "Define Weeks 5-6 (Artifact Creation) design"
+        status: "pending"
+        output: "playbook-v2/02-weekly-design/weeks-5-6-artifact.md"
+      - id: "2.6"
+        title: "Create node content checklist per zone"
+        status: "pending"
+        output: "playbook-v2/02-weekly-design/node-content-checklist.md"
+
+  - id: "epic-3"
+    title: "Session Scripts & Content (Module 5)"
+    status: "pending"
+    stories:
+      - id: "3.1"
+        title: "Create Trevor live session format + scripts"
+        status: "pending"
+        output: "playbook-v2/03-sessions/trevor-session-scripts.md"
+      - id: "3.2"
+        title: "Create NotebookLM master prompt for Zone 0→1"
+        status: "pending"
+        output: "playbook-v2/03-sessions/notebooklm-prompt-zone-0-1.md"
+      - id: "3.3"
+        title: "Create NotebookLM master prompt for Zone 1→2"
+        status: "pending"
+        output: "playbook-v2/03-sessions/notebooklm-prompt-zone-1-2.md"
+      - id: "3.4"
+        title: "Create NotebookLM master prompt for Zone 2→3"
+        status: "pending"
+        output: "playbook-v2/03-sessions/notebooklm-prompt-zone-2-3.md"
+      - id: "3.5"
+        title: "Create NotebookLM master prompt for Zone 3→4"
+        status: "pending"
+        output: "playbook-v2/03-sessions/notebooklm-prompt-zone-3-4.md"
+      - id: "3.6"
+        title: "Create daily async prompt library (30 prompts)"
+        status: "pending"
+        output: "playbook-v2/03-sessions/daily-prompt-library.md"
+
+  - id: "epic-4"
+    title: "CIS Agent System"
+    status: "pending"
+    stories:
+      - id: "4.1"
+        title: "Define CIS Controller logic"
+        status: "pending"
+        output: "playbook-v2/04-cis-agents/controller-logic.md"
+      - id: "4.2"
+        title: "Create The Framer agent prompt"
+        status: "pending"
+        output: "playbook-v2/04-cis-agents/agent-framer.md"
+      - id: "4.3"
+        title: "Create The Explorer agent prompt"
+        status: "pending"
+        output: "playbook-v2/04-cis-agents/agent-explorer.md"
+      - id: "4.4"
+        title: "Create The Challenger agent prompt"
+        status: "pending"
+        output: "playbook-v2/04-cis-agents/agent-challenger.md"
+      - id: "4.5"
+        title: "Create The Synthesizer agent prompt"
+        status: "pending"
+        output: "playbook-v2/04-cis-agents/agent-synthesizer.md"
+      - id: "4.6"
+        title: "Design artifact creation flow (/create-artifact)"
+        status: "pending"
+        output: "playbook-v2/04-cis-agents/artifact-creation-flow.md"
+      - id: "4.7"
+        title: "Create Discord bot technical specification"
+        status: "pending"
+        output: "playbook-v2/04-cis-agents/discord-bot-spec.md"
+
+  - id: "epic-5"
+    title: "Discord Architecture & Operations (Modules 4, 11)"
+    status: "pending"
+    stories:
+      - id: "5.1"
+        title: "Design new Discord server structure"
+        status: "pending"
+        output: "playbook-v2/05-discord-ops/discord-architecture.md"
+      - id: "5.2"
+        title: "Define #thinking-lab channel setup"
+        status: "pending"
+        output: "playbook-v2/05-discord-ops/thinking-lab-setup.md"
+      - id: "5.3"
+        title: "Define #thinking-showcase channel setup"
+        status: "pending"
+        output: "playbook-v2/05-discord-ops/thinking-showcase-setup.md"
+      - id: "5.4"
+        title: "Create Google Forms diagnostic"
+        status: "pending"
+        output: "playbook-v2/05-discord-ops/diagnostic-form-spec.md"
+      - id: "5.5"
+        title: "Create tracking Sheets templates"
+        status: "pending"
+        output: "playbook-v2/05-discord-ops/sheets-templates.md"
+      - id: "5.6"
+        title: "Write manual workflow SOPs"
+        status: "pending"
+        output: "playbook-v2/05-discord-ops/manual-sops.md"
+
+  - id: "epic-6"
+    title: "Artifact System & Measurement (Modules 10, 12)"
+    status: "pending"
+    stories:
+      - id: "6.1"
+        title: "Create Thinking Artifact template"
+        status: "pending"
+        output: "playbook-v2/06-artifacts/thinking-artifact-template.md"
+      - id: "6.2"
+        title: "Create artifact showcase format"
+        status: "pending"
+        output: "playbook-v2/06-artifacts/showcase-format.md"
+      - id: "6.3"
+        title: "Define new success metrics (thinking demonstration)"
+        status: "pending"
+        output: "playbook-v2/06-artifacts/success-metrics.md"
+      - id: "6.4"
+        title: "Create shift verification questions for artifact"
+        status: "pending"
+        output: "playbook-v2/06-artifacts/shift-verification.md"
+      - id: "6.5"
+        title: "Design parent reporting format"
+        status: "pending"
+        output: "playbook-v2/06-artifacts/parent-reporting.md"
+      - id: "6.6"
+        title: "Create 4 Habits graduation card"
+        status: "pending"
+        output: "playbook-v2/06-artifacts/four-habits-card.md"
+
+  - id: "epic-7"
+    title: "Final Assembly & Validation"
+    status: "pending"
+    stories:
+      - id: "7.1"
+        title: "Assemble all modules into Playbook v2"
+        status: "pending"
+        output: "playbook-v2/COHORT-PLAYBOOK-V2-COMPLETE.md"
+      - id: "7.2"
+        title: "Cross-reference all decisions are implemented"
+        status: "pending"
+        output: "playbook-v2/decision-implementation-checklist.md"
+      - id: "7.3"
+        title: "Validate completeness against requirements doc"
+        status: "pending"
+        output: "playbook-v2/validation-report.md"
+      - id: "7.4"
+        title: "Create quick-start guide for Trevor"
+        status: "pending"
+        output: "playbook-v2/QUICK-START-GUIDE.md"
+
+# Progress Summary
+progress:
+  completed_stories: 1
+  in_progress_stories: 1
+  pending_stories: 33
+  completion_percentage: 3
+
+# Decision Tracking
+decisions_implemented:
+  - decision_id: 1
+    title: "Adopt Agent-Facilitated Model"
+    implemented_in: ["epic-1", "epic-4", "epic-5"]
+    status: "pending"
+  - decision_id: 2
+    title: "Accept 90/10 Hybrid Model"
+    implemented_in: ["epic-3", "epic-5"]
+    status: "pending"
+  - decision_id: 3
+    title: "Accept Shift Rate Trade-off"
+    implemented_in: ["epic-1", "epic-6"]
+    status: "pending"
+  - decision_id: 4
+    title: "Zone 2-3 is Valid Outcome"
+    implemented_in: ["epic-2", "epic-6"]
+    status: "pending"
+  - decision_id: 5
+    title: "Add Proof-of-Work to Self-Assessment"
+    implemented_in: ["epic-2", "epic-6"]
+    status: "pending"
+  - decision_id: 6
+    title: "The Explainer (evolved to nodes)"
+    implemented_in: ["epic-2", "epic-3"]
+    status: "pending"
+  - decision_id: 7
+    title: "Defer Context Engine"
+    implemented_in: ["epic-5"]
+    status: "pending"
+  - decision_id: 8
+    title: "NotebookLM for Node Content"
+    implemented_in: ["epic-3"]
+    status: "pending"
+  - decision_id: 9
+    title: "Trevor as Live Facilitator"
+    implemented_in: ["epic-3"]
+    status: "pending"
+  - decision_id: 10
+    title: "Node-Based Learning Architecture"
+    implemented_in: ["epic-1", "epic-2"]
+    status: "pending"
+  - decision_id: 11
+    title: "CIS Agent System for Discord"
+    implemented_in: ["epic-4"]
+    status: "pending"
+  - decision_id: 12
+    title: "Hybrid Discord Model"
+    implemented_in: ["epic-5"]
+    status: "pending"
+  - decision_id: 13
+    title: "Thinking Artifact (JTBD)"
+    implemented_in: ["epic-6"]
+    status: "pending"
+  - decision_id: 14
+    title: "Artifact in Last 2 Weeks"
+    implemented_in: ["epic-2", "epic-6"]
+    status: "pending"
+  - decision_id: 15
+    title: "Simplified Tech Stack"
+    implemented_in: ["epic-5"]
+    status: "pending"
+  - decision_id: 16
+    title: "Manual Workflows for Cohort 1"
+    implemented_in: ["epic-5"]
+    status: "pending"
+
+# Last Updated
+last_updated: "2026-01-22"
+updated_by: "Party Mode Session"
