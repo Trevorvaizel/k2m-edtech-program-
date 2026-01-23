@@ -17,14 +17,21 @@ This document consolidates all decisions from the Cohort Facilitation Redesign p
 **The Product Being Built:**
 A complete, shippable Cohort Playbook v2 that includes:
 1. Updated philosophy and guardrails
-2. New 6-week design with zone nodes
-3. CIS agent system for Discord
+2. New 8-week design with zone nodes (extended from 6 weeks for deeper transformation)
+3. CIS agent system for Discord (introduced gradually from Week 1)
 4. Thinking Artifact graduation requirement
 5. All support documents, prompts, and templates
+
+**Timeline Decision (Locked 2026-01-23):**
+- Original proposal: 6 weeks (compressed transformation)
+- **APPROVED:** 8 weeks (deeper transformation, aligns with node architecture)
+- Rationale: JTBD emotional job ("stop feeling anxious") requires adequate dwell time for identity shifts to stabilize
 
 ---
 
 ## Source Documents
+
+### External Source Documents (Pre-Existing)
 
 | Document | Location | Purpose |
 |----------|----------|---------|
@@ -33,6 +40,41 @@ A complete, shippable Cohort Playbook v2 that includes:
 | Cartographer's Manifesto | `docs/cartographers_manifesto/` | Philosophy foundation |
 | AI Territory Map | `docs/ai_proficiency_territory_map/` | Zone framework |
 | Brand Conversion Framework V3 | `_bmad-output/k2m-edtech-brand-artifacts/k2m-brand-conversion-framework-v3.md` | Voice/altitude guidance for all content |
+
+### Foundation Documents (Epic 0 & Epic 1 Outputs)
+
+**CRITICAL:** All subsequent epics (2-7) MUST reference and build upon these foundational documents. These are not optional context—they are the load-bearing walls that define the entire v2 system.
+
+| Epic | Story | Document | Location | Purpose |
+|------|-------|----------|----------|---------|
+| **Epic 0** | 0.1 | Requirements Document (this file) | `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md` | Master requirements - single source of truth |
+| **Epic 0** | 0.2 | Sprint Status Tracker | `_bmad-output/cohort-design-artifacts/sprint-status.yaml` | Progress tracking across all epics |
+| **Epic 1** | 1.1 | Core Guardrails - Preserved & Enhanced | `playbook-v2/01-philosophy/guardrails-preserved.md` | 10 guardrails that protect framework purity, student safety, and scalability |
+| **Epic 1** | 1.2 | JTBD Identity Transformation Integration | `playbook-v2/01-philosophy/jtbd-integration.md` | Zones as identity shifts, emotional/social jobs, philosophy principles |
+| **Epic 1** | 1.3 | Node-Based Learning Architecture | `playbook-v2/01-philosophy/node-architecture.md` | Mental lattice framework, 16 nodes (4 per zone), node design principles |
+| **Epic 1** | 1.4 | The 4 Habits Branding | `playbook-v2/01-philosophy/four-habits-brand.md` | 4 Habits as graduation proof, icons/taglines, Dual Pillars integration |
+
+**Foundation Summary:**
+
+**Epic 0 (Foundation & Decision Lock)** ✅ COMPLETE:
+- Created the project infrastructure and requirements tracking
+- Established single source of truth (this document)
+- Set up sprint-status.yaml for progress monitoring
+
+**Epic 1 (Philosophy & Framework)** ✅ COMPLETE:
+- **Guardrails (10 total):** Define what we NEVER do, what we ALWAYS do, and v2-specific rules for agent model, node quality, Discord safety, artifact authenticity, and brand voice compliance
+- **JTBD Integration:** Maps zones to identity shifts (outsider→observer→experimenter→collaborator→director), connects to functional/emotional/social jobs
+- **Node Architecture:** 16 nodes across 4 zone transitions (0→1, 1→2, 2→3, 3→4), each targeting one identity shift + one emotional job + one 4 Habit
+- **4 Habits Branding:** Pause ⏸️, Context 🎯, Iterate 🔄, Think First 🧠 - visible, tangible graduation-proof that serves JTBD social job
+
+**All Future Work (Epics 2-7) Must:**
+1. Reference relevant guardrails from Epic 1.1
+2. Honor zone-to-identity-shift mapping from Epic 1.2
+3. Use node architecture from Epic 1.3 for all content design
+4. Reinforce 4 Habits from Epic 1.4 across all touchpoints
+5. Track progress in Epic 0's sprint-status.yaml
+
+**These documents are NON-NEGOTIABLE foundation.** Any design decision that contradicts these foundations without explicit update to Epic 1 outputs is invalid.
 
 ---
 
@@ -198,16 +240,29 @@ A complete, shippable Cohort Playbook v2 that includes:
 4. "I made this" → Identity shift to director
 
 #### Decision 11: CIS Agent System for Discord
-**Status:** APPROVED
-**Summary:** Structured thinking agents that guide students through artifact creation
+**Status:** APPROVED (Updated 2026-01-23)
+**Summary:** Structured thinking agents introduced GRADUALLY from Week 1, not just for artifact creation
 
 **Agent Roles:**
-| Role | Command | Function |
-|------|---------|----------|
-| The Framer | /frame | Clarifies the question |
-| The Explorer | /diverge | Pushes ideas without judgment |
-| The Challenger | /challenge | Stress-tests assumptions |
-| The Synthesizer | /synthesize | Helps write clearly |
+| Role | Command | Function | Introduction Week |
+|------|---------|----------|-------------------|
+| The Framer | /frame | Clarifies the question | Week 1 (practice mode) |
+| The Explorer | /diverge | Pushes ideas without judgment | Week 4 |
+| The Challenger | /challenge | Stress-tests assumptions | Week 4 |
+| The Synthesizer | /synthesize | Helps write clearly | Week 6 |
+
+**Graduated Introduction Plan (NEW):**
+- **Week 1:** `/frame` available in "practice mode" - scaffolds Habit 1 (Pause before asking)
+- **Weeks 2-3:** `/frame` continues + introduces context prompting - scaffolds Habit 2
+- **Weeks 4-5:** Full CIS suite (`/frame`, `/diverge`, `/challenge`) - scaffolds Habit 3
+- **Weeks 6-7:** `/synthesize` added - scaffolds Habit 4, artifact creation begins
+- **Week 8:** Full artifact completion using all four agents
+
+**Rationale for Early Introduction:**
+- CIS agents scaffold the 4 Habits as students learn them (not just at artifact time)
+- Reduces facilitator burden from Week 1 (aligned with automation goals)
+- Students practice with tools before high-stakes artifact creation
+- Creates familiar "thinking partners" by the time artifact matters
 
 **Controller Logic:**
 - Interprets student input
@@ -271,9 +326,12 @@ WHAT THIS TAUGHT ME:
 ```
 
 #### Decision 14: Artifact Timeline
-**Status:** APPROVED
-**Summary:** Artifact in last 2 weeks (Weeks 5-6)
+**Status:** APPROVED (Updated 2026-01-23 for 8-week timeline)
+**Summary:** Artifact creation in Weeks 6-7, completion and showcase in Week 8
 **Nature:** Required graduation deliverable
+**Updated Timeline:**
+- Weeks 6-7: Artifact creation begins (all CIS agents available)
+- Week 8: Artifact completion, polish, and public showcase
 
 ---
 
@@ -373,15 +431,24 @@ K2M occupies the Dominant Strategy quadrant:
 - 1.3: Document node-based learning architecture
 - 1.4: Define the 4 Habits branding
 
-### Epic 2: 6-Week Design & Zone Nodes (Module 3)
-**Goal:** Complete week-by-week design with node specifications
+### Epic 2: 8-Week Design & Zone Nodes (Module 3)
+**Goal:** Complete week-by-week design with node specifications (8 weeks for deeper transformation)
 **Stories:**
-- 2.1: Define Week 1 (Wonder) complete design + nodes
-- 2.2: Define Week 2 (Trust) complete design + nodes
-- 2.3: Define Week 3 (Converse) complete design + nodes
-- 2.4: Define Week 4 (Direct) complete design + nodes
-- 2.5: Define Weeks 5-6 (Artifact Creation) design
+- 2.1: Define Week 1 (Wonder) complete design + nodes + /frame introduction ✅ COMPLETE
+- 2.2: Define Weeks 2-3 (Trust) complete design + nodes
+- 2.3: Define Weeks 4-5 (Converse) complete design + nodes + full CIS suite
+- 2.4: Define Weeks 6-7 (Direct) complete design + nodes + artifact start
+- 2.5: Define Week 8 (Artifact Completion & Showcase) design
 - 2.6: Create node content checklist per zone
+
+**8-Week Timeline:**
+| Week | Zone Shift | Habit Focus | CIS Agents Available |
+|------|-----------|-------------|---------------------|
+| 1 | 0→1 (Wonder) | Habit 1: Pause | /frame (practice mode) |
+| 2-3 | 1→2 (Trust) | Habit 2: Context | /frame |
+| 4-5 | 2→3 (Converse) | Habit 3: Iterate | /frame, /diverge, /challenge |
+| 6-7 | 3→4 (Direct) | Habit 4: Think First | All + /synthesize, artifact begins |
+| 8 | Consolidation | All 4 Habits | All, artifact completion |
 
 ### Epic 3: Session Scripts & Content (Module 5)
 **Goal:** Trevor-facilitated session scripts + NotebookLM master prompts

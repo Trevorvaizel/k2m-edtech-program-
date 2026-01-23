@@ -342,6 +342,57 @@ WHAT THIS TAUGHT ME: [Reflection on thinking growth]
 
 ---
 
+### Guardrail #11: JTBD-Relevant Examples
+
+**Purpose:** Ensures all examples match the audience's actual life context and serve real jobs-to-be-done
+
+**The Problem This Solves:** Generic or juvenile examples (cat poems, silly nicknames) don't serve the emotional job of pre-university students who are anxious about their futures. Examples must feel relevant to their life transition.
+
+**Rule:** Every node example must pass the "Would this matter to them?" test:
+1. Does this example address a real concern in their life transition?
+2. Would they see themselves in this scenario?
+3. Could they explain to their parents why this matters?
+4. Does it serve functional, emotional, OR social JTBD?
+
+**For Pre-University Students (Primary Audience - Cohort 1):**
+
+**Their Life Context:**
+- Transitioning from high school to university
+- Anxious about academic performance and career direction
+- Want to prove themselves to parents
+- Need skills that transfer to "real" situations
+
+**APPROVED Example Categories:**
+- ✅ University applications, essay brainstorming, course selection
+- ✅ Study techniques, exam preparation, understanding complex topics
+- ✅ Career exploration, internship questions, CV thinking
+- ✅ Decision-making about their future
+- ✅ Understanding topics they'll encounter in university
+- ✅ Processing anxiety about transitions
+
+**PROHIBITED Example Categories:**
+- ❌ Pet poems, random jokes, silly scenarios
+- ❌ Trivial games that don't connect to their concerns
+- ❌ Examples that feel "middle school" level
+- ❌ Anything a parent would see as "wasting time"
+
+**Scaling Consideration (Future Audiences):**
+
+When expanding to other audiences, examples MUST flex to their life contexts while node CONCEPTS stay constant:
+
+| Audience | Life Context | Example Categories |
+|----------|--------------|-------------------|
+| Pre-University | University transition, career anxiety | Applications, study, career exploration |
+| University Students | Academic pressure, internships | Research, projects, professional skills |
+| Early-Career Professionals | Job performance, career growth | Work tasks, presentations, skill development |
+| Corporate Teams | Productivity, collaboration | Meeting prep, project work, communication |
+
+**The Principle:** Fun comes from RELEVANCE, not silliness. A pre-university student finds it "fun" when AI helps them explore careers they're genuinely curious about - not when it writes cat poems.
+
+**Implementation:** Node STRUCTURE stays constant across audiences. Example SETS are swapped based on target segment. NotebookLM master prompts (Epic 3) must include audience-specific example libraries.
+
+---
+
 ## GUARDRAIL COMPLIANCE FOR V2 COMPONENTS
 
 ### Epic 2 (6-Week Design & Zone Nodes):

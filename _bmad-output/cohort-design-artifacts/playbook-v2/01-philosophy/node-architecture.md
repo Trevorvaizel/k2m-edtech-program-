@@ -47,10 +47,11 @@
 
 ## THE 4-ZONE NODE SYSTEM
 
-### Zone 0→1 Nodes (Wonder Week 1)
+### Zone 0→1 Nodes (Wonder - Week 1)
 **Theme:** From outsider to observer
 **Emotional Job:** Belonging ("Maybe this is for me")
 **4 Habits Focus:** Pause before asking (Habit 1)
+**CIS Agent:** /frame available in practice mode
 
 **Node 0.1: "AI is not sci-fi—it's here"**
 - **Concept:** Witnessing AI in everyday life (email spam filters, Netflix recommendations, Spotify playlists)
@@ -78,10 +79,11 @@
 
 ---
 
-### Zone 1→2 Nodes (Trust Weeks 2-3)
+### Zone 1→2 Nodes (Trust - Weeks 2-3)
 **Theme:** From observer to experimenter
 **Emotional Job:** Confidence ("I'm not terrible at this!")
 **4 Habits Focus:** Explain context first (Habit 2)
+**CIS Agent:** /frame continues (building familiarity)
 
 **Node 1.1: "It actually works for MY tasks"**
 - **Concept:** Contrast experience (vague prompt vs. rich context)
@@ -109,10 +111,11 @@
 
 ---
 
-### Zone 2→3 Nodes (Converse Weeks 4-5)
+### Zone 2→3 Nodes (Converse - Weeks 4-5)
 **Theme:** From experimenter to collaborator
 **Emotional Job:** Companionship ("I have a thinking partner")
 **4 Habits Focus:** Change one thing at a time (Habit 3)
+**CIS Agents:** Full suite introduced (/frame, /diverge, /challenge)
 
 **Node 2.1: "Context changes everything"**
 - **Concept:** Vague vs. rich comparison (same question, different context = different answer)
@@ -140,10 +143,11 @@
 
 ---
 
-### Zone 3→4 Nodes (Direct Week 6)
+### Zone 3→4 Nodes (Direct - Weeks 6-7, Artifact in Week 8)
 **Theme:** From collaborator to director
 **Emotional Job:** Ownership ("I have opinions about quality")
 **4 Habits Focus:** Use AI before decisions (Habit 4)
+**CIS Agents:** All agents + /synthesize for artifact creation
 
 **Node 3.1: "First draft is raw material"**
 - **Concept:** Iteration mindset (AI generates → you refine)
@@ -240,29 +244,122 @@
 
 ## NODE LATTICE ACCUMULATION
 
-### How Nodes Build on Each Other
+### How Nodes Build on Each Other (8-Week Timeline)
 
-**Week 1 (Wonder):**
+**Week 1 (Wonder) - /frame introduced:**
 - Node 0.1 → Node 0.2 → Node 0.3 → Node 0.4
-- **Accumulation:** "I see AI" → "People like me use it" → "I can try" → "It's fun"
+- **Accumulation:** "I see AI" → "People like me use it" → "I can try" → "It's engaging"
 - **Identity Result:** "I'm someone who's curious about AI"
+- **CIS Practice:** Students try /frame to practice pausing and clarifying
 
-**Week 2-3 (Trust):**
+**Weeks 2-3 (Trust) - /frame continues:**
 - Node 1.1 → Node 1.2 → Node 1.3 → Node 1.4
 - **Accumulation:** "It works for me" → "I'm getting better" → "Mistakes are okay" → "It's a habit"
 - **Identity Result:** "I'm someone who uses AI regularly"
+- **CIS Practice:** Students use /frame with context-rich questions
 
-**Week 4-5 (Converse):**
+**Weeks 4-5 (Converse) - Full CIS suite:**
 - Node 2.1 → Node 2.2 → Node 2.3 → Node 2.4
 - **Accumulation:** "Context matters" → "It's a conversation" → "I think through AI" → "We iterate together"
 - **Identity Result:** "I'm someone who collaborates with AI"
+- **CIS Practice:** /frame, /diverge, /challenge available for exploration
 
-**Week 6 (Direct):**
+**Weeks 6-7 (Direct) - All agents + artifact begins:**
 - Node 3.1 → Node 3.2 → Node 3.3 → Node 3.4
 - **Accumulation:** "Drafts are raw material" → "I have standards" → "I can direct" → "I made this"
 - **Identity Result:** "I'm someone who directs AI intentionally"
+- **CIS Practice:** All agents including /synthesize, artifact creation begins
 
-**Final Identity:** "I'm someone who thinks with AI"
+**Week 8 (Consolidation & Showcase):**
+- Artifact completion and polish
+- Public showcase in #thinking-showcase
+- 4 Habits graduation card awarded
+- **Final Identity:** "I'm someone who thinks with AI"
+
+---
+
+## AUDIENCE-APPROPRIATE EXAMPLE FRAMEWORK (Guardrail #11)
+
+**Core Principle:** Node STRUCTURE stays constant across audiences. Example SETS flex based on target segment.
+
+### Why This Matters
+
+The same node concept ("It's actually fun") means different things to different audiences:
+- **Pre-university student:** "Fun" = exploring careers, understanding their future, reducing anxiety
+- **Corporate employee:** "Fun" = solving a work problem, impressing their team, learning something useful
+- **Early-career professional:** "Fun" = advancing their career, building skills, standing out
+
+Generic examples (cat poems, silly scenarios) don't serve ANY audience's real jobs-to-be-done.
+
+### Example Sets by Audience
+
+#### Pre-University Students (Primary - Cohort 1)
+
+**Their JTBD:**
+- Functional: "Help me move from confusion to clarity before university"
+- Emotional: "Help me stop feeling anxious and start feeling like I belong"
+- Social: "Give me proof I can show to myself, my parents, and my future"
+
+**Example Categories:**
+| Node | Generic (WRONG) | JTBD-Aligned (RIGHT) |
+|------|-----------------|----------------------|
+| 0.1 "AI is here" | "Netflix recommendations" | "Study apps you use, career websites" |
+| 0.2 "People like me" | "Random adults" | "Students applying to university, Form 4 leavers" |
+| 0.3 "I could try" | "Cat jokes, toast recipes" | "Understand a topic, explore a career" |
+| 0.4 "It's engaging" | "Cat poems, nicknames" | "Career exploration, essay brainstorming, processing anxiety" |
+
+#### University Students (Future Expansion)
+
+**Their JTBD:**
+- Functional: "Help me succeed academically and prepare for internships"
+- Emotional: "Help me feel capable despite imposter syndrome"
+- Social: "Help me stand out to employers and peers"
+
+**Example Categories:**
+| Node | Example Focus |
+|------|---------------|
+| 0.1 "AI is here" | Research tools, citation helpers, academic writing aids |
+| 0.2 "People like me" | Students in their major, successful interns |
+| 0.3 "I could try" | Summarize a paper, outline a project, prep for interview |
+| 0.4 "It's engaging" | Research brainstorming, thesis exploration, internship applications |
+
+#### Early-Career Professionals (Future Expansion)
+
+**Their JTBD:**
+- Functional: "Help me perform better at work and grow my career"
+- Emotional: "Help me feel confident in meetings and with leadership"
+- Social: "Help me be seen as capable and forward-thinking"
+
+**Example Categories:**
+| Node | Example Focus |
+|------|---------------|
+| 0.1 "AI is here" | Work tools, email assistants, meeting summaries |
+| 0.2 "People like me" | Professionals in their field, people at their level |
+| 0.3 "I could try" | Draft an email, prep for a meeting, understand a report |
+| 0.4 "It's engaging" | Presentation brainstorming, skill development, problem-solving |
+
+#### Corporate Teams (Future Expansion)
+
+**Their JTBD:**
+- Functional: "Help us work more efficiently as a team"
+- Emotional: "Help us feel capable of adapting to change"
+- Social: "Help us demonstrate value to leadership"
+
+**Example Categories:**
+| Node | Example Focus |
+|------|---------------|
+| 0.1 "AI is here" | Team tools, project management AI, collaboration aids |
+| 0.2 "People like me" | Teams in similar industries, competitor companies |
+| 0.3 "I could try" | Summarize meeting notes, draft project brief, analyze data |
+| 0.4 "It's engaging" | Strategic brainstorming, innovation sessions, team problem-solving |
+
+### Implementation for NotebookLM Prompts (Epic 3)
+
+When creating NotebookLM master prompts, include:
+1. **Audience identifier** - Which segment is this for?
+2. **Example library** - Segment-specific scenarios only
+3. **JTBD reference** - Which job does each example serve?
+4. **Anti-examples** - What NOT to include (generic/juvenile examples)
 
 ---
 
@@ -299,6 +396,15 @@ Every node must pass these checks before inclusion:
 - [ ] After this node, can student say "I'm someone who..."?
 - [ ] Is the shift specific, not generic?
 - [ ] Does the shift feel earned, not declared?
+
+### JTBD Relevance Check (Guardrail #11)
+- [ ] Does this example address a REAL concern in their life transition?
+- [ ] Would a parent say "Yes, that's valuable for my child"?
+- [ ] Does the example serve functional, emotional, OR social job?
+- [ ] Is the example age-appropriate AND life-stage appropriate?
+- [ ] Could this example be used in a conversation with a university interviewer?
+- [ ] Is this example from the APPROVED categories for this audience segment?
+- [ ] Does this AVOID the PROHIBITED categories (cat poems, silly scenarios, juvenile games)?
 
 ---
 

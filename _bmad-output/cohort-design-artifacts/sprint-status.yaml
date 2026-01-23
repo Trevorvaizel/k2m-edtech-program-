@@ -52,29 +52,29 @@ epics:
         output: "playbook-v2/01-philosophy/four-habits-brand.md"
 
   - id: "epic-2"
-    title: "6-Week Design & Zone Nodes (Module 3)"
-    status: "pending"
+    title: "8-Week Design & Zone Nodes (Module 3)"
+    status: "in_progress"
     stories:
       - id: "2.1"
         title: "Define Week 1 (Wonder) complete design + nodes"
-        status: "pending"
+        status: "completed"
         output: "playbook-v2/02-weekly-design/week-1-wonder.md"
       - id: "2.2"
-        title: "Define Week 2 (Trust) complete design + nodes"
-        status: "pending"
-        output: "playbook-v2/02-weekly-design/week-2-trust.md"
+        title: "Define Weeks 2-3 (Trust) complete design + nodes"
+        status: "completed"
+        output: "playbook-v2/02-weekly-design/weeks-2-3-trust.md"
       - id: "2.3"
-        title: "Define Week 3 (Converse) complete design + nodes"
+        title: "Define Weeks 4-5 (Converse) complete design + nodes"
         status: "pending"
-        output: "playbook-v2/02-weekly-design/week-3-converse.md"
+        output: "playbook-v2/02-weekly-design/weeks-4-5-converse.md"
       - id: "2.4"
-        title: "Define Week 4 (Direct) complete design + nodes"
+        title: "Define Weeks 6-7 (Direct) complete design + nodes + artifact start"
         status: "pending"
-        output: "playbook-v2/02-weekly-design/week-4-direct.md"
+        output: "playbook-v2/02-weekly-design/weeks-6-7-direct.md"
       - id: "2.5"
-        title: "Define Weeks 5-6 (Artifact Creation) design"
+        title: "Define Week 8 (Artifact Completion & Showcase) design"
         status: "pending"
-        output: "playbook-v2/02-weekly-design/weeks-5-6-artifact.md"
+        output: "playbook-v2/02-weekly-design/week-8-artifact-showcase.md"
       - id: "2.6"
         title: "Create node content checklist per zone"
         status: "pending"
@@ -223,10 +223,10 @@ epics:
 
 # Progress Summary
 progress:
-  completed_stories: 7
+  completed_stories: 9
   in_progress_stories: 0
-  pending_stories: 28
-  completion_percentage: 20
+  pending_stories: 26
+  completion_percentage: 26
 
 # Decision Tracking
 decisions_implemented:
@@ -300,5 +300,5 @@ decisions_implemented:
     status: "pending"
 
 # Last Updated
-last_updated: "2026-01-22"
-updated_by: "Epic 1 Complete - Philosophy & Framework"
+last_updated: "2026-01-23"
+updated_by: "Epic 2 Story 2.2 Complete - Weeks 2-3 Trust Zone Design"
