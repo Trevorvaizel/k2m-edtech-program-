@@ -495,6 +495,12 @@ Task: Pick something you're confused about or trying to understand.
 Use /frame to structure your thinking:
 "/frame I'm trying to understand electricity. Here's what I think I know so far: It's about flow of electrons, I've seen Ohm's law. Here's what's confusing me: I don't get the difference between voltage and current, and I can't visualize how circuits actually work."
 
+**⏸️🎯🔄 HABIT INTEGRATION CHECK:**
+Before you use /frame, notice the habit loop:
+- ⏸️ PAUSE: What do I actually want to understand?
+- 🎯 CONTEXT: What's my current knowledge and confusion?
+- 🔄 ITERATE: I'll change one part of my explanation if needed
+
 Then notice:
 • Did explaining it help YOU see gaps in your understanding?
 • Did AI's response clarify something for you?
@@ -502,9 +508,7 @@ Then notice:
 
 Post: One moment when explaining to AI helped YOU think more clearly.
 
-🔄 HABIT 3 PRACTICE: As you explain, iterate - change one part of your explanation and notice how your understanding shifts.
-
-AI doesn't just answer you. It helps you think.
+🧠 All three habits working together: That's the full framework.
 ```
 
 **All Day - Agent Monitoring:**
