@@ -90,8 +90,8 @@ epics:
         output: "playbook-v2/03-sessions/trevor-live-session-scripts.md"
       - id: "3.2"
         title: "Create NotebookLM master prompt for Zone 0→1"
-        status: "pending"
-        output: "playbook-v2/03-sessions/notebooklm-prompt-zone-0-1.md"
+        status: "completed"
+        output: "playbook-v2/03-sessions/notebooklm-zone-0-to-1-master-prompt.md"
       - id: "3.3"
         title: "Create NotebookLM master prompt for Zone 1→2"
         status: "pending"
@@ -223,10 +223,10 @@ epics:
 
 # Progress Summary
 progress:
-  completed_stories: 13
+  completed_stories: 14
   in_progress_stories: 0
-  pending_stories: 22
-  completion_percentage: 37
+  pending_stories: 21
+  completion_percentage: 40
 
 # Decision Tracking
 decisions_implemented:
@@ -301,4 +301,4 @@ decisions_implemented:
 
 # Last Updated
 last_updated: "2026-01-24"
-updated_by: "Epic 3 Story 3.1 - Trevor Live Session Scripts COMPLETE with adversarial review fixes applied: Added Dual Pillars Framework (Decision 17), Node Architecture references (Epic 1.3), emotional job touchpoints (JTBD), strengthened CIS agent scaffolding, added NotebookLM bridge, fixed Week 2 theme, moved file to correct location. Production ready. Next: Stories 3.2-3.5 (NotebookLM master prompts)."
+updated_by: "Epic 3 Story 3.2 - NotebookLM Zone 0→1 Master Prompt COMPLETE with adversarial review fixes applied: Added Dual Pillars Framework (Decision 17), CIS Agent Integration (/frame mentions in all nodes), Story 3.1 Live Session Bridge, Node Architecture 'mental lattice' language, enhanced Quality Checklist (added 5 new verification categories), Emotional Job Touchpoints (psychological safety signals). All 4 critical and 2 high-priority issues resolved. Production ready. Sprint progress: 40% complete (14/35 stories). Next: Stories 3.3-3.5 (NotebookLM master prompts for Zones 1→2, 2→3, 3→4)."
