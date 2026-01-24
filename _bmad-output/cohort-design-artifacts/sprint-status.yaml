@@ -69,11 +69,11 @@ epics:
         output: "playbook-v2/02-weekly-design/weeks-4-5-converse.md"
       - id: "2.4"
         title: "Define Weeks 6-7 (Direct) complete design + nodes + artifact start"
-        status: "pending"
+        status: "completed"
         output: "playbook-v2/02-weekly-design/weeks-6-7-direct.md"
       - id: "2.5"
         title: "Define Week 8 (Artifact Completion & Showcase) design"
-        status: "pending"
+        status: "completed"
         output: "playbook-v2/02-weekly-design/week-8-artifact-showcase.md"
       - id: "2.6"
         title: "Create node content checklist per zone"
@@ -223,10 +223,10 @@ epics:
 
 # Progress Summary
 progress:
-  completed_stories: 10
+  completed_stories: 12
   in_progress_stories: 0
-  pending_stories: 25
-  completion_percentage: 29
+  pending_stories: 23
+  completion_percentage: 34
 
 # Decision Tracking
 decisions_implemented:
@@ -300,5 +300,5 @@ decisions_implemented:
     status: "pending"
 
 # Last Updated
-last_updated: "2026-01-23"
-updated_by: "Epic 2 Story 2.3 - Party mode review complete: Team consensus achieved (Architecture sound, requirements complete, human-centered design validated). Story 2.3 (Weeks 4-5 Converse) approved - full CIS suite, 4 nodes, Habit 3 integration, Trevor sessions, success metrics all in place. Ready for Epic 2 Stories 2.4-2.6."
+last_updated: "2026-01-24"
+updated_by: "Epic 2 Story 2.5 - Week 8 (Artifact Completion & Showcase) complete: Artifact polish, public showcase in #thinking-showcase, graduation ceremony, 4 Habits card award, cohort celebration, Trevor graduation session, success metrics. Production ready. Epic 2 nears completion (Story 2.6 pending)."

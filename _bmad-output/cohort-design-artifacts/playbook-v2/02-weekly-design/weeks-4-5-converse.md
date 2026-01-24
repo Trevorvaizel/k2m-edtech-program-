@@ -206,7 +206,7 @@ When to use it:
 Task: Try /diverge on a real question you have.
 
 Example command:
-"/diverge I'm trying to decide between [two universities/programs]. Help me see this from different angles."
+"/diverge I'm trying to decide between University of Nairobi's CS program and Strathmore's CS program. Help me see this from different angles."
 
 Post: What new angles did /diverge help you see?
 
@@ -263,7 +263,7 @@ When to use it:
 Task: Try /challenge on an opinion or conclusion you've reached.
 
 Example command:
-"/challenge I've decided to [choice]. Here's my reasoning: [explain]. Help me see what I'm missing."
+"/challenge I've decided to pursue computer science. Here's my reasoning: I love coding and it pays well. Help me see what I'm missing."
 
 Post: What blind spot did /challenge help you notice?
 
@@ -303,11 +303,11 @@ Today: Treat AI like a conversation partner, not a search engine.
 Task: Have a BACK-AND-FORTH conversation with AI (not just one prompt).
 
 Conversation pattern:
-1. You: [Ask something with context]
+1. You: Help me understand whether I should take a gap year. I'm burned out from Form 6 but worried about losing momentum.
 2. AI: [Responds]
-3. You: [React, clarify, or change one thing]
+3. You: Actually, what if I did a productive gap year? Like volunteering or interning?
 4. AI: [Responds to your reaction]
-5. You: [Continue until you're satisfied]
+5. You: What about my parents? They want me to go straight to university. How do I talk to them?
 
 Post: One thing that was different about "conversing" vs. "prompting."
 
@@ -371,6 +371,49 @@ Take 10 minutes. Be honest. No grading - just noticing your growth.
 - Trevor reviews 15-20 reflections (random sample)
 - Looks for: Evidence of conversational mindset, iteration practice, students needing support
 - Escalations: If student says "I don't get the point of iteration" → Flag for outreach
+
+**Friday Spot-Check Escalation Workflow:**
+
+1. **Agent Mechanical Processing (All Students):**
+   - Verifies reflection submitted
+   - Routes self-assessment response
+   - Checks proof-of-work requirement (conversation thread included)
+
+2. **Agent Flagging Criteria:**
+   Flags students who meet ANY of these:
+   - Didn't submit reflection by Friday 11:59 PM
+   - Self-assess as "Still takes effort" + express confusion
+   - Say "I don't get the point" or "This isn't working"
+   - Share concerning emotional content ("I'm stupid," "I can't do this," etc.)
+
+3. **Trevor's Review (10% Role):**
+   - Reviews 15-20 reflections (random sample)
+   - Reviews ALL agent-flagged reflections
+   - Total review time: ~30-45 minutes
+
+4. **Escalation Tiers:**
+
+   **Yellow Flag (Forgot):**
+   - Student didn't post by Friday
+   - Action: Agent sends reminder Saturday morning
+   - Template: "Hey! Friday reflection is waiting when you're ready. No stress, just share your Week 4 journey. 🔄"
+
+   **Orange Flag (Struggling but Engaged):**
+   - Student self-assesses "Still takes effort" + expresses confusion
+   - Action: Trevor DMs within 24 hours
+   - Template: "Hey [name], I noticed you're feeling stuck on iteration. That's totally normal - Week 4 is when it starts clicking for many students. Want to chat during office hours? We can troubleshoot together."
+
+   **Red Flag (Disengaged 3+ Days):**
+   - Student hasn't posted in 3+ days (not just Friday reflection)
+   - Action: Trevor outreach + check-in call if needed
+   - Template: "Hey [name], haven't seen you in Discord this week. Everything okay? Want to hop on a quick call?"
+
+5. **Response Timeline:**
+   - Yellow flags: Agent responds within 12 hours
+   - Orange flags: Trevor responds within 24 hours
+   - Red flags: Trevor responds within 24 hours, escalates to phone call if no response in 48 hours
+
+**Note:** Full escalation SOPs with additional templates and decision trees will be documented in Epic 5, Story 5.6 (Manual SOPs). Current workflow provides minimum viable guidance for Cohort 1 launch.
 
 ---
 
@@ -450,7 +493,7 @@ Explaining to AI also clarifies YOUR thinking.
 Task: Pick something you're confused about or trying to understand.
 
 Use /frame to structure your thinking:
-"/frame I'm trying to understand [topic]. Here's what I think I know so far: [explain]. Here's what's confusing me: [explain]."
+"/frame I'm trying to understand electricity. Here's what I think I know so far: It's about flow of electrons, I've seen Ohm's law. Here's what's confusing me: I don't get the difference between voltage and current, and I can't visualize how circuits actually work."
 
 Then notice:
 • Did explaining it help YOU see gaps in your understanding?
@@ -544,19 +587,17 @@ Notice: When you notice your own thinking, you can change it. That's agency.
 
 You've been iterating for two weeks. Today: See the full arc.
 
-Task: Have a conversation with AI (5+ exchanges) and trace how it evolved.
+Task: Have a conversation with AI until you feel satisfied with the precision.
 
-Start vague / general:
-"Help me understand [topic]"
+Then look back:
+- Where did you start? (vague question)
+- Where did you end? (precise understanding)
+- What changed? (context added, clarification, iteration)
 
-Then iterate (Habit 3 🔄):
-Exchange 2: Add context
-Exchange 3: Clarify what you actually want
-Exchange 4: Change one aspect
-Exchange 5: Notice how precise you've become
+Post: Share your conversation arc (start → end), however many exchanges it took.
 
-Post: Share your conversation arc (start → middle → end).
-How different is your final question from your first?
+Some conversations take 3 exchanges. Others take 5 or 6.
+What matters: Not how many, but how much it evolved from vague to precise.
 
 🔄 HABIT 3 PRACTICE: Each exchange changes ONE thing, and you get closer to exactly what you need.
 
@@ -669,6 +710,49 @@ Take 10 minutes. Be honest. No grading - just noticing your growth.
 - Trevor reviews 15-20 reflections
 - Looks for: Evidence of meta-awareness, partnership identity, students needing support
 - Escalations: If student says "I still don't see the point" → Flag for outreach
+
+**Friday Spot-Check Escalation Workflow:**
+
+1. **Agent Mechanical Processing (All Students):**
+   - Verifies reflection submitted
+   - Routes self-assessment response
+   - Checks proof-of-work requirement (conversation thread included)
+
+2. **Agent Flagging Criteria:**
+   Flags students who meet ANY of these:
+   - Didn't submit reflection by Friday 11:59 PM
+   - Self-assess as "Still effortful" + express confusion
+   - Say "I still don't see the point" or "This isn't working"
+   - Share concerning emotional content ("I'm stupid," "I can't do this," etc.)
+
+3. **Trevor's Review (10% Role):**
+   - Reviews 15-20 reflections (random sample)
+   - Reviews ALL agent-flagged reflections
+   - Total review time: ~30-45 minutes
+
+4. **Escalation Tiers:**
+
+   **Yellow Flag (Forgot):**
+   - Student didn't post by Friday
+   - Action: Agent sends reminder Saturday morning
+   - Template: "Hey! Friday reflection is waiting when you're ready. No stress, just share your Week 5 journey. 🧠"
+
+   **Orange Flag (Struggling but Engaged):**
+   - Student self-assesses "Still effortful" + expresses confusion
+   - Action: Trevor DMs within 24 hours
+   - Template: "Hey [name], noticed you're feeling stuck on conversational iteration. That's totally normal - Week 5 is when partnership identity really forms for many students. Want to chat during office hours? We can troubleshoot together."
+
+   **Red Flag (Disengaged 3+ Days):**
+   - Student hasn't posted in 3+ days (not just Friday reflection)
+   - Action: Trevor outreach + check-in call if needed
+   - Template: "Hey [name], haven't seen you in Discord this week. Everything okay? Want to hop on a quick call?"
+
+5. **Response Timeline:**
+   - Yellow flags: Agent responds within 12 hours
+   - Orange flags: Trevor responds within 24 hours
+   - Red flags: Trevor responds within 24 hours, escalates to phone call if no response in 48 hours
+
+**Note:** Full escalation SOPs with additional templates and decision trees will be documented in Epic 5, Story 5.6 (Manual SOPs). Current workflow provides minimum viable guidance for Cohort 1 launch.
 
 ---
 
@@ -1555,7 +1639,7 @@ You're ready for this. See you in Discord. 🧠"
 
 **Files Ready for Deployment:**
 1. ✅ This document (complete Weeks 4-5 design)
-2. ✅ 4 NotebookLM podcasts (Epic 3, Story 3.4 - Zone 2→3 master prompt)
+2. ⏳ 4 NotebookLM podcasts (specifications complete, generation pending - Epic 3, Story 3.4)
 3. ✅ 10 daily prompts (Week 4: 5, Week 5: 5) - ready for agent posting
 4. ✅ 2 Friday reflection templates - with REQUIRED proof-of-work
 5. ✅ 2 Trevor session scripts (60-minute each)
@@ -1590,6 +1674,17 @@ Weeks 4-5 (Converse) are fully specified with:
 - Success metrics
 - Guardrails compliance
 
-**Production Ready:** YES - All components specified and ready for deployment to students.
+**Production Ready:** PARTIAL - Design complete, awaiting NotebookLM generation (Epic 3, Story 3.4)
+
+READY FOR STUDENTS NOW:
+✅ Daily prompts (all 10 prompts designed)
+✅ Discord structure (channels defined)
+✅ Agent behavior specifications
+✅ Trevor session scripts (2 sessions)
+✅ Friday reflection templates
+
+ROLLING OUT DURING COHORT (Epic 3):
+⏳ NotebookLM podcasts (4 podcasts will be generated weekly as produced by Epic 3, Story 3.4)
+⏳ /diverge & /challenge agents (will be implemented by Epic 4)
 
 **Next Story:** 2.4 - Weeks 6-7 (Direct) complete design + nodes + artifact start
