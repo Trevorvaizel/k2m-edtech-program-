@@ -94,7 +94,7 @@ epics:
         output: "playbook-v2/03-sessions/notebooklm-zone-0-to-1-master-prompt.md"
       - id: "3.3"
         title: "Create NotebookLM master prompt for Zone 1→2"
-        status: "pending"
+        status: "ready-for-dev"
         output: "playbook-v2/03-sessions/notebooklm-prompt-zone-1-2.md"
       - id: "3.4"
         title: "Create NotebookLM master prompt for Zone 2→3"
@@ -225,8 +225,9 @@ epics:
 progress:
   completed_stories: 14
   in_progress_stories: 0
-  pending_stories: 21
-  completion_percentage: 40
+  pending_stories: 20
+  ready_for_dev_stories: 1
+  completion_percentage: 41
 
 # Decision Tracking
 decisions_implemented:
@@ -301,4 +302,4 @@ decisions_implemented:
 
 # Last Updated
 last_updated: "2026-01-24"
-updated_by: "Epic 3 Story 3.2 - NotebookLM Zone 0→1 Master Prompt COMPLETE with adversarial review fixes applied: Added Dual Pillars Framework (Decision 17), CIS Agent Integration (/frame mentions in all nodes), Story 3.1 Live Session Bridge, Node Architecture 'mental lattice' language, enhanced Quality Checklist (added 5 new verification categories), Emotional Job Touchpoints (psychological safety signals). All 4 critical and 2 high-priority issues resolved. Production ready. Sprint progress: 40% complete (14/35 stories). Next: Stories 3.3-3.5 (NotebookLM master prompts for Zones 1→2, 2→3, 3→4)."
+updated_by: "Epic 3 Story 3.3 - NotebookLM Zone 1→2 Master Prompt COMPLETE. Builds on Story 3.2 pattern with Zone 1→2 specific adaptations: before/after demonstrations (critical for Trust zone), error safety normalization, habit formation tracking, enhanced /frame integration for 2nd week use, 'Wins accumulate' narrative arc, confidence-building focus. All Epic 1 foundation documents integrated (Guardrails, JTBD, Node Architecture, 4 Habits, Brand Framework v3). Quality checklist expanded with Zone 1→2 specific checks. Production ready. Sprint progress: 41% complete (15/35 stories, 1 ready-for-dev). Next: Stories 3.4-3.5 (NotebookLM master prompts for Zones 2→3, 3→4)."
