@@ -1,9 +1,9 @@
 # Sprint Progress Summary - Cohort Playbook v2
 
-**Last Updated:** 2026-01-24
-**Current Sprint:** Epic 3 - Session Scripts & Content
-**Previous Sprint:** Epic 2 - 8-Week Design & Zone Nodes ✅ COMPLETE
-**Overall Progress:** 13/35 stories complete (37%)
+**Last Updated:** 2026-01-25
+**Current Sprint:** Epic 4 - CIS Agent System
+**Previous Sprint:** Epic 3 - Session Scripts & Content ✅ COMPLETE
+**Overall Progress:** 19/35 stories complete (54%)
 
 ---
 
@@ -144,28 +144,91 @@
 
 ---
 
+### Epic 3: Session Scripts & Content ✅ COMPLETE
+**Status:** Complete (6/6 stories - 100%)
+**Completed:** 2026-01-25
+
+**Completed:**
+- ✅ **Story 3.1:** Trevor Live Session Format + Scripts
+  - Master session template (60-min structure)
+  - Trevor's 10% human layer protocols defined
+  - Habit modeling scripts for all 4 habits
+  - Friday reflection facilitation guide
+  - Live session workflow (opening → practice → sharing → framing → closing)
+
+- ✅ **Story 3.2:** NotebookLM Master Prompt - Zone 0→1 (Wonder)
+  - Comprehensive master prompt for Week 1 nodes
+  - JTBD-relevant example library (approved vs prohibited)
+  - Brand voice compliance (Revolutionary Hope, Level 1-2 language)
+  - Quality checklist with 10 validation criteria
+  - Trevor pre-upload checklist (34 lines)
+
+- ✅ **Story 3.3:** NotebookLM Master Prompt - Zone 1→2 (Trust)
+  - Habit 2 focus: Explain Context First 🎯
+  - Error normalization and recovery patterns
+  - Progressive confidence building stories
+  - Low-stakes wins accumulation theme
+  - Emotional job: Confidence ("I'm not terrible at this!")
+  - Guardrails #11 compliance (JTBD-relevant examples)
+
+- ✅ **Story 3.4:** NotebookLM Master Prompt - Zone 2→3 (Converse)
+  - Habit 3 focus: Change One Thing at a Time 🔄
+  - Conversation partnership metaphors
+  - Iterative refinement examples
+  - Vague vs. rich context demonstrations
+  - Emotional job: Companionship ("I have a thinking partner")
+
+- ✅ **Story 3.5:** NotebookLM Master Prompt - Zone 3→4 (Direct)
+  - Habit 4 focus: Use AI Before Decisions 🧠
+  - Director identity emergence (collaborator → director)
+  - Authorship and ownership themes
+  - Emotional job: Ownership ("I have standards")
+  - Dual Pillars integration: Habits 1-2 (Intelligence), 3-4 (Expertise)
+
+  **Adversarial Review Fixes Applied (2026-01-25):**
+  - Fixed 5 critical gaps identified by adversarial review
+  - Party mode session with 4 BMAD agents (Winston, Bob, John, Mary)
+  - All fixes applied and committed: 0ba1997
+  - Identity shift language corrected
+  - Emotional job realigned
+  - Trevor pre-upload checklist expanded (117 lines)
+  - Dual Pillars mapping clarified
+  - Rock climbing metaphor strengthened
+
+- ✅ **Story 3.6:** Daily Async Prompt Library (32 Prompts)
+  - 32 daily prompts across 8 weeks (4 per week, Monday-Thursday)
+  - Friday reflections handled separately in weekly designs
+  - Wednesday peer visibility moments built in (all 8 weeks)
+  - JTBD-relevant examples ONLY (Guardrail #11 compliance)
+  - Brand voice compliance (Revolutionary Hope, altitude-appropriate)
+  - All 4 Habits reinforcement across 8 weeks
+
+  **Adversarial Review Fixes Applied (2026-01-25):**
+  - Fixed critical Guardrail #11 violation (Week 1 Wednesday prohibited examples)
+  - Replaced "joke about cats", "recipe for toast" with JTBD-relevant alternatives
+  - Updated acceptance criteria: 30→32 prompts (4 per week × 8 weeks)
+  - Added Week 4 CIS scaffolding (reduce cognitive load for new tools)
+  - CIS team consensus: Maya, John, Mary, Bob
+  - All fixes committed: 913fd51 + 4c19ad1
+
+**Key Achievement:** Epic 3 COMPLETE! All session scripts and content ready:
+- ✅ Trevor live session scripts with habit modeling
+- ✅ NotebookLM master prompts for all 4 zones (0→1, 1→2, 2→3, 3→4)
+- ✅ Daily async prompt library (32 prompts, production-ready)
+- ✅ All prompts JTBD-compliant and guardrail-compliant
+- ✅ Quality assurance system with adversarial review process
+- ✅ Ready for Discord agent deployment
+
+---
+
 ## 🚧 In Progress
 
-### Epic 3: Session Scripts & Content
-**Status:** In Progress (0/6 stories)
+### Epic 4: CIS Agent System
+**Status:** In Progress (0/7 stories)
 
 ---
 
 ## 📋 Pending Epics
-
-### Epic 3: Session Scripts & Content
-**Status:** Pending (0/6 stories)
-**Dependencies:** Epic 2 must be complete
-
-**Stories:**
-- 3.1: Trevor live session format + scripts (partially done in Epic 2)
-- 3.2: NotebookLM master prompt for Zone 0→1
-- 3.3: NotebookLM master prompt for Zone 1→2
-- 3.4: NotebookLM master prompt for Zone 2→3
-- 3.5: NotebookLM master prompt for Zone 3→4
-- 3.6: Daily async prompt library (30 prompts)
-
----
 
 ### Epic 4: CIS Agent System
 **Status:** Pending (0/7 stories)
@@ -230,12 +293,12 @@
 | 0 | Foundation & Decision Lock | 3 | 3 | 100% ✅ |
 | 1 | Philosophy & Framework | 4 | 4 | 100% ✅ |
 | 2 | 8-Week Design & Zone Nodes | 6 | 6 | 100% ✅ |
-| 3 | Session Scripts & Content | 6 | 0 | 0% 🚧 |
-| 4 | CIS Agent System | 7 | 0 | 0% ⏳ |
+| 3 | Session Scripts & Content | 6 | 6 | 100% ✅ |
+| 4 | CIS Agent System | 7 | 0 | 0% 🚧 |
 | 5 | Discord Architecture & Operations | 6 | 0 | 0% ⏳ |
 | 6 | Artifact System & Measurement | 6 | 0 | 0% ⏳ |
 | 7 | Final Assembly & Validation | 4 | 0 | 0% ⏳ |
-| **TOTAL** | | **35** | **13** | **37%** |
+| **TOTAL** | | **35** | **19** | **54%** |
 
 ### Zone Coverage (Epic 2) ✅ COMPLETE
 | Zone Transition | Nodes | Status |
@@ -258,49 +321,95 @@
 
 ## 🎯 Up Next
 
-### Immediate Next Steps (Current Sprint - Epic 3)
-1. **Story 3.1:** Trevor live session format + scripts
-   - Consolidate session scripts from Epic 2
-   - Create master session template
-   - Define Trevor's 10% human layer protocols
+### Immediate Next Steps (Current Sprint - Epic 4)
+1. **Story 4.1:** CIS Controller Logic
+   - Define routing logic for student inputs
+   - Enforce conversation structure
+   - Track progress toward artifact
+   - Integrate with Discord agent system
 
-2. **Story 3.2:** NotebookLM master prompt for Zone 0→1 (Wonder)
-   - Use node checklists from Story 2.6
-   - Create host guide with JTBD-aligned examples
-   - Specify conversational tone and storytelling hooks
+2. **Story 4.2:** The Framer Agent Prompt
+   - Clarify questions before AI interaction
+   - Scaffold Habit 1 (Pause Before Asking)
+   - Practice mode for Week 1, full mode from Week 2
 
-3. **Story 3.3:** NotebookLM master prompt for Zone 1→2 (Trust)
-   - Habit 2 focus: Explain Context First
-   - Error normalization and recovery patterns
-   - Progressive confidence building stories
+3. **Story 4.3:** The Explorer Agent Prompt
+   - Push ideas without judgment (YES AND)
+   - Explore multiple angles simultaneously
+   - Scaffold Habit 3 (Iterate)
+   - Introduced Week 4
 
-4. **Story 3.4:** NotebookLM master prompt for Zone 2→3 (Converse)
-   - Habit 3 focus: Change One Thing at a Time
-   - Conversation partnership metaphors
-   - Iterative refinement examples
+4. **Story 4.4:** The Challenger Agent Prompt
+   - Stress-test assumptions
+   - Identify weaknesses in thinking
+   - Scaffold Habit 3 (Iterate)
+   - Introduced Week 4
 
-5. **Story 3.5:** NotebookLM master prompt for Zone 3→4 (Direct)
-   - Habit 4 focus: Use AI Before Decisions
-   - Director identity emergence
-   - Authorship and ownership themes
+5. **Story 4.5:** The Synthesizer Agent Prompt
+   - Help write clearly and concisely
+   - Scaffold Habit 4 (Think First)
+   - Support artifact creation
+   - Introduced Week 6
 
-6. **Story 3.6:** Daily async prompt library (30 prompts)
-   - 8 weeks × ~4 prompts per week
-   - Habit-specific scaffolding
-   - JTBD-relevant prompt topics
+6. **Story 4.6:** Artifact Creation Flow (/create-artifact)
+   - Guide students through CIS agent sequence
+   - Structure: /frame → /diverge → /challenge → /synthesize
+   - Artifact template completion
+   - Public showcase workflow
+
+7. **Story 4.7:** Discord Bot Technical Specification
+   - Bot architecture and commands
+   - Integration with CIS controller logic
+   - Private DM/thread process → Public showcase
+   - Error handling and escalation
 
 ### Blockers & Risks
-**Current Status:** No blockers. Epic 3 ready to start.
+**Current Status:** No blockers. Epic 4 ready to start.
 
 **Dependencies:**
-- ✅ Epic 2 COMPLETE - unblocks Epic 3, 4, and 6
-- Epic 3 (Session Scripts) can now proceed with NotebookLM prompts
-- Epic 4 (CIS Agents) can now use node designs for agent context
-- Epic 6 (Artifacts) can now use Week 8 structure for artifact templates
+- ✅ Epic 2 COMPLETE - node designs available for agent context
+- ✅ Epic 3 COMPLETE - NotebookLM prompts and daily prompts reference CIS agents
+- Epic 4 (CIS Agents) can now use all prior epics for agent design
+- Epic 5 (Discord) depends on Epic 4 completion
 
 ---
 
 ## 📝 Recent Decisions & Updates
+
+### Story 3.6 Completion - Adversarial Review & Fixes (2026-01-25)
+
+**Adversarial Review Conducted:**
+- Design Thinking Coach (Maya) completed adversarial review of Story 3.6
+- Identified critical Guardrail #11 violations (prohibited examples)
+- Party mode session convened with 4 CIS agents (Maya, John, Mary, Bob)
+
+**3 Critical Fixes Applied:**
+1. ✅ **Guardrail #11 Violation FIXED**
+   - Replaced prohibited examples: "joke about cats", "recipe for toast", "haiku about Monday"
+   - Added JTBD-relevant alternatives: university decisions, career exploration, complex topics
+   - Examples now serve functional, emotional, AND social jobs
+
+2. ✅ **Prompt Count Mismatch FIXED**
+   - Updated acceptance criteria: 30→32 prompts (4 per week × 8 weeks)
+   - Removed confusing justification notes
+   - Clarified all 32 prompts include Wednesday peer visibility
+
+3. ✅ **Week 4 CIS Scaffolding Added**
+   - Added preview of new tools (/diverge, /challenge) in Week 4 Monday
+   - Emphasized OPTIONAL PRACTICE mode for Week 4 Tuesday/Wednesday
+   - Reduced cognitive load for students still building Habit 2
+
+**Git Commits:**
+- 913fd51: "Fix Story 3.6: Apply adversarial review fixes from CIS team"
+- 4c19ad1: "Update sprint-status: Story 3.6 complete after adversarial review"
+
+**CIS Team Consensus:**
+- Maya (Design Thinking): "Wrong emotional tone for pre-university students facing real decisions"
+- John (PM): "Not the job they're hiring us to do. We lose them in Week 1. Game over."
+- Mary (Analyst): "Design drove the number, not the original requirement. Update AC to match reality."
+- Bob (SM): "CRITICAL FAIL on guardrails. Story NOT ready for dev. Fix strategy defined."
+
+---
 
 ### Story 2.6 Completion - Adversarial Review & Fixes (2026-01-24)
 
@@ -408,23 +517,28 @@
 
 ## 📅 Sprint Timeline Estimate
 
-**Completed:** Epics 0-1 (foundation work)
-**Just Completed:** Epic 2 (8-week design) - 100% COMPLETE ✅
-**Current:** Epic 3 (Session Scripts & Content) - 0% complete
-**Estimated Completion:** Epic 3 by end of Week 2
-**Total Project Estimate:** 4-5 weeks to complete all 7 epics
+**Completed:** Epics 0-3 (foundation + design + session scripts)
+**Just Completed:** Epic 3 (Session Scripts & Content) - 100% COMPLETE ✅
+**Current:** Epic 4 (CIS Agent System) - 0% complete
+**Estimated Completion:** Epic 4 by end of Week 3
+**Total Project Estimate:** 3-4 weeks to complete all 7 epics
 
 **Critical Path:**
-1. Epic 2 (8-Week Design) → Epic 3 (Session Scripts)
-2. Epic 2 → Epic 4 (CIS Agents)
+1. ✅ Epic 2 (8-Week Design) → ✅ Epic 3 (Session Scripts) COMPLETE
+2. ✅ Epic 2 → Epic 4 (CIS Agents) - READY TO START
 3. Epic 4 → Epic 5 (Discord Architecture)
-4. Epic 2 → Epic 6 (Artifacts)
+4. ✅ Epic 2 → Epic 6 (Artifacts) - READY TO START
 5. All epics → Epic 7 (Final Assembly)
+
+**Ahead of Schedule:**
+- Original estimate: 4-5 weeks total
+- Current projection: 3-4 weeks total (1 week ahead!)
+- Quality maintained through adversarial reviews
 
 ---
 
-**Last Updated By:** Design Thinking Coach (Maya) with Party Mode Team
-**Next Review:** After Story 3.2 completion (NotebookLM master prompt for Zone 0→1)
+**Last Updated By:** Design Thinking Coach (Maya) with CIS Party Mode Team
+**Next Review:** After Story 4.1 completion (CIS Controller Logic)
 
 ---
 
@@ -446,3 +560,39 @@
 - Verdict: "This deserves to exist. This deserves to scale."
 
 **Next Phase:** Epic 3 will produce actual NotebookLM podcasts and Trevor session scripts for deployment.
+
+---
+
+## 🎉 EPIC 3 COMPLETION CELEBRATION
+
+**MAJOR MILESTONE:** Epic 3 (Session Scripts & Content) is 100% COMPLETE!
+
+**What This Means:**
+- ✅ All Trevor live session scripts created with habit modeling
+- ✅ NotebookLM master prompts for all 4 zones (0→1, 1→2, 2→3, 3→4)
+- ✅ Daily async prompt library (32 prompts) production-ready
+- ✅ Full quality assurance system with adversarial reviews
+- ✅ All content JTBD-compliant and guardrail-compliant
+- ✅ Ready to move to Epic 4 (CIS Agents) and Epic 5 (Discord Architecture)
+
+**Quality Validation:**
+- Story 3.5: Adversarial review fixes applied (5 critical gaps addressed)
+- Story 3.6: Adversarial review fixes applied (3 critical issues resolved)
+- Two party mode evaluations with full CIS team consensus
+- All guardrails violations fixed before production deployment
+- 100% compliance with Guardrail #11 (JTBD-relevant examples)
+
+**Adversarial Review Impact:**
+Both Stories 3.5 and 3.6 underwent rigorous adversarial review process:
+- Multi-agent party mode discussions
+- Critical issues identified and fixed
+- Production quality verified
+- Team consensus achieved on all fixes
+
+**Progress Achievement:**
+- Sprint now at 54% complete (19 of 35 stories)
+- **Over halfway to completion!** 🎯
+- 4 of 7 epics now complete (Epics 0, 1, 2, 3)
+- On track for full Playbook v2 delivery
+
+**Next Phase:** Epic 4 will build the CIS agent system that integrates with the daily prompts and session scripts just created.
