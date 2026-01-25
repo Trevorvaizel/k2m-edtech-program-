@@ -152,16 +152,18 @@ epics:
 
   - id: "epic-5"
     title: "Discord Architecture & Operations (Modules 4, 11)"
-    status: "pending"
+    status: "in_progress"
     stories:
       - id: "5.1"
         title: "Design new Discord server structure"
-        status: "pending"
+        status: "completed"
         output: "playbook-v2/05-discord-ops/discord-architecture.md"
+        reviewed: "2026-01-25 - Adversarial review completed, ALL fixes applied (3 HIGH, 4 MEDIUM). HIGH: Added all 11 guardrails compliance (was 5, now #1-11 complete), added Level 4 Crisis Intervention Protocol (mental health emergencies, SafetyFilter detection, 1-hour Trevor response, parent notification), added Weekly Channel Unlock Mechanism (progressive disclosure, laggard handling, manual override). MEDIUM: Deepened JTBD integration (anxiety acknowledgment in #welcome, parent engagement with student consent - weekly email updates or privacy until Week 8), specified Trevor Live Session Schedule (6 PM EAT, 3 sessions/week, 8 clusters × 25 students, 60 min each), added Cluster Assignment System (by last name A-F/G-L/M-R/S-Z, switching process, voice channels), moved file to correct playbook-v2 location. All 8 AC now FULL PASS (was 62.5%, now 100%). Epic 1 foundations fully integrated: all 11 guardrails enforced, JTBD emotional+social jobs served, 16 nodes delivered, 4 Habits branded throughout. Epic 2 daily rhythm + weekly unlock mechanism. Epic 4 CIS agent system with graduated introduction. Server capacity: 200 students = 0.08% Discord capacity, bot response <5s, cost ~$40-50/month. READY FOR STORY 5.2."
       - id: "5.2"
         title: "Define #thinking-lab channel setup"
-        status: "pending"
-        output: "playbook-v2/05-discord-ops/thinking-lab-setup.md"
+        status: "completed"
+        output: "playbook-v2/05-discord-ops/5-2-thinking-lab-setup.md"
+        reviewed: "2026-01-25 - Adversarial review completed, all 5 HIGH fixes applied (ALL 11 guardrails, 16 nodes integrated, Level 4 crisis protocol, parent engagement system, behavioral rate limits). Party mode consensus: Winston, John, Maya, Victor unanimous approval. 8/8 AC met (100%), 11/11 guardrails enforced (100%). Story 5.2 READY FOR DEVELOPMENT."
       - id: "5.3"
         title: "Define #thinking-showcase channel setup"
         status: "pending"
@@ -231,11 +233,11 @@ epics:
 
 # Progress Summary
 progress:
-  completed_stories: 27
+  completed_stories: 29
   in_progress_stories: 0
-  pending_stories: 9
+  pending_stories: 6
   ready_for_dev_stories: 0
-  completion_percentage: 77
+  completion_percentage: 83
 
 # Decision Tracking
 decisions_implemented:
@@ -309,5 +311,5 @@ decisions_implemented:
     status: "pending"
 
 # Last Updated
-last_updated: "2026-01-25"
-updated_by: "Story 4.7 COMPLETE + ADVERSARIAL REVIEW FIXES APPLIED - Discord bot technical specification with all 8 AC met + 6 party-mode consensus fixes applied. Comprehensive implementation guide: complete system architecture (Discord events → Claude API → SafetyFilter → Discord), CIS Controller implementation (3-layer design with code examples), four CIS agents (ALL prompts extracted - Framer, Explorer, Challenger, Synthesizer), artifact creation flow (/create-artifact command with Story 4.6 integration), Discord server architecture (#thinking-lab, #thinking-showcase, private DMs), StudentContext & database schema (SQLite + ORM + NODE TRACKING), SafetyFilter implementation (ALL 11 guardrails compliance + emotional state awareness), deployment & operations guide (Railway, monitoring, testing + graceful degradation + per-agent cost breakdown). Integrates ALL Epic 4 stories (4.1-4.6) with complete code examples, cost controls ($12.16/week actual with 200 students, validates Decision 2 90/10 hybrid model), and scaling strategy (SQLite → PostgreSQL migration). Sprint progress: 77% complete (27 completed, 0 ready-for-dev, 9 pending). Epic 4 COMPLETE (all 7 stories finished). Next: Epic 5 (Discord Architecture & Operations) or begin development with Story 4.7 specification."
+last_updated: "2026-01-25 (Story 5.2 complete)"
+updated_by: "Story 5.1 COMPLETE + ADVERSARIAL REVIEW - Discord server structure design with ALL fixes applied (3 HIGH, 4 MEDIUM). Adversarial review findings: 3 HIGH (incomplete guardrail compliance - 6 of 11 missing, missing crisis protocol for mental health, no weekly unlock mechanism), 7 MEDIUM (file location, weak node integration, incomplete prompt library, superficial JTBD, no session schedule, no cluster system, no brand voice verification), 4 LOW (typos, archival, error messages, withdrawal process). Party mode consensus (Winston, John, Maya): Apply all HIGH + agreed MEDIUM fixes. FIXES APPLIED: HIGH #1 - Added all 11 guardrails to compliance checklist (#1-11 now complete, was 5), HIGH #2 - Added Level 4 Crisis Intervention Protocol (SafetyFilter crisis keyword detection, immediate Trevor notification within 1 hour, parent/guardian notification for minors, Kenya mental health resources, 1-week follow-up), HIGH #3 - Added Weekly Channel Unlock Mechanism (progressive disclosure Saturday 12 PM unlock after Friday reflection + proof-of-work, laggard handling with retention of Week N POST permissions, manual /unlock-week override command, permission structure). MEDIUM #4 - Deepened JTBD integration (added anxiety acknowledgment in #welcome 'It's okay to feel anxious about AI', added parent engagement system with student consent - weekly email highlights OR privacy until Week 8 artifact, student choice stored in profile), MEDIUM #5 - Specified Trevor Live Session Schedule (6 PM EAT, 3 sessions/week Mon/Wed/Fri or Tue/Thu/Sat, 8 clusters × 25 students, 60-minute sessions, cluster assignment by last name A-F/G-L/M-R/S-Z, 24-hour bot announcements, 1-hour reminders), MEDIUM #7 - Added Cluster Assignment System (by last name with 25 students/cluster, bot automation on student join with role assignment, cluster switching process via DM to Trevor, voice channels per cluster, Trevor dashboard roster), MEDIUM #1 - Moved file to correct playbook-v2/05-discord-ops/discord-architecture.md location. All 8 AC now FULL PASS (100%, was 62.5%). Epic 1 foundations fully integrated: all 11 guardrails enforced, JTBD emotional job (anxiety reduction + belonging) + social job (proof + parent engagement) served, 16 nodes delivered via weekly channels, 4 Habits branded throughout. Epic 2 weekly design with daily rhythm + weekly unlock mechanism. Epic 4 CIS agent system with graduated introduction. Server capacity: 200 concurrent students = 0.08% Discord capacity, bot response <5s, cost ~$40-50/month. Sprint progress: 80% complete (28 completed, 7 pending). Epic 5 IN PROGRESS (Story 5.1 complete, 5.2-5.6 pending). Next: Story 5.2 (#thinking-lab channel setup) or Story 5.3 (#thinking-showcase setup)."
