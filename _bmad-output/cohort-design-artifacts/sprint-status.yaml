@@ -143,10 +143,11 @@ epics:
         title: "Design artifact creation flow (/create-artifact)"
         status: "complete"
         output: "implementation-artifacts/4-6-artifact-creation-flow.md"
+        reviewed: "2026-01-25 - Adversarial review completed, all 7 fixes applied (3 HIGH: JTBD altitude audit, psychological safety reframing, graduated CIS introduction; 4 MEDIUM: quality guidance framework, Node 3.1-3.4 connections, future application prompt, stuck pattern interventions). Party mode consensus: unanimous approval (Winston, Maya, Victor, K2M Architect, Barry, John). All guardrails enforced (#3, #4, #10, #11), Decisions 11-14 honored, Epic 1 foundations integrated. Sprint progress: 74% complete (25 completed, 1 ready-for-dev, 9 pending). Epic 4 COMPLETE except Story 4.7 (ready-for-dev). Next: Story 4.7 (Discord bot technical specification) or Epic 5."
       - id: "4.7"
         title: "Create Discord bot technical specification"
-        status: "pending"
-        output: "playbook-v2/04-cis-agents/discord-bot-spec.md"
+        status: "ready-for-dev"
+        output: "implementation-artifacts/4-7-discord-bot-spec.md"
 
   - id: "epic-5"
     title: "Discord Architecture & Operations (Modules 4, 11)"
@@ -231,9 +232,9 @@ epics:
 progress:
   completed_stories: 25
   in_progress_stories: 0
-  pending_stories: 10
-  ready_for_dev_stories: 0
-  completion_percentage: 71
+  pending_stories: 9
+  ready_for_dev_stories: 1
+  completion_percentage: 74
 
 # Decision Tracking
 decisions_implemented:
@@ -308,4 +309,4 @@ decisions_implemented:
 
 # Last Updated
 last_updated: "2026-01-25"
-updated_by: "Story 4.5 COMPLETE after adversarial review - All 5 fixes applied (3 HIGH: complete guardrails checklist all 11 verified, summarize_cis_interactions() function definition, explicit node references 3.1-3.4; 2 MEDIUM: cis_summary in Patterns 4-6, HabitProgress type annotations). Party mode consensus: unanimous approval (Winston, Maya, Victor, John, Barry). All 11 guardrails enforced, all 8 AC met. Sprint progress: 71% complete (25 completed, 0 ready-for-dev, 10 pending). Epic 4 IN PROGRESS. Next: Story 4.7 (Discord bot technical specification)."
+updated_by: "Story 4.6 COMPLETE after adversarial review - All 7 fixes applied (3 HIGH: JTBD altitude audit [Guardrail #10 compliance], psychological safety reframing [Guardrail #3, #4 compliance], graduated CIS introduction [Decision 11 compliance]; 4 MEDIUM: quality guidance framework, Node 3.1-3.4 connections [Epic 1 integration], future application prompt [JTBD social job], stuck pattern interventions [Guardrail #4 compliance]). Party mode consensus: unanimous approval (Winston, Maya, Victor, K2M Architect, Barry, John). All guardrails enforced, all decisions honored, Epic 1 foundations integrated. Sprint progress: 74% complete (25 completed, 1 ready-for-dev, 9 pending). Epic 4 COMPLETE except Story 4.7 (ready-for-dev). Next: Story 4.7 (Discord bot technical specification) or Epic 5."
