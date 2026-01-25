@@ -112,12 +112,13 @@ epics:
 
   - id: "epic-4"
     title: "CIS Agent System"
-    status: "pending"
+    status: "in_progress"
     stories:
       - id: "4.1"
         title: "Define CIS Controller logic"
-        status: "pending"
-        output: "playbook-v2/04-cis-agents/controller-logic.md"
+        status: "completed"
+        output: "_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-1-cis-controller-logic.md"
+        reviewed: "2026-01-25 - Adversarial review passed, all HIGH+MEDIUM priority fixes applied"
       - id: "4.2"
         title: "Create The Framer agent prompt"
         status: "pending"
@@ -224,11 +225,11 @@ epics:
 
 # Progress Summary
 progress:
-  completed_stories: 19
+  completed_stories: 20
   in_progress_stories: 0
-  pending_stories: 16
+  pending_stories: 15
   ready_for_dev_stories: 0
-  completion_percentage: 54
+  completion_percentage: 57
 
 # Decision Tracking
 decisions_implemented:
@@ -303,4 +304,4 @@ decisions_implemented:
 
 # Last Updated
 last_updated: "2026-01-25"
-updated_by: "Story 3.6 COMPLETE AFTER ADVERSARIAL REVIEW - Daily async prompt library (32 prompts) with all critical fixes applied. Fixed Guardrail #11 violations (replaced prohibited examples with JTBD-relevant alternatives), updated acceptance criteria (30→32 prompts), added Week 4 CIS scaffolding (reduce cognitive load). CIS team consensus: Maya, John, Mary, Bob. All guardrails now compliant. Production-ready. Sprint progress: 54% complete (19 completed, 0 ready-for-dev, 16 pending). Epic 3 now COMPLETE - all session scripts and content ready. Next: Epic 4 (CIS Agent System)."
+updated_by: "Story 4.1 VALIDATED & COMPLETE - Adversarial review passed with all HIGH+MEDIUM priority fixes applied. Applied StudentContext domain model (student-first architecture), 50+ JTBD-aligned pre-university examples, altitude-aware Revolutionary Hope templates, SafetyFilter anti-comparison layer, artifact progress calculation, and anxiety-reducing messages. Party mode team consensus (Maya, Victor, Dr. Quinn, Winston, John, Barry) unanimous approval. Transformation: from 'Discord bot that routes commands' to 'Student Identity Coach that happens to use Discord.' Sprint progress: 57% complete (20 completed, 0 ready-for-dev, 15 pending). Epic 4 IN PROGRESS. Next: Story 4.2 (The Framer agent prompt)."
