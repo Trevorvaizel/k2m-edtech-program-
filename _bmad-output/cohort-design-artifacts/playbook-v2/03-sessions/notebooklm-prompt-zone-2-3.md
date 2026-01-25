@@ -48,11 +48,27 @@ Students are gaining TWO things this week:
 
 Both pillars matter. Thinking WITH AI means both deeper knowledge AND clearer minds through iterative refinement. Mention this in every episode.
 
+**HABIT 3 BRANDING (Critical):**
+This week reinforces Habit 3: Change One Thing At A Time 🔄
+Tagline: "See what each change does"
+Mention this tagline in EVERY episode: "When you change one thing at a time, you see what each change does. That's the insight."
+Use the 🔄 icon throughout when mentioning Habit 3.
+
+**WHY ITERATION = BETTER KNOWLEDGE ACCESS:**
+Explain the mechanism: "When you change one thing at a time, you learn HOW each context element shapes AI's response. You're not just getting better answers - you're learning the relationship between context and knowledge. That's Democratized Expertise through experimentation."
+
 **LIVE SESSION CONNECTION:**
 Students will discuss these podcast concepts in Trevor's live session this week. Say things like: "You'll explore this more in your live session" or "This connects to what you'll practice with Trevor."
 
-**NODE ARCHITECTURE LANGUAGE:**
-Use this structural metaphor: "This week you're filling 4 more nodes in your mental lattice." A mental lattice is like a knowledge framework you're building, one node at a time.
+**NODE ARCHITECTURE LANGUAGE (Critical Metaphor):**
+Use the rock climbing metaphor from Epic 1.3:
+- "This week you're grabbing 4 more holds on the AI territory wall"
+- "Each node is like a handhold or foothold that helps you climb"
+- "These holds aren't isolated - they're part of your mental lattice, a structure you're building"
+- "Zone 2 is down here, Zone 3 is up there - these nodes help you climb from one to the other"
+- "By Zone 4 (the summit), you'll have 16 holds in your lattice - enough to climb confidently"
+
+Explain: "A mental lattice is like a climbing wall. You don't go straight up - you place holds strategically, building a structure that supports your climb. That's what these 4 nodes are doing."
 
 TONE & STYLE:
 - Conversational, like two friends talking
@@ -65,7 +81,7 @@ TONE & STYLE:
 **CIS AGENT INTEGRATION (Critical for Weeks 4-5):**
 Students have access to THREE thinking tools this week - /frame (from Week 1), /diverge (NEW), and /challenge (NEW).
 Mention these tools in each episode: "You have access to /diverge and /challenge in Discord this week - they're thinking tools that help you explore and test your ideas. Try them!"
-This scaffolds Habit 3 (Change one thing at a time) by giving students tools to practice iterative thinking.
+This scaffolds Habit 3 🔄 (Change one thing at a time - "See what each change does") by giving students tools to practice iterative thinking.
 
 **EMOTIONAL JOB TOUCHPOINTS (Psychological Safety):**
 Students are building partnership identity. Acknowledge this explicitly:
@@ -108,13 +124,13 @@ From: "I use AI to get answers"
 To: "I'm someone who thinks WITH AI through conversation"
 
 **NODE ARCHITECTURE CONNECTION:**
-This week fills 4 nodes in their mental lattice:
+This week fills 4 nodes in their mental lattice (climbing from Zone 2 to Zone 3):
 1. "Context changes everything" → They witness how iteration tailors AI to them
 2. "AI is a conversation partner" → They shift from commands to dialogue
 3. "Explaining clarifies MY thinking" → They discover meta-awareness
 4. "We're getting closer together" → They experience iterative refinement
 
-Use this language: "You're filling your mental lattice this week, one node at a time."
+Use this language: "You're grabbing 4 holds this week that help you climb from Zone 2 to Zone 3. Each node is a handhold in your mental lattice."
 
 Make them feel: "I'm not just prompting AI. I'm thinking WITH it through conversation. That's different."
 
@@ -132,6 +148,12 @@ Use the master prompt above, then add these node-specific modifications:
 
 ### Node 2.1: "Context Changes Everything"
 
+**GENERATION WORKFLOW:**
+1. Copy master prompt (lines 34-124 of this document)
+2. Append this "Add to master prompt" section to the end
+3. Paste combined text into NotebookLM "instructions to hosts"
+4. Generate podcast
+
 **Add to master prompt:**
 ```
 SPECIFIC FOCUS FOR THIS EPISODE:
@@ -141,16 +163,27 @@ KEY MESSAGE: "Context isn't just 'more details.' It changes EVERYTHING."
 
 **DUAL PILLARS CONNECTION:**
 This node demonstrates Democratized Expertise - iteration helps you access knowledge tailored to YOUR specific situation.
-Mention: "When you iterate by changing one context element at a time, you're accessing better knowledge. That's Democratized Expertise. You're also developing better thinking through Habit 3."
+Mention: "When you iterate by changing one context element at a time, you're accessing better knowledge. That's Democratized Expertise 🔄. You're also developing better thinking through Habit 3."
+
+**DUAL PILLARS DEEP DIVE:**
+"When you iterate by changing context, you're not just accessing knowledge - you're learning HOW to access knowledge. Each iteration teaches you: 'When I add THIS context, AI responds in THAT way.' That's not just getting answers - that's building expertise in knowledge access. That's Habit 3 🔄 developing Pillar 2 (Democratized Expertise)."
 
 **NODE ARCHITECTURE:**
-"This is the first node in your mental lattice this week: 'Context changes everything.' You're filling your knowledge framework, one node at a time."
+"This is the first node in your mental lattice this week: 'Context changes everything.' You're grabbing a hold that helps you climb from Zone 2 to Zone 3. By the end of Week 5, you'll have 4 holds — that's structure."
+
+**WEEK 4 CONNECTION (From Story 2.3):**
+This podcast drops on Monday, Week 4.
+**Daily Prompt Monday:** "The Iteration Experiment" - reinforces this node's message
+**Trevor's Session Week 4:** Will demonstrate Habit 3 🔄 iteration live
+**Friday Reflection:** Students must paste iteration conversation thread (proof-of-work)
+
+Mention in podcast: "You'll practice this in today's daily prompt, and we'll explore it more in Trevor's live session this week."
 
 **CIS AGENT MENTION:**
 "You have access to /diverge and /challenge this week - they're thinking tools that help you explore different angles and test your assumptions. As you iterate with context, try using them!"
 
 **EMOTIONAL SAFETY SIGNAL:**
-"I know some of you might be wondering: 'Do I really need to add context iteratively? Can't I just say everything at once?' Let me tell you: When you change one thing at a time, you can see WHAT DIFFERENCE that specific context made. That's clarity."
+"I know some of you might be wondering: 'Do I really need to add context iteratively? Can't I just say everything at once?' Let me tell you: When you change one thing at a time, you see WHAT DIFFERENCE that specific context made. That's clarity. That's Habit 3 🔄 - 'See what each change does'."
 
 3 EXAMPLES TO INCLUDE:
 1. "Should I pursue computer science?" → With "I'm shy and like independent work" vs. "I love being around people and want to lead teams" → Completely different answers
@@ -176,6 +209,12 @@ FINAL QUESTION: "What's ONE area where you could iterate by adding context - cha
 
 ### Node 2.2: "AI Is a Conversation Partner"
 
+**GENERATION WORKFLOW:**
+1. Copy master prompt (lines 34-124 of this document)
+2. Append this "Add to master prompt" section to the end
+3. Paste combined text into NotebookLM "instructions to hosts"
+4. Generate podcast
+
 **Add to master prompt:**
 ```
 SPECIFIC FOCUS FOR THIS EPISODE:
@@ -185,10 +224,20 @@ KEY MESSAGE: "AI isn't a search engine. It's a conversation partner."
 
 **DUAL PILLARS CONNECTION:**
 This node shows how Democratized Expertise works through conversation - you access deeper knowledge by iterating.
-Mention: "When you converse instead of one-shot prompt, you're accessing knowledge more effectively. That's Democratized Expertise through Habit 3."
+Mention: "When you converse instead of one-shot prompt, you're accessing knowledge more effectively. That's Democratized Expertise through Habit 3 🔄."
+
+**DUAL PILLARS DEEP DIVE:**
+"Conversations aren't just better answers - they're better knowledge access because you're learning THROUGH the dialogue. Each exchange teaches you how to steer AI toward what you need. That's not just knowledge - that's expertise in knowledge access."
 
 **NODE ARCHITECTURE:**
-"This is the second node in your mental lattice: 'AI is a conversation partner.' Your knowledge framework is growing."
+"This is the second node in your mental lattice: 'AI is a conversation partner.' Your knowledge framework is growing. Another hold in your lattice as you climb from Zone 2 to Zone 3."
+
+**WEEK 4 CONNECTION (From Story 2.3):**
+This podcast drops on Wednesday, Week 4.
+**Daily Prompt Wednesday:** "Meet /challenge" - introduces /challenge agent (mentioned in this podcast)
+**Trevor's Session Week 4:** Will demo /diverge and /challenge agents
+
+Mention in podcast: "Today's daily prompt introduces /challenge - try it after you listen!"
 
 **CIS AGENT MENTION:**
 "This week, try /diverge to explore multiple angles of a question. It's a thinking tool that opens possibilities. That's partnership - exploring together."
@@ -220,6 +269,12 @@ FINAL QUESTION: "What's one question where you could stop prompting and start co
 
 ### Node 2.3: "Explaining Clarifies MY Thinking"
 
+**GENERATION WORKFLOW:**
+1. Copy master prompt (lines 34-124 of this document)
+2. Append this "Add to master prompt" section to the end
+3. Paste combined text into NotebookLM "instructions to hosts"
+4. Generate podcast
+
 **Add to master prompt:**
 ```
 SPECIFIC FOCUS FOR THIS EPISODE:
@@ -229,10 +284,20 @@ KEY MESSAGE: "When you explain your thinking to AI, you discover what you actual
 
 **DUAL PILLARS CONNECTION:**
 This node demonstrates Democratized Intelligence - iteration develops better thinking by revealing gaps in your understanding.
-Mention: "When you notice 'Oh, THAT'S what I mean' mid-explanation, you're developing better thinking. That's Democratized Intelligence through Habit 3."
+Mention: "When you notice 'Oh, THAT'S what I mean' mid-explanation, you're developing better thinking. That's Democratized Intelligence through Habit 3 🔄."
+
+**DUAL PILLARS DEEP DIVE:**
+"When explaining to AI clarifies YOUR thinking, you're not just getting knowledge - you're building metacognition. You're learning HOW you learn, how you think, how you understand. That's Democratized Intelligence AND Expertise working together through Habit 3."
 
 **NODE ARCHITECTURE:**
-"This is the third node in your mental lattice: 'Explaining clarifies MY thinking.' Your framework is taking shape."
+"This is the third node in your mental lattice: 'Explaining clarifies MY thinking.' Your framework is taking shape. Another strategic hold helping you climb from Zone 2 toward Zone 3."
+
+**WEEK 5 CONNECTION (From Story 2.3):**
+This podcast drops on Monday, Week 5.
+**Daily Prompt Monday:** "The Clarification Effect" - practices meta-awareness from this node
+**Trevor's Session Week 5:** All three habits integration demonstration
+
+Mention in podcast: "Today's prompt will help you notice when explaining clarifies YOUR thinking."
 
 **CIS AGENT MENTION:**
 "Use /frame this week to structure your thinking before you explain. /frame helps you notice what you know and what you don't know. That's meta-awareness."
@@ -264,6 +329,12 @@ FINAL QUESTION: "When's the last time you explained something to AI and realized
 
 ### Node 2.4: "We're Getting Closer Together"
 
+**GENERATION WORKFLOW:**
+1. Copy master prompt (lines 34-124 of this document)
+2. Append this "Add to master prompt" section to the end
+3. Paste combined text into NotebookLM "instructions to hosts"
+4. Generate podcast
+
 **Add to master prompt:**
 ```
 SPECIFIC FOCUS FOR THIS EPISODE:
@@ -273,10 +344,20 @@ KEY MESSAGE: "You don't know exactly what you want when you start. The conversat
 
 **DUAL PILLARS CONNECTION:**
 This node brings both pillars together: better knowledge access (getting precise answers) AND better thinking (clarifying what you want) through iterative refinement.
-Mention: "When you iterate toward precision, you're accessing better knowledge AND developing better thinking. Both pillars working together."
+Mention: "When you iterate toward precision, you're accessing better knowledge AND developing better thinking. Both pillars working together through Habit 3 🔄."
+
+**DUAL PILLARS DEEP DIVE:**
+"The conversation arc isn't just about ending with precise knowledge - it's about learning the PATH to precision. Each iteration is a lesson in how to access knowledge effectively. You're not just using AI - you're developing expertise in knowledge access through iterative refinement."
 
 **NODE ARCHITECTURE:**
-"This is the fourth and final node in your mental lattice this week: 'We're getting closer together.' You've filled your framework with 4 nodes this week. That's growth."
+"This is the fourth and final node in your mental lattice this week: 'We're getting closer together.' You've filled your framework with 4 nodes this week. That's growth. Four holds that help you climb from Zone 2 to Zone 3."
+
+**WEEK 5 CONNECTION (From Story 2.3):**
+This podcast drops on Wednesday, Week 5.
+**Daily Prompt Wednesday:** "Track Your Conversation Arc" - practices full arcs from this node
+**Trevor's Session Week 5:** Artifact preview (conversation arcs become artifact evidence)
+
+Mention in podcast: "Today's daily prompt will help you track your own conversation arcs."
 
 **CIS AGENT MENTION:**
 "Use all three tools this week as you iterate: /frame to clarify what you want, /diverge to explore options, /challenge to test your assumptions. They're all thinking partners."
@@ -292,7 +373,7 @@ Mention: "When you iterate toward precision, you're accessing better knowledge A
 NARRATIVE ARC:
 - Start with "You've been iterating for two weeks. Let's look at the full arc."
 - Show complete conversation arcs from vague to precise
-- Emphasize each exchange changes ONE thing (Habit 3)
+- Emphasize each exchange changes ONE thing (Habit 3 🔄 "See what each change does")
 - End with "Started vague. Ended precise. That's the power of dialogue."
 - Add: "In Trevor's live session, you'll share your own conversation arcs."
 
@@ -409,7 +490,7 @@ After NotebookLM generates each podcast, Trevor reviews against this checklist:
 - [ ] Do they feel "conversing is better than one-shot prompting"?
 
 ### Habit Reinforcement Check
-- [ ] Is Habit 3 (Change one thing at a time) visible in every example?
+- [ ] Is Habit 3 🔄 (Change one thing at a time - "See what each change does") visible in every example?
 - [ ] Would student be more likely to iterate after listening?
 - [ ] Is the habit shown through conversation arcs, not just told?
 
@@ -485,10 +566,12 @@ After NotebookLM generates each podcast, Trevor reviews against this checklist:
 
 ### Step 2: Upload & Configure (5 minutes)
 1. Upload source material to NotebookLM
-2. Copy-paste master prompt + node-specific variation
-3. Set "instructions to hosts"
-4. Select "podcast" format
-5. Set duration: 8-12 minutes
+2. Copy the ENTIRE master prompt (lines 34-124 of this document)
+3. Then PASTE the node-specific variation for the node you're generating (see "GENERATION WORKFLOW" in each node section below)
+4. The result: Master prompt content + node-specific addition in "instructions to hosts" field
+5. Set "instructions to hosts"
+6. Select "podcast" format
+7. Set duration: 8-12 minutes
 
 ### Step 3: Generate & Review (15 minutes per podcast)
 1. Generate podcast
@@ -712,8 +795,8 @@ Before generating your first Zone 2→3 podcast:
 - NotebookLM-compatible delivery ✅
 
 **From Epic 1.4 (4 Habits):**
-- Reinforces Habit 3 (Change one thing at a time) ✅
-- Visible habit evidence ✅
+- Reinforces Habit 3 🔄 (Change one thing at a time - "See what each change does") ✅
+- Visible habit evidence with canonical tagline ✅
 
 **From Brand Framework v3:**
 - Level 2-3 language ✅
