@@ -106,7 +106,7 @@ epics:
         output: "playbook-v2/03-sessions/notebooklm-prompt-zone-3-4.md"
       - id: "3.6"
         title: "Create daily async prompt library (30 prompts)"
-        status: "pending"
+        status: "ready-for-dev"
         output: "playbook-v2/03-sessions/daily-prompt-library.md"
 
   - id: "epic-4"
@@ -223,11 +223,11 @@ epics:
 
 # Progress Summary
 progress:
-  completed_stories: 17
+  completed_stories: 18
   in_progress_stories: 0
-  pending_stories: 17
+  pending_stories: 16
   ready_for_dev_stories: 1
-  completion_percentage: 49
+  completion_percentage: 51
 
 # Decision Tracking
 decisions_implemented:
@@ -302,4 +302,4 @@ decisions_implemented:
 
 # Last Updated
 last_updated: "2026-01-25"
-updated_by: "Story 3.4 COMPLETE - Zone 2→3 master prompt with Habit 3 🔄 branding. ADVERSARIAL REVIEW APPLIED: All 5 fixes implemented - canonical tagline 'See what each change does', rock climbing metaphor enhanced, Trevor workflow clarified, Story 2.3 connections added, Dual Pillars deep dive included. Story 3.4 is production-ready. Sprint progress: 49% complete (17/35 stories completed). Next: Story 3.6 (daily async prompt library)."
+updated_by: "Story 3.5 COMPLETE AFTER ADVERSARIAL REVIEW - Zone 3→4 master prompt with all 5 fixes applied. Fixed identity shift language (collaborator → director), corrected emotional job ('I have opinions about quality'), added comprehensive Trevor pre-upload checklist (117 lines), clarified Dual Pillars mapping, strengthened rock climbing metaphor. 100% aligned with Epic 1 foundations. Production-ready. Sprint progress: 51% complete (18 completed, 1 ready-for-dev, 16 pending). Next: Story 3.6 (daily async prompt library)."
