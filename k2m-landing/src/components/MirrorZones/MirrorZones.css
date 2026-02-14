@@ -1,0 +1,327 @@
+/* Mirror Zones - Deep Mirror Styling */
+/* Aquatic Echo + Spotlight Theater visuals */
+
+/* Progress Bar */
+.progress-bar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 3px;
+  height: 100%;
+  background: rgba(64, 224, 208, 0.08);
+  z-index: 100;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.progress-bar.visible {
+  opacity: 1;
+}
+
+.progress-bar .fill {
+  width: 100%;
+  background: linear-gradient(180deg, var(--ocean-mint-glow), #20B2AA);
+  transition: height 0.3s ease;
+  box-shadow: 0 0 10px var(--ocean-mint-glow);
+}
+
+/* Mirror Zone Container */
+.mirror-zone {
+  min-height: 100vh;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 1.5rem;
+}
+
+/* Spotlight Theater Layers */
+.spotlight-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 140%;
+  height: 140%;
+  background: radial-gradient(ellipse 45% 50% at 50% 50%, rgba(64, 224, 208, 0.07) 0%, transparent 60%);
+  opacity: 0;
+  transition: opacity 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+}
+
+.mirror-zone.active .spotlight-glow {
+  opacity: 1;
+}
+
+/* Vignette / Curtain edges */
+.vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.85) 0%, transparent 18%, transparent 82%, rgba(0, 0, 0, 0.85) 100%),
+    linear-gradient(180deg, rgba(0, 0, 0, 0.6) 0%, transparent 20%, transparent 80%, rgba(0, 0, 0, 0.6) 100%);
+}
+
+/* Subtle depth grid */
+.depth-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.03;
+  background-image:
+    linear-gradient(rgba(64, 224, 208, 0.5) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(64, 224, 208, 0.5) 1px, transparent 1px);
+  background-size: 80px 80px;
+}
+
+/* Aquatic Whispers */
+.whispers-pool {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+  overflow: hidden;
+}
+
+.whisper {
+  position: absolute;
+  padding: 0.75rem 1.1rem;
+  background: rgba(64, 224, 208, 0.04);
+  border: 1px solid rgba(64, 224, 208, 0.1);
+  border-radius: 16px;
+  backdrop-filter: blur(8px);
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+  font-style: italic;
+  max-width: 220px;
+  opacity: 0;
+  transform: translateY(30px) scale(0.9);
+  transition: opacity 0.8s ease, border-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 0 20px rgba(64, 224, 208, 0), 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.whisper.floating {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.whisper:hover {
+  color: rgba(255, 255, 255, 0.8);
+  border-color: rgba(64, 224, 208, 0.25);
+  box-shadow: 0 0 30px rgba(64, 224, 208, 0.15), 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+/* Water ripple effect on whispers */
+.whisper::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(64, 224, 208, 0.1) 0%, transparent 50%, rgba(64, 224, 208, 0.05) 100%);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.whisper:hover::before {
+  opacity: 1;
+}
+
+/* Mobile: horizontal scroll pool */
+@media (max-width: 768px) {
+  .whispers-pool {
+    position: relative;
+    display: flex;
+    gap: 0.75rem;
+    padding: 1rem 0.5rem;
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    mask-image: linear-gradient(90deg, transparent, black 5%, black 95%, transparent);
+    -webkit-mask-image: linear-gradient(90deg, transparent, black 5%, black 95%, transparent);
+  }
+
+  .whispers-pool::-webkit-scrollbar {
+    display: none;
+  }
+
+  .whisper {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    flex: 0 0 auto;
+    max-width: 200px;
+    scroll-snap-align: center;
+    transform: none !important;
+    opacity: 1;
+  }
+
+  .whisper.floating {
+    animation: none !important;
+  }
+
+  .mirror-zone {
+    padding: 3rem 1rem;
+    min-height: auto;
+  }
+}
+
+/* Voice Card (Clean Deep Mirror style) */
+.voice-stage {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 560px;
+  padding: 2.5rem 2rem;
+  background: linear-gradient(180deg, rgba(8, 8, 8, 0.95) 0%, rgba(3, 3, 3, 0.98) 100%);
+  border: 1px solid rgba(64, 224, 208, 0.12);
+  border-radius: 24px;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(35px) scale(0.97);
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mirror-zone.active .voice-stage {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  box-shadow:
+    0 0 80px rgba(64, 224, 208, 0.08),
+    0 25px 50px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(64, 224, 208, 0.1);
+}
+
+.voice-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 1rem;
+  margin-bottom: 1.25rem;
+  background: rgba(64, 224, 208, 0.06);
+  border: 1px solid rgba(64, 224, 208, 0.15);
+  border-radius: 50px;
+}
+
+.voice-badge .num {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--ocean-mint-glow);
+}
+
+.voice-badge .label {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--ocean-mint-glow);
+}
+
+.voice-statement {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(1.5rem, 4vw, 2.25rem);
+  font-weight: 700;
+  line-height: 1.25;
+  margin-bottom: 1.25rem;
+  color: var(--text-primary);
+}
+
+.voice-inner {
+  font-size: clamp(0.95rem, 2vw, 1.05rem);
+  color: var(--text-secondary);
+  line-height: 1.8;
+  margin-bottom: 1.5rem;
+}
+
+.voice-inner em {
+  color: #bbb;
+  font-style: normal;
+}
+
+.voice-inner .raw {
+  display: block;
+  margin-top: 0.75rem;
+  font-size: 1.05em;
+  color: #ccc;
+}
+
+/* Recognition prompt */
+.recognition {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.recognition .pulse-ring {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 2px solid rgba(64, 224, 208, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.recognition .pulse-ring::before,
+.recognition .pulse-ring::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border: 1px solid rgba(64, 224, 208, 0.2);
+  border-radius: 50%;
+}
+
+.recognition .pulse-ring::before {
+  animation: ripple-out 2.5s ease-out infinite;
+}
+
+.recognition .pulse-ring::after {
+  animation: ripple-out 2.5s ease-out infinite 0.8s;
+}
+
+@keyframes ripple-out {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+.recognition .pulse-ring span {
+  font-size: 0.9rem;
+  color: var(--ocean-mint-glow);
+  font-weight: 600;
+}
+
+.recognition .text {
+  font-size: 0.75rem;
+  color: var(--ocean-mint-glow);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+.recognition .meta {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .voice-stage {
+    padding: 2rem 1.5rem;
+  }
+
+  .vignette {
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.7) 0%, transparent 15%, transparent 85%, rgba(0, 0, 0, 0.7) 100%);
+  }
+}

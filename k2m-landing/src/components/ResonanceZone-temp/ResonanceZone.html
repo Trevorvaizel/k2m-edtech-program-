@@ -1,0 +1,46 @@
+<!-- Resonance Zone - Single emotional zone container -->
+<!-- Includes: echo bubbles, voice stage card, spotlight effects -->
+<section class="resonance-zone" data-zone="{{zoneNumber}}">
+  <!-- Spotlight gradient layer -->
+  <div class="spotlight-layer"></div>
+
+  <!-- Vignette/curtain edges -->
+  <div class="vignette"></div>
+
+  <!-- Echo bubbles container (desktop: absolute, mobile: stacked) -->
+  <div class="echoes-container">
+    {{#each echoes}}
+      <div class="echo" style="top: {{top}}%; left: {{left}}%;" data-delay="{{delay}}">{{text}}</div>
+    {{/each}}
+  </div>
+
+  <!-- Voice stage card -->
+  <div class="voice-stage">
+    <!-- Zone number watermark -->
+    <div class="voice-number">{{zoneNumber}}</div>
+
+    <!-- Voice content -->
+    <div class="voice-content">
+      <!-- Zone label -->
+      <div class="voice-label">{{label}}</div>
+
+      <!-- Zone title -->
+      <h2 class="voice-title">{{title}}</h2>
+
+      <!-- Zone monologue -->
+      <p class="voice-monologue">
+        {{monologueText}}
+        {{#if emphasis}}
+          <span class="emphasis">{{emphasis}}</span>
+        {{/if}}
+      </p>
+
+      <!-- Recognition prompt -->
+      <div class="recognition">
+        <div class="pulse-dot"></div>
+        <span class="prompt">{{prompt}}</span>
+        <span class="stat">{{stat}}</span>
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,85 @@
+/* Echo Bubble Component Styles */
+/* Mobile-responsive floating thought/quote from territory map */
+
+:root {
+  --ocean: #40E0D0;
+}
+
+.echo {
+  position: absolute;
+  padding: 0.875rem 1.25rem;
+  background: rgba(10, 10, 10, 0.85);
+  border: 1px solid rgba(64, 224, 208, 0.12);
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  font-size: 0.85rem;
+  color: #777;
+  font-style: italic;
+  line-height: 1.4;
+  max-width: 240px;
+  opacity: 0;
+  transform: translateY(20px) scale(0.95);
+  transition: opacity 0.6s ease, transform 0.6s ease, border-color 0.3s ease;
+  pointer-events: auto;
+  cursor: default;
+}
+
+.echo.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.echo.visible.floating {
+  animation: echo-float 6s ease-in-out infinite;
+}
+
+@keyframes echo-float {
+  0%, 100% {
+    transform: translateY(0) rotate(-0.5deg);
+  }
+  50% {
+    transform: translateY(-12px) rotate(0.5deg);
+  }
+}
+
+/* Highlighted echo on hover */
+.echo.highlight {
+  border-color: rgba(64, 224, 208, 0.15);
+  color: #aaa;
+  box-shadow: 0 0 30px rgba(64, 224, 208, 0.1);
+}
+
+/* Mobile: echoes become stacked list */
+@media (max-width: 768px) {
+  .echoes-container {
+    position: relative !important;
+    display: flex !important;
+    flex-direction: column;
+    gap: 0.75rem;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    order: -1; /* Echoes appear BEFORE voice card on mobile */
+  }
+
+  .echo {
+    position: relative !important;
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
+    max-width: 100%;
+    transform: none !important;
+  }
+
+  .echo.visible {
+    animation: none; /* No float animation on mobile */
+  }
+
+  .echo:nth-child(odd) {
+    align-self: flex-start;
+  }
+
+  .echo:nth-child(even) {
+    align-self: flex-end;
+  }
+}

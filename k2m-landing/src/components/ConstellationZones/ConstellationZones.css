@@ -1,0 +1,318 @@
+/* Constellation Zones - Star Field & Connected Thoughts */
+/* Hybrid: deep-mirror hero → constellation zones */
+
+/* ===== STAR FIELD BACKGROUND ===== */
+.starfield {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: #fff;
+  border-radius: 50%;
+  animation: twinkle var(--duration, 3s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: var(--min-opacity, 0.3); }
+  50% { opacity: var(--max-opacity, 1); }
+}
+
+/* ===== CONSTELLATION ZONE ===== */
+.constellation-zone {
+  min-height: 100vh;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  overflow: hidden;
+}
+
+/* SVG Canvas for constellation lines */
+.constellation-canvas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.constellation-line {
+  stroke: var(--ocean-mint-glow);
+  stroke-width: 1;
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  opacity: 0.3;
+  transition: stroke-dashoffset 1.5s ease, opacity 0.5s ease;
+}
+
+.constellation-zone.active .constellation-line {
+  stroke-dashoffset: 0;
+  opacity: 0.5;
+}
+
+/* Thought stars (whispers) */
+.thought-star {
+  position: absolute;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  opacity: 0;
+  transform: scale(0);
+  transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.thought-star.visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.star-point {
+  width: 12px;
+  height: 12px;
+  background: var(--ocean-mint-glow);
+  border-radius: 50%;
+  box-shadow: 0 0 20px var(--ocean-mint-glow), 0 0 40px rgba(64, 224, 208, 0.3);
+  position: relative;
+}
+
+.star-point::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border: 1px solid rgba(64, 224, 208, 0.3);
+  border-radius: 50%;
+  animation: star-pulse 2s ease-out infinite;
+}
+
+@keyframes star-pulse {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+.star-label {
+  padding: 0.5rem 0.75rem;
+  background: rgba(0, 0, 0, 0.8);
+  border: 1px solid rgba(64, 224, 208, 0.15);
+  border-radius: 8px;
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.7);
+  font-style: italic;
+  white-space: nowrap;
+  max-width: 150px;
+  text-align: center;
+  backdrop-filter: blur(8px);
+}
+
+/* Central voice card */
+.voice-nebula {
+  position: relative;
+  z-index: 20;
+  width: 100%;
+  max-width: 520px;
+  padding: 3rem 2.5rem;
+  background: radial-gradient(ellipse at center, rgba(64, 224, 208, 0.05) 0%, rgba(0, 0, 0, 0.95) 70%);
+  border: 1px solid rgba(64, 224, 208, 0.1);
+  border-radius: 20px;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.8s ease;
+}
+
+.constellation-zone.active .voice-nebula {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Nebula glow effect */
+.voice-nebula::before {
+  content: '';
+  position: absolute;
+  inset: -40px;
+  background: radial-gradient(ellipse 50% 40% at 50% 50%, rgba(64, 224, 208, 0.08) 0%, transparent 70%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1s ease;
+}
+
+.constellation-zone.active .voice-nebula::before {
+  opacity: 1;
+}
+
+.zone-constellation-name {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4em;
+  color: var(--ocean-mint-glow);
+  margin-bottom: 0.5rem;
+  opacity: 0.7;
+}
+
+.zone-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 1rem;
+  background: rgba(64, 224, 208, 0.08);
+  border-radius: 50px;
+  margin-bottom: 1.5rem;
+}
+
+.zone-badge .num {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  color: var(--ocean-mint-glow);
+}
+
+.zone-badge .label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--ocean-mint-glow);
+}
+
+.voice-quote {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(1.5rem, 4vw, 2.25rem);
+  font-weight: 600;
+  line-height: 1.3;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+.voice-inner {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.8;
+}
+
+.voice-inner em {
+  color: rgba(255, 255, 255, 0.85);
+  font-style: normal;
+}
+
+.recognition-star {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.recognition-star .icon {
+  font-size: 1.5rem;
+  color: var(--ocean-mint-glow);
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+@keyframes glow-pulse {
+  0%, 100% { text-shadow: 0 0 10px var(--ocean-mint-glow); }
+  50% { text-shadow: 0 0 25px var(--ocean-mint-glow), 0 0 40px rgba(64, 224, 208, 0.5); }
+}
+
+.recognition-star .text {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--ocean-mint-glow);
+}
+
+/* Star pool wrapper (desktop: absolute positioning, mobile: flex scroll) */
+.star-pool-mobile {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.star-pool-mobile .thought-star {
+  pointer-events: auto;
+}
+
+/* ===== MOBILE ===== */
+@media (max-width: 768px) {
+  /* Keep constellation lines on mobile */
+  .constellation-canvas { display: block; }
+
+  .voice-nebula {
+    padding: 1.25rem 0.75rem;
+    max-width: 85%;
+    margin: 0 auto;
+  }
+
+  .voice-quote {
+    font-size: 1.1rem;
+  }
+
+  .voice-inner {
+    font-size: 0.85rem;
+  }
+
+  .zone-constellation-name {
+    font-size: 0.5rem;
+  }
+
+  .zone-badge {
+    padding: 0.3rem 0.75rem;
+    margin-bottom: 1rem;
+  }
+
+  .constellation-zone {
+    flex-direction: column;
+    padding: 2rem 0.5rem;
+    min-height: 80vh;
+    height: auto;
+  }
+
+  /* Mobile: Keep absolute positioning, squeeze constellation pattern */
+  .star-pool-mobile {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .thought-star {
+    position: absolute !important;
+    top: auto !important;
+    left: auto !important;
+    pointer-events: auto;
+    opacity: 0;
+    transform: scale(0.8);
+  }
+
+  .thought-star.visible {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  /* Scale down star point significantly on mobile */
+  .thought-star .star-point {
+    width: 6px;
+    height: 6px;
+  }
+
+  .thought-star .star-point::before {
+    inset: -2px;
+  }
+
+  /* Make labels much smaller and more compact */
+  .thought-star .star-label {
+    padding: 0.25rem 0.4rem;
+    font-size: 0.55rem;
+    max-width: 80px;
+    line-height: 1.2;
+  }
+
+  .constellation-zone.active .thought-star {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
