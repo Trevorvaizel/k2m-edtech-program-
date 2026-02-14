@@ -7,16 +7,25 @@
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   padding: 2rem;
   z-index: 1;
+  overflow: hidden;
+}
+
+/* Hero Background - Radial gradient from mockup style */
+.hero-bg {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.03) 0%, rgba(34, 211, 238, 0.02) 40%, transparent 70%);
+  z-index: 0;
 }
 
 /* Logo Header */
 .hero-logo {
   position: absolute;
-  top: 2rem;
+  top: 3rem;
   left: 50%;
   transform: translateX(-50%);
   z-index: 10;
@@ -54,93 +63,151 @@
 
 /* Content Wrapper - Center content */
 .hero-content {
-  position: relative; /* For z-index stacking context */
-  max-width: 1200px;
-  margin: 0 auto;
+  position: relative;
+  z-index: 10;
+  max-width: 800px;
   text-align: center;
+  margin-top: 8rem;
 }
 
-/* Gradient Background Layer */
-.gradient-layer {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(180deg, #000000 0%, #0A0A0A 100%);
-  z-index: 0;
-  opacity: 1;
-}
-
-/* Hero Title - Typography from design tokens */
-.hero-title {
-  font-family: 'Space Grotesk', sans-serif;
-  font-weight: 700;
-  font-size: clamp(2.5rem, 8vw, 5rem);
-  color: var(--text-primary);
-  line-height: 1.1;
-  margin-bottom: 1.5rem;
-}
-
-/* Hero Subtitle - Secondary heading */
-.hero-subtitle {
-  font-family: 'Space Grotesk', sans-serif;
-  font-weight: 600;
-  font-size: clamp(1.5rem, 4vw, 2.5rem);
-  color: var(--text-secondary);
-  margin-bottom: 2rem;
-  /* Hidden initially for surprise reveal on scroll */
-  opacity: 0;
-  transform: translateY(30px);
-}
-
-/* Hero Body Text - Readable body copy */
-.hero-body p {
+/* Hero Eyebrow - Small label text */
+.hero-eyebrow {
   font-family: 'Inter', sans-serif;
-  font-weight: 400;
-  font-size: clamp(1rem, 2vw, 1.25rem); /* Balanced size for readability */
-  color: var(--text-secondary);
-  line-height: 1.6;
-  margin-bottom: 1.5em;
-  /* Hidden initially for surprise reveal on scroll */
-  opacity: 0;
-  transform: translateY(50px);
-}
-
-/* Ocean Mint Glow Text - Key phrase highlights */
-.glow-text {
-  color: var(--ocean-mint-glow); /* #40E0D0 - solid ocean mint */
-  display: inline-block; /* For animation targeting in Story 1.4 */
-  /* Initial subtle glow - will intensify on scroll */
-  text-shadow: 0 0 10px rgba(64, 224, 208, 0.4);
-}
-
-/* Ocean Mint Gradient Text - Special emphasis for "in control?" */
-.glow-gradient {
-  /* Ocean mint gradient using logo colors */
-  background: linear-gradient(135deg, #06b6d4 0%, #22d3ee 50%, #40E0D0 100%);
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.4em;
+  background: linear-gradient(90deg, #06b6d4, #22d3ee, #40E0D0);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  margin-bottom: 1.5rem;
+  opacity: 0;
+  animation: fade-up 0.8s ease forwards 0.3s;
+  will-change: opacity, transform;
+}
 
-  display: inline-block; /* For animation targeting in Story 1.4 */
-  /* Initial subtle glow - will intensify on scroll */
+/* Hero Title - Main headline from mockup */
+.hero-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 300;
+  font-size: clamp(2.5rem, 8vw, 5.5rem);
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+  color: var(--text-primary);
+  opacity: 0;
+  animation: fade-up 0.8s ease forwards 0.5s;
+  will-change: opacity, transform;
+}
+
+/* Strong tag styling in title - gradient for "5 voices" */
+.hero-title strong {
+  font-weight: 700;
+  background: linear-gradient(135deg, #06b6d4 0%, #22d3ee 25%, #40E0D0 50%, #20B2AA 75%, #10b981 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: inline-block;
+  /* Initial subtle glow for scroll animation */
   filter: drop-shadow(0 0 10px rgba(6, 182, 212, 0.4));
+}
+
+/* Hero Sub - Descriptive paragraph */
+.hero-sub {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(1rem, 2.5vw, 1.25rem);
+  color: var(--text-secondary);
+  max-width: 560px;
+  margin: 0 auto 2rem;
+  line-height: 1.7;
+  opacity: 0;
+  animation: fade-up 0.8s ease forwards 0.7s;
+  will-change: opacity, transform;
+}
+
+/* Hero Prompt - Italic call-to-action */
+.hero-prompt {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  font-style: italic;
+  opacity: 0;
+  animation: fade-up 0.8s ease forwards 0.9s;
+  will-change: opacity, transform;
+}
+
+/* Fade-up animation keyframes */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scroll Cue - Bottom indicator */
+.scroll-cue {
+  position: absolute;
+  bottom: 2.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  z-index: 10;
+  opacity: 1;
+}
+
+.scroll-cue span {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--text-muted);
+}
+
+.scroll-cue .line {
+  width: 1px;
+  height: 40px;
+  background: linear-gradient(180deg, #06b6d4, #22d3ee, transparent);
+  animation: pulse-line 2s ease infinite;
+}
+
+@keyframes pulse-line {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 /* Responsive Design - Mobile */
 @media (max-width: 768px) {
   .hero {
-    padding: 1.5rem; /* More padding on mobile for safety */
+    padding: 1.5rem 1rem;
   }
 
   .hero-content {
-    text-align: center; /* Center-align on mobile for better visual balance */
+    text-align: center;
+    margin-top: 6rem;
   }
 
   .hero-logo {
-    top: 1.5rem; /* Slightly closer to top on mobile */
+    top: 2rem;
   }
 
   .k2m-logo {
-    width: 60px; /* Smaller logo on mobile */
+    width: 60px;
     height: 60px;
+  }
+
+  .scroll-cue {
+    bottom: 2rem;
+  }
+
+  .scroll-cue .line {
+    height: 30px;
   }
 }

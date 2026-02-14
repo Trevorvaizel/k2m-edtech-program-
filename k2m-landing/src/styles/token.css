@@ -19,4 +19,26 @@ body {
   padding: 0;
   background-color: var(--pure-black);
   color: var(--text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* ===== STAR FIELD BACKGROUND ===== */
+.starfield {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.starfield .star {
+  position: absolute;
+  background: #fff;
+  border-radius: 50%;
+  animation: twinkle var(--duration, 3s) ease-in-out infinite;
+  animation-delay: var(--delay, 0s);
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: var(--min-opacity, 0.3); }
+  50% { opacity: var(--max-opacity, 1); }
 }

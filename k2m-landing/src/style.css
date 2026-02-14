@@ -6,4 +6,11 @@
 body {
   background-color: var(--pure-black);
   color: var(--text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* App container sits above the fixed starfield */
+#app {
+  position: relative;
+  z-index: 2;
 }
