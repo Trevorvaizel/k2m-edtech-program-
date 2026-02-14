@@ -1,7 +1,7 @@
 import './styles/token.css'
 import './style.css'
 import './components/Hero/Hero.css'
-import './components/resonanceZone/resonanceZone.css'
+import './components/ResonanceZone/resonanceZone.css'
 import './components/Bridge/Bridge.css'
 import './components/CTA/CTA.css'
 import './components/Contact/Contact.css'
