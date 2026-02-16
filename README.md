@@ -197,14 +197,16 @@ python bot.py                   # Run bot (Sprint 1+)
 After running `setup_discord_server.py`, a template is created automatically.
 
 **Deploy New Cohort:**
-1. Use server template link (output from script)
+1. Open template URL: `https://discord.new/Eqz6DMNHuVHU`
 2. Rename server: "K2M Cohort #2 - AI Thinking Skills"
 3. Update `.env`: `COHORT_ID=cohort-2`
 4. Create new database: `cohort-2.db`
 5. Update start date in bot config
-6. Deploy in ~30 minutes
+6. Deploy in ~2 minutes (instant server copy)
 
-**Template Link:** Check script output for `https://discord.new/XXXXX` link.
+**Template Link:** `https://discord.new/Eqz6DMNHuVHU`
+- Clones complete server: 4 categories, 15 channels (with emoji), 3 roles, permissions
+- No need to run setup script again for new cohorts
 
 ## Documentation
 
