@@ -134,7 +134,11 @@ sprint_0:
         section: "Complete Discord Server Architecture + Role & Permission System + Onboarding & Welcome Experience"
         also_load: "source_documents.bot_technical_spec"
       acceptance: "Script exists, passes syntax check, ready to run"
-      completion_notes: "setup_discord_server.py created (480 lines). Successfully executed: 4 categories, 14 channels, 3 roles, welcome+resources content posted. Server infrastructure complete per Story 5.1 spec."
+      completion_notes: |
+        setup_discord_server.py created (500 lines). Successfully executed: 4 categories, 15 channels, 3 roles, welcome+resources content posted.
+        Additional fix applied (2026-02-16): Created fix_channel_emojis.py to rename all channels with emoji prefixes.
+        All 15 channels now have correct emoji per Story 5.1 spec (👋welcome, 📢announcements, 🧪thinking-lab, etc.).
+        Server infrastructure complete per Story 5.1 spec.
 
     - id: "0.5"
       title: "Run server setup script + verify"

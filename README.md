@@ -73,6 +73,7 @@ Check your Discord server for:
 ```
 k2m-edtech-program-/
 ├── setup_discord_server.py    # Discord server automation script
+├── fix_channel_emojis.py      # Utility to add emoji to channel names
 ├── requirements.txt            # Python dependencies
 ├── .env.example                # Environment variables template
 ├── .env                        # Your actual tokens (DO NOT COMMIT)
