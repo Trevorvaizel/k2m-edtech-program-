@@ -1,0 +1,182 @@
+# Sprint Status: K2M Landing Page Forms Implementation
+# Created: 2026-02-16
+# Purpose: Custom form → Google Sheets integration for student onboarding diagnostic
+
+project_name: "K2M Landing Page - Forms Implementation"
+requirements_doc: "_bmad-output/cohort-design-artifacts/playbook-v2/05-discord-ops/5-4-google-forms-diagnostic.md"
+output_folder: "k2m-landing/"
+
+# Sprint Overview
+sprint_goal: "Implement seamless branded diagnostic form on landing page with Google Sheets backend integration"
+total_epics: 1
+total_stories: 4
+
+# Epic Status Tracking
+epics:
+  - id: "epic-1"
+    title: "Landing Page Forms Integration"
+    status: "in_progress"
+    stories:
+      - id: "1.1"
+        title: "Frontend Form Component (7 Sections)"
+        status: "in-progress"
+        story_file: "_bmad-output/implementation-artifacts/1-1-frontend-form-component.md"
+        tasks:
+          - id: "1.1.1"
+            title: "Setup React Hook Form or Formik"
+            status: "pending"
+          - id: "1.1.2"
+            title: "Create form layout with progress indicator"
+            status: "pending"
+          - id: "1.1.3"
+            title: "Implement AgeVerification section"
+            status: "pending"
+          - id: "1.1.4"
+            title: "Implement BasicInfo section (name, email, last name)"
+            status: "pending"
+          - id: "1.1.5"
+            title: "Implement ZoneAssessment (2-part verification)"
+            status: "pending"
+          - id: "1.1.6"
+            title: "Implement EmotionalBaseline (optional questions)"
+            status: "pending"
+          - id: "1.1.7"
+            title: "Implement GoalsExpectations"
+            status: "pending"
+          - id: "1.1.8"
+            title: "Implement ParentContact (required fields)"
+            status: "pending"
+          - id: "1.1.9"
+            title: "Implement ConsentPreferences (weekly updates)"
+            status: "pending"
+          - id: "1.1.10"
+            title: "Add real-time validation (phone, email)"
+            status: "pending"
+          - id: "1.1.11"
+            title: "Add privacy assurance first screen"
+            status: "pending"
+          - id: "1.1.12"
+            title: "Add Kenya crisis resources at end"
+            status: "pending"
+          - id: "1.1.13"
+            title: "Mobile responsive testing"
+            status: "pending"
+        estimated_days: 3-4
+
+      - id: "1.2"
+        title: "Backend API + Google Sheets Integration"
+        status: "ready-for-dev"
+        story_file: "_bmad-output/implementation-artifacts/1-2-backend-api-google-sheets.md"
+        tasks:
+          - id: "1.2.1"
+            title: "Create /api/submit-diagnostic endpoint"
+            status: "pending"
+          - id: "1.2.2"
+            title: "Install googleapis npm package"
+            status: "pending"
+          - id: "1.2.3"
+            title: "Implement form data validation"
+            status: "pending"
+          - id: "1.2.4"
+            title: "Google Sheets API authentication"
+            status: "pending"
+          - id: "1.2.5"
+            title: "Append row function (26 columns)"
+            status: "pending"
+          - id: "1.2.6"
+            title: "Error handling + try/catch"
+            status: "pending"
+          - id: "1.2.7"
+            title: "Rate limiting middleware"
+            status: "pending"
+          - id: "1.2.8"
+            title: "CORS configuration"
+            status: "pending"
+          - id: "1.2.9"
+            title: "Test API with Postman/curl"
+            status: "pending"
+        estimated_days: 2
+
+      - id: "1.3"
+        title: "Google Sheets Setup + Security"
+        status: "ready-for-dev"
+        story_file: "_bmad-output/implementation-artifacts/1-3-google-sheets-setup-security.md"
+        tasks:
+          - id: "1.3.1"
+            title: "Enable Google Sheets API in Google Cloud Console"
+            status: "pending"
+          - id: "1.3.2"
+            title: "Create service account"
+            status: "pending"
+          - id: "1.3.3"
+            title: "Download service account credentials (JSON key)"
+            status: "pending"
+          - id: "1.3.4"
+            title: "Create new Sheet with 26 columns"
+            status: "pending"
+          - id: "1.3.5"
+            title: "Add formulas (cluster assignment, crisis flags)"
+            status: "pending"
+          - id: "1.3.6"
+            title: "Share Sheet with service account email"
+            status: "pending"
+          - id: "1.3.7"
+            title: "Set up environment variables (.env.local)"
+            status: "pending"
+          - id: "1.3.8"
+            title: "Test API → Sheets integration"
+            status: "pending"
+        estimated_days: 1
+
+      - id: "1.4"
+        title: "Testing + Deployment"
+        status: "ready-for-dev"
+        story_file: "_bmad-output/implementation-artifacts/1-4-testing-deployment.md"
+        tasks:
+          - id: "1.4.1"
+            title: "Write unit tests for validation"
+            status: "pending"
+          - id: "1.4.2"
+            title: "Integration test (form submission)"
+            status: "pending"
+          - id: "1.4.3"
+            title: "Mobile browser testing"
+            status: "pending"
+          - id: "1.4.4"
+            title: "Security checklist (HTTPS, env vars, validation)"
+            status: "pending"
+          - id: "1.4.5"
+            title: "Deploy frontend + backend to Vercel"
+            status: "pending"
+          - id: "1.4.6"
+            title: "Production smoke test"
+            status: "pending"
+        estimated_days: 1-2
+
+# Sprint Progress
+completed_stories: 0
+total_stories: 4
+progress_percentage: 0
+
+# Technical Stack
+frontend_framework: "React (existing)"
+form_library: "React Hook Form OR Formik (TBD)"
+backend: "Vercel serverless functions"
+database: "Google Sheets API"
+hosting: "Vercel"
+
+# Key Requirements (from Story 5.4)
+acceptance_criteria:
+  - 7 form sections (Age, Basic, Zone, Emotional, Goals, Parent, Consent)
+  - Mobile-responsive design
+  - Real-time validation
+  - Privacy assurance first screen
+  - Psychological safety (optional emotional questions)
+  - Kenya crisis resources at end
+  - Google Sheets API integration (26 columns)
+  - All formulas from Story 5.4 (cluster, crisis flags, intervention)
+  - Security (HTTPS, env vars, rate limiting)
+
+# Timeline
+estimated_total_days: 7-9
+target_completion: "2026-02-25"
