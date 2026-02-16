@@ -42,11 +42,11 @@ source_documents:
 # ============================================================
 progress:
   total_tasks: 49
-  done: 0
+  done: 4
   in_progress: 0
   blocked: 0
-  pending: 49
-  percent_complete: 0
+  pending: 45
+  percent_complete: 8
 
 # ============================================================
 # SPRINT 0: AUTOMATED DISCORD SERVER SETUP
@@ -64,7 +64,7 @@ sprint_0:
   tasks:
     - id: "0.1"
       title: "Create Discord bot application + get token"
-      status: "pending"
+      status: "done"
       description: |
         Manual setup in Discord Developer Portal:
         1. Go to https://discord.com/developers/applications
@@ -80,11 +80,11 @@ sprint_0:
         load: "source_documents.bot_technical_spec"
         section: "Deployment & Operations Guide"
       acceptance: "Bot application created, token saved, invite URL ready"
-      completion_notes: ""
+      completion_notes: "Bot named 'KIRA' (K2M Interactive Reasoning Agent). Token saved to .env, .gitignore created for security."
 
     - id: "0.2"
       title: "Create empty Discord server manually"
-      status: "pending"
+      status: "done"
       description: |
         Quick manual server creation:
         1. Open Discord
@@ -96,11 +96,11 @@ sprint_0:
         load: "source_documents.server_architecture"
         section: "Discord Server Configuration"
       acceptance: "Empty Discord server exists with correct name"
-      completion_notes: ""
+      completion_notes: "Server 'K2M Cohort #1 - AI Thinking Skills' created. Ready for KIRA bot invitation and automation."
 
     - id: "0.3"
       title: "Invite bot to server with admin permissions"
-      status: "pending"
+      status: "done"
       description: |
         Use the OAuth2 URL from task 0.1:
         1. Open invite URL in browser
@@ -111,11 +111,11 @@ sprint_0:
       agent_context:
         load: "source_documents.bot_technical_spec"
       acceptance: "Bot appears in server member list with admin role"
-      completion_notes: ""
+      completion_notes: "KIRA successfully invited to K2M Cohort #1 server with admin permissions. Ready for automation script."
 
     - id: "0.4"
       title: "Write Discord server setup automation script"
-      status: "pending"
+      status: "done"
       description: |
         Create setup_discord_server.py that uses discord.py to:
         1. Connect to Discord with bot token
@@ -134,7 +134,7 @@ sprint_0:
         section: "Complete Discord Server Architecture + Role & Permission System + Onboarding & Welcome Experience"
         also_load: "source_documents.bot_technical_spec"
       acceptance: "Script exists, passes syntax check, ready to run"
-      completion_notes: ""
+      completion_notes: "setup_discord_server.py created (480 lines). Successfully executed: 4 categories, 14 channels, 3 roles, welcome+resources content posted. Server infrastructure complete per Story 5.1 spec."
 
     - id: "0.5"
       title: "Run server setup script + verify"

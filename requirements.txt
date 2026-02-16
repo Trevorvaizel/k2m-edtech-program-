@@ -1,0 +1,14 @@
+# KIRA Discord Bot Dependencies
+# Python 3.9+
+
+# Discord.py - Discord API wrapper
+discord.py>=2.3.2
+
+# Environment variables
+python-dotenv>=1.0.0
+
+# Zhipu AI GLM-5 (temporary LLM provider)
+# TODO: Add zhipu-api package when implementing CIS agents
+
+# Future: Anthropic SDK for Claude
+# anthropic>=0.8.0
