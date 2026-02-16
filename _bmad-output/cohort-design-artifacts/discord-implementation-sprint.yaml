@@ -1,0 +1,827 @@
+# Discord Infrastructure Implementation Sprint
+# Created: 2026-02-16
+# Purpose: Track implementation of Discord server + CIS bot for Cohort 1
+# Context: All design stories (Epics 1-6) are COMPLETE. This tracks BUILD+DEPLOY.
+# Usage: Any BMAD agent should load this file for current implementation state.
+#
+# HOW TO USE THIS FILE:
+#   - Before starting work, read this file to know what's done and what's next
+#   - After completing a task, update its status to "done" and add completion_notes
+#   - If blocked, set status to "blocked" and add blocker description
+#   - The "agent_context" field tells you what files to load for that task
+#
+# STATUS VALUES: pending | in_progress | done | blocked | skipped
+
+project: "K2M Cohort 1 - Discord Infrastructure"
+cohort_launch_target: "TBD"
+builder: "Trevor (with BMAD agents)"
+tech_stack: "Discord + Python (discord.py) + Claude API (Anthropic SDK) + SQLite"
+
+# ============================================================
+# SOURCE DOCUMENTS (Load these for full context)
+# ============================================================
+source_documents:
+  server_architecture: "_bmad-output/cohort-design-artifacts/playbook-v2/05-discord-ops/5-1-discord-server-structure.md"
+  thinking_lab_spec: "_bmad-output/cohort-design-artifacts/playbook-v2/05-discord-ops/5-2-thinking-lab-setup.md"
+  thinking_showcase_spec: "_bmad-output/cohort-design-artifacts/playbook-v2/05-discord-ops/5-3-thinking-showcase-setup.md"
+  google_forms_diagnostic: "_bmad-output/cohort-design-artifacts/playbook-v2/05-discord-ops/5-4-google-forms-diagnostic.md"
+  sheets_templates: "_bmad-output/cohort-design-artifacts/playbook-v2/05-discord-ops/5-5-sheets-templates.md"
+  manual_sops: "_bmad-output/cohort-design-artifacts/playbook-v2/05-discord-ops/5-6-manual-sops.md"
+  discord_architecture_overview: "_bmad-output/cohort-design-artifacts/playbook-v2/05-discord-ops/discord-architecture.md"
+  cis_controller_logic: "_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-1-cis-controller-logic.md"
+  framer_agent: "_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-2-framer-agent-prompt.md"
+  explorer_agent: "_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-3-explorer-agent-prompt.md"
+  challenger_agent: "_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-4-challenger-agent-prompt.md"
+  synthesizer_agent: "_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-5-synthesizer-agent-prompt.md"
+  artifact_creation_flow: "_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-6-artifact-creation-flow.md"
+  bot_technical_spec: "_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-7-discord-bot-spec.md"
+  design_sprint_status: "_bmad-output/cohort-design-artifacts/sprint-status.yaml"
+
+# ============================================================
+# OVERALL PROGRESS
+# ============================================================
+progress:
+  total_tasks: 49
+  done: 0
+  in_progress: 0
+  blocked: 0
+  pending: 49
+  percent_complete: 0
+
+# ============================================================
+# SPRINT 0: AUTOMATED DISCORD SERVER SETUP
+# One-time automation script that creates entire server from spec
+# Estimated: 30-60 minutes to write + run
+# Dependencies: None (can start immediately)
+# ============================================================
+sprint_0:
+  name: "Automated Discord Server Setup"
+  type: "automation_script"
+  status: "pending"
+  estimated_time: "30-60 minutes"
+  dependencies: "none"
+
+  tasks:
+    - id: "0.1"
+      title: "Create Discord bot application + get token"
+      status: "pending"
+      description: |
+        Manual setup in Discord Developer Portal:
+        1. Go to https://discord.com/developers/applications
+        2. Click "New Application" → name it "K2M CIS Bot"
+        3. Go to "Bot" tab → click "Add Bot"
+        4. Copy bot token (save to .env file as DISCORD_TOKEN)
+        5. Enable "Presence Intent", "Server Members Intent", "Message Content Intent"
+        6. Go to "OAuth2" → "URL Generator"
+        7. Select scopes: bot, applications.commands
+        8. Select bot permissions: Administrator (for setup script)
+        9. Copy generated URL (use this to invite bot to server)
+      agent_context:
+        load: "source_documents.bot_technical_spec"
+        section: "Deployment & Operations Guide"
+      acceptance: "Bot application created, token saved, invite URL ready"
+      completion_notes: ""
+
+    - id: "0.2"
+      title: "Create empty Discord server manually"
+      status: "pending"
+      description: |
+        Quick manual server creation:
+        1. Open Discord
+        2. Click "+" → "Create My Own" → "For a club or community"
+        3. Name: "K2M Cohort #1 - AI Thinking Skills"
+        4. Set server icon (optional)
+        5. Server is now empty and ready for bot setup
+      agent_context:
+        load: "source_documents.server_architecture"
+        section: "Discord Server Configuration"
+      acceptance: "Empty Discord server exists with correct name"
+      completion_notes: ""
+
+    - id: "0.3"
+      title: "Invite bot to server with admin permissions"
+      status: "pending"
+      description: |
+        Use the OAuth2 URL from task 0.1:
+        1. Open invite URL in browser
+        2. Select your K2M Cohort #1 server
+        3. Click "Authorize"
+        4. Complete captcha
+        5. Bot should now appear in member list (offline until script runs)
+      agent_context:
+        load: "source_documents.bot_technical_spec"
+      acceptance: "Bot appears in server member list with admin role"
+      completion_notes: ""
+
+    - id: "0.4"
+      title: "Write Discord server setup automation script"
+      status: "pending"
+      description: |
+        Create setup_discord_server.py that uses discord.py to:
+        1. Connect to Discord with bot token
+        2. Find the K2M Cohort #1 server by name
+        3. Create 4 channel categories (INFORMATION, CORE INTERACTION, WEEKLY PROGRESSION, ADMIN)
+        4. Create all 14 channels with correct names, emoji, descriptions
+        5. Create 3 roles (@Student, @Trevor, @CIS Bot) with permission boundaries from spec
+        6. Set channel permissions per role (read-only, post allowed, hidden, etc.)
+        7. Post #welcome channel content (load from Story 5.1 spec text)
+        8. Post #resources channel content (load from Story 5.1 spec text)
+        9. Set weekly channels to hidden except #week-1-wonder
+        10. Create server template for future cohorts
+        Script should be idempotent (can run multiple times without breaking).
+      agent_context:
+        load: "source_documents.server_architecture"
+        section: "Complete Discord Server Architecture + Role & Permission System + Onboarding & Welcome Experience"
+        also_load: "source_documents.bot_technical_spec"
+      acceptance: "Script exists, passes syntax check, ready to run"
+      completion_notes: ""
+
+    - id: "0.5"
+      title: "Run server setup script + verify"
+      status: "pending"
+      description: |
+        Execute the automation script:
+        1. Set environment variable: DISCORD_TOKEN=<your_bot_token>
+        2. Run: python setup_discord_server.py
+        3. Script should complete in ~60 seconds
+        4. Verify server structure matches Story 5.1 spec exactly:
+           - 14 channels in correct categories
+           - 3 roles with correct permissions
+           - #welcome and #resources populated with content
+           - Weekly channels hidden except Week 1
+        5. Test permissions: create test @Student account, verify can't post in #thinking-showcase
+      agent_context:
+        load: "source_documents.server_architecture"
+        section: "Architecture Compliance Checklist"
+      acceptance: "Server fully configured, all channels/roles/content match spec, permissions verified"
+      completion_notes: ""
+
+    - id: "0.6"
+      title: "Build Google Sheets templates (4 sheets)"
+      status: "pending"
+      description: |
+        Create 4 Google Sheets from Story 5.5 spec:
+        1. Student Roster (demographics, diagnostic, cluster assignment, crisis flags)
+        2. Submissions Log (daily posts, reflections, CIS usage, engagement)
+        3. Intervention Tracking (escalations, spot-checks, outcomes)
+        4. Progress Dashboard (zone shifts, habit practice, success metrics)
+        All sheets linked by Student ID. Formulas per spec.
+      agent_context:
+        load: "source_documents.sheets_templates"
+      acceptance: "4 sheets created with correct columns, formulas, data validation, and cross-references"
+      completion_notes: ""
+
+# ============================================================
+# SPRINT 1: BOT CORE ENGINE (formerly Sprint 2)
+# Python project setup, DB, CIS Controller, /frame agent
+# Estimated: 4-5 days
+# Dependencies: Sprint 0 (server must exist for bot testing)
+# ============================================================
+sprint_1:
+  name: "Bot Core Engine"
+  type: "development"
+  status: "pending"
+  estimated_days: 5
+  dependencies: "sprint_0"
+
+  tasks:
+    - id: "1.1"
+      title: "Scaffold Python bot project"
+      status: "pending"
+      description: |
+        Create project structure per Story 4.7:
+        - discord.py bot with async/await patterns
+        - Anthropic SDK (Claude API) integration
+        - SQLite database connection
+        - Environment variables (.env: DISCORD_TOKEN, ANTHROPIC_API_KEY, COHORT_ID, START_DATE)
+        - Basic bot startup, connect to Discord, respond to ping
+        - Deploy to Railway (or local dev first)
+      agent_context:
+        load: "source_documents.bot_technical_spec"
+        section: "Discord Bot Architecture → System Architecture"
+      acceptance: "Bot connects to Discord server, responds to test command in #bot-testing"
+      completion_notes: ""
+
+    - id: "1.2"
+      title: "Implement StudentContext + SQLite schema"
+      status: "pending"
+      description: |
+        Create database schema per Story 4.7:
+        Tables: students (zone, JTBD concern, habit journey, artifact progress, cluster_id),
+                conversations (student_id, agent_type, messages, timestamps),
+                api_usage (daily costs, rate tracking)
+        ORM patterns, data access layer, indexes for performance.
+      agent_context:
+        load: "source_documents.bot_technical_spec"
+        section: "StudentContext & Database Schema"
+      acceptance: "Database creates on first run, CRUD operations work, indexes in place"
+      completion_notes: ""
+
+    - id: "1.3"
+      title: "Implement CIS Controller routing logic"
+      status: "pending"
+      description: |
+        Three-layer controller per Story 4.1:
+        Layer 1: Intent Recognition (slash commands + natural language with 'Did you mean...?' suggestions)
+        Layer 2: State Machine (framing, exploring, challenging, synthesizing, complete states)
+        Layer 3: Agent Router (routes to correct CIS agent based on command + student context)
+        Week-based agent unlocking (Decision 11): Week 1 = /frame only, Week 4 = +/diverge +/challenge, Week 6 = +/synthesize +/create-artifact
+      agent_context:
+        load: "source_documents.cis_controller_logic"
+        section: "Controller Architecture + State Machine Design"
+        also_load: "source_documents.bot_technical_spec"
+      acceptance: "Controller routes commands correctly, blocks locked agents with helpful message, state machine tracks student progress"
+      completion_notes: ""
+
+    - id: "1.4"
+      title: "Implement /frame agent (The Framer)"
+      status: "pending"
+      description: |
+        First CIS agent per Story 4.2:
+        - System prompt from 4-2-framer-agent-prompt.md
+        - Claude API integration with prompt caching
+        - Habit 1 (Pause) + Habit 2 (Context) scaffolding
+        - StudentContext-aware responses (zone, altitude, emotional state)
+        - Conversation lifecycle: initiation → scaffolding → completion → optional share
+      agent_context:
+        load: "source_documents.framer_agent"
+        also_load: "source_documents.bot_technical_spec"
+        section: "Four CIS Agent Implementations → /frame agent"
+      acceptance: "/frame command in #thinking-lab creates DM, bot responds in character, conversation persists in DB"
+      completion_notes: ""
+
+    - id: "1.5"
+      title: "Implement private DM workflow"
+      status: "pending"
+      description: |
+        Core Decision 12 flow per Story 5.2:
+        1. Student types /frame in #thinking-lab
+        2. Bot creates private DM with student
+        3. CIS agent conversation happens in DM (private, safe)
+        4. Bot saves conversation to StudentContext
+        5. At end, bot asks: 'Want to share to #thinking-showcase?' [Yes/No/Anonymous]
+        6. If yes: bot publishes celebration message to #thinking-showcase
+        CRITICAL: No private content ever appears in public channels
+      agent_context:
+        load: "source_documents.thinking_lab_spec"
+        section: "Bot Automation Flow"
+        also_load: "source_documents.server_architecture"
+        also_section: "Hybrid Discord Model Implementation"
+      acceptance: "Full DM workflow works end-to-end: command → DM → conversation → optional share to showcase"
+      completion_notes: ""
+
+    - id: "1.6"
+      title: "Implement rate limiting + cost controls"
+      status: "pending"
+      description: |
+        Per Story 4.7:
+        - 50 messages/day rate limit per student in #thinking-lab
+        - Per-student API interaction limits
+        - Daily budget tracking ($10 threshold alert)
+        - Weekly budget cap ($50)
+        - Cost alerts to #facilitator-dashboard
+      agent_context:
+        load: "source_documents.bot_technical_spec"
+        section: "Error Handling & Cost Controls"
+      acceptance: "Rate limits enforce, cost tracking works, budget alerts fire to dashboard channel"
+      completion_notes: ""
+
+    - id: "1.7"
+      title: "Implement Observability Infrastructure (MVP)"
+      status: "pending"
+      description: |
+        Guardrail-compliant observability system per party-mode consensus (2026-02-16):
+
+        MUST-HAVE (cost/escalation - extends Task 1.6):
+        - Cost tracking + escalation alerts (already in 1.6, verify integration)
+
+        SHOULD-HAVE (journey tracking):
+        - observability_events table: student_id_hash, event_type, metadata (JSON), timestamp
+        - Event types: "agent_used", "stuck_detected", "milestone_reached", "zone_shift"
+        - Emit events at key decision points: agent invocation, state transitions, escalation triggers
+        - Student journey visualization: which agents → when → stuck patterns
+
+        Trevor admin commands:
+        - /show-aggregate-patterns → aggregate metrics (always-on, no consent needed)
+        - /inspect-journey [student-id] → requires student consent prompt
+        - /show-stuck-students → identify intervention opportunities
+
+        GUARDRAIL COMPLIANCE:
+        - Guardrail #3: No comparison/ranking (aggregate patterns only, no individual leaderboards)
+        - Guardrail #8: Private process → consent gates for deep inspection
+        - Student ID hashing for privacy protection
+        - Metadata includes {agent, week, zone} NOT full conversation content
+        - Deep inspection (full prompt transparency) deferred to Sprint 5
+
+        Database schema:
+        CREATE TABLE observability_events (
+            id INTEGER PRIMARY KEY,
+            student_id_hash TEXT,  -- Privacy: hashed student Discord ID
+            event_type TEXT,       -- "agent_used", "stuck_detected", "milestone_reached", "zone_shift"
+            metadata TEXT,         -- JSON: {agent: "framer", week: 4, zone: "zone_1"} NOT full messages
+            timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
+            INDEX idx_student_hash (student_id_hash),
+            INDEX idx_event_type (event_type),
+            INDEX idx_timestamp (timestamp)
+        );
+
+        CRITICAL: Can answer "Why did this student get stuck?" within 5 minutes of dashboard review.
+      agent_context:
+        load: "source_documents.bot_technical_spec"
+        section: "Monitoring & Alerting + Health Checks"
+        also_load: "source_documents.cis_controller_logic"
+        also_section: "State Machine Schema + Error Handling & Resilience"
+      acceptance: "observability_events table exists, events emit at key points, Trevor admin commands work, Guardrail #3 + #8 compliance verified, can debug student journey in <5 minutes"
+      completion_notes: ""
+
+# ============================================================
+# SPRINT 2: AUTOMATION + SAFETY SYSTEMS
+# Daily prompts, reactions, SafetyFilter, escalations
+# Estimated: 3-4 days
+# Dependencies: Sprint 1 (bot core must be running)
+# ============================================================
+sprint_2:
+  name: "Automation + Safety Systems"
+  type: "development"
+  status: "pending"
+  estimated_days: 4
+  dependencies: "sprint_1"
+
+  tasks:
+    - id: "2.1"
+      title: "Implement daily prompt scheduling"
+      status: "pending"
+      description: |
+        Automated content delivery per Stories 2.1 + 5.1:
+        - 9:00 AM EAT: Bot posts NotebookLM podcast link (node) to current week channel
+        - 9:15 AM EAT: Bot posts daily prompt to current week channel
+        - Content sourced from daily-prompt-library.md (32 prompts across 8 weeks)
+        - Week-aware: posts to correct channel based on current cohort week
+      agent_context:
+        load: "source_documents.server_architecture"
+        section: "Weekly Channel Design → Week 1 Channel → Daily Structure"
+        also_load: "playbook-v2/03-sessions/daily-prompt-library.md"
+      acceptance: "Bot posts node at 9 AM and prompt at 9:15 AM to correct week channel automatically"
+      completion_notes: ""
+
+    - id: "2.2"
+      title: "Implement bot reactions + participation tracking"
+      status: "pending"
+      description: |
+        Per Story 5.1:
+        - Bot reacts 👀 (witnessed) to every student submission within 5 minutes
+        - Tracks participation per student (no public rankings - Guardrail #3)
+        - Flags students who haven't posted by 6 PM (private to dashboard)
+        - Sends gentle nudge DM to inactive students
+        - Evening aggregate peer visibility snapshot (anonymized patterns, no names)
+      agent_context:
+        load: "source_documents.server_architecture"
+        section: "Week 1 Channel → Bot Behavior + Evening Peer Visibility Snapshot"
+      acceptance: "Bot reacts to submissions, tracks participation privately, sends nudges, posts evening snapshot"
+      completion_notes: ""
+
+    - id: "2.3"
+      title: "Implement SafetyFilter (Guardrail #3)"
+      status: "pending"
+      description: |
+        Anti-comparison validation per Story 4.7:
+        - Validates ALL public channel messages
+        - Blocks comparison/ranking language ('top student', 'better than', 'best artifact', 'most active')
+        - Blocks in #thinking-showcase: unfinished work, process drafts
+        - Alerts Trevor on violation attempt
+        - Level 4 Crisis detection: flags crisis keywords (self-harm, suicide, hopeless, etc.)
+        - Immediate crisis response message with Kenya resources
+      agent_context:
+        load: "source_documents.bot_technical_spec"
+        section: "SafetyFilter Implementation Specification"
+        also_load: "source_documents.server_architecture"
+        also_section: "Moderation Workflow → Level 4 Crisis Intervention"
+      acceptance: "SafetyFilter blocks comparison language, detects crisis keywords, fires correct alerts"
+      completion_notes: ""
+
+    - id: "2.4"
+      title: "Implement escalation system"
+      status: "pending"
+      description: |
+        Per Story 5.1:
+        Level 1 (Bot): Auto-nudge after no post for 1 day
+        Level 2 (Trevor alert): Student stuck 3+ days → notification in #facilitator-dashboard
+        Level 3 (Trevor DM): Student stuck 7+ days → Trevor DMs directly
+        Level 4 (Crisis): SafetyFilter flags → instant Trevor DM with student's last 3 messages
+        All escalations logged to #moderation-logs
+      agent_context:
+        load: "source_documents.server_architecture"
+        section: "Moderation Workflow → Escalation Path"
+      acceptance: "4-level escalation works with correct triggers, notifications fire to correct channels"
+      completion_notes: ""
+
+    - id: "2.5"
+      title: "Implement Friday reflection gating + week unlock"
+      status: "pending"
+      description: |
+        Progressive disclosure per Story 5.1:
+        - Friday: Bot posts reflection prompt to current week channel
+        - Student must submit reflection + proof-of-work sentence
+        - Saturday 12 PM: Batch unlock next week channel for students who completed
+        - Laggard handling: retain current week POST, block next week until reflection done
+        - Trevor notification: list of students who haven't completed
+        - Manual override: /unlock-week [@Student] [week] command for Trevor
+      agent_context:
+        load: "source_documents.server_architecture"
+        section: "Weekly Channel Unlock Mechanism (Progressive Disclosure)"
+      acceptance: "Friday reflection gates next week. Saturday auto-unlock works. Laggard handling works. Trevor override works."
+      completion_notes: ""
+
+    - id: "2.6"
+      title: "Implement #facilitator-dashboard automation"
+      status: "pending"
+      description: |
+        Trevor's private dashboard per Story 5.1:
+        - 9 AM: Daily summary (engagement %, habit practice, escalations, API costs, system health)
+        - 6 PM: Peer visibility summary (aggregate patterns, guardrail check)
+        - Friday 5 PM: Reflection summary (completion %, identity shift evidence, unlock status)
+        - Friday 5 PM: Spot-check list (15-20 random reflections for Trevor review)
+        - Real-time: Escalation notifications (instant for Level 3-4)
+      agent_context:
+        load: "source_documents.server_architecture"
+        section: "Trevor's 10% Workflow Design → #facilitator-dashboard Channel"
+      acceptance: "Dashboard posts daily/weekly summaries on schedule, escalation alerts fire in real-time"
+      completion_notes: ""
+
+# ============================================================
+# SPRINT 4: FULL CIS AGENT SUITE
+# /diverge, /challenge, /synthesize + graduated unlock
+# Estimated: 4-5 days
+# Dependencies: Sprint 2 (CIS Controller + /frame must work)
+# ============================================================
+sprint_3:
+  name: "Full CIS Agent Suite"
+  type: "development"
+  status: "pending"
+  estimated_days: 5
+  dependencies: "sprint_2"
+
+  tasks:
+    - id: "3.1"
+      title: "Implement /diverge agent (The Explorer)"
+      status: "pending"
+      description: |
+        Per Story 4.3:
+        - System prompt from 4-3-explorer-agent-prompt.md
+        - Habit 3 (Iterate) scaffolding
+        - Available from Week 4 onwards (CIS Controller enforces)
+        - Explores possibilities without judgment
+        - Dynamic emotional context (5 emotion-specific response patterns)
+      agent_context:
+        load: "source_documents.explorer_agent"
+        also_load: "source_documents.bot_technical_spec"
+      acceptance: "/diverge command creates DM, agent responds in character, blocked before Week 4 with helpful message"
+      completion_notes: ""
+
+    - id: "3.2"
+      title: "Implement /challenge agent (The Challenger)"
+      status: "pending"
+      description: |
+        Per Story 4.4:
+        - System prompt from 4-4-challenger-agent-prompt.md
+        - Habit 4 (Think First) scaffolding
+        - Available from Week 4 onwards
+        - Stress-tests assumptions with psychological safety
+        - Zone 2→3 identity shift scaffolding
+      agent_context:
+        load: "source_documents.challenger_agent"
+        also_load: "source_documents.bot_technical_spec"
+      acceptance: "/challenge command creates DM, agent responds in character, blocked before Week 4"
+      completion_notes: ""
+
+    - id: "3.3"
+      title: "Implement /synthesize agent (The Synthesizer)"
+      status: "pending"
+      description: |
+        Per Story 4.5:
+        - System prompt from 4-5-synthesizer-agent-prompt.md
+        - Habit 4 (Think First) completion scaffolding
+        - Available from Week 6 onwards
+        - Articulates conclusions, bridges to artifact creation
+        - summarize_cis_interactions() function for conversation history
+      agent_context:
+        load: "source_documents.synthesizer_agent"
+        also_load: "source_documents.bot_technical_spec"
+      acceptance: "/synthesize command creates DM, agent responds in character, blocked before Week 6"
+      completion_notes: ""
+
+    - id: "3.4"
+      title: "Implement graduated agent unlock system"
+      status: "pending"
+      description: |
+        Decision 11 enforcement:
+        Week 1: /frame only (practice mode)
+        Weeks 2-3: /frame (context building)
+        Weeks 4-5: /frame + /diverge + /challenge (full suite)
+        Weeks 6-7: All four + /synthesize + /create-artifact
+        Week 8: All agents active (artifact polish)
+        Bot announces new agents when they unlock in week channel.
+      agent_context:
+        load: "source_documents.cis_controller_logic"
+        section: "Temporal Awareness Logic"
+        also_load: "source_documents.server_architecture"
+        also_section: "Graduated Agent Introduction (Decision 11)"
+      acceptance: "Agent availability matches week schedule exactly. Unlock announcements post to correct channel."
+      completion_notes: ""
+
+    - id: "3.5"
+      title: "Implement share-to-showcase flow"
+      status: "pending"
+      description: |
+        Decision 12 public product side per Story 5.3:
+        - After CIS conversation, bot asks: 'Share to #thinking-showcase?' [Yes/No/Anonymous]
+        - Yes: Bot publishes celebration message with student name
+        - Anonymous: Bot publishes without name
+        - No: Conversation stays private, saved for later artifact use
+        - SafetyFilter validates before publication
+        - Celebration patterns: no comparison, emoji only
+      agent_context:
+        load: "source_documents.thinking_showcase_spec"
+        section: "Publication Flow"
+      acceptance: "All 3 sharing options work. Celebration messages match spec. SafetyFilter validates."
+      completion_notes: ""
+
+# ============================================================
+# SPRINT 4: ARTIFACT SYSTEM + ADVANCED FEATURES
+# /create-artifact, showcase publication, cluster management
+# Estimated: 4-5 days
+# Dependencies: Sprint 3 (all CIS agents must work)
+# ============================================================
+sprint_4:
+  name: "Artifact System + Advanced Features"
+  type: "development"
+  status: "pending"
+  estimated_days: 5
+  dependencies: "sprint_3"
+
+  tasks:
+    - id: "4.1"
+      title: "Implement /create-artifact command"
+      status: "pending"
+      description: |
+        Per Story 4.6:
+        - /create-artifact command available Week 6+
+        - Creates private DM workspace for 6-section artifact
+        - Save/resume functionality (student can return to artifact across sessions)
+        - All 4 CIS agents available during artifact creation
+        - Progress tracking in StudentContext (artifact_progress field)
+        - Stuck pattern interventions (6 patterns from Story 4.6)
+        - Voice check prompts after every section
+      agent_context:
+        load: "source_documents.artifact_creation_flow"
+        also_load: "source_documents.bot_technical_spec"
+        section: "Artifact Creation Flow Implementation"
+      acceptance: "/create-artifact creates DM workspace, 6 sections trackable, save/resume works, stuck interventions fire"
+      completion_notes: ""
+
+    - id: "4.2"
+      title: "Implement #thinking-showcase publication + celebration"
+      status: "pending"
+      description: |
+        Per Story 5.3:
+        - /publish command validates artifact completeness
+        - Publication options: Public (name), Anonymous, Private to Trevor
+        - Bot publishes formatted artifact to #thinking-showcase
+        - Celebration message template (no comparison language)
+        - Emoji reactions auto-added
+        - Aggregate celebrations: 'X students published artifacts this week!'
+        - 4 Habits badge awarding on completion
+      agent_context:
+        load: "source_documents.thinking_showcase_spec"
+        section: "Publication Flow + Celebration Culture Design + Graduation"
+      acceptance: "Artifacts publish to showcase with correct formatting, celebration fires, badge awarded"
+      completion_notes: ""
+
+    - id: "4.3"
+      title: "Implement cluster assignment + voice channels"
+      status: "pending"
+      description: |
+        Per Story 5.1:
+        - On student join: assign @Student role + cluster role (@Cluster-1 through @Cluster-8)
+        - Cluster by last name (A-F, G-L, M-R, S-Z)
+        - Welcome DM with cluster info and session schedule
+        - Before live session: create temporary voice channel for cluster
+        - After session: delete voice channel
+        - Cluster switching via Trevor command
+      agent_context:
+        load: "source_documents.server_architecture"
+        section: "Cluster Assignment System + Voice Channels"
+      acceptance: "Auto-assignment works, voice channels create/destroy on schedule, cluster switch works"
+      completion_notes: ""
+
+    - id: "4.4"
+      title: "Implement live session automation"
+      status: "pending"
+      description: |
+        Per Story 5.1:
+        - 24-hour pre-session announcement to week channel (cluster-targeted)
+        - 1-hour reminder
+        - Post-session: summary posted to week channel within 1 hour
+        - Session schedule: 3 sessions/week, 60 min, 6 PM EAT
+      agent_context:
+        load: "source_documents.server_architecture"
+        section: "Trevor's Live Session Workflow"
+      acceptance: "Announcements fire on schedule, reminders work, post-session summary posts"
+      completion_notes: ""
+
+    - id: "4.5"
+      title: "Implement bot failure handling + health checks"
+      status: "pending"
+      description: |
+        Per Story 4.7:
+        - Health checks every 5 minutes (Discord API, Claude API, SQLite)
+        - Claude API down: fallback message encouraging Habit 1 practice independently
+        - Discord disconnect: auto-reconnect via discord.py
+        - Database failure: switch to in-memory state, alert Trevor
+        - Daily database backups
+        - All failures → instant Trevor notification in #facilitator-dashboard
+      agent_context:
+        load: "source_documents.bot_technical_spec"
+        section: "Bot Failure Handling + Preventive Measures"
+        also_load: "source_documents.server_architecture"
+        also_section: "Bot Failure Handling"
+      acceptance: "Health checks run, failure fallbacks work, Trevor gets alerts, DB backs up daily"
+      completion_notes: ""
+
+    - id: "4.6"
+      title: "Implement parent email system"
+      status: "pending"
+      description: |
+        Per Story 5.3 + 6.5:
+        - Student consent tracking (Yes weekly updates / No until Week 8)
+        - Weekly Friday email to opted-in parents
+        - SendGrid/Mailgun integration
+        - Template: habit practice counts, reflection highlights (no comparison), growth celebration
+        - Privacy: never share DM content, only aggregate patterns
+        - Dual-Pillar language translation for parents (Intelligence + Expertise)
+      agent_context:
+        load: "source_documents.thinking_showcase_spec"
+        section: "JTBD Social Job Integration → Parent Email"
+        also_load: "playbook-v2/06-artifacts/06-artifact-system-epic-6-unified-design.md"
+        also_section: "Story 6.5 - Parent Reporting Format"
+      acceptance: "Parent emails send on Friday for opted-in students, content matches spec, privacy enforced"
+      completion_notes: ""
+
+# ============================================================
+# SPRINT 5: INTEGRATION TESTING + DEPLOYMENT
+# End-to-end testing, SOPs validation, production deploy
+# Estimated: 3-4 days
+# Dependencies: Sprints 0-4 (everything must be built)
+# ============================================================
+sprint_5:
+  name: "Integration Testing + Production Deploy"
+  type: "testing_and_deploy"
+  status: "pending"
+  estimated_days: 4
+  dependencies: "sprint_0, sprint_1, sprint_2, sprint_3, sprint_4"
+
+  tasks:
+    - id: "5.1"
+      title: "Finalize manual SOPs against live bot"
+      status: "pending"
+      description: |
+        Review Story 5.6 SOPs against actual bot behavior:
+        - Pre-cohort SOPs (diagnostic review, roster setup, cluster verify, session schedule)
+        - Daily 5-minute morning scan SOP
+        - Friday spot-check SOP
+        - Intervention escalation SOPs (Level 1-4)
+        - Crisis management SOPs
+        - Live session prep/delivery/follow-up SOPs
+        Update any SOP steps that don't match actual bot behavior.
+      agent_context:
+        load: "source_documents.manual_sops"
+      acceptance: "All SOPs validated against live bot. Any gaps identified and fixed."
+      completion_notes: ""
+
+    - id: "5.2"
+      title: "End-to-end test: Full Week 1 student journey"
+      status: "pending"
+      description: |
+        Simulate complete Week 1 flow in #bot-testing:
+        1. Student joins → welcome DM + cluster assignment
+        2. Monday 9 AM → Node 0.1 posts + 9:15 prompt posts
+        3. Student responds → bot reacts 👀
+        4. Student uses /frame → DM conversation works
+        5. Student shares to #thinking-showcase → celebration posts
+        6. Evening → peer visibility snapshot posts (anonymized)
+        7. Friday → reflection prompt posts, student submits
+        8. Saturday → next week unlocks, laggard handling works
+        9. Dashboard → all summaries fire correctly
+        Test EVERY daily pattern for all 5 days of Week 1.
+      agent_context:
+        load: "source_documents.server_architecture"
+        section: "Week 1 Channel (#week-1-wonder)"
+      acceptance: "Complete Week 1 flow works end-to-end with no errors"
+      completion_notes: ""
+
+    - id: "5.3"
+      title: "End-to-end test: CIS agent graduated introduction"
+      status: "pending"
+      description: |
+        Verify agent unlock schedule:
+        - Week 1: Only /frame works, others blocked with helpful message
+        - Week 4: /diverge + /challenge unlock, announcement posts
+        - Week 6: /synthesize + /create-artifact unlock, announcement posts
+        - Artifact flow: full 6-section creation → publish → celebration → badge
+      agent_context:
+        load: "source_documents.cis_controller_logic"
+        section: "Temporal Awareness Logic"
+      acceptance: "All agents locked/unlocked per schedule. Announcements fire. Artifact flow complete."
+      completion_notes: ""
+
+    - id: "5.4"
+      title: "Safety and crisis protocol test"
+      status: "pending"
+      description: |
+        Test all safety systems:
+        - Post comparison language in public channel → SafetyFilter blocks
+        - Post crisis keywords → Level 4 protocol fires (instant Trevor alert + Kenya resources)
+        - Simulate 3-day inactive student → escalation fires
+        - Simulate 7-day inactive → Trevor DM prompt
+        - Verify #moderation-logs captures all events
+        - Verify no private DM content leaks to public channels
+      agent_context:
+        load: "source_documents.server_architecture"
+        section: "Moderation Workflow + Level 4 Crisis Intervention"
+      acceptance: "SafetyFilter catches violations, crisis protocol works, escalations fire, privacy maintained"
+      completion_notes: ""
+
+    - id: "5.5"
+      title: "Performance and cost validation"
+      status: "pending"
+      description: |
+        Verify production readiness:
+        - Bot response time <5 seconds for CIS agents
+        - Simulate 50+ concurrent DM conversations
+        - Verify rate limits work under load
+        - Check daily API cost tracking accuracy
+        - Verify budget alerts fire at thresholds
+        - Database backup automation working
+        - Health checks running every 5 minutes
+      agent_context:
+        load: "source_documents.bot_technical_spec"
+        section: "Bot Performance Requirements + Cost Management"
+      acceptance: "Performance within spec. Cost tracking accurate. Backups running. Health checks working."
+      completion_notes: ""
+
+    - id: "5.6"
+      title: "Create server template for future cohorts"
+      status: "pending"
+      description: |
+        Per Story 5.1:
+        - Save current server as Discord template
+        - Document deployment checklist (rename, update dates, new DB, update env vars, test, invite)
+        - Verify template can deploy in ~30 minutes
+      agent_context:
+        load: "source_documents.server_architecture"
+        section: "Copy-Paste Server Template"
+      acceptance: "Template saved. Deployment checklist verified. Future cohort can spin up in 30 min."
+      completion_notes: ""
+
+    - id: "5.7"
+      title: "Production deployment + go-live checklist"
+      status: "pending"
+      description: |
+        Final deployment:
+        - Bot deployed to Railway (production)
+        - Environment variables set (production tokens, API keys)
+        - Database initialized (clean cohort-1.db)
+        - Monitoring dashboard accessible
+        - Trevor has all credentials (bot token, API key, Railway URL, DB location)
+        - Student invite link generated
+        - #announcements updated with cohort start date
+        - All SOPs in Trevor's hands
+      agent_context:
+        load: "source_documents.server_architecture"
+        section: "Server Handoff to Trevor"
+      acceptance: "Bot live in production. Trevor has all access. Invite link ready. Go/no-go decision made."
+      completion_notes: ""
+
+# ============================================================
+# NOTES FOR AGENTS
+# ============================================================
+agent_instructions: |
+  WHEN LOADING THIS FILE:
+  1. Check progress section for overall status
+  2. Find the first sprint with status != "done"
+  3. Within that sprint, find first task with status "pending" or "in_progress"
+  4. Load the agent_context files specified for that task
+  5. Execute the task per its description
+  6. When done, update task status to "done" and add completion_notes
+  7. Update progress section totals
+
+  CRITICAL RULES:
+  - NEVER skip a task's dependencies
+  - ALWAYS load the specified source documents before starting
+  - The design documents are the BIBLE - implement what they specify, don't improvise
+  - Test in #bot-testing before deploying to production channels
+  - Update this file after EVERY completed task
+
+# Last Updated
+last_updated: "2026-02-16"
+updated_by: "Dev Agent (Amelia) - Added Task 1.7: Observability Infrastructure per party-mode team consensus (Winston, Victor, Maya)"
