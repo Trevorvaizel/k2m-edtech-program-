@@ -1,0 +1,18 @@
+# Discord.py - Discord API wrapper
+discord.py==2.3.2
+
+# Anthropic Claude SDK
+anthropic==0.18.0
+
+# Environment variables
+python-dotenv==1.0.0
+
+# Async HTTP (required by discord.py)
+aiohttp==3.9.1
+
+# Database
+# (Using sqlite3 - built into Python 3.10+)
+
+# Testing (optional, for development)
+pytest==7.4.3
+pytest-asyncio==0.21.1
