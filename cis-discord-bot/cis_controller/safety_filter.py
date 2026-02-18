@@ -12,7 +12,7 @@ Task 2.3 Enhancement: Crisis detection and Level 4 intervention
 import re
 import logging
 import os
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any
 import discord
 
 from database import store
@@ -121,7 +121,9 @@ You are not alone. Help is here."""
         Returns crisis_type if detected, None otherwise.
         Triggers Level 4 intervention protocol.
         """
-        message_lower = message_text.lower()
+        # Normalize whitespace and case so variations like
+        # "I can't  go   on" still match crisis keywords.
+        message_lower = " ".join(message_text.lower().split())
 
         for keyword in self.CRISIS_KEYWORDS:
             if keyword in message_lower:
@@ -184,6 +186,117 @@ You are not alone. Help is here."""
 safety_filter = SafetyFilter()
 
 
+def _resolve_channel_by_id_or_slug(
+    bot: discord.Client,
+    configured_id: str,
+    slug: str,
+) -> Optional[discord.abc.Messageable]:
+    """Find a channel by configured ID or slug fallback."""
+    if configured_id:
+        try:
+            target_id = int(configured_id)
+            for guild in getattr(bot, "guilds", []):
+                channel = guild.get_channel(target_id)
+                if channel:
+                    return channel
+        except ValueError:
+            logger.warning("Invalid channel ID configured for %s: %s", slug, configured_id)
+
+    for guild in getattr(bot, "guilds", []):
+        for channel in getattr(guild, "text_channels", []):
+            channel_name = getattr(channel, "name", "").lower()
+            if (
+                channel_name == slug
+                or channel_name.endswith(slug)
+                or slug in channel_name
+            ):
+                return channel
+    return None
+
+
+def _load_crisis_context(student_discord_id: Optional[int]) -> Dict[str, Any]:
+    """
+    Build crisis context payload required by Level 4 protocol:
+    - student's last 3 stored messages
+    - current emotional state flag
+    """
+    if student_discord_id is None:
+        return {"emotional_state": "unknown", "last_messages": []}
+
+    student_id = str(student_discord_id)
+    db = None
+    try:
+        db = store.StudentStateStore()
+        student = db.get_student(student_id)
+        emotional_state = (
+            student["emotional_state"] if student and student["emotional_state"] else "unknown"
+        )
+
+        cursor = db.conn.execute(
+            """
+            SELECT role, content
+            FROM conversations
+            WHERE student_id = ?
+            ORDER BY created_at DESC
+            LIMIT 3
+            """,
+            (student_id,),
+        )
+
+        messages = []
+        for row in cursor.fetchall():
+            role = row["role"] if row["role"] else "unknown"
+            content = " ".join((row["content"] or "").split())
+            if len(content) > 140:
+                content = f"{content[:137]}..."
+            messages.append(f"{role}: {content}")
+
+        return {"emotional_state": emotional_state, "last_messages": messages}
+    except Exception as exc:
+        logger.error("Failed to load crisis context for %s: %s", student_id, exc)
+        return {"emotional_state": "unknown", "last_messages": []}
+    finally:
+        if db:
+            db.close()
+
+
+async def _log_to_moderation_logs(
+    bot: discord.Client,
+    violation_type: str,
+    message: str,
+    student_discord_id: Optional[int] = None,
+    emotional_state: Optional[str] = None,
+):
+    """Log safety events to #moderation-logs channel if available."""
+    configured_channel_id = os.getenv("CHANNEL_MODERATION_LOGS", "").strip()
+    channel = _resolve_channel_by_id_or_slug(bot, configured_channel_id, "moderation-logs")
+    if channel is None:
+        logger.warning("Could not resolve #moderation-logs channel for safety logging")
+        return
+
+    trimmed = " ".join((message or "").split())
+    if len(trimmed) > 180:
+        trimmed = f"{trimmed[:177]}..."
+
+    try:
+        if violation_type == "crisis":
+            log_message = (
+                "🚨 **Level 4 Crisis Logged**\n"
+                f"Student ID: `{student_discord_id}`\n"
+                f"Emotional State: `{emotional_state or 'unknown'}`\n"
+                f"Detected Message: \"{trimmed}\""
+            )
+        else:
+            log_message = (
+                "⚠️ **Guardrail #3 Violation Logged**\n"
+                f"Student ID: `{student_discord_id}`\n"
+                f"Blocked Message: \"{trimmed}\""
+            )
+        await channel.send(log_message)
+    except discord.DiscordException as exc:
+        logger.error("Failed to post to #moderation-logs: %s", exc)
+
+
 async def notify_trevor_safety_violation(
     bot: discord.Client,
     violation_type: str,
@@ -208,6 +321,14 @@ async def notify_trevor_safety_violation(
         trevor_user = await bot.fetch_user(int(trevor_discord_id))
 
         if violation_type == "crisis":
+            crisis_context = _load_crisis_context(student_discord_id)
+            emotional_state = crisis_context.get("emotional_state", "unknown")
+            last_messages = crisis_context.get("last_messages", [])
+            if last_messages:
+                last_messages_block = "\n".join(f"- {line}" for line in last_messages)
+            else:
+                last_messages_block = "- No prior stored messages available."
+
             # Level 4: INSTANT crisis alert
             alert_message = f"""🚨 **LEVEL 4 CRISIS INTERVENTION**
 
@@ -215,17 +336,27 @@ async def notify_trevor_safety_violation(
 "{message[:100]}..."
 
 **Student ID:** {student_discord_id}
+**Emotional State Flag:** {emotional_state}
+
+**Last 3 messages:**
+{last_messages_block}
 
 **Action Required:**
 ⚠️ DM student within 1 hour
 ⚠️ Assess risk level
 ⚠️ If minor (<18) and high risk: call parent within 2 hours
 ⚠️ Provide Kenya crisis resources
-
-**Last 3 messages are being pulled from database..."""
+"""
 
             await trevor_user.send(alert_message)
             logger.critical(f"CRISIS ALERT sent to Trevor for student {student_discord_id}")
+            await _log_to_moderation_logs(
+                bot=bot,
+                violation_type="crisis",
+                message=message,
+                student_discord_id=student_discord_id,
+                emotional_state=emotional_state,
+            )
 
         elif violation_type == "comparison":
             # Level 3: Comparison violation (less urgent)
@@ -242,6 +373,12 @@ Logged to #moderation-logs"""
 
             await trevor_user.send(alert_message)
             logger.warning(f"Comparison violation alert sent to Trevor for student {student_discord_id}")
+            await _log_to_moderation_logs(
+                bot=bot,
+                violation_type="comparison",
+                message=message,
+                student_discord_id=student_discord_id,
+            )
 
     except discord.DiscordException as e:
         logger.error(f"Failed to send Trevor alert: {e}")

@@ -23,9 +23,9 @@ from cis_controller.state_machine import (
     get_student_state,
 )
 from cis_controller.safety_filter import (
+    ComparisonViolationError,
     safety_filter,
-    post_to_discord_safe,
-    CrisisDetectedError,
+    notify_trevor_safety_violation,
 )
 import logging
 
@@ -546,12 +546,13 @@ def setup_bot_events(bot: commands.Bot):
                 # Check for crisis keywords (Level 4 intervention)
                 crisis_type = safety_filter.detect_crisis(message.content)
                 if crisis_type:
-                    # Send crisis response immediately
-                    await post_to_discord_safe(
-                        bot,
-                        message.channel,
-                        safety_filter.KENYA_CRISIS_RESPONSE,
-                        student_discord_id=str(message.author.id)
+                    # Send crisis response and trigger Trevor alert immediately.
+                    await message.channel.send(safety_filter.KENYA_CRISIS_RESPONSE)
+                    await notify_trevor_safety_violation(
+                        bot=bot,
+                        violation_type="crisis",
+                        message=message.content,
+                        student_discord_id=message.author.id,
                     )
                     # Message already handled (crisis response sent, Trevor alerted)
                     return
@@ -560,10 +561,24 @@ def setup_bot_events(bot: commands.Bot):
                 # Only validates, doesn't block (we want the bot to still process commands)
                 safety_filter.validate_no_comparison(message.content)
 
-            except Exception as safety_error:
+            except ComparisonViolationError as safety_error:
                 # Safety violation detected - log and notify Trevor
                 logger.critical(f"Safety violation in message from {message.author.id}: {safety_error}")
+                await notify_trevor_safety_violation(
+                    bot=bot,
+                    violation_type="comparison",
+                    message=message.content,
+                    student_discord_id=message.author.id,
+                )
                 # Don't process the message further if it has safety violations
+                return
+            except Exception as safety_error:
+                logger.error(
+                    "Safety filter processing failed for message from %s: %s",
+                    message.author.id,
+                    safety_error,
+                    exc_info=True,
+                )
                 return
 
         # Only process DMs or messages in designated channels

@@ -9,11 +9,17 @@ language from appearing in public Discord channels per Guardrail #3.
 import pytest
 import sys
 import os
+from unittest.mock import AsyncMock, Mock, patch
 
 # Ensure cis-discord-bot root is on path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from cis_controller.safety_filter import SafetyFilter, ComparisonViolationError, CrisisDetectedError
+from cis_controller.safety_filter import (
+    SafetyFilter,
+    ComparisonViolationError,
+    CrisisDetectedError,
+    notify_trevor_safety_violation,
+)
 
 
 class TestSafetyFilterPassCases:
@@ -278,3 +284,69 @@ class TestKenyaCrisisResponse:
     def test_crisis_response_mentions_1_hour_response(self):
         """Crisis response promises Trevor response within 1 hour"""
         assert "1 hour" in self.filter.KENYA_CRISIS_RESPONSE or "1hour" in self.filter.KENYA_CRISIS_RESPONSE
+
+
+class TestTrevorSafetyAlerts:
+    """Task 2.3 regression tests for Trevor safety escalation payloads."""
+
+    @pytest.mark.asyncio
+    async def test_crisis_alert_includes_context_payload(self, monkeypatch):
+        monkeypatch.setenv("TREVOR_DISCORD_ID", "999888777")
+
+        trevor_user = Mock()
+        trevor_user.send = AsyncMock()
+
+        bot = Mock()
+        bot.fetch_user = AsyncMock(return_value=trevor_user)
+
+        with patch(
+            "cis_controller.safety_filter._load_crisis_context",
+            return_value={
+                "emotional_state": "stuck",
+                "last_messages": [
+                    "user: I feel overwhelmed",
+                    "assistant: Let's pause and breathe",
+                    "user: I can't go on",
+                ],
+            },
+        ), patch(
+            "cis_controller.safety_filter._log_to_moderation_logs",
+            new_callable=AsyncMock,
+        ) as mock_log:
+            await notify_trevor_safety_violation(
+                bot=bot,
+                violation_type="crisis",
+                message="I can't go on",
+                student_discord_id=123456,
+            )
+
+        bot.fetch_user.assert_awaited_once_with(999888777)
+        trevor_user.send.assert_awaited_once()
+        sent_alert = trevor_user.send.await_args.args[0]
+        assert "Last 3 messages" in sent_alert
+        assert "stuck" in sent_alert
+        mock_log.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_comparison_alert_logs_to_moderation(self, monkeypatch):
+        monkeypatch.setenv("TREVOR_DISCORD_ID", "999888777")
+
+        trevor_user = Mock()
+        trevor_user.send = AsyncMock()
+
+        bot = Mock()
+        bot.fetch_user = AsyncMock(return_value=trevor_user)
+
+        with patch(
+            "cis_controller.safety_filter._log_to_moderation_logs",
+            new_callable=AsyncMock,
+        ) as mock_log:
+            await notify_trevor_safety_violation(
+                bot=bot,
+                violation_type="comparison",
+                message="Top student this week...",
+                student_discord_id=123456,
+            )
+
+        trevor_user.send.assert_awaited_once()
+        mock_log.assert_awaited_once()
