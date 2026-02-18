@@ -17,6 +17,7 @@ import pytz
 from discord.ext import tasks
 
 from cis_controller.safety_filter import post_to_discord_safe
+from cis_controller.facilitator_dashboard import FacilitatorDashboard
 from scheduler.daily_prompts import DailyPromptLibrary, WeekDay
 from database.store import StudentStateStore
 
@@ -55,6 +56,7 @@ class DailyPromptScheduler:
         self.cohort_start_date = datetime.strptime(cohort_start_date, "%Y-%m-%d").replace(tzinfo=EAT)
         self.escalation_system = escalation_system
         self.store = store or StudentStateStore()  # Task 2.5: Database access
+        self.dashboard = FacilitatorDashboard(self.store)  # Task 2.6: Dashboard automation
 
         # Load prompt library
         self.library = DailyPromptLibrary()
@@ -66,12 +68,17 @@ class DailyPromptScheduler:
         self._escalations_checked_today = False
         self._reflection_posted_today = False  # Task 2.5
         self._week_unlock_today = False  # Task 2.5
+        self._daily_summary_today = False  # Task 2.6: 9 AM daily summary
+        self._peer_visibility_today = False  # Task 2.6: 6 PM peer visibility
+        self._reflection_summary_today = False  # Task 2.6: Friday 5 PM reflection summary
+        self._spot_check_today = False  # Task 2.6: Friday 5 PM spot-check list
 
         logger.info(f"Scheduler initialized for guild {guild_id}")
         logger.info(f"Cohort start date: {cohort_start_date}")
         logger.info(f"Channel mapping: {channel_mapping}")
         if escalation_system:
             logger.info("Escalation system integrated")
+        logger.info("Facilitator dashboard integrated")
 
     def get_current_week(self) -> int:
         """
@@ -430,6 +437,131 @@ class DailyPromptScheduler:
         except Exception as e:
             logger.error(f"Failed to send Trevor notification: {e}")
 
+    async def post_daily_summary(self, week: int):
+        """
+        Post 9:00 AM daily summary to #facilitator-dashboard (Task 2.6).
+
+        Args:
+            week: Current week number
+        """
+        if week == 0 or week > 8:
+            logger.info("Skipping daily summary: cohort not active or week > 8")
+            return
+
+        # Get dashboard channel
+        dashboard_channel_id = int(os.getenv('CHANNEL_FACILITATOR_DASHBOARD', 0))
+        if not dashboard_channel_id:
+            logger.warning("CHANNEL_FACILITATOR_DASHBOARD not set, skipping daily summary")
+            return
+
+        try:
+            guild = self.bot.get_guild(self.guild_id)
+            if not guild:
+                logger.error(f"Guild {self.guild_id} not found")
+                return
+
+            dashboard = guild.get_channel(dashboard_channel_id)
+            if not dashboard or not hasattr(dashboard, "send"):
+                logger.error(f"Dashboard channel {dashboard_channel_id} not found or not sendable")
+                return
+        except Exception as e:
+            logger.error(f"Error getting dashboard channel: {e}")
+            return
+
+        # Generate and post summary
+        try:
+            message = self.dashboard.generate_daily_summary(week)
+            await dashboard.send(message)
+            logger.info(f"Posted daily summary to dashboard for week {week}")
+            self._daily_summary_today = True
+        except Exception as e:
+            logger.error(f"Failed to post daily summary: {e}")
+
+    async def post_peer_visibility_summary(self, week: int):
+        """
+        Post 6:00 PM peer visibility summary to #facilitator-dashboard (Task 2.6).
+
+        Args:
+            week: Current week number
+        """
+        if week == 0 or week > 8:
+            return
+
+        # Get dashboard channel
+        dashboard_channel_id = int(os.getenv('CHANNEL_FACILITATOR_DASHBOARD', 0))
+        if not dashboard_channel_id:
+            logger.warning("CHANNEL_FACILITATOR_DASHBOARD not set, skipping peer visibility summary")
+            return
+
+        try:
+            guild = self.bot.get_guild(self.guild_id)
+            if not guild:
+                return
+
+            dashboard = guild.get_channel(dashboard_channel_id)
+            if not dashboard or not hasattr(dashboard, "send"):
+                return
+        except Exception as e:
+            logger.error(f"Error getting dashboard channel: {e}")
+            return
+
+        try:
+            message = self.dashboard.generate_peer_visibility_summary(week)
+            await dashboard.send(message)
+            logger.info(f"Posted peer visibility summary to dashboard for week {week}")
+            self._peer_visibility_today = True
+        except Exception as e:
+            logger.error(f"Failed to post peer visibility summary: {e}")
+
+    async def post_friday_dashboard_summaries(self, week: int):
+        """
+        Post Friday 5:00 PM reflection summary + spot-check list (Task 2.6).
+
+        Args:
+            week: Current week number
+        """
+        if week == 0 or week > 8:
+            logger.info("Skipping Friday dashboard summaries: cohort not active or week > 8")
+            return
+
+        # Get dashboard channel
+        dashboard_channel_id = int(os.getenv('CHANNEL_FACILITATOR_DASHBOARD', 0))
+        if not dashboard_channel_id:
+            logger.warning("CHANNEL_FACILITATOR_DASHBOARD not set, skipping Friday summaries")
+            return
+
+        try:
+            guild = self.bot.get_guild(self.guild_id)
+            if not guild:
+                logger.error(f"Guild {self.guild_id} not found")
+                return
+
+            dashboard = guild.get_channel(dashboard_channel_id)
+            if not dashboard or not hasattr(dashboard, "send"):
+                logger.error(f"Dashboard channel {dashboard_channel_id} not found or not sendable")
+                return
+        except Exception as e:
+            logger.error(f"Error getting dashboard channel: {e}")
+            return
+
+        # Post reflection summary
+        try:
+            summary_message = self.dashboard.generate_reflection_summary(week)
+            await dashboard.send(summary_message)
+            logger.info(f"Posted reflection summary to dashboard for week {week}")
+            self._reflection_summary_today = True
+        except Exception as e:
+            logger.error(f"Failed to post reflection summary: {e}")
+
+        # Post spot-check list
+        try:
+            spot_check_message = self.dashboard.generate_spot_check_list(week)
+            await dashboard.send(spot_check_message)
+            logger.info(f"Posted spot-check list to dashboard for week {week}")
+            self._spot_check_today = True
+        except Exception as e:
+            logger.error(f"Failed to post spot-check list: {e}")
+
     async def _send_public_message(self, channel, message_text: str):
         """Route student-facing public posts through Guardrail #3 safety checks."""
         await post_to_discord_safe(
@@ -457,6 +589,10 @@ class DailyPromptScheduler:
             self._escalations_checked_today = False
             self._reflection_posted_today = False  # Task 2.5
             self._week_unlock_today = False  # Task 2.5
+            self._daily_summary_today = False  # Task 2.6
+            self._peer_visibility_today = False  # Task 2.6
+            self._reflection_summary_today = False  # Task 2.6
+            self._spot_check_today = False  # Task 2.6
 
         week, day = self.get_week_day()
 
@@ -464,6 +600,11 @@ class DailyPromptScheduler:
         if current_time.hour == 9 and current_time.minute == 0 and not self._node_posted_today:
             logger.info("Scheduled: 9:00 AM node post")
             await self.post_node_link(week, day)
+
+        # 9:00 AM EAT - Post daily summary to dashboard (Task 2.6)
+        elif current_time.hour == 9 and current_time.minute == 0 and not self._daily_summary_today:
+            logger.info("Scheduled: 9:00 AM daily summary to dashboard")
+            await self.post_daily_summary(week)
 
         # 9:15 AM EAT - Post daily prompt
         elif current_time.hour == 9 and current_time.minute == 15 and not self._prompt_posted_today:
@@ -487,9 +628,19 @@ class DailyPromptScheduler:
             logger.info(f"Scheduled: 12:00 PM week {week} batch unlock")
             await self.batch_unlock_week(week)
 
-        # 6:00 PM EAT Wednesday - Post peer visibility snapshot
+        # 5:00 PM EAT Friday - Post reflection summary + spot-check (Task 2.6)
+        elif current_time.hour == 17 and current_time.minute == 0 and day == WeekDay.FRIDAY and not self._reflection_summary_today:
+            logger.info("Scheduled: 5:00 PM Friday dashboard summaries")
+            await self.post_friday_dashboard_summaries(week)
+
+        # 6:00 PM EAT - Post peer visibility snapshot to dashboard (Task 2.6)
+        elif current_time.hour == 18 and current_time.minute == 0 and not self._peer_visibility_today:
+            logger.info("Scheduled: 6:00 PM peer visibility summary to dashboard")
+            await self.post_peer_visibility_summary(week)
+
+        # 6:00 PM EAT Wednesday - Post peer visibility snapshot to weekly channel (legacy, kept for compatibility)
         elif current_time.hour == 18 and current_time.minute == 0 and day == WeekDay.WEDNESDAY:
-            logger.info("Scheduled: 6:00 PM peer visibility snapshot")
+            logger.info("Scheduled: 6:00 PM peer visibility snapshot to weekly channel")
             await self.post_peer_visibility_snapshot(week)
 
     def start(self):

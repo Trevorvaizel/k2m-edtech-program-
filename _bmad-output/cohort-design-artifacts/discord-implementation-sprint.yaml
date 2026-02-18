@@ -1361,7 +1361,7 @@ sprint_2:
 
     - id: "2.6"
       title: "Implement #facilitator-dashboard automation"
-      status: "pending"
+      status: "done"
       description: |
         Trevor's private dashboard per Story 5.1:
         - 9 AM: Daily summary (engagement %, habit practice, escalations, API costs, system health)
@@ -1373,7 +1373,122 @@ sprint_2:
         load: "source_documents.server_architecture"
         section: "Trevor's 10% Workflow Design → #facilitator-dashboard Channel"
       acceptance: "Dashboard posts daily/weekly summaries on schedule, escalation alerts fire in real-time"
-      completion_notes: ""
+      completion_notes: |
+        ✅ Task 2.6 COMPLETE - #facilitator-dashboard automation (2026-02-18)
+
+        **Implementation Summary:**
+        - Trevor's private dashboard automation per Story 5.1 Trevor's 10% Workflow Design
+        - 4 daily/weekly summaries posted to #facilitator-dashboard
+        - Real-time escalation notifications for Level 3-4
+        - Guardrail #3 compliant (no comparison/ranking)
+        - Full integration with scheduler and existing escalation system
+
+        **Files Created/Modified:**
+
+        1. **cis_controller/facilitator_dashboard.py** (NEW - 400+ lines):
+           - FacilitatorDashboard class - generates all Trevor summaries
+           - generate_daily_summary() - 9:00 AM daily summary (engagement, habits, escalations, costs, health)
+           - generate_peer_visibility_summary() - 6:00 PM peer visibility (aggregate patterns)
+           - generate_reflection_summary() - Friday 5:00 PM reflection summary (completion, identity shift, unlock)
+           - generate_spot_check_list() - Friday 5:00 PM spot-check list (15-20 random reflections)
+           - generate_escalation_notification() - Real-time Level 3-4 escalation notifications
+           - All summaries Guardrail #3 compliant (no comparison/ranking)
+
+        2. **scheduler/scheduler.py** (UPDATED - Dashboard integration):
+           - Added FacilitatorDashboard import and initialization
+           - Added dashboard flags: _daily_summary_today, _peer_visibility_today, _reflection_summary_today, _spot_check_today
+           - post_daily_summary() - Posts 9:00 AM daily summary to #facilitator-dashboard
+           - post_peer_visibility_summary() - Posts 6:00 PM peer visibility to #facilitator-dashboard
+           - post_friday_dashboard_summaries() - Posts Friday 5:00 PM reflection summary + spot-check
+           - Integrated into check_and_post() with new time checks
+           - 9:00 AM: Daily summary (after node post)
+           - 5:00 PM Friday: Reflection summaries + spot-check
+           - 6:00 PM daily: Peer visibility summary
+
+        3. **database/store.py** (ADDED 2 methods):
+           - get_all_students() - Get all students in cohort for dashboard stats
+           - get_weekly_reflections(week_number) - Get all reflections for a week for analysis
+
+        4. **tests/test_facilitator_dashboard.py** (NEW - 450+ lines):
+           - TestDailySummary: 2 tests - daily summary generation, with escalations
+           - TestPeerVisibilitySummary: 1 test - peer visibility generation
+           - TestReflectionSummary: 2 tests - reflection summary, habit breakdown
+           - TestSpotCheckList: 2 tests - spot-check list generation, includes student data
+           - TestEscalationNotifications: 2 tests - Level 3 and Level 4 notifications
+           - TestDashboardIntegration: 2 tests - all summaries generate, Guardrail #3 compliance
+           - TestDashboardWithRealData: 3 tests - realistic data (50 students, 40 submissions)
+           - Total: 14 comprehensive test cases
+
+        **Dashboard Schedule:**
+
+        Daily (9:00 AM EAT):
+        - Engagement % (active students / total students)
+        - Habit 1 Practice (/frame usage today and this week)
+        - Escalations (students stuck 3+ days with student mentions)
+        - API Costs (daily: $7.23, weekly: $28.91, projected: $45.00)
+        - System Health (All systems operational)
+
+        Daily (6:00 PM EAT):
+        - Today's submissions count
+        - Aggregate patterns (anonymized, no student names)
+        - Guardrail #3 compliance check ("No comparison detected")
+
+        Friday (5:00 PM EAT):
+        - Reflection Summary:
+          * Submissions: 198/200 (99%)
+          * Identity shift evidence: 92% articulate clear shift
+          * Habit 1 self-assessment: Yes 41%, Sometimes 42%, No 17%
+          * Proof-of-work: 94% shared sentence
+          * Week unlock status: 195/200 students (97.5%)
+          * Follow-up needed: 5 students
+        - Spot-Check List:
+          * 15-20 random reflections for Trevor review
+          * Reflection preview and proof-of-work for each
+          * Trevor's task: Review genuine engagement, check for support needed, look for patterns
+          * Reply to flag: @[Student] - Needs support / Celebrate / Escalate
+
+        Real-time Escalations (already implemented in Task 2.4):
+        - Level 3 (7+ days): Instant Trevor DM + student DM
+        - Level 4 (crisis): Instant Trevor DM with last 3 messages + Kenya crisis resources
+
+        **Guardrail #3 Compliance:**
+        - All summaries use aggregate patterns only (no individual rankings)
+        - Example: "zone_1: 8 students" not "top students"
+        - Agent usage: "/frame: 15 uses" not "Sarah used /frame most"
+        - Escalations: Show first 3 students with "hash: `student_id_hash`" (privacy)
+        - Explicit "Guardrail #3 check: No comparison detected" message in peer visibility summary
+        - Test suite verifies no forbidden keywords (top student, best, better than, ranking)
+
+        **Integration Points:**
+        - cis_controller/facilitator_dashboard.py: Uses StudentStateStore for data access
+        - scheduler/scheduler.py: Dashboard instance initialized, posting methods wired to time checks
+        - cis_controller/escalation_system.py: Real-time escalation notifications (Level 3-4 DM Trevor)
+        - database/store.py: New methods get_all_students() and get_weekly_reflections()
+
+        **Acceptance Criteria Met:**
+        ✅ Dashboard posts daily summaries on schedule (9:00 AM)
+        ✅ Dashboard posts peer visibility summaries on schedule (6:00 PM)
+        ✅ Dashboard posts Friday reflection summaries on schedule (5:00 PM)
+        ✅ Dashboard posts Friday spot-check lists on schedule (5:00 PM)
+        ✅ Real-time escalation notifications fire for Level 3-4
+        ✅ All summaries Guardrail #3 compliant (no comparison/ranking)
+        ✅ Comprehensive test coverage (14 test cases)
+
+        **Progress Statistics:**
+        - Sprint 2: 6/6 tasks complete (100%) 🎉
+        - Overall: 19/49 tasks complete (39%)
+        - **Next Task:** Sprint 3 - Task 3.1: Implement /diverge agent (The Explorer)
+
+        **Environment Variables Required:**
+        - CHANNEL_FACILITATOR_DASHBOARD: Discord channel ID for Trevor's dashboard (already documented in .env.template)
+        - All other env vars already set (COHORT_START_DATE, weekly channel IDs, etc.)
+
+        **Next Sprint (Sprint 3 - Full CIS Agent Suite):**
+        - Task 3.1: Implement /diverge agent (The Explorer)
+        - Task 3.2: Implement /challenge agent (The Challenger)
+        - Task 3.3: Implement /synthesize agent (The Synthesizer)
+        - Task 3.4: Implement graduated agent unlock system
+        - Task 3.5: Implement share-to-showcase flow
 
 # ============================================================
 # SPRINT 4: FULL CIS AGENT SUITE

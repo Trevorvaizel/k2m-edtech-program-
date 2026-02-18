@@ -1062,6 +1062,43 @@ class StudentStateStore:
             'pending_count': (row['total'] or 0) - (row['submitted_count'] or 0)
         }
 
+    def get_all_students(self) -> List[sqlite3.Row]:
+        """
+        Get all students in the cohort.
+
+        Returns:
+            List of student rows
+        """
+        cursor = self.conn.execute(
+            """
+            SELECT * FROM students
+            ORDER BY created_at DESC
+            """
+        )
+        return cursor.fetchall()
+
+    def get_weekly_reflections(self, week_number: int) -> List[sqlite3.Row]:
+        """
+        Get all weekly reflections for a specific week.
+
+        Args:
+            week_number: Week number to retrieve
+
+        Returns:
+            List of reflection rows
+        """
+        cursor = self.conn.execute(
+            """
+            SELECT wr.*, s.zone, s.current_week
+            FROM weekly_reflections wr
+            JOIN students s ON wr.discord_id = s.discord_id
+            WHERE wr.week_number = ?
+            ORDER BY wr.submitted_at DESC
+            """,
+            (week_number,)
+        )
+        return cursor.fetchall()
+
     def close(self):
         """Close database connection"""
         if self.conn:
