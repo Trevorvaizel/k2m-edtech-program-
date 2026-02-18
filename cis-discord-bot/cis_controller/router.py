@@ -22,6 +22,11 @@ from cis_controller.state_machine import (
     celebrate_habit,
     get_student_state,
 )
+from cis_controller.safety_filter import (
+    safety_filter,
+    post_to_discord_safe,
+    CrisisDetectedError,
+)
 import logging
 
 logger = logging.getLogger(__name__)
@@ -41,8 +46,18 @@ CONTROLLED_COMMANDS = {
     "publish",
 }
 
+# Student-controlled consent gate for Guardrail #8 deep journey inspection.
+JOURNEY_CONSENT_PHRASE = "i consent to journey inspection"
+JOURNEY_CONSENT_REVOKE_PHRASE = "revoke journey inspection consent"
+
 # Commands that belong to discord.py bot command handlers in main.py.
 BYPASS_CONTROLLER_COMMANDS = {"ping", "status"}
+
+# User-facing command aliases.
+COMMAND_ALIASES = {
+    "framer": "frame",
+    "create_artifact": "create-artifact",
+}
 
 # Habit mapping for milestone tracking.
 HABIT_BY_COMMAND = {
@@ -93,9 +108,129 @@ class PrivateReplyMessage:
         self.author = source_message.author
         self.content = source_message.content
         self.channel = private_channel
+        self.guild = getattr(source_message, "guild", None)
 
     async def reply(self, content=None, **kwargs):
         return await self.channel.send(content, **kwargs)
+
+
+class SlashInteractionMessage:
+    """
+    Adapter that lets slash-command interactions reuse message-based routing.
+    """
+
+    def __init__(self, interaction: discord.Interaction, content: str):
+        self._interaction = interaction
+        self.author = interaction.user
+        self.content = content
+        self.channel = interaction.channel
+        self.guild = interaction.guild
+        self.did_reply = False
+
+    async def reply(self, content=None, **kwargs):
+        self.did_reply = True
+        kwargs.pop("mention_author", None)
+        ephemeral = kwargs.pop("ephemeral", self._interaction.guild is not None)
+
+        if self._interaction.response.is_done():
+            return await self._interaction.followup.send(
+                content, ephemeral=ephemeral, **kwargs
+            )
+        return await self._interaction.response.send_message(
+            content, ephemeral=ephemeral, **kwargs
+        )
+
+    async def add_reaction(self, emoji):
+        # Interactions are not tied to a message object we can react to.
+        return None
+
+
+def normalize_command_name(raw_command: str, remainder: str = "") -> str:
+    """
+    Normalize user-entered command names to canonical controller commands.
+    """
+    command = (raw_command or "").strip().lower()
+    trailing = (remainder or "").strip().lower()
+
+    # Handle legacy spaced variant: "/create artifact ..."
+    if command == "create" and trailing.startswith("artifact"):
+        command = "create-artifact"
+
+    return COMMAND_ALIASES.get(command, command)
+
+
+async def _send_interaction_feedback(
+    interaction: discord.Interaction, content: str, ephemeral: bool | None = None
+):
+    """
+    Send an interaction-safe response, regardless of response state.
+    """
+    if ephemeral is None:
+        ephemeral = interaction.guild is not None
+
+    if interaction.response.is_done():
+        return await interaction.followup.send(content, ephemeral=ephemeral)
+    return await interaction.response.send_message(content, ephemeral=ephemeral)
+
+
+async def route_slash_command(
+    interaction: discord.Interaction, command: str, prompt: str = ""
+):
+    """
+    Entry point for Discord application slash commands.
+
+    Converts the interaction into a message-like object so existing controller
+    logic (DM routing, week unlock checks, handlers) stays centralized.
+    """
+    channel = interaction.channel
+    if channel is None:
+        await _send_interaction_feedback(
+            interaction,
+            "I could not detect this channel. Please try again.",
+        )
+        return
+
+    is_dm = isinstance(channel, discord.DMChannel) or interaction.guild is None
+    if not is_dm and not _is_designated_channel(channel):
+        await _send_interaction_feedback(
+            interaction,
+            "Use this command in #thinking-lab, #bot-testing, or in DM.",
+            ephemeral=True,
+        )
+        return
+
+    prompt_text = (prompt or "").strip()
+    normalized = normalize_command_name(command, prompt_text)
+    synthetic_content = f"/{normalized}"
+    if prompt_text:
+        synthetic_content += f" {prompt_text}"
+
+    synthetic_message = SlashInteractionMessage(interaction, synthetic_content)
+
+    if not interaction.response.is_done():
+        await interaction.response.defer(ephemeral=not is_dm, thinking=True)
+
+    try:
+        await route_student_interaction(synthetic_message)
+    except Exception as exc:
+        logger.error("Error routing slash command %s: %s", normalized, exc, exc_info=True)
+        if not synthetic_message.did_reply:
+            await _send_interaction_feedback(
+                interaction,
+                "Something went wrong. Try again in a moment.",
+                ephemeral=not is_dm,
+            )
+        return
+
+    # Acknowledge slash invocation even when response is delivered in DM.
+    if not synthetic_message.did_reply:
+        if is_dm:
+            await interaction.followup.send("Command received. Check this DM thread.")
+        else:
+            await interaction.followup.send(
+                "Command received. Check your DMs from KIRA.",
+                ephemeral=True,
+            )
 
 
 def _is_designated_channel(channel) -> bool:
@@ -123,7 +258,13 @@ async def _prepare_response_message(message: discord.Message):
 
     dm_channel = message.author.dm_channel
     if dm_channel is None:
-        dm_channel = await message.author.create_dm()
+        try:
+            dm_channel = await message.author.create_dm()
+        except discord.Forbidden:
+            await message.reply(
+                "I can't DM you yet. Please enable direct messages and try again."
+            )
+            return None
 
     try:
         await message.add_reaction("\U0001F4E9")
@@ -162,17 +303,16 @@ async def route_student_interaction(message: discord.Message):
         logger.info(f"Created new student: {discord_id}")
 
     response_message = await _prepare_response_message(message)
+    if response_message is None:
+        return
 
     # LAYER 1: INTENT RECOGNITION
     # Check if message is a slash command
     if message.content.startswith('/'):
         # Extract command name (e.g., "/frame what is ai" -> "frame")
         parts = message.content.split(maxsplit=1)
-        command = parts[0][1:].lower()  # Remove leading slash
-
-        # Handle artifact command with hyphen
-        if command == "create" and len(parts) > 1 and parts[1].startswith("artifact"):
-            command = "create-artifact"
+        trailing = parts[1] if len(parts) > 1 else ""
+        command = normalize_command_name(parts[0][1:], trailing)
 
         # Let core bot command handlers in main.py handle these commands.
         if command in BYPASS_CONTROLLER_COMMANDS:
@@ -180,6 +320,39 @@ async def route_student_interaction(message: discord.Message):
 
         await handle_command(response_message, student, command)
     else:
+        # Handle pending showcase share decisions in DM before NL intent suggestions.
+        if isinstance(message.channel, discord.DMChannel):
+            normalized_dm = " ".join(message.content.lower().strip().split())
+            if normalized_dm == JOURNEY_CONSENT_PHRASE:
+                store.record_student_consent(
+                    discord_id=discord_id,
+                    consent_type="journey_inspection",
+                    source="student_dm_phrase",
+                )
+                await message.reply(
+                    "✅ Consent recorded for journey inspection (valid for 24 hours). "
+                    "You can revoke anytime by sending: `revoke journey inspection consent`."
+                )
+                return
+
+            if normalized_dm == JOURNEY_CONSENT_REVOKE_PHRASE:
+                store.revoke_student_consent(
+                    discord_id=discord_id,
+                    consent_type="journey_inspection",
+                )
+                await message.reply("✅ Journey inspection consent revoked.")
+                return
+
+            from commands.frame import (
+                handle_showcase_share_response,
+                has_pending_showcase_share,
+            )
+
+            if has_pending_showcase_share(discord_id):
+                handled = await handle_showcase_share_response(message)
+                if handled:
+                    return
+
         # Natural language - classify intent and suggest command
         # Delayed import prevents circular dependency during module load.
         from cis_controller.suggestions import suggest_explicit_command
@@ -248,18 +421,20 @@ async def handle_command(message: discord.Message, student, command: str):
             from commands.artifact import handle_artifact_commands
             await handle_artifact_commands(message, student, command)
 
-        # LAYER 2: STATE MACHINE PERSISTENCE
-        transition_state(previous_state, command, student=student, store=store)
+        # /frame already owns its own lifecycle/persistence in handler.
+        if command != "frame":
+            # LAYER 2: STATE MACHINE PERSISTENCE
+            transition_state(previous_state, command, student=student, store=store)
 
-        # Habit tracking + milestone celebration for relevant commands.
-        habit_id = HABIT_BY_COMMAND.get(command)
-        if habit_id is not None:
-            discord_id = str(message.author.id)
-            store.update_habit_practice(discord_id, habit_id)
-            refreshed_student = store.get_student(discord_id)
-            milestone_message = celebrate_habit(refreshed_student, habit_id)
-            if milestone_message:
-                await message.reply(milestone_message)
+            # Habit tracking + milestone celebration for relevant commands.
+            habit_id = HABIT_BY_COMMAND.get(command)
+            if habit_id is not None:
+                discord_id = str(message.author.id)
+                store.update_habit_practice(discord_id, habit_id)
+                refreshed_student = store.get_student(discord_id)
+                milestone_message = celebrate_habit(refreshed_student, habit_id)
+                if milestone_message:
+                    await message.reply(milestone_message)
 
     except Exception as e:
         logger.error(f"Error handling command {command}: {e}")
@@ -361,6 +536,35 @@ def setup_bot_events(bot: commands.Bot):
         # Ignore bot's own messages
         if message.author.bot:
             return
+
+        # Task 2.3: SafetyFilter validation for ALL public channel messages
+        # DMs are private spaces and don't go through SafetyFilter
+        is_public_channel = not isinstance(message.channel, discord.DMChannel)
+
+        if is_public_channel:
+            try:
+                # Check for crisis keywords (Level 4 intervention)
+                crisis_type = safety_filter.detect_crisis(message.content)
+                if crisis_type:
+                    # Send crisis response immediately
+                    await post_to_discord_safe(
+                        bot,
+                        message.channel,
+                        safety_filter.KENYA_CRISIS_RESPONSE,
+                        student_discord_id=str(message.author.id)
+                    )
+                    # Message already handled (crisis response sent, Trevor alerted)
+                    return
+
+                # Check for comparison/ranking language (Guardrail #3)
+                # Only validates, doesn't block (we want the bot to still process commands)
+                safety_filter.validate_no_comparison(message.content)
+
+            except Exception as safety_error:
+                # Safety violation detected - log and notify Trevor
+                logger.critical(f"Safety violation in message from {message.author.id}: {safety_error}")
+                # Don't process the message further if it has safety violations
+                return
 
         # Only process DMs or messages in designated channels
         if isinstance(message.channel, discord.DMChannel) or _is_designated_channel(message.channel):

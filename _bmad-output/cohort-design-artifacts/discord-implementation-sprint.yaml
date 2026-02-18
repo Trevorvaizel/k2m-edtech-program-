@@ -15,12 +15,15 @@
 project: "K2M Cohort 1 - Discord Infrastructure"
 cohort_launch_target: "TBD"
 builder: "Trevor (with BMAD agents)"
-tech_stack: "Discord + Python (discord.py) + Claude API (Anthropic SDK) + SQLite"
+tech_stack: "Discord + Python (discord.py) + Provider-routed LLM API (OpenAI active runtime) + SQLite"
+active_llm_provider: "openai"
+provider_swap_status: "completed (OpenAI active; provider-swappable architecture retained)"
 
 # ============================================================
 # SOURCE DOCUMENTS (Load these for full context)
 # ============================================================
 source_documents:
+  provider_runtime_override: "_bmad-output/cohort-design-artifacts/provider-runtime-override.md"
   server_architecture: "_bmad-output/cohort-design-artifacts/playbook-v2/05-discord-ops/5-1-discord-server-structure.md"
   thinking_lab_spec: "_bmad-output/cohort-design-artifacts/playbook-v2/05-discord-ops/5-2-thinking-lab-setup.md"
   thinking_showcase_spec: "_bmad-output/cohort-design-artifacts/playbook-v2/05-discord-ops/5-3-thinking-showcase-setup.md"
@@ -42,11 +45,11 @@ source_documents:
 # ============================================================
 progress:
   total_tasks: 49
-  done: 15
+  done: 16
   in_progress: 0
   blocked: 0
-  pending: 34
-  percent_complete: 31
+  pending: 33
+  percent_complete: 33
 
 # ============================================================
 # SPRINT 0: AUTOMATED DISCORD SERVER SETUP
@@ -315,9 +318,9 @@ sprint_1:
       description: |
         Create project structure per Story 4.7:
         - discord.py bot with async/await patterns
-        - Anthropic SDK (Claude API) integration
+        - Provider-routed LLM integration (OpenAI active runtime; Anthropic/Zhipu supported)
         - SQLite database connection
-        - Environment variables (.env: DISCORD_TOKEN, ANTHROPIC_API_KEY, COHORT_ID, START_DATE)
+        - Environment variables (.env: DISCORD_TOKEN, AI_PROVIDER, OPENAI_API_KEY, COHORT_ID, COHORT_START_DATE)
         - Basic bot startup, connect to Discord, respond to ping
         - Deploy to Railway (or local dev first)
       agent_context:
@@ -355,7 +358,7 @@ sprint_1:
         **Next Steps:**
         - Task 1.2: Implement full StudentContext ORM (build_student_context wired to DB)
         - Task 1.3: Implement CIS Controller routing (state machine, suggestions, handle_command)
-        - Task 1.4: Implement /frame agent with Claude API integration
+        - Task 1.4: Implement /frame agent with provider-routed LLM integration
 
     - id: "1.2"
       title: "Implement StudentContext + SQLite schema"
@@ -537,7 +540,7 @@ sprint_1:
         - main.py: setup_bot_events(bot) already wired (line 132)
 
         **Next Steps:**
-        - Task 1.4: Implement /frame agent with Claude API integration
+        - Task 1.4: Implement /frame agent with provider-routed LLM integration
         - Task 1.5: Implement private DM workflow (Decision 12)
         - Task 1.6: Implement rate limiting + cost controls
         - Task 1.7: Implement Observability Infrastructure (MVP)
@@ -561,7 +564,7 @@ sprint_1:
         ✅ Task 1.4 COMPLETE - /frame agent implementation (2026-02-17)
 
         **Implementation Summary:**
-        - Claude API integration with prompt caching (90% cost reduction)
+        - Provider-routed LLM integration with prompt caching (OpenAI active runtime)
         - StudentContext-aware responses (zone, altitude, emotional state)
         - Habit 1 (Pause) + Habit 2 (Context) scaffolding
         - Conversation lifecycle: DM initiation → scaffolding → completion → optional share to #thinking-showcase
@@ -571,7 +574,7 @@ sprint_1:
 
         **Files Created/Updated:**
         1. cis_controller/llm_integration.py (162 lines):
-           - Full Claude API integration (anthropic SDK)
+           - Full provider-routed LLM integration (OpenAI active; Anthropic/Zhipu fallback paths)
            - Prompt caching for 90% cost reduction
            - Cost tracking (input/output/cache tokens, total USD)
            - Error handling (RateLimitError, APIConnectionError, APITimeoutError)
@@ -586,10 +589,10 @@ sprint_1:
            - State machine transitions
            - Observability event logging
            - Optional share to #thinking-showcase prompt
-           - Graceful fallback if Claude API fails
+           - Graceful fallback if active LLM provider fails
 
         3. tests/test_frame_command.py (NEW - 450+ lines):
-           - TestFrameCommandClaudeAPI: API integration, prompt caching, conversation history
+           - Frame command tests: API integration, prompt caching, conversation history
            - TestFrameCommandStudentContext: Zone-aware, altitude-aware, emotional state responses
            - TestFrameCommandHabitScaffolding: Habit 1 & 2 scaffolding, practice count updates
            - TestFrameCommandConversationLifecycle: DM workflow, DB persistence, share prompt
@@ -597,7 +600,7 @@ sprint_1:
            - TestFrameCommandErrorHandling: API failures, DM permissions, StudentContext build failures
 
         **Key Features Implemented:**
-        - ✅ Claude Sonnet 4.5 API integration with prompt caching
+        - ✅ Provider-routed LLM integration with prompt caching (OpenAI active runtime)
         - ✅ Cost tracking: $3/M input, $0.30/M cached, $15/M output (50% Batch API discount)
         - ✅ StudentContext-aware responses (zone, altitude, emotional state)
         - ✅ Habit 1 (Pause) scaffolding: "What do you actually want?"
@@ -1051,7 +1054,7 @@ sprint_2:
 
     - id: "2.3"
       title: "Implement SafetyFilter (Guardrail #3)"
-      status: "pending"
+      status: "done"
       description: |
         Anti-comparison validation per Story 4.7:
         - Validates ALL public channel messages
@@ -1066,7 +1069,79 @@ sprint_2:
         also_load: "source_documents.server_architecture"
         also_section: "Moderation Workflow → Level 4 Crisis Intervention"
       acceptance: "SafetyFilter blocks comparison language, detects crisis keywords, fires correct alerts"
-      completion_notes: ""
+      completion_notes: |
+        ✅ Task 2.3 COMPLETE - SafetyFilter (Guardrail #3 + Level 4 Crisis Intervention) (2026-02-18)
+
+        **Implementation Summary:**
+        - Guardrail #3: Anti-comparison validation for all public messages
+        - Level 4 Crisis Intervention: Mental health keyword detection + Kenya crisis response
+        - Trevor alerting system: Instant DM for crisis, logged alerts for violations
+        - Showcase content validation: Blocks unfinished work drafts
+        - Full test coverage: 44 tests (20 existing + 24 new crisis/showcase tests)
+
+        **Files Created/Updated:**
+        1. cis_controller/safety_filter.py (300 lines):
+           - Guardrail #3: 19 comparison/ranking keywords + 4 regex patterns
+           - Level 4 Crisis: 19 crisis keywords (suicide, self-harm, hopeless, etc.)
+           - Kenya Crisis Response: "💚 You matter. Hotline: 119, Trevor: 0116 405604"
+           - Showcase validation: 9 unfinished work phrases blocked
+           - Trevor alerting: notify_trevor_safety_violation() function
+           - post_to_discord_safe(): Wrapper with 3-layer validation (crisis → comparison → showcase)
+
+        2. cis_controller/router.py (updated):
+           - Added SafetyFilter imports (safety_filter, post_to_discord_safe, CrisisDetectedError)
+           - Wired SafetyFilter to on_message event (lines 540-567)
+           - Crisis detection triggers immediate response + Trevor alert
+           - Comparison validation logs violations and notifies Trevor
+           - DMs bypass SafetyFilter (private spaces)
+
+        3. tests/test_safety_filter.py (280 lines, 44 total tests):
+           - TestCrisisDetection: 10 tests for crisis keyword detection
+           - TestShowcaseContentValidation: 9 tests for unfinished work blocking
+           - TestKenyaCrisisResponse: 5 tests for crisis response message
+           - TestSafetyFilterPassCases: 6 tests (existing)
+           - TestSafetyFilterBlockCases: 10 tests (existing)
+           - TestSafetyFilterAggregateMessages: 4 tests (existing)
+
+        **Key Features Implemented:**
+        - ✅ Guardrail #3 compliance: Blocks 19 comparison keywords (top student, best, ranking, etc.)
+        - ✅ Level 4 Crisis Detection: 19 crisis keywords trigger instant intervention
+        - ✅ Kenya Crisis Response: Hotline 119, Trevor 0116 405604, Emergency 999
+        - ✅ Trevor Alerting: Instant DM for crisis, logged alerts for comparison violations
+        - ✅ Showcase Protection: Blocks 9 unfinished work phrases (draft, WIP, still working on, etc.)
+        - ✅ Public Channel Validation: ALL public messages pass through SafetyFilter
+        - ✅ DM Privacy: DMs bypass SafetyFilter (private, safe spaces)
+        - ✅ Error Handling: Graceful fallback, logging, Trevor notifications
+
+        **Crisis Intervention Flow:**
+        1. Student posts message with crisis keyword in public channel
+        2. SafetyFilter.detect_crisis() immediately returns "mental_health_crisis"
+        3. Bot posts Kenya Crisis Response to channel: "💚 You matter. Hotline: 119, Trevor: 0116 405604"
+        4. notify_trevor_safety_violation() sends Trevor instant DM with student ID
+        5. Trevor reaches out within 1 hour (per Level 4 protocol)
+        6. If minor + high risk, Trevor calls parent within 2 hours
+
+        **Comparison Violation Flow:**
+        1. Student posts "top student" or similar comparison language
+        2. SafetyFilter.validate_no_comparison() raises ComparisonViolationError
+        3. Message blocked from posting
+        4. Trevor notified via DM with violation details
+        5. Logged to #moderation-logs
+
+        **Showcase Validation Flow:**
+        1. Student tries to share to #thinking-showcase with "draft" or "still working on"
+        2. SafetyFilter.validate_showcase_content() raises ComparisonViolationError
+        3. Message blocked with explanation: "#thinking-showcase is for finished work only"
+        4. Trevor notified of unfinished work attempt
+
+        **Environment Variables Required:**
+        - TREVOR_DISCORD_ID: Trevor's Discord user ID for instant DM alerts
+        - Already documented in .env.template (line 10)
+
+        **Next Steps:**
+        - Task 2.4: Implement escalation system (Level 1-4)
+        - Task 2.5: Implement Friday reflection gating + week unlock
+        - Task 2.6: Implement #facilitator-dashboard automation
 
     - id: "2.4"
       title: "Implement escalation system"
@@ -1303,8 +1378,8 @@ sprint_4:
       status: "pending"
       description: |
         Per Story 4.7:
-        - Health checks every 5 minutes (Discord API, Claude API, SQLite)
-        - Claude API down: fallback message encouraging Habit 1 practice independently
+        - Health checks every 5 minutes (Discord API, active LLM provider API, SQLite)
+        - Active LLM provider down: fallback message encouraging Habit 1 practice independently
         - Discord disconnect: auto-reconnect via discord.py
         - Database failure: switch to in-memory state, alert Trevor
         - Daily database backups
@@ -1493,6 +1568,4 @@ agent_instructions: |
 
 # Last Updated
 last_updated: "2026-02-18"
-updated_by: "Dev Agent (Amelia) - Task 2.2 COMPLETE: Bot Reactions + Participation Tracking implemented with 👀 emoji reactions, daily_participation table tracking, 6 PM inactivity flagging, week-specific gentle nudge DMs, anonymized evening peer visibility snapshots, 1-6 engagement scoring, Guardrail #3 compliance (no public rankings). Sprint 2: 2/6 tasks complete (33%). Overall: 15/49 tasks complete (31%)."
-
-
+updated_by: "Dev Agent (Amelia) - Task 2.3 COMPLETE: SafetyFilter (Guardrail #3 + Level 4 Crisis Intervention) implemented with 19 crisis keywords, 19 comparison keywords, Kenya Crisis Response (Hotline 119, Trevor 0116 405604), Trevor alerting system, showcase content validation (blocks unfinished work), 44 comprehensive tests. Sprint 2: 3/6 tasks complete (50%). Overall: 16/49 tasks complete (33%)."
