@@ -112,14 +112,72 @@ CREATE TABLE IF NOT EXISTS api_usage (
 -- ============================================================
 CREATE TABLE IF NOT EXISTS observability_events (
     id INTEGER PRIMARY KEY,
-    student_id_hash TEXT,  -- Privacy: hashed student Discord ID
+    student_id_hash TEXT,  -- Privacy: SHA256[:16] of discord_id — NOT a FK (hashed, can't join)
     event_type TEXT,       -- "agent_used", "stuck_detected", "milestone_reached", "zone_shift"
     metadata TEXT,         -- JSON: {agent: "framer", week: 4, zone: "zone_1"} NOT full messages
-    timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (student_id_hash) REFERENCES students(discord_id)
+    timestamp TEXT DEFAULT CURRENT_TIMESTAMP
+    -- No FK: student_id_hash is hashed for privacy, not equal to students.discord_id
 );
 
 -- Indexes for observability queries
 CREATE INDEX IF NOT EXISTS idx_observability_student ON observability_events(student_id_hash);
 CREATE INDEX IF NOT EXISTS idx_observability_type ON observability_events(event_type);
 CREATE INDEX IF NOT EXISTS idx_observability_timestamp ON observability_events(timestamp);
+
+-- ============================================================
+-- STUDENT CONSENTS TABLE
+-- Guardrail #8 consent gate for private journey inspection
+-- ============================================================
+CREATE TABLE IF NOT EXISTS student_consents (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    student_id_hash TEXT NOT NULL,  -- Privacy: hashed student id
+    consent_type TEXT NOT NULL,     -- e.g. journey_inspection
+    granted_at TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    revoked_at TEXT,
+    source TEXT,                    -- e.g. student_dm_phrase
+    UNIQUE(student_id_hash, consent_type)
+);
+
+CREATE INDEX IF NOT EXISTS idx_consents_lookup ON student_consents(student_id_hash, consent_type);
+CREATE INDEX IF NOT EXISTS idx_consents_expiry ON student_consents(expires_at);
+
+-- ============================================================
+-- DAILY PARTICIPATION TABLE (Task 2.2)
+-- Track daily student posting activity and bot reactions
+-- ============================================================
+CREATE TABLE IF NOT EXISTS daily_participation (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    discord_id TEXT NOT NULL,
+    date TEXT NOT NULL,  -- YYYY-MM-DD format
+    week_number INTEGER NOT NULL,
+    day_of_week TEXT NOT NULL,  -- Monday, Tuesday, Wednesday, Thursday, Friday
+
+    -- Posting activity
+    has_posted INTEGER DEFAULT 0,
+    first_post_time TEXT,
+    post_count INTEGER DEFAULT 0,
+
+    -- Bot reactions
+    bot_reacted INTEGER DEFAULT 0,
+    reaction_time TEXT,
+
+    -- Engagement depth
+    engagement_score INTEGER DEFAULT 0,  -- 1-6 scale based on post quality
+    reflection_quality TEXT,  -- high, medium, low (for Friday reflections)
+
+    -- Inactivity tracking
+    flagged_inactive INTEGER DEFAULT 0,
+    nudge_sent INTEGER DEFAULT 0,
+    nudge_time TEXT,
+
+    FOREIGN KEY (discord_id) REFERENCES students(discord_id) ON DELETE CASCADE,
+    UNIQUE(discord_id, date)
+);
+
+-- Indexes for participation queries
+CREATE INDEX IF NOT EXISTS idx_participation_date ON daily_participation(date);
+CREATE INDEX IF NOT EXISTS idx_participation_student ON daily_participation(discord_id);
+CREATE INDEX IF NOT EXISTS idx_participation_flagged ON daily_participation(flagged_inactive);
+CREATE INDEX IF NOT EXISTS idx_participation_week ON daily_participation(week_number);
+
