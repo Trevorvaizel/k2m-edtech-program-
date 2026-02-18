@@ -14,6 +14,7 @@ from cis_controller.llm_integration import call_agent_with_context
 from cis_controller.rate_limiter import rate_limiter
 from cis_controller.safety_filter import (
     ComparisonViolationError,
+    post_to_discord_safe,
     safety_filter,
 )
 from cis_controller.state_machine import celebrate_habit, transition_state
@@ -118,6 +119,18 @@ def _find_dashboard_channel(message: discord.Message):
         )
         if channel:
             return channel
+    return None
+
+
+def _resolve_bot_client(message: discord.Message):
+    """Best-effort bot resolver for safe public posting."""
+    state = getattr(message, "_state", None)
+    get_client = getattr(state, "_get_client", None)
+    if callable(get_client):
+        try:
+            return get_client()
+        except Exception:
+            return None
     return None
 
 
@@ -236,17 +249,26 @@ async def handle_showcase_share_response(message: discord.Message) -> bool:
 
     post_text = _build_showcase_post(message.author, decision, payload)
     try:
-        safety_filter.validate_no_comparison(post_text)
-        # #thinking-showcase is finished-work only (Story 5.3).
-        safety_filter.validate_showcase_content(post_text)
+        await post_to_discord_safe(
+            bot=_resolve_bot_client(message),
+            channel=showcase_channel,
+            message_text=post_text,
+            student_discord_id=message.author.id,
+            is_showcase=True,
+        )
     except ComparisonViolationError:
         PENDING_SHOWCASE_SHARES.pop(discord_id, None)
         await message.reply(
             "I kept this private for now. #thinking-showcase only accepts finished work."
         )
         return True
-
-    await showcase_channel.send(post_text)
+    except Exception as exc:
+        logger.error("Failed to publish showcase post for %s: %s", discord_id, exc)
+        PENDING_SHOWCASE_SHARES.pop(discord_id, None)
+        await message.reply(
+            "I couldn't publish to #thinking-showcase right now, so I kept this private."
+        )
+        return True
 
     PENDING_SHOWCASE_SHARES.pop(discord_id, None)
     await message.reply("Shared to #thinking-showcase. Nice work.")

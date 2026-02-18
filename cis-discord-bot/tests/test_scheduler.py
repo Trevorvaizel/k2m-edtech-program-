@@ -366,16 +366,15 @@ class TestSchedulingLogic:
     @pytest.mark.asyncio
     async def test_post_daily_prompt_at_915am(self, scheduler):
         """Test posting daily prompt at 9:15 AM"""
-        with patch('scheduler.scheduler.DailyPromptLibrary') as mock_library:
-            mock_prompt = MagicMock()
-            mock_prompt.format_for_discord.return_value = "Test prompt content"
-            mock_library.return_value.get_prompt.return_value = mock_prompt
+        mock_prompt = MagicMock()
+        mock_prompt.format_for_discord.return_value = "Test prompt content"
+        scheduler.library.get_prompt.return_value = mock_prompt
 
-            await scheduler.post_daily_prompt(1, WeekDay.MONDAY)
+        await scheduler.post_daily_prompt(1, WeekDay.MONDAY)
 
-            # Verify message was sent
-            channel = scheduler.bot.get_guild.return_value.get_channel.return_value
-            channel.send.assert_called_once()
+        # Verify message was sent
+        channel = scheduler.bot.get_guild.return_value.get_channel.return_value
+        channel.send.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_skip_prompt_on_friday(self, scheduler):
@@ -398,6 +397,66 @@ class TestSchedulingLogic:
         call_args = channel.send.call_args[0][0]
         assert "TODAY'S PATTERNS" in call_args
         assert "anonymized" in call_args
+
+
+# ============================================================
+# EGRESS CONTRACT TESTS
+# ============================================================
+
+class TestPublicSendContracts:
+    """Ensure student-facing public posts use the safety gateway."""
+
+    @pytest.fixture
+    def mock_bot(self):
+        bot = MagicMock()
+        guild = MagicMock()
+        channel = MagicMock()
+
+        bot.get_guild.return_value = guild
+        guild.get_channel.return_value = channel
+        channel.send = AsyncMock()
+        return bot
+
+    @pytest.fixture
+    def scheduler(self, mock_bot):
+        with patch('scheduler.scheduler.DailyPromptLibrary'):
+            return DailyPromptScheduler(
+                bot=mock_bot,
+                guild_id=123456,
+                channel_mapping={1: 123456789},
+                cohort_start_date="2026-02-01",
+            )
+
+    @pytest.mark.asyncio
+    async def test_node_post_uses_safe_gateway(self, scheduler):
+        channel = scheduler.bot.get_guild.return_value.get_channel.return_value
+
+        with patch('scheduler.scheduler.post_to_discord_safe', new_callable=AsyncMock) as mock_safe:
+            await scheduler.post_node_link(1, WeekDay.MONDAY)
+
+        mock_safe.assert_awaited_once()
+        kwargs = mock_safe.await_args.kwargs
+        assert kwargs["bot"] is scheduler.bot
+        assert kwargs["channel"] is channel
+        assert "Node 0.1" in kwargs["message_text"]
+        channel.send.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_daily_prompt_uses_safe_gateway(self, scheduler):
+        channel = scheduler.bot.get_guild.return_value.get_channel.return_value
+        prompt = MagicMock()
+        prompt.format_for_discord.return_value = "Test prompt content"
+        scheduler.library.get_prompt.return_value = prompt
+
+        with patch('scheduler.scheduler.post_to_discord_safe', new_callable=AsyncMock) as mock_safe:
+            await scheduler.post_daily_prompt(1, WeekDay.MONDAY)
+
+        mock_safe.assert_awaited_once()
+        kwargs = mock_safe.await_args.kwargs
+        assert kwargs["bot"] is scheduler.bot
+        assert kwargs["channel"] is channel
+        assert kwargs["message_text"] == "Test prompt content"
+        channel.send.assert_not_called()
 
 
 # ============================================================

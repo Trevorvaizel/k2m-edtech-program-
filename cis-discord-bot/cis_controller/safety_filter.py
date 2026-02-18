@@ -298,7 +298,7 @@ async def _log_to_moderation_logs(
 
 
 async def notify_trevor_safety_violation(
-    bot: discord.Client,
+    bot: Optional[discord.Client],
     violation_type: str,
     message: str,
     student_discord_id: Optional[int] = None,
@@ -312,6 +312,15 @@ async def notify_trevor_safety_violation(
 
     Task 2.4 Enhancement: Log Level 4 crises to escalations table via EscalationSystem.
     """
+    if bot is None or not hasattr(bot, "fetch_user"):
+        logger.warning(
+            "Skipping Trevor safety alert: bot client unavailable "
+            "(type=%s, student=%s).",
+            violation_type,
+            student_discord_id,
+        )
+        return
+
     # Get Trevor's Discord ID from environment
     trevor_discord_id = os.getenv('TREVOR_DISCORD_ID')
 
@@ -404,12 +413,12 @@ Logged to #moderation-logs"""
                 student_discord_id=student_discord_id,
             )
 
-    except discord.DiscordException as e:
-        logger.error(f"Failed to send Trevor alert: {e}")
+    except Exception as e:
+        logger.error(f"Failed to send Trevor alert: {e}", exc_info=True)
 
 
 async def post_to_discord_safe(
-    bot: discord.Client,
+    bot: Optional[discord.Client],
     channel,
     message_text: str,
     student_discord_id: Optional[int] = None,
