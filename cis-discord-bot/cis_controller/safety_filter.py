@@ -301,13 +301,16 @@ async def notify_trevor_safety_violation(
     bot: discord.Client,
     violation_type: str,
     message: str,
-    student_discord_id: Optional[int] = None
+    student_discord_id: Optional[int] = None,
+    escalation_system=None
 ):
     """
     Task 2.3: Send Trevor alert for safety violations.
 
     Level 4: Crisis - INSTANT DM with last 3 messages
     Level 3: Comparison - Log to #moderation-logs
+
+    Task 2.4 Enhancement: Log Level 4 crises to escalations table via EscalationSystem.
     """
     # Get Trevor's Discord ID from environment
     trevor_discord_id = os.getenv('TREVOR_DISCORD_ID')
@@ -358,6 +361,27 @@ async def notify_trevor_safety_violation(
                 emotional_state=emotional_state,
             )
 
+            # Task 2.4: Log to escalations table via EscalationSystem
+            if escalation_system and student_discord_id:
+                try:
+                    # Get student username for escalation log
+                    db = store.StudentStateStore()
+                    student = db.get_student(str(student_discord_id))
+                    username = student["username"] if student else f"<@{student_discord_id}>"
+                    zone = student["zone"] if student else "unknown"
+
+                    await escalation_system.escalate_level_4_crisis(
+                        discord_id=str(student_discord_id),
+                        username=username,
+                        crisis_type="mental_health_crisis",
+                        last_3_messages=last_messages,
+                        zone=zone,
+                        emotional_state=emotional_state
+                    )
+                    logger.info(f"Level 4 crisis logged to escalations table for student {student_discord_id}")
+                except Exception as e:
+                    logger.error(f"Failed to log crisis to escalations table: {e}", exc_info=True)
+
         elif violation_type == "comparison":
             # Level 3: Comparison violation (less urgent)
             alert_message = f"""⚠️ **Guardrail #3 Violation Blocked**
@@ -389,7 +413,8 @@ async def post_to_discord_safe(
     channel,
     message_text: str,
     student_discord_id: Optional[int] = None,
-    is_showcase: bool = False
+    is_showcase: bool = False,
+    escalation_system=None
 ):
     """
     Wrapper for Discord posting with safety validation.
@@ -400,6 +425,9 @@ async def post_to_discord_safe(
     - Validates showcase content (blocks unfinished work)
     - Alerts Trevor on violations
 
+    Task 2.4 Enhancement:
+    - Pass escalation_system to log Level 4 crises to escalations table
+
     ALL public messages MUST use this function.
     """
     try:
@@ -408,8 +436,8 @@ async def post_to_discord_safe(
         if crisis_type:
             # Send crisis response immediately
             await channel.send(safety_filter.KENYA_CRISIS_RESPONSE)
-            # Alert Trevor instantly
-            await notify_trevor_safety_violation(bot, "crisis", message_text, student_discord_id)
+            # Alert Trevor instantly (with escalation_system for logging)
+            await notify_trevor_safety_violation(bot, "crisis", message_text, student_discord_id, escalation_system)
             # Log to moderation logs
             logger.critical(f"CRISIS: {message_text[:100]}... | Student: {student_discord_id}")
             raise CrisisDetectedError(message_text, crisis_type)

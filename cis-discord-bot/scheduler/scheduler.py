@@ -35,7 +35,7 @@ class DailyPromptScheduler:
     - 9:00 AM EAT: Post Friday reflection (Fri only)
     """
 
-    def __init__(self, bot, guild_id: int, channel_mapping: dict[int, int], cohort_start_date: str):
+    def __init__(self, bot, guild_id: int, channel_mapping: dict[int, int], cohort_start_date: str, escalation_system=None):
         """
         Initialize the scheduler.
 
@@ -44,11 +44,13 @@ class DailyPromptScheduler:
             guild_id: Discord server ID
             channel_mapping: Week number → Discord channel ID mapping
             cohort_start_date: Cohort start date (YYYY-MM-DD format)
+            escalation_system: Optional EscalationSystem instance (Task 2.4)
         """
         self.bot = bot
         self.guild_id = guild_id
         self.channel_mapping = channel_mapping
         self.cohort_start_date = datetime.strptime(cohort_start_date, "%Y-%m-%d").replace(tzinfo=EAT)
+        self.escalation_system = escalation_system
 
         # Load prompt library
         self.library = DailyPromptLibrary()
@@ -57,10 +59,13 @@ class DailyPromptScheduler:
         self._last_post_date = None
         self._node_posted_today = False
         self._prompt_posted_today = False
+        self._escalations_checked_today = False
 
         logger.info(f"Scheduler initialized for guild {guild_id}")
         logger.info(f"Cohort start date: {cohort_start_date}")
         logger.info(f"Channel mapping: {channel_mapping}")
+        if escalation_system:
+            logger.info("Escalation system integrated")
 
     def get_current_week(self) -> int:
         """
@@ -269,6 +274,7 @@ class DailyPromptScheduler:
             self._last_post_date = current_date
             self._node_posted_today = False
             self._prompt_posted_today = False
+            self._escalations_checked_today = False
 
         week, day = self.get_week_day()
 
@@ -281,6 +287,13 @@ class DailyPromptScheduler:
         elif current_time.hour == 9 and current_time.minute == 15 and not self._prompt_posted_today:
             logger.info("Scheduled: 9:15 AM prompt post")
             await self.post_daily_prompt(week, day)
+
+        # 10:00 AM EAT - Check escalations (Task 2.4)
+        elif current_time.hour == 10 and current_time.minute == 0 and not self._escalations_checked_today:
+            if self.escalation_system:
+                logger.info("Scheduled: 10:00 AM escalation check")
+                await self.escalation_system.check_escalations(week)
+                self._escalations_checked_today = True
 
         # 6:00 PM EAT Wednesday - Post peer visibility snapshot
         elif current_time.hour == 18 and current_time.minute == 0 and day == WeekDay.WEDNESDAY:

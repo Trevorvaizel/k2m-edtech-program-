@@ -45,11 +45,11 @@ source_documents:
 # ============================================================
 progress:
   total_tasks: 49
-  done: 16
+  done: 17
   in_progress: 0
   blocked: 0
-  pending: 33
-  percent_complete: 33
+  pending: 32
+  percent_complete: 35
 
 # ============================================================
 # SPRINT 0: AUTOMATED DISCORD SERVER SETUP
@@ -1145,7 +1145,7 @@ sprint_2:
 
     - id: "2.4"
       title: "Implement escalation system"
-      status: "pending"
+      status: "done"
       description: |
         Per Story 5.1:
         Level 1 (Bot): Auto-nudge after no post for 1 day
@@ -1157,7 +1157,91 @@ sprint_2:
         load: "source_documents.server_architecture"
         section: "Moderation Workflow → Escalation Path"
       acceptance: "4-level escalation works with correct triggers, notifications fire to correct channels"
-      completion_notes: ""
+      completion_notes: |
+        ✅ Task 2.4 COMPLETE - 4-Level Escalation System (2026-02-18)
+
+        **Implementation Summary:**
+        - Complete 4-level escalation system per Story 5.1 + escalation-playbook-v1.md
+        - Level 1 (Yellow): Bot auto-nudge after 1 day no post (ParticipationTracker)
+        - Level 2 (Orange): Trevor alert after 3+ days stuck (#facilitator-dashboard)
+        - Level 3 (Red): Trevor DM after 7+ days stuck (direct outreach)
+        - Level 4 (Crisis): Instant Trevor DM for mental health emergencies
+        - Daily escalation checks at 10:00 AM EAT via scheduler
+        - All escalations logged to database + #moderation-logs
+
+        **Files Created:**
+        1. cis_controller/escalation_system.py (570+ lines):
+           - EscalationSystem class with 4-level logic
+           - check_escalations(): Daily check for all students
+           - _escalate_level_2(): Dashboard alerts (3+ days)
+           - _escalate_level_3(): Trevor DM (7+ days)
+           - escalate_level_4_crisis(): Instant crisis intervention
+           - _log_escalation(): Database logging
+           - get_escalation_summary(): Trevor dashboard summary
+
+        2. database/schema.sql (updated):
+           - Added escalations table (discord_id, escalation_level, notes, resolved, timestamps)
+           - 3 indexes for efficient queries
+
+        3. tests/test_escalation_system.py (420+ lines):
+           - 15+ test classes covering all escalation levels
+           - Tests for Level 2 dashboard alerts, Level 3 Trevor DM, Level 4 crisis
+           - Tests for deduplication logic (recent escalation check)
+           - Tests for escalation summary generation
+           - Tests for brand-new student handling
+
+        **Integration Points:**
+        - cis_controller/safety_filter.py: Updated notify_trevor_safety_violation() to accept escalation_system parameter and log Level 4 crises to escalations table
+        - cis_controller/safety_filter.py: Updated post_to_discord_safe() to pass escalation_system for Level 4 logging
+        - scheduler/scheduler.py: Added escalation_system parameter to __init__, integrated daily escalation check at 10:00 AM EAT
+        - cis_controller/participation_tracker.py: Level 1 nudges already implemented (check_inactive_students at 6 PM)
+
+        **Escalation Level Triggers:**
+        Level 1 (Yellow): 1 day no post → Bot nudge (ParticipationTracker.check_inactive_students)
+        Level 2 (Orange): 3+ days no post → Dashboard alert (EscalationSystem._escalate_level_2)
+        Level 3 (Red): 7+ days no post → Trevor DM (EscalationSystem._escalate_level_3)
+        Level 4 (Crisis): Mental health keywords → Instant Trevor DM (SafetyFilter + EscalationSystem.escalate_level_4_crisis)
+
+        **Database Schema:**
+        - escalations table tracks all escalations
+        - Fields: id, discord_id, escalation_level, notes, resolved, resolved_at, resolution_notes, escalated_at
+        - Indexes: student_id, escalation_level, escalated_at
+        - Foreign key to students table with CASCADE delete
+
+        **Trevor Dashboard Integration:**
+        - Level 2 posts to #facilitator-dashboard with student context
+        - Level 3 sends Trevor DM + student DM
+        - Level 4 sends instant Trevor DM with last 3 messages
+        - get_escalation_summary() generates weekly summary
+
+        **Moderation Logs:**
+        - All escalations logged to #moderation-logs
+        - Format: "[LEVEL] Student @username stuck X days"
+
+        **Deduplication Logic:**
+        - _was_recently_escalated() prevents spamming Trevor
+        - Level 2: 7-day lookback (no duplicate Orange flags)
+        - Level 3: 14-day lookback (no duplicate Red flags)
+
+        **Kenya Crisis Resources (Level 4):**
+        - Kenya Crisis Hotline: 119 (free, 24/7)
+        - Trevor: 0116 405604
+        - Emergency: 999
+
+        **Acceptance Criteria Met:**
+        ✅ 4-level escalation works with correct triggers
+        ✅ Level 1: Bot nudges after 1 day (ParticipationTracker)
+        ✅ Level 2: Trevor dashboard alerts after 3+ days
+        ✅ Level 3: Trevor DM after 7+ days
+        ✅ Level 4: Instant crisis intervention
+        ✅ Notifications fire to correct channels (#facilitator-dashboard, Trevor DM, #moderation-logs)
+        ✅ All escalations logged to database
+        ✅ Daily checks integrated with scheduler
+        ✅ Comprehensive test coverage (15+ test classes)
+
+        **Next Steps:**
+        - Task 2.5: Implement Friday reflection gating + week unlock
+        - Task 2.6: Implement #facilitator-dashboard automation
 
     - id: "2.5"
       title: "Implement Friday reflection gating + week unlock"
@@ -1568,4 +1652,4 @@ agent_instructions: |
 
 # Last Updated
 last_updated: "2026-02-18"
-updated_by: "Dev Agent (Amelia) - Task 2.3 COMPLETE: SafetyFilter (Guardrail #3 + Level 4 Crisis Intervention) implemented with 19 crisis keywords, 19 comparison keywords, Kenya Crisis Response (Hotline 119, Trevor 0116 405604), Trevor alerting system, showcase content validation (blocks unfinished work), 44 comprehensive tests. Sprint 2: 3/6 tasks complete (50%). Overall: 16/49 tasks complete (33%)."
+updated_by: "Dev Agent (Amelia) - Task 2.4 COMPLETE: 4-Level Escalation System implemented with EscalationSystem class (570+ lines), escalations table with 3 indexes, comprehensive test coverage (15+ test classes). Level 1: Bot nudge (ParticipationTracker), Level 2: Trevor dashboard alerts (3+ days), Level 3: Trevor DM (7+ days), Level 4: Crisis intervention (SafetyFilter integration). Daily checks at 10:00 AM EAT via scheduler. All escalations logged to database + #moderation-logs. Sprint 2: 4/6 tasks complete (67%). Overall: 17/49 tasks complete (35%)."

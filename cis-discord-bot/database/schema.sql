@@ -181,3 +181,24 @@ CREATE INDEX IF NOT EXISTS idx_participation_student ON daily_participation(disc
 CREATE INDEX IF NOT EXISTS idx_participation_flagged ON daily_participation(flagged_inactive);
 CREATE INDEX IF NOT EXISTS idx_participation_week ON daily_participation(week_number);
 
+-- ============================================================
+-- ESCALATIONS TABLE (Task 2.4)
+-- Track 4-level escalation system for student stuckness patterns
+-- ============================================================
+CREATE TABLE IF NOT EXISTS escalations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    discord_id TEXT NOT NULL,
+    escalation_level INTEGER NOT NULL,  -- 1=Yellow (bot), 2=Orange (Trevor alert), 3=Red (Trevor DM), 4=Crisis
+    notes TEXT,  -- Escalation details: days stuck, crisis type, etc.
+    resolved INTEGER DEFAULT 0,  -- 0=active, 1=resolved
+    resolved_at TEXT,
+    resolution_notes TEXT,
+    escalated_at TEXT NOT NULL,
+    FOREIGN KEY (discord_id) REFERENCES students(discord_id) ON DELETE CASCADE
+);
+
+-- Indexes for escalation queries
+CREATE INDEX IF NOT EXISTS idx_escalations_student ON escalations(discord_id);
+CREATE INDEX IF NOT EXISTS idx_escalations_level ON escalations(escalation_level);
+CREATE INDEX IF NOT EXISTS idx_escalations_date ON escalations(escalated_at);
+
