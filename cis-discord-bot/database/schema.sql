@@ -202,3 +202,40 @@ CREATE INDEX IF NOT EXISTS idx_escalations_student ON escalations(discord_id);
 CREATE INDEX IF NOT EXISTS idx_escalations_level ON escalations(escalation_level);
 CREATE INDEX IF NOT EXISTS idx_escalations_date ON escalations(escalated_at);
 
+-- ============================================================
+-- WEEKLY REFLECTIONS TABLE (Task 2.5)
+-- Track Friday reflections and week unlock gating
+-- ============================================================
+CREATE TABLE IF NOT EXISTS weekly_reflections (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    discord_id TEXT NOT NULL,
+    week_number INTEGER NOT NULL,
+
+    -- Reflection submission
+    reflection_content TEXT,  -- Student's Friday reflection
+    proof_of_work TEXT,  -- One sentence showing AI understood them
+    submitted INTEGER DEFAULT 0,  -- 0=no, 1=yes
+    submitted_at TEXT,
+
+    -- Week unlock tracking
+    next_week_unlocked INTEGER DEFAULT 0,  -- 0=locked, 1=unlocked
+    unlocked_at TEXT,
+
+    -- Manual override tracking
+    manually_unlocked INTEGER DEFAULT 0,  -- 0=no, 1=yes
+    unlocked_by TEXT,  -- Trevor's discord_id
+    unlock_reason TEXT,  -- illness, emergency, accelerated, etc.
+
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (discord_id) REFERENCES students(discord_id) ON DELETE CASCADE,
+    UNIQUE(discord_id, week_number)
+);
+
+-- Indexes for reflection queries
+CREATE INDEX IF NOT EXISTS idx_reflections_student ON weekly_reflections(discord_id);
+CREATE INDEX IF NOT EXISTS idx_reflections_week ON weekly_reflections(week_number);
+CREATE INDEX IF NOT EXISTS idx_reflections_submitted ON weekly_reflections(submitted);
+CREATE INDEX IF NOT EXISTS idx_reflections_unlocked ON weekly_reflections(next_week_unlocked);
+

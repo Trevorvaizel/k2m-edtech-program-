@@ -45,11 +45,11 @@ source_documents:
 # ============================================================
 progress:
   total_tasks: 49
-  done: 17
+  done: 18
   in_progress: 0
   blocked: 0
-  pending: 32
-  percent_complete: 35
+  pending: 31
+  percent_complete: 37
 
 # ============================================================
 # SPRINT 0: AUTOMATED DISCORD SERVER SETUP
@@ -1245,7 +1245,7 @@ sprint_2:
 
     - id: "2.5"
       title: "Implement Friday reflection gating + week unlock"
-      status: "pending"
+      status: "done"
       description: |
         Progressive disclosure per Story 5.1:
         - Friday: Bot posts reflection prompt to current week channel
@@ -1258,7 +1258,106 @@ sprint_2:
         load: "source_documents.server_architecture"
         section: "Weekly Channel Unlock Mechanism (Progressive Disclosure)"
       acceptance: "Friday reflection gates next week. Saturday auto-unlock works. Laggard handling works. Trevor override works."
-      completion_notes: ""
+      completion_notes: |
+        ✅ Task 2.5 COMPLETE - Friday Reflection Gating + Week Unlock (2026-02-18)
+
+        **Implementation Summary:**
+        - Progressive disclosure system per Story 5.1 Weekly Channel Unlock Mechanism
+        - Friday reflection posting at 9:00 AM EAT
+        - Student reflection submission via /submit-reflection command
+        - Saturday 12:00 PM EAT batch unlock for completed reflections
+        - Laggard handling: students retain current week access until reflection submitted
+        - Trevor notifications for incomplete reflections
+        - Manual override: /unlock-week admin command for Trevor
+
+        **Files Created/Modified:**
+
+        1. **database/schema.sql** (ADDED weekly_reflections table):
+           - Fields: reflection_content, proof_of_work, submitted, submitted_at
+           - Week unlock tracking: next_week_unlocked, unlocked_at, manually_unlocked, unlocked_by, unlock_reason
+           - 4 indexes for efficient queries
+           - Foreign key to students table with CASCADE delete
+
+        2. **database/store.py** (ADDED 9 methods for weekly reflections):
+           - create_weekly_reflection_record() - Create new reflection record
+           - get_weekly_reflection() - Retrieve reflection by student+week
+           - submit_weekly_reflection() - Submit reflection with content+proof
+           - get_incomplete_reflections() - Get list of students who haven't submitted
+           - unlock_next_week() - Unlock next week for student (manual or auto)
+           - batch_unlock_next_week() - Batch unlock all submitted reflections
+           - has_unlocked_next_week() - Check if student has unlocked next week
+           - get_reflection_summary() - Get summary statistics for a week
+
+        3. **scheduler/scheduler.py** (ADDED Friday + Saturday automation):
+           - post_friday_reflection() - Posts reflection prompt at 9:00 AM EAT (Friday only)
+           - batch_unlock_week() - Batch unlock at Saturday 12:00 PM EAT
+           - _notify_trevor_incomplete_reflections() - Trevor notification with incomplete student list
+           - Added _reflection_posted_today and _week_unlock_today flags
+           - Integrated with check_and_post() loop (runs every minute)
+
+        4. **commands/reflection.py** (NEW - Student reflection submission):
+           - /submit-reflection command with 3 parameters:
+             * habit_practice: Yes/Sometimes/No
+             * identity_shift: Student's reflection on what changed
+             * proof_of_work: One sentence showing AI understood them
+           - Creates reflection record if needed
+           - Validates habit_practice format
+           - Prevents duplicate submissions
+           - Success confirmation with next unlock timing
+
+        5. **commands/admin.py** (ADDED Trevor manual override):
+           - unlock_week() async function for /unlock-week command
+           - Parameters: student_mention, week_number, reason
+           - Trevor authorization check (TREVOR_DISCORD_ID)
+           - Manual unlock tracking (logged for culture monitoring)
+           - Week number validation (1-7 only)
+           - Already-unlocked detection
+
+        6. **tests/test_week_unlock.py** (NEW - Comprehensive test coverage):
+           - TestWeeklyReflections: 3 tests - create, get, submit reflections
+           - TestWeekUnlock: 3 tests - unlock next week, manual unlock tracking, batch unlock
+           - TestReflectionSummary: 1 test - reflection summary statistics
+           - TestWeekUnlockIntegration: 3 tests - complete workflow, laggard scenario, manual override
+           - Total: 10 comprehensive test cases
+
+        **Friday Reflection Flow:**
+        1. Friday 9:00 AM EAT: Bot posts reflection prompt to current week channel
+        2. Student uses: /submit-reflection habit-practice:Yes identity_shift:"I learned so much!" proof-of-work:"AI knew I'm interested in game design"
+        3. Bot saves reflection to database with timestamp
+        4. Bot confirms submission and informs of Saturday unlock timing
+
+        **Saturday Batch Unlock Flow:**
+        1. Saturday 12:00 PM EAT: batch_unlock_week() runs
+        2. Database updates: next_week_unlocked=1, unlocked_at=timestamp for all submitted reflections
+        3. Student.current_week incremented (Week N → Week N+1)
+        4. Bot posts unlock announcement to current week channel
+        5. Bot sends Trevor notification with list of incomplete students
+
+        **Laggard Handling:**
+        - Students who didn't submit remain in current week
+        - They retain POST permissions to current week channel (can catch up)
+        - They cannot access next week channel until reflection submitted
+        - Batch unlock skips them (no current_week increment)
+        - Trevor can manually unlock if needed (illness, emergency)
+
+        **Trevor Manual Override:**
+        - Command: /unlock-week [@student] [week] [reason]
+        - Use cases: illness, emergency, accelerated pacing, special circumstances
+        - Manually unlocked flag set to 1 (logged for culture monitoring)
+        - Trevor's Discord ID and reason tracked in database
+
+        **Acceptance Criteria Met:**
+        ✅ Friday reflection gates next week (students must submit to unlock)
+        ✅ Saturday auto-unlock works (batch unlock at 12:00 PM EAT)
+        ✅ Laggard handling works (retains current week, can catch up at own pace)
+        ✅ Trevor override works (/unlock-week command with manual unlock tracking)
+        ✅ Trevor notifications fire (list of students who haven't completed)
+        ✅ Comprehensive test coverage (10 test cases, all scenarios covered)
+
+        **Progress Statistics:**
+        - Sprint 2: 5/6 tasks complete (83%)
+        - Overall: 18/49 tasks complete (37%)
+        - **Next Task:** 2.6 - #facilitator-dashboard automation
 
     - id: "2.6"
       title: "Implement #facilitator-dashboard automation"
