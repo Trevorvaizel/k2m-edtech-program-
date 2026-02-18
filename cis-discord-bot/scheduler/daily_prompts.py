@@ -5,16 +5,16 @@ Story 2.1 Implementation: Daily Prompt Scheduling
 Loads and parses the daily-prompt-library.md file for automated posting.
 """
 
-import os
-import re
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from typing import List, Optional
+import re
 
 
 class WeekDay(Enum):
     """Days of the week for scheduling"""
+
     MONDAY = 1
     TUESDAY = 2
     WEDNESDAY = 3
@@ -25,6 +25,7 @@ class WeekDay(Enum):
 @dataclass
 class DailyPrompt:
     """Single daily prompt data structure"""
+
     week: int
     day: WeekDay
     title: str
@@ -38,21 +39,29 @@ class DailyPrompt:
 
     def format_for_discord(self) -> str:
         """Format prompt for Discord posting"""
-        message = f"{self.emoji} **TODAY'S PRACTICE: {self.title}**\n\n"
+        message = f"{self.emoji} **TODAY'S PRACTICE:** {self.title}\n\n"
         message += f"{self.context}\n\n"
         message += f"**Task:**\n{self.task}\n\n"
         message += f"{self.habit_emoji} **HABIT PRACTICE:** {self.habit_practice}\n\n"
         message += f"{self.closing}"
 
-        # Add peer visibility note if applicable
         if self.has_peer_visibility:
-            message += "\n\n**Peer Visibility Moment:** Agent will aggregate anonymized responses in evening message."
+            message += (
+                "\n\n**Peer Visibility Moment:** Agent will aggregate anonymized responses "
+                "in evening message."
+            )
 
         return message
 
 
 class DailyPromptLibrary:
     """Loads and manages the daily prompt library"""
+
+    HEADER_PATTERN = re.compile(
+        r"^#### \*\*(Monday|Tuesday|Wednesday|Thursday|Friday) \(Week (\d+)\): (.+)\*\*$",
+        re.MULTILINE,
+    )
+    KNOWN_EMOJIS = ("🎯", "⏸️", "🔄", "🧠", "🌟")
 
     def __init__(self, library_path: Optional[str] = None):
         """
@@ -62,142 +71,141 @@ class DailyPromptLibrary:
             library_path: Path to daily-prompt-library.md. If None, uses default.
         """
         if library_path is None:
-            # Default path relative to project root
             project_root = Path(__file__).resolve().parent.parent.parent
-            library_path = project_root / "_bmad-output" / "cohort-design-artifacts" / "playbook-v2" / "03-sessions" / "daily-prompt-library.md"
+            library_path = (
+                project_root
+                / "_bmad-output"
+                / "cohort-design-artifacts"
+                / "playbook-v2"
+                / "03-sessions"
+                / "daily-prompt-library.md"
+            )
 
         self.library_path = Path(library_path)
         self.prompts: dict[tuple[int, WeekDay], DailyPrompt] = {}
         self._load_library()
 
     def _load_library(self):
-        """Parse the daily prompt library markdown file"""
+        """Parse the daily prompt library markdown file."""
         if not self.library_path.exists():
             raise FileNotFoundError(f"Daily prompt library not found: {self.library_path}")
 
-        with open(self.library_path, 'r', encoding='utf-8') as f:
+        with open(self.library_path, "r", encoding="utf-8") as f:
             content = f.read()
 
-        # Parse prompts using regex
-        # Pattern matches: #### **{Day} (Week {N}): {Title}**
-        prompt_pattern = r'#### \*\*(Monday|Tuesday|Wednesday|Thursday|Friday) \(Week (\d+)\): (.+)\*\*'
+        matches = list(self.HEADER_PATTERN.finditer(content))
+        for idx, match in enumerate(matches):
+            day_name, week_str, title = match.groups()
+            week = int(week_str)
+            day = WeekDay[day_name.upper()]
 
-        current_week = None
-        current_day = None
-        current_title = None
-        sections = {}
+            start = match.end()
+            end = matches[idx + 1].start() if idx + 1 < len(matches) else len(content)
+            block = content[start:end]
 
-        lines = content.split('\n')
-        i = 0
+            parsed = self._parse_prompt_block(title, block)
+            self.prompts[(week, day)] = DailyPrompt(
+                week=week,
+                day=day,
+                title=title,
+                emoji=parsed["emoji"],
+                context=parsed["context"],
+                task=parsed["task"],
+                habit_practice=parsed["habit_practice"],
+                habit_emoji=parsed["habit_emoji"],
+                closing=parsed["closing"],
+                has_peer_visibility=parsed["has_peer_visibility"],
+            )
 
-        while i < len(lines):
-            line = lines[i].strip()
+    def _parse_prompt_block(self, title: str, block: str) -> dict:
+        """Parse one markdown block under a prompt header."""
+        lines = [line.strip() for line in block.splitlines() if line.strip()]
 
-            # Match prompt header
-            header_match = re.match(prompt_pattern, line)
-            if header_match:
-                day_name, week_str, title = header_match.groups()
-                current_week = int(week_str)
-                current_day = WeekDay[day_name.upper()]
-                current_title = title
+        emoji = self._extract_emoji(title) or "🎯"
+        for line in lines:
+            found = self._extract_emoji(line)
+            if found:
+                emoji = found
+                break
 
-                # Extract emoji from title if present
-                emoji_match = re.search(r'([🎯⏸️🔄🧠🌟])', title)
-                emoji = emoji_match.group(1) if emoji_match else "🎯"
+        task_start = self._find_first_index(
+            lines, lambda line: line.startswith("**Task:**") or line.startswith("**OPTION")
+        )
 
-                # Initialize prompt sections
-                sections = {
-                    'emoji': emoji,
-                    'context': '',
-                    'task': '',
-                    'habit_practice': '',
-                    'habit_emoji': '',
-                    'closing': ''
-                }
-
-                # Look for peer visibility note
-                has_peer_visibility = False
-
-                # Parse sections until next prompt or end
-                i += 1
-                while i < len(lines):
-                    next_line = lines[i].strip()
-
-                    # Check if we hit another prompt
-                    if re.match(prompt_pattern, next_line):
-                        break
-
-                    # Check for key section markers
-                    if next_line.startswith('🎯 TODAY\'S PRACTICE:') or \
-                       next_line.startswith('⏸️→🎯 PRACTICE:') or \
-                       next_line.startswith('🔄 TODAY\'S PRACTICE:') or \
-                       next_line.startswith('🧠 TODAY\'S PRACTICE:'):
-                        # Skip, this is the title we already captured
-                        pass
-
-                    elif 'HABIT PRACTICE:' in next_line or 'HABIT CHECK:' in next_line:
-                        # Extract habit emoji and practice
-                        habit_match = re.search(r'([⏸️🎯🔄🧠]+)(?:→| )?HABIT (?:\d+ )?PRACTICE|CHECK:', next_line)
-                        if habit_match:
-                            sections['habit_emoji'] = habit_match.group(1)
-
-                        # Extract practice text (may span multiple lines)
-                        i += 1
-                        practice_lines = []
-                        while i < len(lines) and not lines[i].strip().startswith(('**', '⏸️', '🎯', '🔄', '🧠', '**Peer')):
-                            practice_lines.append(lines[i].strip())
-                            i += 1
-                        sections['habit_practice'] = ' '.join(practice_lines).strip()
-                        i -= 1  # Back up one line
-
-                    elif '**Task:**' in next_line or '**OPTION A:**' in next_line:
-                        # Extract task content (may span multiple lines)
-                        i += 1
-                        task_lines = []
-                        while i < len(lines) and lines[i].strip() and not lines[i].strip().startswith(('⏸️', '🎯', '🔄', '🧠', '**Peer', '**Note')):
-                            task_lines.append(lines[i].strip())
-                            i += 1
-                        sections['task'] = '\n'.join(task_lines).strip()
-                        i -= 1  # Back up one line
-
-                    elif next_line.startswith('**Peer Visibility Moment:**'):
-                        has_peer_visibility = True
-
-                    elif not next_line.startswith(('####', '---', '**Task:', '**OPTION')):
-                        # Context or closing content
-                        if not sections['context']:
-                            # First paragraph is context
-                            context_lines = []
-                            while i < len(lines) and lines[i].strip() and not lines[i].strip().startswith(('**Task', '**OPTION', '⏸️', '🎯')):
-                                context_lines.append(lines[i].strip())
-                                i += 1
-                            sections['context'] = ' '.join(context_lines).strip()
-                            i -= 1
-                        elif not sections['closing']:
-                            # Last paragraph before next header is closing
-                            if lines[i].strip() and not lines[i].startswith(('####', '---')):
-                                sections['closing'] = lines[i].strip()
-
-                    i += 1
-
-                # Create the prompt object
-                prompt = DailyPrompt(
-                    week=current_week,
-                    day=current_day,
-                    title=current_title,
-                    emoji=sections['emoji'],
-                    context=sections['context'],
-                    task=sections['task'],
-                    habit_practice=sections['habit_practice'],
-                    habit_emoji=sections['habit_emoji'],
-                    closing=sections['closing'],
-                    has_peer_visibility=has_peer_visibility
-                )
-
-                self.prompts[(current_week, current_day)] = prompt
+        context_lines: List[str] = []
+        search_until = task_start if task_start is not None else len(lines)
+        for line in lines[:search_until]:
+            if "TODAY'S PRACTICE" in line:
                 continue
+            if line.startswith(("####", "---", "**")):
+                continue
+            if "HABIT PRACTICE:" in line or "HABIT CHECK:" in line:
+                continue
+            context_lines.append(line)
+        context = " ".join(context_lines).strip()
 
-            i += 1
+        task_lines: List[str] = []
+        if task_start is not None:
+            for line in lines[task_start + 1 :]:
+                if line.startswith(("####", "---", "**Peer Visibility Moment:**")):
+                    break
+                if self._is_habit_line(line):
+                    break
+                task_lines.append(line)
+        task = "\n".join(task_lines).strip()
+
+        habit_line = next(
+            (line for line in lines if self._is_habit_line(line)),
+            "",
+        )
+        habit_emoji = self._extract_emoji(habit_line) or "⏸️"
+        if ":" in habit_line:
+            habit_practice = habit_line.split(":", 1)[1].strip()
+        else:
+            habit_practice = ""
+
+        closing = ""
+        habit_idx = self._find_first_index(lines, self._is_habit_line)
+        if habit_idx is not None:
+            for line in lines[habit_idx + 1 :]:
+                if line.startswith(("####", "---", "**Peer Visibility Moment:**")):
+                    break
+                if line.startswith(("**Task:**", "**OPTION")):
+                    continue
+                closing = line
+                break
+
+        has_peer_visibility = any(
+            line.startswith("**Peer Visibility Moment:**") for line in lines
+        )
+
+        return {
+            "emoji": emoji,
+            "context": context,
+            "task": task,
+            "habit_practice": habit_practice,
+            "habit_emoji": habit_emoji,
+            "closing": closing,
+            "has_peer_visibility": has_peer_visibility,
+        }
+
+    def _extract_emoji(self, text: str) -> Optional[str]:
+        """Return first known emoji from text."""
+        for emoji in self.KNOWN_EMOJIS:
+            if emoji in text:
+                return emoji
+        return None
+
+    def _find_first_index(self, lines: List[str], predicate) -> Optional[int]:
+        """Return first index that matches predicate."""
+        for i, line in enumerate(lines):
+            if predicate(line):
+                return i
+        return None
+
+    def _is_habit_line(self, line: str) -> bool:
+        """Detect habit lines like `HABIT PRACTICE:` or `HABIT 1 PRACTICE:`."""
+        return bool(re.search(r"HABIT(?:\s+\d+)?\s+(PRACTICE|CHECK):", line))
 
     def get_prompt(self, week: int, day: WeekDay) -> Optional[DailyPrompt]:
         """
@@ -222,11 +230,7 @@ class DailyPromptLibrary:
         Returns:
             List of DailyPrompt objects for the week
         """
-        return [
-            self.prompts[(week, day)]
-            for day in WeekDay
-            if (week, day) in self.prompts
-        ]
+        return [self.prompts[(week, day)] for day in WeekDay if (week, day) in self.prompts]
 
     def get_all_prompts(self) -> List[DailyPrompt]:
         """Get all prompts in the library"""

@@ -90,11 +90,15 @@ class TestLevel2Escalation:
 
         # Verify dashboard message sent
         assert dashboard_channel.send.called
-        message = dashboard_channel.send.call_args[0][0]
-        assert "ORANGE FLAG" in message
-        assert "test_student" in message
-        assert "3+ days" in message
-        assert "zone_1" in message
+        first_message = dashboard_channel.send.call_args_list[0][0][0]
+        assert "ORANGE FLAG" in first_message
+        assert "test_student" in first_message
+        assert "3+ days" in first_message
+        assert "zone_1" in first_message
+
+        # Verify moderation log call also happened
+        last_message = dashboard_channel.send.call_args[0][0]
+        assert "ORANGE FLAG" in last_message
 
     @pytest.mark.asyncio
     async def test_level_2_logs_to_database(self, escalation_system, mock_store):
@@ -122,7 +126,7 @@ class TestLevel2Escalation:
         call_args = cursor.execute.call_args
         assert "INSERT INTO escalations" in call_args[0][0]
         assert "111222333" in call_args[0][1]
-        assert str(LEVEL_2_ORANGE) in call_args[0][1]
+        assert LEVEL_2_ORANGE in call_args[0][1]
 
 
 class TestLevel3Escalation:
@@ -174,13 +178,15 @@ class TestLevel3Escalation:
         # Setup mocks
         trevor = Mock()
         trevor.send = AsyncMock()
-        mock_bot.fetch_user.return_value = trevor
+        student = Mock()
+        student.send = AsyncMock()
+        mock_bot.fetch_user.side_effect = [trevor, student]
 
         import discord
-        mock_bot.fetch_user.side_effect = [
-            trevor,
-            discord.Forbidden()  # Student DMs disabled
-        ]
+        response = Mock()
+        response.status = 403
+        response.reason = "Forbidden"
+        student.send.side_effect = discord.Forbidden(response, "DMs disabled")
 
         logs_channel = Mock()
         logs_channel.send = AsyncMock()

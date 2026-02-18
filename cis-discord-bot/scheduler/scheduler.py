@@ -13,7 +13,6 @@ from typing import Optional
 
 import pytz
 
-from discord import TextChannel
 from discord.ext import tasks
 
 from scheduler.daily_prompts import DailyPromptLibrary, WeekDay
@@ -101,7 +100,7 @@ class DailyPromptScheduler:
 
         return (min(week, 8), day_of_week)
 
-    async def get_target_channel(self, week: int) -> Optional[TextChannel]:
+    async def get_target_channel(self, week: int) -> Optional[object]:
         """
         Get the Discord channel for a given week.
 
@@ -123,8 +122,8 @@ class DailyPromptScheduler:
                 return None
 
             channel = guild.get_channel(channel_id)
-            if not channel or not isinstance(channel, TextChannel):
-                logger.error(f"Channel {channel_id} not found or not a text channel")
+            if not channel or not hasattr(channel, "send"):
+                logger.error(f"Channel {channel_id} not found or not sendable")
                 return None
 
             return channel
