@@ -38,7 +38,16 @@ class DailyPromptScheduler:
     - 9:00 AM EAT: Post Friday reflection (Fri only)
     """
 
-    def __init__(self, bot, guild_id: int, channel_mapping: dict[int, int], cohort_start_date: str, escalation_system=None, store=None):
+    def __init__(
+        self,
+        bot,
+        guild_id: int,
+        channel_mapping: dict[int, int],
+        cohort_start_date: str,
+        escalation_system=None,
+        participation_tracker=None,
+        store=None,
+    ):
         """
         Initialize the scheduler.
 
@@ -48,6 +57,7 @@ class DailyPromptScheduler:
             channel_mapping: Week number → Discord channel ID mapping
             cohort_start_date: Cohort start date (YYYY-MM-DD format)
             escalation_system: Optional EscalationSystem instance (Task 2.4)
+            participation_tracker: Optional ParticipationTracker instance (Task 2.2/2.4)
             store: Optional StudentStateStore instance (Task 2.5)
         """
         self.bot = bot
@@ -55,6 +65,7 @@ class DailyPromptScheduler:
         self.channel_mapping = channel_mapping
         self.cohort_start_date = datetime.strptime(cohort_start_date, "%Y-%m-%d").replace(tzinfo=EAT)
         self.escalation_system = escalation_system
+        self.participation_tracker = participation_tracker
         self.store = store or StudentStateStore()  # Task 2.5: Database access
         self.dashboard = FacilitatorDashboard(self.store)  # Task 2.6: Dashboard automation
 
@@ -78,6 +89,8 @@ class DailyPromptScheduler:
         logger.info(f"Channel mapping: {channel_mapping}")
         if escalation_system:
             logger.info("Escalation system integrated")
+        if participation_tracker:
+            logger.info("Participation tracker integrated")
         logger.info("Facilitator dashboard integrated")
 
     def get_current_week(self) -> int:
@@ -144,6 +157,123 @@ class DailyPromptScheduler:
         except Exception as e:
             logger.error(f"Error getting channel for week {week}: {e}")
             return None
+
+    def _habit_focus_for_week(self, week: int) -> tuple[str, str]:
+        """
+        Return the habit label and self-check question for the provided week.
+        """
+        if week == 1:
+            return ("Habit 1 (Pause)", "Did you pause before asking AI this week?")
+        if week in (2, 3):
+            return ("Habit 2 (Context)", "Did you explain your situation before asking AI this week?")
+        if week in (4, 5):
+            return ("Habit 3 (Iterate)", "Did you change one thing at a time while iterating this week?")
+        if week in (6, 7):
+            return ("Habit 4 (Think First)", "Did you use AI before decisions this week?")
+        return ("This Week's Habit", "Did you practice this week's habit?")
+
+    async def _set_student_channel_access(
+        self,
+        discord_id: str,
+        channel: object,
+        can_read: bool,
+        can_post: bool,
+        reason: str,
+    ) -> None:
+        """
+        Set per-student channel access for progression gating.
+        """
+        if not channel:
+            return
+
+        guild = self.bot.get_guild(self.guild_id)
+        if not guild:
+            logger.error(f"Guild {self.guild_id} not found for permission sync")
+            return
+
+        member = guild.get_member(int(discord_id))
+        if member is None:
+            try:
+                member = await guild.fetch_member(int(discord_id))
+            except Exception:
+                logger.warning(f"Could not resolve member {discord_id} for permission sync")
+                return
+
+        if not hasattr(channel, "set_permissions"):
+            logger.warning("Channel does not support set_permissions; skipping progression gate sync")
+            return
+
+        try:
+            await channel.set_permissions(
+                member,
+                view_channel=can_read,
+                send_messages=can_post,
+                reason=reason,
+            )
+        except Exception as exc:
+            logger.error(
+                "Failed updating channel permissions for %s in channel %s: %s",
+                discord_id,
+                getattr(channel, "id", "unknown"),
+                exc,
+            )
+
+    async def _apply_week_unlock_permissions(self, week: int) -> None:
+        """
+        Apply progressive-disclosure channel permissions after weekly unlock.
+        """
+        if week <= 0 or week >= 8:
+            return
+
+        current_channel = await self.get_target_channel(week)
+        next_channel = await self.get_target_channel(week + 1)
+        if current_channel is None or next_channel is None:
+            logger.warning("Skipping permission sync: current/next week channels not configured")
+            return
+
+        same_channel = getattr(current_channel, "id", None) == getattr(next_channel, "id", None)
+
+        submitted = self.store.get_submitted_reflections(week)
+        for row in submitted:
+            discord_id = str(row['discord_id'])
+
+            await self._set_student_channel_access(
+                discord_id=discord_id,
+                channel=next_channel,
+                can_read=True,
+                can_post=True,
+                reason=f"Week {week + 1} unlocked",
+            )
+
+            if not same_channel:
+                await self._set_student_channel_access(
+                    discord_id=discord_id,
+                    channel=current_channel,
+                    can_read=True,
+                    can_post=False,
+                    reason=f"Week {week} archived after unlock",
+                )
+
+        laggards = self.store.get_incomplete_reflections(week)
+        for row in laggards:
+            discord_id = str(row['discord_id'])
+
+            await self._set_student_channel_access(
+                discord_id=discord_id,
+                channel=current_channel,
+                can_read=True,
+                can_post=True,
+                reason=f"Week {week} remains open for catch-up",
+            )
+
+            if not same_channel:
+                await self._set_student_channel_access(
+                    discord_id=discord_id,
+                    channel=next_channel,
+                    can_read=False,
+                    can_post=False,
+                    reason=f"Week {week + 1} locked pending reflection",
+                )
 
     async def post_node_link(self, week: int, day: WeekDay):
         """
@@ -288,25 +418,26 @@ class DailyPromptScheduler:
             logger.error(f"Cannot post reflection: no channel for week {week}")
             return
 
-        # Friday reflection prompt template
+        # Ensure all active students in this week have a reflection record.
+        self.store.ensure_weekly_reflection_records(week)
+        habit_label, habit_prompt = self._habit_focus_for_week(week)
+
         message = (
-            f"🤔 **FRIDAY REFLECTION (Week {week})**\n\n"
+            f"FRIDAY REFLECTION (Week {week})\n\n"
             f"Before you unlock next week, take 15 minutes to reflect:\n\n"
-            f"**Part 1: Self-Assessment**\n"
-            f"Did you practice Habit 1 (⏸️ Pause) this week?\n"
-            f"- Yes ✅ | Sometimes 🔄 | No ❌\n\n"
-            f"**Part 2: Identity Shift**\n"
-            f"What changed this week? \n"
-            f"(Example: \"I went from 'confused' to 'getting it'\")\n\n"
-            f"**Part 3: Proof-of-Work**\n"
+            f"Part 1: Self-Assessment\n"
+            f"{habit_prompt}\n"
+            f"- Yes | Sometimes | No\n\n"
+            f"Part 2: Identity Shift\n"
+            f"What changed this week?\n"
+            f"(Example: \"I went from confused to getting it\")\n\n"
+            f"Part 3: Proof-of-Work\n"
             f"Paste ONE sentence that shows AI understood YOU.\n"
             f"(Example: \"AI knew I'm interested in game design, not just coding\")\n\n"
-            f"📝 **Reply with your reflection:**\n"
-            f"Format: \n"
-            f"1. Habit practice: [Yes/Sometimes/No]\n"
-            f"2. What changed: [your answer]\n"
-            f"3. Proof-of-work: [one sentence]\n\n"
-            f"⏰ **Due by Saturday 12 PM**\n"
+            f"Submit with command:\n"
+            f"`/submit-reflection habit-practice:[Yes/Sometimes/No] identity-shift:[your answer] proof-of-work:[one sentence]`\n\n"
+            f"Tracking habit focus: {habit_label}\n\n"
+            f"Due by Saturday 12 PM EAT.\n"
             f"Week {week + 1} unlocks after you submit your reflection.\n\n"
             f"Behind schedule? No pressure. Complete at your own pace. Week {week} stays open."
         )
@@ -337,6 +468,11 @@ class DailyPromptScheduler:
         except Exception as e:
             logger.error(f"Failed to batch unlock week {week}: {e}")
             return
+
+        try:
+            await self._apply_week_unlock_permissions(week)
+        except Exception as e:
+            logger.error(f"Failed to apply week unlock permissions: {e}")
 
         # Get summary stats
         try:
@@ -425,7 +561,7 @@ class DailyPromptScheduler:
         message = (
             f"📊 **FRIDAY REFLECTIONS (Week {week})**\n\n"
             f"**Completion Status:**\n"
-            f"Submitted: {len(incomplete_students)} pending\n\n"
+            f"Pending: {len(incomplete_students)}\n\n"
             f"**Students who haven't completed:**\n"
             f"{student_list}\n\n"
             f"Trevor's decision: Personal outreach OR let student self-pace (Guardrail #5)."
@@ -596,52 +732,52 @@ class DailyPromptScheduler:
 
         week, day = self.get_week_day()
 
-        # 9:00 AM EAT - Post node link
-        if current_time.hour == 9 and current_time.minute == 0 and not self._node_posted_today:
-            logger.info("Scheduled: 9:00 AM node post")
-            await self.post_node_link(week, day)
+        # 9:00 AM EAT - Friday reflection or weekday node, plus dashboard summary.
+        if current_time.hour == 9 and current_time.minute == 0:
+            if day == WeekDay.FRIDAY and not self._reflection_posted_today:
+                logger.info("Scheduled: 9:00 AM Friday reflection post")
+                await self.post_friday_reflection(week)
+            elif day != WeekDay.FRIDAY and not self._node_posted_today:
+                logger.info("Scheduled: 9:00 AM node post")
+                await self.post_node_link(week, day)
 
-        # 9:00 AM EAT - Post daily summary to dashboard (Task 2.6)
-        elif current_time.hour == 9 and current_time.minute == 0 and not self._daily_summary_today:
-            logger.info("Scheduled: 9:00 AM daily summary to dashboard")
-            await self.post_daily_summary(week)
+            if not self._daily_summary_today:
+                logger.info("Scheduled: 9:00 AM daily summary to dashboard")
+                await self.post_daily_summary(week)
 
         # 9:15 AM EAT - Post daily prompt
-        elif current_time.hour == 9 and current_time.minute == 15 and not self._prompt_posted_today:
+        if current_time.hour == 9 and current_time.minute == 15 and not self._prompt_posted_today:
             logger.info("Scheduled: 9:15 AM prompt post")
             await self.post_daily_prompt(week, day)
 
-        # 9:00 AM EAT Friday - Post Friday reflection (Task 2.5)
-        elif current_time.hour == 9 and current_time.minute == 0 and day == WeekDay.FRIDAY and not self._reflection_posted_today:
-            logger.info("Scheduled: 9:00 AM Friday reflection post")
-            await self.post_friday_reflection(week)
-
         # 10:00 AM EAT - Check escalations (Task 2.4)
-        elif current_time.hour == 10 and current_time.minute == 0 and not self._escalations_checked_today:
+        if current_time.hour == 10 and current_time.minute == 0 and not self._escalations_checked_today:
             if self.escalation_system:
                 logger.info("Scheduled: 10:00 AM escalation check")
                 await self.escalation_system.check_escalations(week)
                 self._escalations_checked_today = True
 
         # 12:00 PM EAT Saturday - Batch unlock next week (Task 2.5)
-        elif current_time.hour == 12 and current_time.minute == 0 and day == WeekDay.SATURDAY and not self._week_unlock_today:
+        if current_time.hour == 12 and current_time.minute == 0 and day == WeekDay.SATURDAY and not self._week_unlock_today:
             logger.info(f"Scheduled: 12:00 PM week {week} batch unlock")
             await self.batch_unlock_week(week)
 
         # 5:00 PM EAT Friday - Post reflection summary + spot-check (Task 2.6)
-        elif current_time.hour == 17 and current_time.minute == 0 and day == WeekDay.FRIDAY and not self._reflection_summary_today:
+        if current_time.hour == 17 and current_time.minute == 0 and day == WeekDay.FRIDAY and not self._reflection_summary_today:
             logger.info("Scheduled: 5:00 PM Friday dashboard summaries")
             await self.post_friday_dashboard_summaries(week)
 
-        # 6:00 PM EAT - Post peer visibility snapshot to dashboard (Task 2.6)
-        elif current_time.hour == 18 and current_time.minute == 0 and not self._peer_visibility_today:
+        # 6:00 PM EAT - Level 1 inactive student nudges + dashboard summary
+        if current_time.hour == 18 and current_time.minute == 0 and not self._peer_visibility_today:
+            if self.participation_tracker:
+                logger.info("Scheduled: 6:00 PM inactive student check")
+                await self.participation_tracker.check_inactive_students(week)
+
             logger.info("Scheduled: 6:00 PM peer visibility summary to dashboard")
             await self.post_peer_visibility_summary(week)
-
-        # 6:00 PM EAT Wednesday - Post peer visibility snapshot to weekly channel (legacy, kept for compatibility)
-        elif current_time.hour == 18 and current_time.minute == 0 and day == WeekDay.WEDNESDAY:
-            logger.info("Scheduled: 6:00 PM peer visibility snapshot to weekly channel")
-            await self.post_peer_visibility_snapshot(week)
+            if day == WeekDay.WEDNESDAY:
+                logger.info("Scheduled: 6:00 PM peer visibility snapshot to weekly channel")
+                await self.post_peer_visibility_snapshot(week)
 
     def start(self):
         """Start the scheduler background task."""

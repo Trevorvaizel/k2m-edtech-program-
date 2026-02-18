@@ -90,6 +90,25 @@ class TestWeeklyReflections:
         assert "333333" in discord_ids
         assert "222222" not in discord_ids
 
+    def test_get_incomplete_reflections_includes_students_without_rows(self, store):
+        """Students with no reflection row should still appear as incomplete."""
+        store.create_student("111111", cohort_id="test-cohort")
+        store.create_student("222222", cohort_id="test-cohort")
+
+        # Only one student has a row, and that row is submitted.
+        store.create_weekly_reflection_record("111111", 1)
+        store.submit_weekly_reflection(
+            discord_id="111111",
+            week_number=1,
+            reflection_content="Done",
+            proof_of_work="Done",
+        )
+
+        incomplete = store.get_incomplete_reflections(1)
+        discord_ids = [r['discord_id'] for r in incomplete]
+        assert "222222" in discord_ids
+        assert "111111" not in discord_ids
+
 
 class TestWeekUnlock:
     """Test week unlock logic."""
@@ -171,6 +190,29 @@ class TestWeekUnlock:
         for i in range(3, 5):
             reflection = store.get_weekly_reflection(f"{i:06d}", 1)
             assert reflection['next_week_unlocked'] == 0
+
+    def test_batch_unlock_next_week_is_idempotent(self, store):
+        """Repeated unlock runs should not advance students multiple times."""
+        for i in range(2):
+            discord_id = f"{i:06d}"
+            store.create_student(discord_id, cohort_id="test-cohort")
+            store.create_weekly_reflection_record(discord_id, 1)
+            store.submit_weekly_reflection(
+                discord_id=discord_id,
+                week_number=1,
+                reflection_content=f"Reflection {i}",
+                proof_of_work=f"Proof {i}",
+            )
+
+        first_count = store.batch_unlock_next_week(1)
+        second_count = store.batch_unlock_next_week(1)
+
+        assert first_count == 2
+        assert second_count == 0
+
+        for i in range(2):
+            student = store.get_student(f"{i:06d}")
+            assert student['current_week'] == 2
 
     def test_has_unlocked_next_week(self, store, student):
         """Test checking if student has unlocked next week."""

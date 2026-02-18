@@ -52,6 +52,91 @@ def extract_discord_id(student_mention: Optional[object]) -> Optional[str]:
     return None
 
 
+def _env_int(name: str) -> int:
+    raw = os.getenv(name, "0").strip()
+    try:
+        return int(raw)
+    except ValueError:
+        return 0
+
+
+def get_weekly_channel_mapping() -> dict[int, int]:
+    """
+    Resolve week->channel ids from environment variables.
+    """
+    mapping = {
+        1: _env_int("CHANNEL_WEEK_1"),
+        2: _env_int("CHANNEL_WEEK_2_3"),
+        3: _env_int("CHANNEL_WEEK_2_3"),
+        4: _env_int("CHANNEL_WEEK_4_5"),
+        5: _env_int("CHANNEL_WEEK_4_5"),
+        6: _env_int("CHANNEL_WEEK_6_7"),
+        7: _env_int("CHANNEL_WEEK_6_7"),
+        8: _env_int("CHANNEL_WEEK_8"),
+    }
+    return {week: channel_id for week, channel_id in mapping.items() if channel_id}
+
+
+async def _apply_manual_unlock_permissions(
+    ctx: commands.Context | discord.Interaction,
+    discord_id: str,
+    week_number: int,
+) -> None:
+    """
+    Mirror manual week unlock in Discord channel permissions.
+    """
+    guild = getattr(ctx, "guild", None)
+    if guild is None:
+        logger.warning("Manual unlock permission sync skipped: no guild context")
+        return
+
+    channel_map = get_weekly_channel_mapping()
+    current_channel_id = channel_map.get(week_number)
+    next_channel_id = channel_map.get(week_number + 1)
+    if not current_channel_id or not next_channel_id:
+        logger.warning("Manual unlock permission sync skipped: missing channel mapping")
+        return
+
+    member = guild.get_member(int(discord_id))
+    if member is None:
+        try:
+            member = await guild.fetch_member(int(discord_id))
+        except Exception:
+            logger.warning("Manual unlock permission sync skipped: member %s not found", discord_id)
+            return
+
+    current_channel = guild.get_channel(current_channel_id)
+    next_channel = guild.get_channel(next_channel_id)
+    if next_channel is None or not hasattr(next_channel, "set_permissions"):
+        logger.warning("Manual unlock permission sync skipped: next channel not available")
+        return
+
+    try:
+        await next_channel.set_permissions(
+            member,
+            view_channel=True,
+            send_messages=True,
+            reason=f"Manual week unlock ({week_number}->{week_number + 1})",
+        )
+    except Exception as exc:
+        logger.error("Failed setting next-week permissions for %s: %s", discord_id, exc)
+
+    if (
+        current_channel is not None
+        and hasattr(current_channel, "set_permissions")
+        and getattr(current_channel, "id", None) != getattr(next_channel, "id", None)
+    ):
+        try:
+            await current_channel.set_permissions(
+                member,
+                view_channel=True,
+                send_messages=False,
+                reason=f"Week {week_number} archived after manual unlock",
+            )
+        except Exception as exc:
+            logger.error("Failed setting current-week permissions for %s: %s", discord_id, exc)
+
+
 async def send_response(ctx_or_interaction, content: str, ephemeral: bool = True):
     """Send to either command context or interaction; defaults to private delivery."""
     if isinstance(ctx_or_interaction, commands.Context):
@@ -400,14 +485,12 @@ async def unlock_week(
         await send_response(ctx, "Student not found in database.", ephemeral=True)
         return
 
-    current_week = student['current_week']
-
     # Check if already unlocked
-    if store.has_unlocked_next_week(discord_id, current_week):
+    if store.has_unlocked_next_week(discord_id, week_number):
         await send_response(
             ctx,
-            f"<@{discord_id}> has already unlocked Week {current_week + 1}.\n\n"
-            f"Current week: {current_week}",
+            f"<@{discord_id}> has already unlocked Week {week_number + 1}.\n\n"
+            f"Current student week: {student['current_week']}",
             ephemeral=True
         )
         return
@@ -422,6 +505,7 @@ async def unlock_week(
             unlocked_by=trevor_id,
             unlock_reason=reason
         )
+        await _apply_manual_unlock_permissions(ctx, discord_id, week_number)
 
         await send_response(
             ctx,
@@ -437,4 +521,3 @@ async def unlock_week(
 
     except Exception as exc:
         await send_response(ctx, f"Error unlocking week: {str(exc)}", ephemeral=True)
-

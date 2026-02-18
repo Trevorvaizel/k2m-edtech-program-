@@ -819,6 +819,34 @@ class StudentStateStore:
     # Friday reflection gating + week unlock system
     # ============================================================
 
+    def ensure_weekly_reflection_records(self, week_number: int) -> int:
+        """
+        Ensure every student in the target week has a reflection row.
+
+        Args:
+            week_number: Week number to initialize records for
+
+        Returns:
+            Number of records inserted
+        """
+        cursor = self.conn.execute(
+            """
+            INSERT INTO weekly_reflections (discord_id, week_number)
+            SELECT s.discord_id, ?
+            FROM students s
+            WHERE s.current_week = ?
+              AND NOT EXISTS (
+                SELECT 1
+                FROM weekly_reflections r
+                WHERE r.discord_id = s.discord_id
+                  AND r.week_number = ?
+              )
+            """,
+            (week_number, week_number, week_number)
+        )
+        self.conn.commit()
+        return cursor.rowcount
+
     def create_weekly_reflection_record(self, discord_id: str, week_number: int) -> sqlite3.Row:
         """
         Create a new weekly reflection record for a student.
@@ -911,12 +939,53 @@ class StudentStateStore:
         Returns:
             List of reflection rows where submitted=0
         """
+        # Include students with no reflection row yet (LEFT JOIN) so Trevor sees true laggards.
+        cursor = self.conn.execute(
+            """
+            SELECT
+                COALESCE(r.id, 0) AS id,
+                s.discord_id,
+                ? AS week_number,
+                r.reflection_content,
+                r.proof_of_work,
+                COALESCE(r.submitted, 0) AS submitted,
+                r.submitted_at,
+                COALESCE(r.next_week_unlocked, 0) AS next_week_unlocked,
+                r.unlocked_at,
+                COALESCE(r.manually_unlocked, 0) AS manually_unlocked,
+                r.unlocked_by,
+                r.unlock_reason,
+                r.created_at,
+                r.updated_at,
+                s.current_week,
+                s.zone
+            FROM students s
+            LEFT JOIN weekly_reflections r
+              ON r.discord_id = s.discord_id
+             AND r.week_number = ?
+            WHERE s.current_week = ?
+              AND COALESCE(r.submitted, 0) = 0
+            """,
+            (week_number, week_number, week_number)
+        )
+        return cursor.fetchall()
+
+    def get_submitted_reflections(self, week_number: int) -> List[sqlite3.Row]:
+        """
+        Get students who submitted reflection for a week.
+
+        Args:
+            week_number: Week number to check
+
+        Returns:
+            List of reflection rows where submitted=1
+        """
         cursor = self.conn.execute(
             """
             SELECT r.*, s.current_week, s.zone
             FROM weekly_reflections r
             JOIN students s ON r.discord_id = s.discord_id
-            WHERE r.week_number = ? AND r.submitted = 0
+            WHERE r.week_number = ? AND r.submitted = 1
             """,
             (week_number,)
         )
@@ -946,6 +1015,13 @@ class StudentStateStore:
         discord_id = str(discord_id)
         now = datetime.now().isoformat()
 
+        existing = self.get_weekly_reflection(discord_id, current_week)
+        if existing is None:
+            existing = self.create_weekly_reflection_record(discord_id, current_week)
+
+        if existing and existing['next_week_unlocked'] == 1:
+            return existing
+
         self.conn.execute(
             """
             UPDATE weekly_reflections
@@ -961,8 +1037,12 @@ class StudentStateStore:
         )
         self.conn.commit()
 
-        # Update student's current week
-        self.update_student_week(discord_id, current_week + 1)
+        # Update student's current week if this unlock advances them.
+        student = self.get_student(discord_id)
+        if student is not None:
+            target_week = current_week + 1
+            if student['current_week'] < target_week:
+                self.update_student_week(discord_id, target_week)
 
         return self.get_weekly_reflection(discord_id, current_week)
 
@@ -978,7 +1058,22 @@ class StudentStateStore:
         """
         now = datetime.now().isoformat()
 
-        # Unlock all submitted reflections
+        # Keep reflection rows complete for all students still in this week.
+        self.ensure_weekly_reflection_records(week_number)
+
+        # Capture the exact set that should unlock now to keep the operation idempotent.
+        to_unlock_cursor = self.conn.execute(
+            """
+            SELECT discord_id
+            FROM weekly_reflections
+            WHERE week_number = ? AND submitted = 1 AND next_week_unlocked = 0
+            """,
+            (week_number,)
+        )
+        to_unlock = [row['discord_id'] for row in to_unlock_cursor.fetchall()]
+        if not to_unlock:
+            return 0
+
         cursor = self.conn.execute(
             """
             UPDATE weekly_reflections
@@ -990,20 +1085,20 @@ class StudentStateStore:
             (now, now, week_number)
         )
         self.conn.commit()
-
         unlocked_count = cursor.rowcount
 
-        # Update all students' current_week
+        placeholders = ",".join(["?"] * len(to_unlock))
+        target_week = week_number + 1
         self.conn.execute(
-            """
+            f"""
             UPDATE students
-            SET current_week = current_week + 1
-            WHERE discord_id IN (
-                SELECT discord_id FROM weekly_reflections
-                WHERE week_number = ? AND submitted = 1 AND next_week_unlocked = 1
-            )
+            SET current_week = CASE
+                WHEN current_week < ? THEN ?
+                ELSE current_week
+            END
+            WHERE discord_id IN ({placeholders})
             """,
-            (week_number,)
+            [target_week, target_week, *to_unlock]
         )
         self.conn.commit()
 

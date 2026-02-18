@@ -21,7 +21,7 @@ from cis_controller.llm_integration import (
     load_system_prompts,
     validate_provider_configuration,
 )
-from cis_controller.router import route_slash_command, setup_bot_events
+from cis_controller.router import route_slash_command, setup_bot_events, set_runtime_services
 
 # Load environment variables
 BOT_DIR = Path(__file__).resolve().parent
@@ -184,20 +184,72 @@ async def on_ready():
     for guild in bot.guilds:
         logger.info("Connected to: %s (ID: %s)", guild.name, guild.id)
 
+    runtime_store = None
+    runtime_participation_tracker = None
+    runtime_escalation_system = None
+
     # Initialize database
     try:
         from database.store import StudentStateStore
 
-        store = StudentStateStore()
-        student_count = store.get_student_count()
+        runtime_store = StudentStateStore()
+        student_count = runtime_store.get_student_count()
         logger.info("Tracking %s students", student_count)
     except Exception as exc:
         logger.warning("Database not initialized yet: %s", exc)
         logger.info("Database will be created automatically in Task 1.2")
 
+    # Initialize participation tracker for weekly channels (Task 2.2 / 2.4 Level 1).
+    try:
+        if runtime_store:
+            from cis_controller.participation_tracker import ParticipationTracker
+
+            weekly_channel_ids = sorted({cid for cid in WEEKLY_CHANNEL_MAPPING.values() if cid})
+            if weekly_channel_ids:
+                runtime_participation_tracker = ParticipationTracker(
+                    bot=bot,
+                    store=runtime_store,
+                    weekly_channel_ids=weekly_channel_ids,
+                )
+            else:
+                logger.warning("Participation tracker not started: no weekly channels configured")
+    except Exception as exc:
+        logger.error("Failed to initialize participation tracker: %s", exc, exc_info=True)
+
+    # Initialize escalation system (Task 2.4).
+    try:
+        if runtime_store:
+            from cis_controller.escalation_system import EscalationSystem
+
+            dashboard_channel_id = int(os.getenv("CHANNEL_FACILITATOR_DASHBOARD", "0"))
+            moderation_logs_id = int(os.getenv("CHANNEL_MODERATION_LOGS", "0"))
+            trevor_discord_id = os.getenv("TREVOR_DISCORD_ID", "").strip()
+
+            if dashboard_channel_id and moderation_logs_id and trevor_discord_id:
+                runtime_escalation_system = EscalationSystem(
+                    bot=bot,
+                    store=runtime_store,
+                    facilitator_dashboard_id=dashboard_channel_id,
+                    moderation_logs_id=moderation_logs_id,
+                    trevor_discord_id=trevor_discord_id,
+                )
+            else:
+                logger.warning(
+                    "Escalation system not started: set CHANNEL_FACILITATOR_DASHBOARD, "
+                    "CHANNEL_MODERATION_LOGS, and TREVOR_DISCORD_ID"
+                )
+    except Exception as exc:
+        logger.error("Failed to initialize escalation system: %s", exc, exc_info=True)
+
+    # Inject runtime services for router-level safety and tracking hooks.
+    set_runtime_services(
+        escalation_system=runtime_escalation_system,
+        participation_tracker=runtime_participation_tracker,
+    )
+
     # Initialize daily prompt scheduler (Story 2.1)
     try:
-        if DISCORD_GUILD_ID and all(WEEKLY_CHANNEL_MAPPING.values()):
+        if DISCORD_GUILD_ID:
             from scheduler.scheduler import DailyPromptScheduler
 
             guild_id_int = int(DISCORD_GUILD_ID)
@@ -206,11 +258,22 @@ async def on_ready():
                 guild_id=guild_id_int,
                 channel_mapping=WEEKLY_CHANNEL_MAPPING,
                 cohort_start_date=COHORT_START_DATE,
+                escalation_system=runtime_escalation_system,
+                participation_tracker=runtime_participation_tracker,
+                store=runtime_store,
             )
             daily_prompt_scheduler.start()
             logger.info("Daily prompt scheduler started")
+
+            missing_weeks = [week for week, channel_id in WEEKLY_CHANNEL_MAPPING.items() if not channel_id]
+            if missing_weeks:
+                logger.warning(
+                    "Weekly channel mappings missing for weeks: %s. "
+                    "Escalations/dashboard remain active; content posts may skip those weeks.",
+                    missing_weeks,
+                )
         else:
-            logger.warning("Daily prompt scheduler not started: missing guild_id or channel mapping")
+            logger.warning("Daily prompt scheduler not started: missing DISCORD_GUILD_ID")
     except Exception as exc:
         logger.error("Failed to start daily prompt scheduler: %s", exc, exc_info=True)
 
@@ -304,6 +367,50 @@ async def review_slash(interaction: discord.Interaction):
 @bot.tree.command(name="publish", description="Artifact workflow command (Week 6+).")
 async def publish_slash(interaction: discord.Interaction):
     await route_slash_command(interaction, "publish")
+
+
+@bot.tree.command(name="submit-reflection", description="Submit Friday reflection to unlock next week.")
+@app_commands.describe(
+    habit_practice="Did you practice this week's habit? (Yes/Sometimes/No)",
+    identity_shift="What changed this week?",
+    proof_of_work="One sentence showing AI understood you",
+)
+async def submit_reflection_slash(
+    interaction: discord.Interaction,
+    habit_practice: str,
+    identity_shift: str,
+    proof_of_work: str,
+):
+    from database.store import StudentStateStore
+    from commands.reflection import submit_reflection_handler
+
+    store = StudentStateStore()
+    await submit_reflection_handler(
+        interaction=interaction,
+        store=store,
+        habit_practice=habit_practice,
+        identity_shift=identity_shift,
+        proof_of_work=proof_of_work,
+    )
+
+
+@bot.tree.command(name="unlock-week", description="Manually unlock a student's next week (Trevor only).")
+@app_commands.describe(
+    student="Student mention",
+    week_number="Week number to unlock (1-7)",
+    reason="Reason for manual override",
+)
+async def unlock_week_slash(
+    interaction: discord.Interaction,
+    student: discord.Member,
+    week_number: int,
+    reason: str = "Manual override by Trevor",
+):
+    from database.store import StudentStateStore
+    from commands.admin import unlock_week
+
+    store = StudentStateStore()
+    await unlock_week(interaction, store, student, week_number, reason)
 
 
 # ============================================================
