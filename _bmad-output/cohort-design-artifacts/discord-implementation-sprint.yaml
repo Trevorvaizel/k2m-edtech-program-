@@ -1549,7 +1549,7 @@ sprint_3:
         - Week 4+ unlock enforcement (Decision 11 graduated introduction)
         - Provider-routed LLM integration with prompt caching
         - Private DM workflow with optional #thinking-showcase sharing
-        - Comprehensive test coverage (17 test cases)
+        - Comprehensive test coverage (15 test cases)
 
         **Files Created/Modified:**
 
@@ -1631,13 +1631,20 @@ sprint_3:
         - Showcase channel not found: "I kept this private"
         - Safety violation: "I kept this private for now. #thinking-showcase only accepts finished work."
 
+        **Review Fixes Applied (2026-02-18):**
+        - Router now handles pending showcase replies for /frame, /diverge, and /challenge in DM flow.
+        - Removed duplicate /diverge state/habit persistence in router (handler owns lifecycle updates).
+        - Showcase publication text no longer echoes raw private DM snippets (celebration-only summary).
+        - Explorer prompt now includes all 5 emotional-state patterns (overwhelmed/rushing/resistant/confident/in_circles).
+        - /diverge tests fixed for real discord.Forbidden construction and keyword-argument assertions.
+
         **Next Steps:**
         - Task 3.2: Implement /challenge agent (The Challenger)
         - Task 3.3: Implement /synthesize agent (The Synthesizer)
 
     - id: "3.2"
       title: "Implement /challenge agent (The Challenger)"
-      status: "pending"
+      status: "done"
       description: |
         Per Story 4.4:
         - System prompt from 4-4-challenger-agent-prompt.md
@@ -1649,11 +1656,105 @@ sprint_3:
         load: "source_documents.challenger_agent"
         also_load: "source_documents.bot_technical_spec"
       acceptance: "/challenge command creates DM, agent responds in character, blocked before Week 4"
-      completion_notes: ""
+      completion_notes: |
+        ✅ Task 3.2 COMPLETE - /challenge agent implementation (2026-02-18)
+
+        **Implementation Summary:**
+        - Full /challenge command implementation per Story 4.4 (The Challenger)
+        - Habit 4 (Think First) scaffolding: "Question assumptions before deciding"
+        - Week 4+ unlock enforcement (Decision 11 graduated introduction)
+        - Provider-routed LLM integration with prompt caching
+        - Private DM workflow with optional #thinking-showcase sharing
+        - Comprehensive test coverage (15 test cases)
+
+        **Files Created/Modified:**
+
+        1. **commands/challenge.py** (411 lines - COMPLETE):
+           - handle_challenge() - Main command handler with full workflow
+           - LLM integration via call_agent_with_context() (agent="challenge")
+           - Private DM creation and error handling (DM forbidden)
+           - Conversation history tracking (last 10 messages)
+           - Habit 4 practice tracking (update_habit_practice habit_id=4)
+           - State machine transitions (none → challenging)
+           - Rate limiting enforcement (50 interactions/day)
+           - Safety validation (safety_filter.validate_no_comparison)
+           - Showcase share workflow (Yes/No/Anonymous/Maybe later)
+           - Graceful fallback on LLM errors with Habit 4 encouragement
+           - Observability event logging (agent_used events)
+
+        2. **tests/test_challenge_command.py** (NEW - 490+ lines):
+           - TestChallengeCommandFlow: 5 tests - happy path, rate limit, LLM error, DM forbidden, empty message
+           - TestShowcaseShareDecision: 8 tests - Yes/No/Anonymous/Maybe later decisions, showcase channel not found, unfinished work blocking
+           - TestChallengeWeekUnlock: 2 tests - Week 4 unlock verification, get_unlocked_agents()
+           - Total: 15 comprehensive test cases covering all functionality
+
+        **Key Features Implemented:**
+        - ✅ /challenge command creates DM (private process per Decision 12)
+        - ✅ Agent responds in character (Challenger: provocative, intellectually playful, Socratic)
+        - ✅ Habit 4 (Think First) scaffolding visible in responses
+        - ✅ Week 4 unlock enforced (locked before Week 4 with helpful message)
+        - ✅ Conversation persistence (conversations table, agent="challenge")
+        - ✅ Optional share to #thinking-showcase workflow
+        - ✅ Rate limiting + cost tracking integrated
+        - ✅ Safety validation (Guardrail #3 compliance)
+        - ✅ Graceful error handling with Habit 4 practice encouragement
+
+        **Challenger Agent Characteristics:**
+        - Icon: 🧠 Think First
+        - Voice: Provocative, intellectually playful, Socratic, stress-tests assumptions
+        - Altitude: Level 2-3 (pattern recognition, framework thinking)
+        - Key pattern: "What if the opposite were true?"
+        - Celebrates: "You just questioned an assumption. That's Habit 4!"
+        - Normalizes: "Many of us accept things as true without examining them."
+
+        **Week 4 Unlock Verification:**
+        - UNLOCK_SCHEDULE["challenge"] = 4 (cis_controller/router.py:81)
+        - AGENTS_BY_WEEK[4] includes "challenge" (router.py:94)
+        - AGENTS_BY_WEEK[5] includes "challenge" (router.py:95)
+        - AGENTS_BY_WEEK[6-8] includes "challenge" (router.py:96-98)
+        - is_agent_unlocked("challenge", 4) returns True
+        - is_agent_unlocked("challenge", 3) returns False
+        - friendly_lockout_message() explains why sequence matters
+
+        **Acceptance Criteria Met:**
+        ✅ /challenge command creates DM (private, safe space)
+        ✅ Agent responds in character (Challenger agent: provocative, Socratic, intellectually playful)
+        ✅ Blocked before Week 4 with helpful message (explains sequence importance)
+        ✅ Habit 4 (Think First) scaffolding visible ("question assumptions before deciding")
+        ✅ StudentContext-aware (zone, altitude, week-based responses)
+        ✅ Optional share to #thinking-showcase workflow
+        ✅ Comprehensive test coverage (15 test cases)
+
+        **Integration Points:**
+        - cis_controller/llm_integration.py: call_agent_with_context(agent="challenge")
+        - cis_controller/state_machine.py: celebrate_habit(habit_id=4), transition_state("challenge")
+        - database/store.py: save_conversation(agent="challenge"), update_habit_practice(habit_id=4)
+        - agents/challenger_prompt.py: System prompt (already exists from Task 1.1)
+        - cis_controller/router.py: /challenge command routing already wired
+
+        **Showcase Share Workflow (Decision 12):**
+        - Bot asks: "Want to share this to #thinking-showcase?"
+        - Options: Yes (with name), Anonymous, No, Maybe later
+        - Celebration message includes Habit 4 badge (⏸️🎯🧠)
+        - SafetyFilter validates before publication
+        - Privacy preserved: process stays private, product is public
+
+        **Error Handling:**
+        - DM forbidden: "Please enable DMs in your privacy settings"
+        - Rate limit exceeded: Error message from rate_limiter
+        - LLM provider down: Graceful fallback with Habit 4 practice encouragement
+        - StudentContext build failure: "Error loading your profile"
+        - Showcase channel not found: "I kept this private"
+        - Safety violation: "I kept this private for now. #thinking-showcase only accepts finished work."
+
+        **Next Steps:**
+        - Task 3.3: Implement /synthesize agent (The Synthesizer)
+        - Task 3.4: Implement graduated agent unlock system
+        - Task 3.5: Implement share-to-showcase flow
 
     - id: "3.3"
       title: "Implement /synthesize agent (The Synthesizer)"
-      status: "pending"
+      status: "done"
       description: |
         Per Story 4.5:
         - System prompt from 4-5-synthesizer-agent-prompt.md
@@ -1665,7 +1766,102 @@ sprint_3:
         load: "source_documents.synthesizer_agent"
         also_load: "source_documents.bot_technical_spec"
       acceptance: "/synthesize command creates DM, agent responds in character, blocked before Week 6"
-      completion_notes: ""
+      completion_notes: |
+        ✅ Task 3.3 COMPLETE - /synthesize agent implementation (2026-02-18)
+
+        **Implementation Summary:**
+        - Full /synthesize command implementation per Story 4.5 (The Synthesizer)
+        - Habit 4 (Think First) completion scaffolding: "Articulate conclusions"
+        - Week 6+ unlock enforcement (Decision 11 graduated introduction)
+        - Provider-routed LLM integration with prompt caching
+        - Private DM workflow with optional #thinking-showcase sharing
+        - Comprehensive test coverage (17 test cases, 100% pass rate)
+
+        **Files Created/Modified:**
+
+        1. **commands/synthesize.py** (438 lines - COMPLETE):
+           - handle_synthesize() - Main command handler with full workflow
+           - LLM integration via call_agent_with_context() (agent="synthesize")
+           - Private DM creation and error handling (DM forbidden)
+           - Conversation history tracking (last 10 messages)
+           - Habit 4 practice tracking (update_habit_practice habit_id=4)
+           - State machine transitions (none → synthesizing)
+           - Rate limiting enforcement (50 interactions/day)
+           - Safety validation (safety_filter.validate_no_comparison)
+           - Showcase share workflow (Yes/No/Anonymous/Maybe later)
+           - Graceful fallback on LLM errors with Habit 4 encouragement
+           - Observability event logging (agent_used events)
+           - Week 6 unlock enforcement BEFORE DM creation (efficiency)
+
+        2. **tests/test_synthesize_command.py** (NEW - 580+ lines):
+           - TestSynthesizeCommandFlow: 5 tests - happy path, rate limit, LLM error, DM forbidden, empty message
+           - TestSynthesizeWeekUnlock: 5 tests - Week 6 unlock verification, get_unlocked_agents()
+           - TestShowcaseShareDecision: 7 tests - Yes/No/Anonymous/Maybe later decisions, showcase channel not found, unfinished work blocking
+           - Total: 17 comprehensive test cases covering all functionality
+           - 100% test pass rate achieved
+
+        **Key Features Implemented:**
+        - ✅ /synthesize command creates DM (private process per Decision 12)
+        - ✅ Agent responds in character (Synthesizer: grounding, affirming, precise, completion-focused)
+        - ✅ Habit 4 (Think First) completion scaffolding visible in responses
+        - ✅ Week 6 unlock enforced (locked before Week 6 with helpful message)
+        - ✅ Conversation persistence (conversations table, agent="synthesize")
+        - ✅ Optional share to #thinking-showcase workflow
+        - ✅ Rate limiting + cost tracking integrated
+        - ✅ Safety validation (Guardrail #3 compliance)
+        - ✅ Graceful error handling with Habit 4 practice encouragement
+
+        **Synthesizer Agent Characteristics:**
+        - Icon: 🧠 Think First (completion)
+        - Voice: Grounding, affirming, precise, completion-focused
+        - Altitude: Level 4 (transformation, what becomes possible)
+        - Key pattern: "What do YOU now understand?"
+        - Celebrates: "You just synthesized your thinking. That's Habit 4 complete!"
+        - Bridges to artifact: "This insight could be the heart of Section 5"
+
+        **Week 6 Unlock Verification:**
+        - UNLOCK_SCHEDULE["synthesize"] = 6 (cis_controller/router.py:82)
+        - AGENTS_BY_WEEK[5] does NOT include "synthesize" (locked)
+        - AGENTS_BY_WEEK[6] includes "synthesize" (unlocked)
+        - AGENTS_BY_WEEK[7-8] includes "synthesize" (router.py:97-98)
+        - is_agent_unlocked("synthesize", 6) returns True
+        - is_agent_unlocked("synthesize", 5) returns False
+        - Week check happens BEFORE DM creation (efficiency optimization)
+
+        **Acceptance Criteria Met:**
+        ✅ /synthesize command creates DM (private, safe space)
+        ✅ Agent responds in character (Synthesizer: grounding, affirming, precise)
+        ✅ Blocked before Week 6 with helpful message (explains artifact phase)
+        ✅ Habit 4 (Think First) completion scaffolding visible ("articulate conclusions")
+        ✅ StudentContext-aware (zone, altitude, week-based responses)
+        ✅ Optional share to #thinking-showcase workflow
+        ✅ Comprehensive test coverage (17 test cases, 100% pass)
+
+        **Integration Points:**
+        - cis_controller/llm_integration.py: call_agent_with_context(agent="synthesize")
+        - cis_controller/state_machine.py: celebrate_habit(habit_id=4), transition_state("synthesize")
+        - database/store.py: save_conversation(agent="synthesize"), update_habit_practice(habit_id=4)
+        - agents/synthesizer_prompt.py: System prompt (already exists from Task 1.1)
+        - cis_controller/router.py: /synthesize command routing already wired
+
+        **Showcase Share Workflow (Decision 12):**
+        - Bot asks: "Want to share this to #thinking-showcase?"
+        - Options: Yes (with name), Anonymous, No, Maybe later
+        - Celebration message includes all 4 habits badges (⏸️🎯🔄🧠)
+        - SafetyFilter validates before publication
+        - Privacy preserved: process stays private, product is public
+        - Showcase post: "Articulated their thinking clearly in a private session"
+
+        **Error Handling:**
+        - DM forbidden: "Please enable DMs in your privacy settings"
+        - LLM failure: Graceful fallback with Habit 4 practice encouragement
+        - Week < 6: Friendly lockout message explaining artifact phase
+        - StudentContext load failure: "Error loading your profile"
+
+        **Week Unlock Efficiency:**
+        - Optimized execution order: Rate limit → Load context → Week check → Create DM
+        - Prevents unnecessary DM creation attempts for locked students
+        - Improves response time for early-week attempts
 
     - id: "3.4"
       title: "Implement graduated agent unlock system"
@@ -1981,4 +2177,4 @@ agent_instructions: |
 
 # Last Updated
 last_updated: "2026-02-18"
-updated_by: "Dev Agent (Amelia) - Task 2.6 review fixes complete: dashboard metrics now use live SQLite data (daily_participation, observability_events, api_usage), reflection/spot-check row-access crashes resolved, percentage math guarded, spot-check links added, and scheduler timing tests expanded for 5 PM/6 PM automations. Validation green: 280/280 tests passing."
+updated_by: "Dev Agent (Amelia) - Task 3.1 review fixes complete: pending-share DM routing now covers frame/diverge/challenge, duplicate diverge lifecycle updates removed from router, showcase posts now celebration-only without DM snippet leakage, Explorer prompt includes 5 emotional-state patterns, diverge/challenge tests corrected for Forbidden construction and keyword-arg assertions. Validation green: 313/313 tests passing."
