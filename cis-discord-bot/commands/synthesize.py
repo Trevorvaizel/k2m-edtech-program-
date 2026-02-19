@@ -6,10 +6,11 @@ Students use /synthesize to articulate conclusions (Habit 4: Think First complet
 Available from Week 6 onwards (Decision 11).
 """
 
+import asyncio
 import logging
 import os
 from datetime import datetime, timedelta, timezone
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 import discord
 
@@ -156,7 +157,89 @@ def _register_pending_share(discord_id: str, user_message: str, student_context)
         "snippet": snippet,
         "week": getattr(student_context, "current_week", None),
         "zone": getattr(student_context, "zone", None),
+        "agent": "synthesize",
+        "habits": ["PAUSE", "CONTEXT", "ITERATE", "THINK FIRST"],
     }
+
+
+async def _try_add_showcase_reaction(showcase_channel) -> None:
+    """Best effort: add a star reaction to the latest showcase post."""
+    try:
+        posted_message = getattr(showcase_channel, "last_message", None)
+        if callable(posted_message):
+            posted_message = posted_message()
+        if asyncio.iscoroutine(posted_message):
+            posted_message = await posted_message
+        if posted_message and hasattr(posted_message, "add_reaction"):
+            await posted_message.add_reaction("\N{WHITE MEDIUM STAR}")
+    except Exception:
+        logger.debug("Could not add star reaction on showcase message.", exc_info=True)
+
+
+def _record_showcase_publication(discord_id: str, decision: str, payload: Dict, post_text: str) -> None:
+    visibility = "anonymous" if decision == "anonymous" else "public"
+    try:
+        store.create_showcase_publication(
+            discord_id=str(discord_id),
+            publication_type="habit_practice",
+            visibility_level=visibility,
+            celebration_message=post_text,
+            habits_demonstrated=payload.get(
+                "habits",
+                ["PAUSE", "CONTEXT", "ITERATE", "THINK FIRST"],
+            ),
+            nodes_mastered=[],
+            parent_email_included=False,
+        )
+    except Exception as exc:
+        logger.error("Failed to record showcase publication for %s: %s", discord_id, exc)
+
+
+def summarize_cis_interactions(conversation_history: List[Dict[str, str]]) -> str:
+    """
+    Summarize prior CIS interactions for Synthesizer context.
+
+    Expected input rows include:
+      - agent: frame|diverge|challenge
+      - content: original user message content
+    """
+    latest_by_agent: Dict[str, str] = {}
+    for interaction in conversation_history:
+        agent = str(interaction.get("agent", "")).strip().lower()
+        content = " ".join(str(interaction.get("content", "")).split())
+        if agent in {"frame", "diverge", "challenge"} and content:
+            latest_by_agent[agent] = content
+
+    if not latest_by_agent:
+        return ""
+
+    def _trim(text: str, max_len: int = 90) -> str:
+        return text if len(text) <= max_len else f"{text[:max_len - 3]}..."
+
+    parts: List[str] = []
+    if "frame" in latest_by_agent:
+        parts.append(f"framed your question about {_trim(latest_by_agent['frame'])}")
+    if "diverge" in latest_by_agent:
+        parts.append(f"explored {_trim(latest_by_agent['diverge'])}")
+    if "challenge" in latest_by_agent:
+        parts.append(f"challenged {_trim(latest_by_agent['challenge'])}")
+
+    if len(parts) == 1:
+        return f"You {parts[0]}."
+    if len(parts) == 2:
+        return f"You {parts[0]} and {parts[1]}."
+    return f"You {parts[0]}, {parts[1]}, and {parts[2]}."
+
+
+def _load_cis_interactions(discord_id: str) -> List[Dict[str, str]]:
+    """Load recent user inputs from /frame, /diverge, and /challenge."""
+    interactions: List[Dict[str, str]] = []
+    for agent in ("frame", "diverge", "challenge"):
+        history = store.get_conversation_history(discord_id, agent, limit=6)
+        for row in history:
+            if row.get("role") == "user" and row.get("content"):
+                interactions.append({"agent": agent, "content": row["content"]})
+    return interactions
 
 
 def _build_showcase_post(author: discord.abc.User, decision: str, payload: Dict) -> str:
@@ -297,6 +380,8 @@ async def handle_showcase_share_response(message: discord.Message) -> bool:
         )
         return True
 
+    await _try_add_showcase_reaction(showcase_channel)
+    _record_showcase_publication(discord_id, decision, payload, post_text)
     PENDING_SHOWCASE_SHARES.pop(discord_id, None)
     await message.reply("Shared to #thinking-showcase. Nice work.")
     return True
@@ -350,13 +435,18 @@ async def handle_synthesize(message: discord.Message, student):
     if not user_message:
         user_message = "Help me articulate my conclusions."
 
+    cis_summary = summarize_cis_interactions(_load_cis_interactions(discord_id))
+    llm_user_message = user_message
+    if cis_summary:
+        llm_user_message = f"{user_message}\n\nRecent CIS context:\n{cis_summary}"
+
     try:
         logger.info("Calling Synthesizer agent for %s", discord_id)
 
         synthesizer_response, cost_data = await call_agent_with_context(
             agent="synthesize",
             student_context=student_context,
-            user_message=user_message,
+            user_message=llm_user_message,
             conversation_history=conversation_history,
         )
 
@@ -405,6 +495,56 @@ async def handle_synthesize(message: discord.Message, student):
                 "cost_usd": cost_data.get("total_cost_usd", 0.0),
             },
         )
+
+        preference = store.get_publication_preference(discord_id)
+        if preference == "always_no":
+            await dm_channel.send(
+                "Kept private based on your showcase preference (`always_no`)."
+            )
+            return
+        if preference == "week8_only" and getattr(student_context, "current_week", 0) < 8:
+            await dm_channel.send(
+                "Saved privately for Week 8 based on your showcase preference (`week8_only`)."
+            )
+            return
+        if preference == "always_yes":
+            payload = {
+                "week": getattr(student_context, "current_week", None),
+                "zone": getattr(student_context, "zone", None),
+                "agent": "synthesize",
+                "habits": ["PAUSE", "CONTEXT", "ITERATE", "THINK FIRST"],
+            }
+            showcase_channel = _find_showcase_channel(message)
+            if showcase_channel is None:
+                await dm_channel.send(
+                    "I couldn't find #thinking-showcase right now, so I kept this private."
+                )
+                return
+
+            post_text = _build_showcase_post(message.author, "yes", payload)
+            try:
+                await post_to_discord_safe(
+                    bot=_resolve_bot_client(message),
+                    channel=showcase_channel,
+                    message_text=post_text,
+                    student_discord_id=message.author.id,
+                    is_showcase=True,
+                )
+                await _try_add_showcase_reaction(showcase_channel)
+                _record_showcase_publication(discord_id, "yes", payload, post_text)
+                await dm_channel.send(
+                    "Shared to #thinking-showcase automatically (preference: `always_yes`)."
+                )
+            except Exception as exc:
+                logger.error(
+                    "Failed auto-publish showcase post for %s: %s",
+                    discord_id,
+                    exc,
+                )
+                await dm_channel.send(
+                    "I couldn't publish to #thinking-showcase right now, so I kept this private."
+                )
+            return
 
         _register_pending_share(discord_id, user_message, student_context)
         await dm_channel.send(

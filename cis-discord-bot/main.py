@@ -108,7 +108,7 @@ def build_status_embed() -> discord.Embed:
     )
     embed.add_field(
         name="Core Commands",
-        value="/frame, /diverge, /challenge, /synthesize, /create-artifact",
+        value="/frame, /diverge, /challenge, /synthesize, /create-artifact, /showcase-preference",
         inline=False,
     )
     return embed
@@ -354,6 +354,43 @@ async def create_artifact_slash(interaction: discord.Interaction):
     await route_slash_command(interaction, "create-artifact")
 
 
+@bot.tree.command(
+    name="showcase-preference",
+    description="Set your default share-to-showcase preference.",
+)
+@app_commands.describe(preference="How KIRA should handle your showcase sharing choice.")
+@app_commands.choices(
+    preference=[
+        app_commands.Choice(name="Always ask me", value="always_ask"),
+        app_commands.Choice(name="Always share publicly", value="always_yes"),
+        app_commands.Choice(name="Never share publicly", value="always_no"),
+        app_commands.Choice(name="Week 8 only", value="week8_only"),
+    ]
+)
+async def showcase_preference_slash(
+    interaction: discord.Interaction,
+    preference: app_commands.Choice[str],
+):
+    from commands.showcase import set_showcase_preference_for_student
+
+    try:
+        set_showcase_preference_for_student(str(interaction.user.id), preference.value)
+    except ValueError as exc:
+        await interaction.response.send_message(str(exc), ephemeral=True)
+        return
+
+    labels = {
+        "always_ask": "Always ask me",
+        "always_yes": "Always share publicly",
+        "always_no": "Never share publicly",
+        "week8_only": "Week 8 only",
+    }
+    await interaction.response.send_message(
+        f"Showcase preference saved: **{labels[preference.value]}**.",
+        ephemeral=True,
+    )
+
+
 @bot.tree.command(name="save", description="Artifact workflow command (Week 6+).")
 async def save_slash(interaction: discord.Interaction):
     await route_slash_command(interaction, "save")
@@ -488,6 +525,32 @@ async def on_command_error(ctx: commands.Context, error: Exception):
 
     logger.error("Command error: %s", error, exc_info=True)
     await ctx.send("An error occurred. Please try again.")
+
+
+@bot.tree.error
+async def on_app_command_error(
+    interaction: discord.Interaction, error: app_commands.AppCommandError
+):
+    """
+    Global slash-command error handler.
+
+    Prevents "The application did not respond" by always returning a fallback
+    interaction response when command callbacks raise.
+    """
+    logger.error("Slash command error: %s", error, exc_info=True)
+
+    fallback = "I hit an error while processing that command. Please try again."
+    try:
+        if interaction.response.is_done():
+            await interaction.followup.send(fallback, ephemeral=True)
+        else:
+            await interaction.response.send_message(fallback, ephemeral=True)
+    except Exception as response_error:
+        logger.error(
+            "Failed to send slash command error fallback: %s",
+            response_error,
+            exc_info=True,
+        )
 
 
 def main():

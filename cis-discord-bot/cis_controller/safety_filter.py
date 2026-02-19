@@ -45,10 +45,14 @@ class SafetyFilter:
     # Guardrail #3: Comparison/Ranking keywords
     FORBIDDEN_KEYWORDS = [
         "top student", "best student", "worst student",
+        "top artifact", "best artifact", "top performer",
         "top 3", "best 5", "leading student",
         "most active", "least active",
+        "most active student",
         "highest quality", "lowest quality",
         "fastest", "slowest",
+        "faster than", "slower than",
+        "faster than others", "ahead of the cohort",
         "ahead of", "behind",
         "better than", "worse than",
         "outperform", "underperform",
@@ -73,6 +77,10 @@ class SafetyFilter:
         r"top\s+\d+",                                 # "top 5", "top 10"
         r"\d+\s*(st|nd|rd|th)\s+place",              # "1st place", "2nd place"
         r"student.*?(better|worse|faster|slower).*?than",  # Comparisons
+        r"\b(top|best)\s+(artifact|student|performer)\b",  # "Top artifact", "Best performer"
+        r"\b(faster|slower)\s+than\b",                # "Faster than others"
+        r"\b(ahead|behind)\s+of\b",                   # "Ahead of the cohort"
+        r"\branked?\b\s*#?\d+",                       # "ranked #1"
     ]
 
     # Task 2.3: Kenya Crisis Response Message
@@ -302,7 +310,9 @@ async def notify_trevor_safety_violation(
     violation_type: str,
     message: str,
     student_discord_id: Optional[int] = None,
-    escalation_system=None
+    escalation_system=None,
+    last_messages: Optional[List[str]] = None,
+    emotional_state: Optional[str] = None,
 ):
     """
     Task 2.3: Send Trevor alert for safety violations.
@@ -333,9 +343,13 @@ async def notify_trevor_safety_violation(
         trevor_user = await bot.fetch_user(int(trevor_discord_id))
 
         if violation_type == "crisis":
-            crisis_context = _load_crisis_context(student_discord_id)
-            emotional_state = crisis_context.get("emotional_state", "unknown")
-            last_messages = crisis_context.get("last_messages", [])
+            if last_messages is None or emotional_state is None:
+                crisis_context = _load_crisis_context(student_discord_id)
+                if emotional_state is None:
+                    emotional_state = crisis_context.get("emotional_state", "unknown")
+                if last_messages is None:
+                    last_messages = crisis_context.get("last_messages", [])
+
             if last_messages:
                 last_messages_block = "\n".join(f"- {line}" for line in last_messages)
             else:
@@ -385,11 +399,34 @@ async def notify_trevor_safety_violation(
                         crisis_type="mental_health_crisis",
                         last_3_messages=last_messages,
                         zone=zone,
-                        emotional_state=emotional_state
+                        emotional_state=emotional_state or "unknown",
                     )
                     logger.info(f"Level 4 crisis logged to escalations table for student {student_discord_id}")
                 except Exception as e:
                     logger.error(f"Failed to log crisis to escalations table: {e}", exc_info=True)
+            elif student_discord_id:
+                # Fallback DB logging when escalation system is not injected.
+                try:
+                    db = store.StudentStateStore()
+                    db.conn.execute(
+                        """
+                        INSERT INTO escalations (discord_id, escalation_level, notes, escalated_at)
+                        VALUES (?, 4, ?, ?)
+                        """,
+                        (
+                            str(student_discord_id),
+                            "Crisis detected: mental_health_crisis (Level 4, fallback logger)",
+                            discord.utils.utcnow().isoformat(),
+                        ),
+                    )
+                    db.conn.commit()
+                    db.close()
+                    logger.info(
+                        "Level 4 crisis logged via fallback path for student %s",
+                        student_discord_id,
+                    )
+                except Exception as e:
+                    logger.error("Fallback Level 4 escalation logging failed: %s", e, exc_info=True)
 
         elif violation_type == "comparison":
             # Level 3: Comparison violation (less urgent)

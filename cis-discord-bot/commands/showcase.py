@@ -1,30 +1,83 @@
 """
-Share to Showcase Command (Task 3.5)
-Decision 12 implementation: Private DM → Public showcase publication flow
+Showcase workflow helpers.
 
-After CIS conversation, bot asks if student wants to share their learning to #thinking-showcase.
-Options: Yes (public), Anonymous, No (private)
+Task 3.5 (Decision 12):
+- Private DM process stays private
+- Student chooses Yes / Anonymous / No
+- Public celebration posts to #thinking-showcase only after safety validation
 """
+
+import asyncio
+import logging
+import os
+from typing import Optional
 
 import discord
 from discord.ext import commands
-from database.store import StudentStateStore
+
 from cis_controller.celebration_generator import generate_celebration_message
-from cis_controller.safety_filter import SafetyFilter, ComparisonViolationError
-import logging
-import asyncio
+from cis_controller.safety_filter import ComparisonViolationError, SafetyFilter
+from database.store import StudentStateStore
 
 logger = logging.getLogger(__name__)
 store = StudentStateStore()
 safety_filter = SafetyFilter()
 
-# Habit icons for celebration messages
+VALID_PREFERENCES = {"always_ask", "always_yes", "always_no", "week8_only"}
+CHANNEL_THINKING_SHOWCASE = os.getenv("CHANNEL_THINKING_SHOWCASE", "").strip()
+
 HABIT_ICONS = {
-    1: "⏸️",  # Pause
-    2: "🎯",   # Context
-    3: "🔄",   # Iterate
-    4: "🧠"    # Think First
+    1: "\N{DOUBLE VERTICAL BAR}",  # Pause
+    2: "\N{DIRECT HIT}",  # Context
+    3: "\N{CLOCKWISE RIGHTWARDS AND LEFTWARDS OPEN CIRCLE ARROWS}",  # Iterate
+    4: "\N{BRAIN}",  # Think First
 }
+
+
+def _find_showcase_channel(bot: commands.Bot):
+    guild = bot.guilds[0] if bot.guilds else None
+    if not guild:
+        return None
+
+    if CHANNEL_THINKING_SHOWCASE:
+        try:
+            configured_id = int(CHANNEL_THINKING_SHOWCASE)
+            by_id = guild.get_channel(configured_id)
+            # Guard against loose mocks in tests; ensure resolved channel ID matches.
+            if by_id is not None and getattr(by_id, "id", None) == configured_id:
+                return by_id
+        except ValueError:
+            logger.warning(
+                "Invalid CHANNEL_THINKING_SHOWCASE id: %s",
+                CHANNEL_THINKING_SHOWCASE,
+            )
+
+    channels = getattr(guild, "text_channels", None)
+    if not isinstance(channels, (list, tuple)):
+        channels = getattr(guild, "channels", []) or []
+
+    for channel in channels:
+        name = str(getattr(channel, "name", "")).lower()
+        if name == "thinking-showcase" or name.endswith("thinking-showcase") or "thinking-showcase" in name:
+            return channel
+    return None
+
+
+def _normalize_visibility_from_reaction(emoji: str) -> Optional[str]:
+    mapping = {
+        "1\ufe0f\u20e3": "public",
+        "2\ufe0f\u20e3": "anonymous",
+        "3\ufe0f\u20e3": "private",
+    }
+    return mapping.get(emoji)
+
+
+def set_showcase_preference_for_student(discord_id: str, preference: str) -> None:
+    """Programmatic preference setter (used by slash command handlers)."""
+    preference = (preference or "").strip().lower()
+    if preference not in VALID_PREFERENCES:
+        raise ValueError(f"Invalid preference: {preference}")
+    store.set_publication_preference(str(discord_id), preference)
 
 
 async def prompt_share_to_showcase(
@@ -32,113 +85,79 @@ async def prompt_share_to_showcase(
     message: discord.Message,
     student_discord_id: str,
     agent_used: str,
-    habits_practiced: list = None
+    habits_practiced: list = None,
 ):
     """
-    Prompt student to share their CIS conversation to #thinking-showcase.
-
-    Called after CIS agent conversation completes.
-
-    Args:
-        bot: Discord bot instance
-        message: Original message that triggered the agent
-        student_discord_id: Student's Discord user ID
-        agent_used: Which CIS agent they just used (frame, diverge, challenge, synthesize)
-        habits_practiced: List of habit IDs practiced (1-4)
+    Ask the student whether to share a completed thinking milestone publicly.
     """
-    # Check student's publication preference
+    student_discord_id = str(student_discord_id)
+    habits_practiced = habits_practiced or [1, 2]
     preference = store.get_publication_preference(student_discord_id)
+    student_row = store.get_student(student_discord_id) or store.create_student(student_discord_id)
+    current_week = int(student_row["current_week"])
 
-    # Auto-share based on preference (reduce decision fatigue)
-    if preference == 'always_no':
-        # Student opted out - save conversation only, no prompt
-        logger.info(f"Student {student_discord_id} has 'always_no' preference - skipping share prompt")
+    if preference == "always_no":
+        logger.info("Student %s has always_no preference; skipped showcase prompt.", student_discord_id)
         return
 
-    elif preference == 'always_yes':
-        # Auto-publish as public
+    if preference == "always_yes":
         await publish_to_showcase(
             bot=bot,
             student_discord_id=student_discord_id,
             agent_used=agent_used,
-            visibility='public',
-            habits_practiced=habits_practiced
+            visibility="public",
+            habits_practiced=habits_practiced,
+            original_message=message,
         )
         return
 
-    elif preference == 'week8_only':
-        # Save for Week 8 artifact only
+    if preference == "week8_only" and current_week < 8:
         await message.reply(
-            "**Saved for your Week 8 artifact!** ✨\n\n"
-            "Your conversation is saved. You'll share it during Week 8 when creating your graduation artifact.\n\n"
-            f"**Habit practiced:** {' '.join([HABIT_ICONS.get(h, '') for h in (habits_practiced or [1, 2])])}"
+            "**Saved for your Week 8 artifact.**\n\n"
+            "Your learning stays private for now and can be shared at graduation."
         )
         return
 
-    # Default: always_ask - show the share prompt
     share_prompt = (
-        f"**Want to share your learning to #thinking-showcase?** 🌟\n\n"
-        f"You just practiced with **/{agent_used}**. Celebrate your growth!\n\n"
-        f"**Choose your privacy level:**\n"
-        f"**[1] Public** - Your name is shown (recommended for social proof)\n"
-        f"**[2] Anonymous** - Shared without your name (psychological safety)\n"
-        f"**[3] Not now** - Keep this conversation private (saved for artifact later)\n\n"
-        f"**Tip:** You can set a permanent preference with `/showcase-preference`"
+        "**Want to share your learning to #thinking-showcase?**\n\n"
+        f"You just practiced with **/{agent_used}**.\n\n"
+        "**Choose one:**\n"
+        "**[1] Public** - Share with your name\n"
+        "**[2] Anonymous** - Share without your name\n"
+        "**[3] Not now** - Keep private\n\n"
+        "Tip: set a permanent preference with `/showcase-preference`."
     )
-
     share_message = await message.reply(share_prompt)
-
-    # Wait for user response (using reaction buttons for simplicity)
-    await share_message.add_reaction("1️⃣")  # Public
-    await share_message.add_reaction("2️⃣")  # Anonymous
-    await share_message.add_reaction("3️⃣")  # Not now
+    await share_message.add_reaction("1\ufe0f\u20e3")
+    await share_message.add_reaction("2\ufe0f\u20e3")
+    await share_message.add_reaction("3\ufe0f\u20e3")
 
     def check_reaction(reaction, user):
         return (
-            user.id == int(student_discord_id) and
-            reaction.message.id == share_message.id and
-            str(reaction.emoji) in ["1️⃣", "2️⃣", "3️⃣"]
+            str(user.id) == student_discord_id
+            and reaction.message.id == share_message.id
+            and str(reaction.emoji) in {"1\ufe0f\u20e3", "2\ufe0f\u20e3", "3\ufe0f\u20e3"}
         )
 
     try:
-        reaction, user = await bot.wait_for('reaction_add', timeout=60.0, check=check_reaction)
-
-        if str(reaction.emoji) == "1️⃣":
-            # Public share
+        reaction, _ = await bot.wait_for("reaction_add", timeout=60.0, check=check_reaction)
+        visibility = _normalize_visibility_from_reaction(str(reaction.emoji))
+        if visibility:
             await publish_to_showcase(
                 bot=bot,
                 student_discord_id=student_discord_id,
                 agent_used=agent_used,
-                visibility='public',
+                visibility=visibility,
                 habits_practiced=habits_practiced,
-                original_message=message
+                original_message=message,
             )
-
-        elif str(reaction.emoji) == "2️⃣":
-            # Anonymous share
-            await publish_to_showcase(
-                bot=bot,
-                student_discord_id=student_discord_id,
-                agent_used=agent_used,
-                visibility='anonymous',
-                habits_practiced=habits_practiced,
-                original_message=message
-            )
-
-        elif str(reaction.emoji) == "3️⃣":
-            # Not now - save privately
-            await message.reply(
-                "**Conversation saved privately.** 🔒\n\n"
-                "Your learning is saved for your Week 8 artifact. You can share anytime with `/share-showcase`.\n\n"
-                f"**Habit practiced:** {' '.join([HABIT_ICONS.get(h, '') for h in (habits_practiced or [1, 2])])}"
-            )
-
-        # Clean up reactions
-        await share_message.clear_reactions()
-
     except asyncio.TimeoutError:
-        await share_message.clear_reactions()
-        logger.info(f"Share prompt timeout for student {student_discord_id}")
+        logger.info("Share prompt timeout for %s", student_discord_id)
+    finally:
+        try:
+            await share_message.clear_reactions()
+        except Exception:
+            pass
 
 
 async def publish_to_showcase(
@@ -147,135 +166,120 @@ async def publish_to_showcase(
     agent_used: str,
     visibility: str,
     habits_practiced: list = None,
-    original_message: discord.Message = None
+    original_message: discord.Message = None,
 ):
     """
-    Publish a celebration message to #thinking-showcase.
-
-    Args:
-        bot: Discord bot instance
-        student_discord_id: Student's Discord user ID
-        agent_used: Which CIS agent was used
-        visibility: 'public', 'anonymous', or 'private'
-        habits_practiced: List of habit IDs practiced
-        original_message: Original message (for reply)
+    Publish a celebration message to #thinking-showcase or keep it private.
     """
     try:
-        # Get student data
-        student = store.get_student(student_discord_id)
-        if not student:
-            logger.error(f"Student {student_discord_id} not found")
+        student_discord_id = str(student_discord_id)
+        habits_practiced = habits_practiced or [1, 2]
+        student = store.get_student(student_discord_id) or store.create_student(student_discord_id)
+
+        if visibility == "private":
+            private_message = (
+                "**Conversation saved privately.**\n\n"
+                "Your learning is saved for your Week 8 artifact."
+            )
+            store.create_showcase_publication(
+                discord_id=student_discord_id,
+                publication_type="habit_practice",
+                visibility_level="private",
+                celebration_message=private_message,
+                habits_demonstrated=[HABIT_ICONS.get(h, "") for h in habits_practiced],
+                nodes_mastered=[],
+                parent_email_included=False,
+            )
+            if original_message:
+                await original_message.reply(private_message)
             return
 
-        # Get #thinking-showcase channel
-        guild = bot.guilds[0] if bot.guilds else None
-        if not guild:
-            logger.error("Bot not in any guild")
-            return
-
-        showcase_channel = discord.utils.get(guild.channels, name="thinking-showcase")
+        showcase_channel = _find_showcase_channel(bot)
         if not showcase_channel:
             logger.error("#thinking-showcase channel not found")
             return
 
-        # Generate celebration message using Claude API
         celebration = await generate_celebration_message(
             student_id=student_discord_id,
             agent_used=agent_used,
             visibility=visibility,
-            habits_practiced=habits_practiced or [1, 2],
-            zone=student['zone'],
-            week=student['current_week']
+            habits_practiced=habits_practiced,
+            zone=student["zone"],
+            week=student["current_week"],
         )
 
-        # Validate with SafetyFilter (Guardrail #3)
-        try:
-            safety_filter.validate_no_comparison(celebration)
-        except ComparisonViolationError as e:
-            logger.error(f"SafetyFilter blocked celebration: {e}")
-            if original_message:
-                await original_message.reply(
-                    "**Your celebration is being reviewed.** ⏳\n\n"
-                    "It will be posted shortly. In the meantime, your growth is saved!"
-                )
-            return
+        safety_filter.validate_no_comparison(celebration)
+        safety_filter.validate_showcase_content(celebration)
 
-        # Post to #thinking-showcase
-        await showcase_channel.send(celebration)
+        posted_message = await showcase_channel.send(celebration)
+        if posted_message and hasattr(posted_message, "add_reaction"):
+            try:
+                reaction_result = posted_message.add_reaction("\N{WHITE MEDIUM STAR}")
+                if asyncio.iscoroutine(reaction_result):
+                    await reaction_result
+            except Exception:
+                logger.debug("Could not add star reaction for showcase message.", exc_info=True)
 
-        # Add ⭐ reaction (models celebration behavior)
-        message = await showcase_channel.last_message()
-        if message:
-            await message.add_reaction("⭐")
-
-        # Record publication in database
         store.create_showcase_publication(
             discord_id=student_discord_id,
-            publication_type='habit_practice',
+            publication_type="habit_practice",
             visibility_level=visibility,
             celebration_message=celebration,
-            habits_demonstrated=[HABIT_ICONS.get(h, '') for h in (habits_practiced or [1, 2])],
-            nodes_mastered=[],  # TODO: Calculate from student data
-            parent_email_included=False  # TODO: Implement parent email system
+            habits_demonstrated=[HABIT_ICONS.get(h, "") for h in habits_practiced],
+            nodes_mastered=[],
+            parent_email_included=False,
         )
 
-        # DM confirmation to student
         if original_message:
-            if visibility == 'public':
-                confirm_msg = f"**Posted to #thinking-showcase!** 🌟\n\n{celebration[:100]}..."
-            elif visibility == 'anonymous':
-                confirm_msg = "**Posted anonymously to #thinking-showcase!** 🌟\n\nYour identity is protected. Your growth inspires others!"
+            if visibility == "public":
+                confirm = "**Posted to #thinking-showcase.** Nice work."
             else:
-                confirm_msg = "**Saved for your artifact!** 🔒"
+                confirm = "**Posted anonymously to #thinking-showcase.** Nice work."
+            await original_message.reply(confirm)
 
-            await original_message.reply(confirm_msg)
+        logger.info("Published showcase celebration for %s as %s", student_discord_id, visibility)
 
-        logger.info(f"Published {agent_used} practice for {student_discord_id} as {visibility}")
-
-    except Exception as e:
-        logger.error(f"Error publishing to showcase: {e}")
+    except ComparisonViolationError as exc:
+        logger.error("SafetyFilter blocked celebration for %s: %s", student_discord_id, exc)
         if original_message:
             await original_message.reply(
-                "**Something went wrong.** 😕\n\n"
-                "Your growth is saved! Try sharing later with `/share-showcase`"
+                "I kept this private for now. #thinking-showcase only accepts finished work."
+            )
+    except Exception as exc:
+        logger.error("Error publishing to showcase for %s: %s", student_discord_id, exc)
+        if original_message:
+            await original_message.reply(
+                "**Something went wrong.** Your growth is saved; try sharing again later."
             )
 
 
 async def set_showcase_preference(message: discord.Message, preference: str):
     """
     Set student's permanent showcase publication preference.
-
-    Args:
-        message: Discord message
-        preference: 'always_ask', 'always_yes', 'always_no', 'week8_only'
     """
-    valid_preferences = ['always_ask', 'always_yes', 'always_no', 'week8_only']
-
-    if preference not in valid_preferences:
+    preference = (preference or "").strip().lower()
+    if preference not in VALID_PREFERENCES:
         await message.reply(
-            f"**Invalid preference.**\n\n"
-            f"Valid options: {', '.join(valid_preferences)}\n\n"
-            f"**always_ask** - Ask me every time (default)\n"
-            f"**always_yes** - Auto-publish all my celebrations\n"
-            f"**always_no** - Never publish (private only)\n"
-            f"**week8_only** - Only publish during Week 8 artifact"
+            "**Invalid preference.**\n\n"
+            "Valid options: always_ask, always_yes, always_no, week8_only\n\n"
+            "- always_ask: ask every time (default)\n"
+            "- always_yes: auto-publish celebrations\n"
+            "- always_no: keep conversations private\n"
+            "- week8_only: publish during Week 8 artifact only"
         )
         return
 
     store.set_publication_preference(message.author.id, preference)
 
-    preference_desc = {
-        'always_ask': "I'll ask you every time you complete a CIS conversation",
-        'always_yes': "All your celebrations will be auto-published publicly",
-        'always_no': "Your conversations will stay private (saved for artifact only)",
-        'week8_only': "Your celebrations will be saved for Week 8 artifact publication"
+    descriptions = {
+        "always_ask": "I will ask you every time.",
+        "always_yes": "I will auto-publish your celebrations publicly.",
+        "always_no": "I will keep your conversations private.",
+        "week8_only": "I will save celebrations for Week 8 publication.",
     }
-
     await message.reply(
-        f"**Showcase preference updated!** ✅\n\n"
-        f"**Setting:** {preference}\n"
-        f"**What this means:** {preference_desc[preference]}\n\n"
-        f"You can change this anytime with `/showcase-preference [preference]`"
+        "**Showcase preference updated.**\n\n"
+        f"Setting: `{preference}`\n"
+        f"What this means: {descriptions[preference]}"
     )
-
-    logger.info(f"Student {message.author.id} set showcase preference to {preference}")
+    logger.info("Student %s set showcase preference to %s", message.author.id, preference)

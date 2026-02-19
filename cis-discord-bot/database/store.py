@@ -19,6 +19,12 @@ logger = logging.getLogger(__name__)
 
 # Consent records are short-lived to preserve student control over private process.
 DEFAULT_JOURNEY_CONSENT_TTL_HOURS = 24
+VALID_PUBLICATION_PREFERENCES = {
+    "always_ask",
+    "always_yes",
+    "always_no",
+    "week8_only",
+}
 
 class StudentStateStore:
     """Database operations for student state and conversations"""
@@ -63,7 +69,8 @@ class StudentStateStore:
         schema_path = Path(__file__).parent / "schema.sql"
 
         if schema_path.exists():
-            with open(schema_path, 'r') as f:
+            # Force UTF-8 because schema comments include Unicode symbols.
+            with open(schema_path, 'r', encoding='utf-8') as f:
                 schema_sql = f.read()
                 self.conn.executescript(schema_sql)
                 self.conn.commit()
@@ -192,6 +199,17 @@ class StudentStateStore:
         self.conn.commit()
 
         return self.get_student(discord_id)
+
+    def _ensure_student_record(self, discord_id: str) -> None:
+        """
+        Ensure a student row exists before writing FK-backed records.
+
+        Showcase preference/publication writes can happen from async handlers
+        that may race initial student creation in other paths.
+        """
+        discord_id = str(discord_id)
+        if self.get_student(discord_id) is None:
+            self.create_student(discord_id)
 
     def update_student_week(self, discord_id: str, week: int):
         """
@@ -479,6 +497,141 @@ class StudentStateStore:
             (discord_id,)
         )
         return cursor.fetchone()
+
+    def save_artifact_progress(
+        self,
+        discord_id: str,
+        artifact_progress
+    ) -> None:
+        """
+        Save or update artifact progress for a student.
+
+        Args:
+            discord_id: Student's Discord user ID
+            artifact_progress: ArtifactProgress dataclass instance
+        """
+        from database.models import ArtifactProgress
+
+        discord_id = str(discord_id)
+        now = datetime.now().isoformat()
+
+        # Ensure student record exists
+        self._ensure_student_record(discord_id)
+
+        # Check if this is a new artifact or update
+        existing = self.get_artifact_progress_row(discord_id)
+        if existing is None:
+            # Create new artifact progress record
+            started_at = artifact_progress.started_at.isoformat() if artifact_progress.started_at else now
+            self.conn.execute(
+                """
+                INSERT INTO artifact_progress (
+                    student_id, section_1_question, section_2_reframed, section_3_explored,
+                    section_4_challenged, section_5_concluded, section_6_reflection,
+                    completed_sections, current_section, status, started_at, last_activity
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    discord_id,
+                    artifact_progress.section_1_question,
+                    artifact_progress.section_2_reframed,
+                    artifact_progress.section_3_explored,
+                    artifact_progress.section_4_challenged,
+                    artifact_progress.section_5_concluded,
+                    artifact_progress.section_6_reflection,
+                    json.dumps(artifact_progress.completed_sections),
+                    artifact_progress.current_section,
+                    artifact_progress.status,
+                    started_at,
+                    now
+                )
+            )
+        else:
+            # Update existing artifact progress
+            self.conn.execute(
+                """
+                UPDATE artifact_progress SET
+                    section_1_question = ?,
+                    section_2_reframed = ?,
+                    section_3_explored = ?,
+                    section_4_challenged = ?,
+                    section_5_concluded = ?,
+                    section_6_reflection = ?,
+                    completed_sections = ?,
+                    current_section = ?,
+                    status = ?,
+                    last_activity = ?,
+                    completed_at = CASE WHEN ? = 'completed' THEN ? ELSE completed_at END,
+                    published_at = CASE WHEN ? = 'published' THEN ? ELSE published_at END
+                WHERE student_id = ?
+                """,
+                (
+                    artifact_progress.section_1_question,
+                    artifact_progress.section_2_reframed,
+                    artifact_progress.section_3_explored,
+                    artifact_progress.section_4_challenged,
+                    artifact_progress.section_5_concluded,
+                    artifact_progress.section_6_reflection,
+                    json.dumps(artifact_progress.completed_sections),
+                    artifact_progress.current_section,
+                    artifact_progress.status,
+                    now,
+                    artifact_progress.status, now,  # Set completed_at if status is 'completed'
+                    artifact_progress.status, now,  # Set published_at if status is 'published'
+                    discord_id
+                )
+            )
+
+        self.conn.commit()
+
+    def update_artifact_section(
+        self,
+        discord_id: str,
+        section_number: int,
+        content: str
+    ) -> None:
+        """
+        Update a specific section of the artifact.
+
+        Args:
+            discord_id: Student's Discord user ID
+            section_number: Section number (1-6)
+            content: Section content to save
+        """
+        discord_id = str(discord_id)
+        section_columns = {
+            1: "section_1_question",
+            2: "section_2_reframed",
+            3: "section_3_explored",
+            4: "section_4_challenged",
+            5: "section_5_concluded",
+            6: "section_6_reflection"
+        }
+
+        if section_number not in section_columns:
+            raise ValueError(f"Invalid section_number: {section_number}. Must be 1-6.")
+
+        column = section_columns[section_number]
+        now = datetime.now().isoformat()
+
+        # Update the specific section
+        self.conn.execute(
+            f"UPDATE artifact_progress SET {column} = ?, last_activity = ? WHERE student_id = ?",
+            (content, now, discord_id)
+        )
+
+        # Update completed_sections list
+        existing = self.get_artifact_progress_row(discord_id)
+        if existing:
+            completed = json.loads(existing['completed_sections'] or '[]')
+            if section_number not in completed:
+                completed.append(f"section_{section_number}")
+            self.conn.execute(
+                "UPDATE artifact_progress SET completed_sections = ?, current_section = ? WHERE student_id = ?",
+                (json.dumps(completed), section_number, discord_id)
+            )
+
+        self.conn.commit()
 
     def log_observability_event(
         self,
@@ -1322,6 +1475,7 @@ class StudentStateStore:
             Publication record ID
         """
         discord_id = str(discord_id)
+        self._ensure_student_record(discord_id)
         habits_json = json.dumps(habits_demonstrated) if habits_demonstrated else None
         nodes_json = json.dumps(nodes_mastered) if nodes_mastered else None
 
@@ -1445,6 +1599,12 @@ class StudentStateStore:
             preference: 'always_ask', 'always_yes', 'always_no', 'week8_only'
         """
         discord_id = str(discord_id)
+        if preference not in VALID_PUBLICATION_PREFERENCES:
+            raise ValueError(
+                f"Invalid publication preference '{preference}'. "
+                f"Valid options: {sorted(VALID_PUBLICATION_PREFERENCES)}"
+            )
+        self._ensure_student_record(discord_id)
         now = datetime.now().isoformat()
 
         self.conn.execute(

@@ -68,6 +68,13 @@ def safety_filter():
     return SafetyFilter()
 
 
+@pytest.fixture
+def patch_showcase_store(temp_db):
+    """Patch commands.showcase to use test DB connection."""
+    with patch("commands.showcase.store", temp_db):
+        yield
+
+
 # ============================================================
 # DATABASE TRACKING TESTS
 # ============================================================
@@ -243,11 +250,11 @@ class TestCelebrationGeneration:
         """Test that generated celebrations have correct structure"""
         from cis_controller.celebration_generator import generate_celebration_message
 
-        # Mock Claude API response
-        with patch('cis_controller.celebration_generator.client.messages.create') as mock_api:
-            mock_api.return_value = Mock(
-                content=[Mock(text="🌟 [Student] practiced Habit 1 & 2 today!\n\nTest message")]
-            )
+        with patch(
+            "cis_controller.celebration_generator._call_celebration_llm",
+            new_callable=AsyncMock,
+            return_value="🌟 [Student] practiced Habit 1 & 2 today! ⏸️🎯\n\nTest message",
+        ):
 
             message = await generate_celebration_message(
                 student_id="12345",
@@ -303,7 +310,7 @@ class TestPublicationFlow:
     """Test complete publication flow for all 3 sharing options"""
 
     @pytest.mark.asyncio
-    async def test_public_publication_flow(self, mock_bot, mock_message, temp_db):
+    async def test_public_publication_flow(self, mock_bot, mock_message, temp_db, patch_showcase_store):
         """Test public publication flow (name visible)"""
         from commands.showcase import publish_to_showcase
 
@@ -325,7 +332,7 @@ class TestPublicationFlow:
             assert showcase_channel.send.called
 
     @pytest.mark.asyncio
-    async def test_anonymous_publication_flow(self, mock_bot, mock_message, temp_db):
+    async def test_anonymous_publication_flow(self, mock_bot, mock_message, temp_db, patch_showcase_store):
         """Test anonymous publication flow (name hidden)"""
         from commands.showcase import publish_to_showcase
 
@@ -347,7 +354,7 @@ class TestPublicationFlow:
             assert "Anonymous" in call_args
 
     @pytest.mark.asyncio
-    async def test_private_no_publication(self, mock_bot, mock_message, temp_db):
+    async def test_private_no_publication(self, mock_bot, mock_message, temp_db, patch_showcase_store):
         """Test private option (no publication, only saved to DB)"""
         from commands.showcase import publish_to_showcase
 
@@ -409,7 +416,7 @@ class TestShareToShowcaseIntegration:
     """Integration tests for complete share-to-showcase flow"""
 
     @pytest.mark.asyncio
-    async def test_complete_flow_with_safety_validation(self, mock_bot, mock_message, temp_db):
+    async def test_complete_flow_with_safety_validation(self, mock_bot, mock_message, temp_db, patch_showcase_store):
         """Test complete flow: conversation → share prompt → safety check → publish"""
         from commands.showcase import prompt_share_to_showcase
 
@@ -425,7 +432,7 @@ class TestShareToShowcaseIntegration:
             assert temp_db.get_publication_preference("12345") == 'always_ask'
 
     @pytest.mark.asyncio
-    async def test_safety_filter_blocks_invalid_celebration(self, mock_bot, mock_message, temp_db):
+    async def test_safety_filter_blocks_invalid_celebration(self, mock_bot, mock_message, temp_db, patch_showcase_store):
         """Test that SafetyFilter blocks comparison violations"""
         from commands.showcase import publish_to_showcase
 
@@ -440,7 +447,7 @@ class TestShareToShowcaseIntegration:
             assert "student" in unsafe_celebration.lower()
 
     @pytest.mark.asyncio
-    async def test_database_record_created_on_publication(self, mock_bot, mock_message, temp_db):
+    async def test_database_record_created_on_publication(self, mock_bot, mock_message, temp_db, patch_showcase_store):
         """Test that publication creates database record"""
         from commands.showcase import publish_to_showcase
 
@@ -471,7 +478,7 @@ class TestErrorHandling:
     """Test error handling in showcase system"""
 
     @pytest.mark.asyncio
-    async def test_showcase_channel_not_found(self, mock_bot, mock_message, temp_db):
+    async def test_showcase_channel_not_found(self, mock_bot, mock_message, temp_db, patch_showcase_store):
         """Test handling when #thinking-showcase channel doesn't exist"""
         from commands.showcase import publish_to_showcase
 
@@ -494,12 +501,12 @@ class TestErrorHandling:
             assert mock_logger.error.called
 
     @pytest.mark.asyncio
-    async def test_student_not_found_in_database(self, mock_bot, mock_message, temp_db):
+    async def test_student_not_found_in_database(self, mock_bot, mock_message, temp_db, patch_showcase_store):
         """Test handling when student doesn't exist in database"""
         from commands.showcase import publish_to_showcase
 
         # Don't create student in database
-        # Should handle gracefully
+        # Should handle gracefully (auto-create + publish fallback if needed)
         with patch('commands.showcase.logger') as mock_logger:
             await publish_to_showcase(
                 bot=mock_bot,
@@ -510,5 +517,6 @@ class TestErrorHandling:
                 original_message=mock_message
             )
 
-            # Verify error was logged
-            assert mock_logger.error.called
+            # Verify no crash path reached publication handling.
+            showcase_channel = mock_bot.guilds[0].channels[0]
+            assert showcase_channel.send.called

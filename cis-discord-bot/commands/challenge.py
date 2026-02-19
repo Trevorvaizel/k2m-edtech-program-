@@ -1,6 +1,9 @@
 ﻿"""
-Frame Command Handler
-Story 4.7 + Task 1.5/1.6 implementation
+Challenge Command Handler
+Story 4.4 + Task 3.2 implementation: /challenge agent (The Challenger)
+
+Students use /challenge to stress-test assumptions (Habit 4: Think First).
+Available from Week 4 onwards (Decision 11).
 """
 
 import asyncio
@@ -38,11 +41,13 @@ PENDING_SHARE_TTL = timedelta(hours=24)
 
 
 def has_pending_showcase_share(discord_id: str) -> bool:
+    """Check if student has pending share decision."""
     _evict_expired_pending_shares()
     return str(discord_id) in PENDING_SHOWCASE_SHARES
 
 
 def _evict_expired_pending_shares() -> None:
+    """Remove expired pending share records."""
     now = datetime.now(timezone.utc)
     expired = [
         discord_id
@@ -54,6 +59,7 @@ def _evict_expired_pending_shares() -> None:
 
 
 def _normalize_share_choice(raw_text: str) -> Optional[str]:
+    """Normalize user's share decision to standard value."""
     text = (raw_text or "").strip().lower()
     if text in {"yes", "y", "share", "publish"}:
         return "yes"
@@ -67,6 +73,7 @@ def _normalize_share_choice(raw_text: str) -> Optional[str]:
 
 
 def _iter_candidate_guilds(message: discord.Message):
+    """Iterate through potential guilds for channel resolution."""
     guild = getattr(message, "guild", None)
     if guild is not None:
         yield guild
@@ -77,12 +84,14 @@ def _iter_candidate_guilds(message: discord.Message):
 
 
 def _filter_guild(guild) -> bool:
+    """Filter guild by configured ID if set."""
     if not DISCORD_GUILD_ID:
         return True
     return str(getattr(guild, "id", "")) == DISCORD_GUILD_ID
 
 
 def _find_channel_by_id_or_slug(guild, configured_id: str, slug: str):
+    """Find Discord channel by ID or name slug."""
     if configured_id:
         try:
             target_id = int(configured_id)
@@ -100,6 +109,7 @@ def _find_channel_by_id_or_slug(guild, configured_id: str, slug: str):
 
 
 def _find_showcase_channel(message: discord.Message):
+    """Find #thinking-showcase channel across guilds."""
     for guild in _iter_candidate_guilds(message):
         if not _filter_guild(guild):
             continue
@@ -112,6 +122,7 @@ def _find_showcase_channel(message: discord.Message):
 
 
 def _find_dashboard_channel(message: discord.Message):
+    """Find #facilitator-dashboard channel across guilds."""
     for guild in _iter_candidate_guilds(message):
         if not _filter_guild(guild):
             continue
@@ -136,6 +147,7 @@ def _resolve_bot_client(message: discord.Message):
 
 
 def _register_pending_share(discord_id: str, user_message: str, student_context):
+    """Register a pending share decision with context."""
     snippet = " ".join(user_message.split())
     if len(snippet) > 180:
         snippet = f"{snippet[:177]}..."
@@ -145,8 +157,8 @@ def _register_pending_share(discord_id: str, user_message: str, student_context)
         "snippet": snippet,
         "week": getattr(student_context, "current_week", None),
         "zone": getattr(student_context, "zone", None),
-        "agent": "frame",
-        "habits": ["PAUSE", "CONTEXT"],
+        "agent": "challenge",
+        "habits": ["PAUSE", "CONTEXT", "THINK FIRST"],
     }
 
 
@@ -172,7 +184,7 @@ def _record_showcase_publication(discord_id: str, decision: str, payload: Dict, 
             publication_type="habit_practice",
             visibility_level=visibility,
             celebration_message=post_text,
-            habits_demonstrated=payload.get("habits", ["PAUSE", "CONTEXT"]),
+            habits_demonstrated=payload.get("habits", ["PAUSE", "CONTEXT", "THINK FIRST"]),
             nodes_mastered=[],
             parent_email_included=False,
         )
@@ -201,13 +213,14 @@ def _build_showcase_post(author: discord.abc.User, decision: str, payload: Dict)
 
     return (
         f"{lead}{context_text}.\n"
-        "Framed focus clearly in a private session.\n"
-        "Practiced habits: Pause + Context.\n"
+        "Challenged assumptions in a private session.\n"
+        "Practiced habits: Pause + Context + Think First.\n"
         "Process stayed private. Celebration only."
     )
 
 
 async def _notify_budget_alerts(message: discord.Message, budget_state: Dict[str, float]):
+    """Post budget alerts to facilitator dashboard if triggered."""
     if not budget_state:
         return
 
@@ -248,7 +261,7 @@ async def _notify_budget_alerts(message: discord.Message, budget_state: Dict[str
 
 async def handle_showcase_share_response(message: discord.Message) -> bool:
     """
-    Handle Yes/No/Anonymous decision after /frame showcase prompt.
+    Handle Yes/No/Anonymous decision after /challenge showcase prompt.
     """
     discord_id = str(message.author.id)
     if not has_pending_showcase_share(discord_id):
@@ -324,9 +337,9 @@ async def handle_showcase_share_response(message: discord.Message) -> bool:
     return True
 
 
-async def handle_frame(message: discord.Message, student):
+async def handle_challenge(message: discord.Message, student):
     """
-    Handle /frame command end-to-end:
+    Handle /challenge command end-to-end:
     command -> DM -> private conversation -> optional showcase share.
     """
     discord_id = str(message.author.id)
@@ -334,7 +347,7 @@ async def handle_frame(message: discord.Message, student):
     allowed, error_message = rate_limiter.check_rate_limit(discord_id)
     if not allowed:
         await message.reply(error_message)
-        logger.warning("Rate limit blocked /frame for %s", discord_id)
+        logger.warning("Rate limit blocked /challenge for %s", discord_id)
         return
 
     try:
@@ -342,7 +355,7 @@ async def handle_frame(message: discord.Message, student):
     except discord.Forbidden:
         await message.reply(
             "ðŸš« **Cannot start DM** - I need permission to send you private messages. "
-            "Please enable DMs in your privacy settings, then try /frame again."
+            "Please enable DMs in your privacy settings, then try /challenge again."
         )
         return
 
@@ -352,16 +365,16 @@ async def handle_frame(message: discord.Message, student):
         logger.error("Failed to build StudentContext for %s", discord_id)
         return
 
-    conversation_history = store.get_conversation_history(discord_id, "frame", limit=10)
-    user_message = message.content.replace("/frame", "").strip()
+    conversation_history = store.get_conversation_history(discord_id, "challenge", limit=10)
+    user_message = message.content.replace("/challenge", "").strip()
     if not user_message:
-        user_message = "I want to practice framing a question."
+        user_message = "I want to challenge my assumptions."
 
     try:
-        logger.info("Calling Framer agent for %s", discord_id)
+        logger.info("Calling Challenger agent for %s", discord_id)
 
-        framer_response, cost_data = await call_agent_with_context(
-            agent="frame",
+        challenger_response, cost_data = await call_agent_with_context(
+            agent="challenge",
             student_context=student_context,
             user_message=user_message,
             conversation_history=conversation_history,
@@ -369,44 +382,44 @@ async def handle_frame(message: discord.Message, student):
 
         budget_state = rate_limiter.track_interaction(
             discord_id=discord_id,
-            agent="frame",
+            agent="challenge",
             tokens=cost_data.get("total_tokens", 0),
             cost_usd=cost_data.get("total_cost_usd", 0.0),
         )
         await _notify_budget_alerts(message, budget_state)
 
-        safety_filter.validate_no_comparison(framer_response)
+        safety_filter.validate_no_comparison(challenger_response)
 
         store.save_conversation(
             discord_id=discord_id,
-            agent="frame",
+            agent="challenge",
             role="user",
             content=user_message,
         )
         store.save_conversation(
             discord_id=discord_id,
-            agent="frame",
+            agent="challenge",
             role="assistant",
-            content=framer_response,
+            content=challenger_response,
         )
 
-        store.update_habit_practice(discord_id, habit_id=1)
+        store.update_habit_practice(discord_id, habit_id=4)
 
         refreshed_student = store.get_student(discord_id)
-        celebration = celebrate_habit(refreshed_student, habit_id=1)
+        celebration = celebrate_habit(refreshed_student, habit_id=4)
         full_response = (
-            f"{framer_response}\n\n{celebration}" if celebration else framer_response
+            f"{challenger_response}\n\n{celebration}" if celebration else challenger_response
         )
         await dm_channel.send(full_response)
 
         current_state = student_context.current_state
-        transition_state(current_state, "frame", student=student, store=store)
+        transition_state(current_state, "challenge", student=student, store=store)
 
         store.log_observability_event(
             discord_id,
             "agent_used",
             {
-                "agent": "frame",
+                "agent": "challenge",
                 "week": student_context.current_week,
                 "zone": student_context.zone,
                 "cost_usd": cost_data.get("total_cost_usd", 0.0),
@@ -428,8 +441,8 @@ async def handle_frame(message: discord.Message, student):
             payload = {
                 "week": getattr(student_context, "current_week", None),
                 "zone": getattr(student_context, "zone", None),
-                "agent": "frame",
-                "habits": ["PAUSE", "CONTEXT"],
+                "agent": "challenge",
+                "habits": ["PAUSE", "CONTEXT", "THINK FIRST"],
             }
             showcase_channel = _find_showcase_channel(message)
             if showcase_channel is None:
@@ -475,21 +488,22 @@ async def handle_frame(message: discord.Message, student):
         )
 
         logger.info(
-            "Handled /frame for %s | Tokens: %s | Cost: $%.4f",
+            "Handled /challenge for %s | Tokens: %s | Cost: $%.4f",
             discord_id,
             cost_data.get("total_tokens", 0),
             cost_data.get("total_cost_usd", 0.0),
         )
 
     except Exception as exc:
-        logger.error("Error in handle_frame for %s: %s", discord_id, exc)
+        logger.error("Error in handle_challenge for %s: %s", discord_id, exc)
         await dm_channel.send(
-            "**â¸ï¸ The Framer is taking a short break.**\n\n"
+            "**ðŸ§  The Challenger is taking a short break.**\n\n"
             "Try this on your own:\n"
-            "1. **PAUSE**: What do you actually want to know?\n"
-            "2. **ADD CONTEXT**: What's your situation?\n\n"
-            f"Your question: _{user_message}_\n\n"
-            "**You're practicing Habit 1 (â¸ï¸ PAUSE) - you've got this!**\n\n"
-            "Try /frame again in a moment."
+            "1. **IDENTIFY**: What are you assuming is true?\n"
+            "2. **QUESTION**: What if the opposite were true?\n"
+            "3. **EXAMINE**: Is this actually true, or just familiar?\n\n"
+            f"Your assumption: _{user_message}_\n\n"
+            "**You're practicing Habit 4 (ðŸ§  THINK FIRST) - question assumptions before deciding!**\n\n"
+            "Try /challenge again in a moment."
         )
 
