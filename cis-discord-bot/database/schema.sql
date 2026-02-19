@@ -255,3 +255,41 @@ CREATE TABLE IF NOT EXISTS agent_unlock_announcements (
 -- Index for unlock announcement queries
 CREATE INDEX IF NOT EXISTS idx_unlock_announcements_week ON agent_unlock_announcements(week_number);
 
+-- ============================================================
+-- SHOWCASE PUBLICATIONS TABLE (Task 3.5)
+-- Track all publications to #thinking-showcase channel (Decision 12)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS showcase_publications (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    student_id TEXT NOT NULL,
+    timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
+    publication_type TEXT NOT NULL,  -- 'habit_practice' OR 'artifact_completion'
+    visibility_level TEXT NOT NULL,  -- 'public' OR 'anonymous' OR 'private'
+    celebration_message TEXT NOT NULL,
+    habits_demonstrated TEXT,  -- JSON array: ["⏸️", "🎯", "🔄", "🧠"]
+    nodes_mastered TEXT,  -- JSON array: [1.3, 2.1, 3.2]
+    reactions_count INTEGER DEFAULT 0,
+    parent_email_included INTEGER DEFAULT 0,
+    artifact_id INTEGER,  -- FK to artifact_progress if artifact_completion
+    FOREIGN KEY (student_id) REFERENCES students(discord_id) ON DELETE CASCADE
+);
+
+-- Indexes for publication queries
+CREATE INDEX IF NOT EXISTS idx_showcase_student ON showcase_publications(student_id);
+CREATE INDEX IF NOT EXISTS idx_showcase_type ON showcase_publications(publication_type);
+CREATE INDEX IF NOT EXISTS idx_showcase_timestamp ON showcase_publications(timestamp);
+
+-- ============================================================
+-- STUDENT PUBLICATION PREFERENCES TABLE (Task 3.5)
+-- Store student's permanent publication settings to reduce decision fatigue
+-- ============================================================
+CREATE TABLE IF NOT EXISTS student_publication_preferences (
+    student_id TEXT PRIMARY KEY,
+    default_preference TEXT DEFAULT 'always_ask',  -- 'always_ask', 'always_yes', 'always_no', 'week8_only'
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (student_id) REFERENCES students(discord_id) ON DELETE CASCADE
+);
+
+-- Index for preference queries
+CREATE INDEX IF NOT EXISTS idx_pub_prefs_student ON student_publication_preferences(student_id);
+

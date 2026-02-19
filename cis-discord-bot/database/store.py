@@ -1289,6 +1289,176 @@ class StudentStateStore:
             return json.loads(row['agents_unlocked'])
         return []
 
+    # ============================================================
+    # SHOWCASE PUBLICATIONS (Task 3.5)
+    # Track publications to #thinking-showcase (Decision 12)
+    # ============================================================
+
+    def create_showcase_publication(
+        self,
+        discord_id: str,
+        publication_type: str,
+        visibility_level: str,
+        celebration_message: str,
+        habits_demonstrated: List[str] = None,
+        nodes_mastered: List[float] = None,
+        artifact_id: int = None,
+        parent_email_included: bool = False
+    ) -> int:
+        """
+        Record a showcase publication to #thinking-showcase.
+
+        Args:
+            discord_id: Student's Discord user ID
+            publication_type: 'habit_practice' OR 'artifact_completion'
+            visibility_level: 'public', 'anonymous', OR 'private'
+            celebration_message: The published celebration text
+            habits_demonstrated: List of habit icons practiced
+            nodes_mastered: List of node numbers mastered
+            artifact_id: Foreign key to artifact_progress (if artifact)
+            parent_email_included: Whether included in parent email
+
+        Returns:
+            Publication record ID
+        """
+        discord_id = str(discord_id)
+        habits_json = json.dumps(habits_demonstrated) if habits_demonstrated else None
+        nodes_json = json.dumps(nodes_mastered) if nodes_mastered else None
+
+        cursor = self.conn.execute(
+            """
+            INSERT INTO showcase_publications (
+                student_id, publication_type, visibility_level, celebration_message,
+                habits_demonstrated, nodes_mastered, artifact_id, parent_email_included
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                discord_id, publication_type, visibility_level, celebration_message,
+                habits_json, nodes_json, artifact_id, 1 if parent_email_included else 0
+            )
+        )
+        self.conn.commit()
+        return cursor.lastrowid
+
+    def get_student_publications(
+        self,
+        discord_id: str,
+        publication_type: str = None
+    ) -> List[sqlite3.Row]:
+        """
+        Get all publications for a student.
+
+        Args:
+            discord_id: Student's Discord user ID
+            publication_type: Filter by type (optional)
+
+        Returns:
+            List of publication rows
+        """
+        discord_id = str(discord_id)
+
+        if publication_type:
+            cursor = self.conn.execute(
+                """
+                SELECT * FROM showcase_publications
+                WHERE student_id = ? AND publication_type = ?
+                ORDER BY timestamp DESC
+                """,
+                (discord_id, publication_type)
+            )
+        else:
+            cursor = self.conn.execute(
+                """
+                SELECT * FROM showcase_publications
+                WHERE student_id = ?
+                ORDER BY timestamp DESC
+                """,
+                (discord_id,)
+            )
+        return cursor.fetchall()
+
+    def get_publication_count(self, discord_id: str, publication_type: str = None) -> int:
+        """
+        Get count of publications for a student.
+
+        Args:
+            discord_id: Student's Discord user ID
+            publication_type: Filter by type (optional)
+
+        Returns:
+            Number of publications
+        """
+        discord_id = str(discord_id)
+
+        if publication_type:
+            cursor = self.conn.execute(
+                """
+                SELECT COUNT(*) as count FROM showcase_publications
+                WHERE student_id = ? AND publication_type = ?
+                """,
+                (discord_id, publication_type)
+            )
+        else:
+            cursor = self.conn.execute(
+                """
+                SELECT COUNT(*) as count FROM showcase_publications
+                WHERE student_id = ?
+                """,
+                (discord_id,)
+            )
+        row = cursor.fetchone()
+        return row['count'] if row else 0
+
+    # ============================================================
+    # STUDENT PUBLICATION PREFERENCES (Task 3.5)
+    # Manage default sharing settings to reduce decision fatigue
+    # ============================================================
+
+    def get_publication_preference(self, discord_id: str) -> str:
+        """
+        Get student's default publication preference.
+
+        Args:
+            discord_id: Student's Discord user ID
+
+        Returns:
+            Preference: 'always_ask', 'always_yes', 'always_no', 'week8_only'
+        """
+        discord_id = str(discord_id)
+        cursor = self.conn.execute(
+            "SELECT default_preference FROM student_publication_preferences WHERE student_id = ?",
+            (discord_id,)
+        )
+        row = cursor.fetchone()
+        return row['default_preference'] if row else 'always_ask'
+
+    def set_publication_preference(
+        self,
+        discord_id: str,
+        preference: str
+    ) -> None:
+        """
+        Set student's default publication preference.
+
+        Args:
+            discord_id: Student's Discord user ID
+            preference: 'always_ask', 'always_yes', 'always_no', 'week8_only'
+        """
+        discord_id = str(discord_id)
+        now = datetime.now().isoformat()
+
+        self.conn.execute(
+            """
+            INSERT INTO student_publication_preferences (student_id, default_preference, updated_at)
+            VALUES (?, ?, ?)
+            ON CONFLICT(student_id) DO UPDATE SET
+                default_preference = excluded.default_preference,
+                updated_at = excluded.updated_at
+            """,
+            (discord_id, preference, now)
+        )
+        self.conn.commit()
+
     def close(self):
         """Close database connection"""
         if self.conn:
