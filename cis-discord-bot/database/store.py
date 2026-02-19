@@ -1194,6 +1194,101 @@ class StudentStateStore:
         )
         return cursor.fetchall()
 
+    # ============================================================
+    # AGENT UNLOCK ANNOUNCEMENTS (Task 3.4)
+    # Track graduated agent unlock announcements per Decision 11
+    # ============================================================
+
+    def has_announced_unlock(self, week_number: int) -> bool:
+        """
+        Check if agent unlock announcement has been made for a week.
+
+        Args:
+            week_number: Week number to check (1-8)
+
+        Returns:
+            True if announcement was made, False otherwise
+        """
+        cursor = self.conn.execute(
+            "SELECT 1 FROM agent_unlock_announcements WHERE week_number = ?",
+            (week_number,)
+        )
+        return cursor.fetchone() is not None
+
+    def record_unlock_announcement(
+        self,
+        week_number: int,
+        agents_unlocked: list,
+        channel_id: str = None
+    ) -> None:
+        """
+        Record that an agent unlock announcement was made for a week.
+
+        Args:
+            week_number: Week number (1-8)
+            agents_unlocked: List of agent names unlocked this week
+            channel_id: Discord channel ID where announcement was posted
+        """
+        now = datetime.now().isoformat()
+        agents_json = json.dumps(agents_unlocked)
+
+        self.conn.execute(
+            """
+            INSERT INTO agent_unlock_announcements (
+                week_number, agents_unlocked, announced_at, channel_id
+            ) VALUES (?, ?, ?, ?)
+            ON CONFLICT(week_number) DO UPDATE SET
+                agents_unlocked = excluded.agents_unlocked,
+                announced_at = excluded.announced_at,
+                channel_id = excluded.channel_id
+            """,
+            (week_number, agents_json, now, str(channel_id) if channel_id else None)
+        )
+        self.conn.commit()
+
+    def get_unlocked_agents_for_week(self, week_number: int) -> list:
+        """
+        Get list of agent names unlocked for a given week.
+
+        This replicates the logic from router.py AGENTS_BY_WEEK for database access.
+
+        Args:
+            week_number: Week number (1-8)
+
+        Returns:
+            List of agent names available this week
+        """
+        # Agent unlock schedule from Decision 11
+        if week_number == 1:
+            return ["frame"]
+        elif week_number <= 3:
+            return ["frame"]
+        elif week_number <= 5:
+            return ["frame", "diverge", "challenge"]
+        elif week_number <= 8:
+            return ["frame", "diverge", "challenge", "synthesize", "create-artifact", "save", "review", "publish"]
+        else:
+            return ["frame"]  # Default
+
+    def get_announced_agents(self, week_number: int) -> list:
+        """
+        Get the list of agents that were announced as unlocked for a week.
+
+        Args:
+            week_number: Week number (1-8)
+
+        Returns:
+            List of agent names (empty list if no announcement made)
+        """
+        cursor = self.conn.execute(
+            "SELECT agents_unlocked FROM agent_unlock_announcements WHERE week_number = ?",
+            (week_number,)
+        )
+        row = cursor.fetchone()
+        if row and row['agents_unlocked']:
+            return json.loads(row['agents_unlocked'])
+        return []
+
     def close(self):
         """Close database connection"""
         if self.conn:

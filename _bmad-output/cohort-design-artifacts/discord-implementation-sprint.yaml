@@ -1865,7 +1865,7 @@ sprint_3:
 
     - id: "3.4"
       title: "Implement graduated agent unlock system"
-      status: "pending"
+      status: "done"
       description: |
         Decision 11 enforcement:
         Week 1: /frame only (practice mode)
@@ -1880,7 +1880,107 @@ sprint_3:
         also_load: "source_documents.server_architecture"
         also_section: "Graduated Agent Introduction (Decision 11)"
       acceptance: "Agent availability matches week schedule exactly. Unlock announcements post to correct channel."
-      completion_notes: ""
+      completion_notes: |
+        ✅ Task 3.4 COMPLETE - Graduated Agent Unlock System (2026-02-18)
+
+        **Implementation Summary:**
+        - Complete agent unlock announcement system per Decision 11
+        - Bot posts celebratory announcements when new agents unlock
+        - Database tracking prevents duplicate announcements
+        - Revolutionary Hope brand voice in all messages
+        - Monday 9:00 AM EAT scheduling for unlock announcements
+
+        **Files Created/Modified:**
+
+        1. **database/schema.sql** (ADDED agent_unlock_announcements table):
+           - Fields: id, week_number, agents_unlocked (JSON), announced_at, channel_id
+           - UNIQUE constraint on week_number (one announcement per week)
+           - Index for fast queries
+
+        2. **database/store.py** (ADDED 4 methods for unlock tracking):
+           - `has_announced_unlock(week)` - Check if announcement was made
+           - `record_unlock_announcement(week, agents, channel_id)` - Record announcement
+           - `get_unlocked_agents_for_week(week)` - Get agents for given week
+           - `get_announced_agents(week)` - Get announced agents
+           - Replicates router.py AGENTS_BY_WEEK logic for database access
+
+        3. **scheduler/scheduler.py** (ADDED unlock announcement system):
+           - `post_agent_unlock_announcement(week)` - Main announcement method
+           - Week 4 announcement: /diverge and /challenge unlocked
+           - Week 6 announcement: /synthesize and /create-artifact unlocked
+           - Monday 9:00 AM EAT scheduling in check_and_post()
+           - Flag reset at midnight (_agent_unlock_today)
+
+        4. **tests/test_agent_unlock_system.py** (NEW - 400+ lines):
+           - 7 test suites, 25+ test cases
+           - TestAgentUnlockDatabaseTracking: Database methods
+           - TestAgentUnlockAnnouncementMessages: Message generation
+           - TestAgentUnlockIdempotency: Deduplication logic
+           - TestAgentUnlockSchedulerIntegration: Scheduler wiring
+           - TestAgentUnlockBrandVoice: Revolutionary Hope tone
+           - TestAgentUnlockErrorHandling: Error scenarios
+           - TestAgentUnlockIntegration: Decision 11 compliance
+
+        **Key Features Implemented:**
+        - ✅ Database schema for tracking announcements (agent_unlock_announcements table)
+        - ✅ Database methods for recording and querying announcements
+        - ✅ Unlock announcement method with celebratory messages
+        - ✅ Week 4: /diverge + /challenge announcement ("NEW THINKING PARTNERS")
+        - ✅ Week 6: /synthesize + /create-artifact announcement ("FINAL TOOLS")
+        - ✅ Revolutionary Hope brand voice (celebratory, empowering, examples)
+        - ✅ Idempotent (one announcement per week, no spam)
+        - ✅ Scheduler integration (Monday 9:00 AM EAT)
+        - ✅ Error handling (channel not found, send failures)
+
+        **Announcement Messages:**
+
+        Week 4 (🎉 NEW THINKING PARTNERS):
+        - Explains /diverge (The Explorer) and /challenge (The Challenger)
+        - Connects to 4 Habits: ⏸️ Pause (Week 1), 🎯 Context (Weeks 2-3), 🔄 Iterate (Week 4)
+        - Usage examples for each agent
+        - Encourages trying all three agents
+
+        Week 6 (🚀 FINAL TOOLS):
+        - Explains /synthesize (The Synthesizer) and /create-artifact
+        - Lists all 4 Habits mastered
+        - "You're the director" messaging (Zone 3→4 identity shift)
+        - Artifact creation phase introduction
+
+        **Decision 11 Compliance:**
+        - Week 1: /frame only (no announcement - baseline)
+        - Weeks 2-3: /frame only (no announcement - same as Week 1)
+        - Week 4: /frame + /diverge + /challenge (announcement posted)
+        - Weeks 5: Same as Week 4 (no announcement - no new agents)
+        - Week 6: All agents + /synthesize + /create-artifact (announcement posted)
+        - Weeks 7-8: Same as Week 6 (no announcement - no new agents)
+
+        **Acceptance Criteria Met:**
+        ✅ Agent availability matches week schedule exactly (Decision 11)
+        ✅ Unlock announcements post to correct channel (week-specific channels)
+        ✅ Bot announces new agents when they unlock
+        ✅ Revolutionary Hope brand voice (celebratory, empowering)
+        ✅ Explains why sequence matters (4 Habits progression)
+        ✅ Includes usage examples for each agent
+        ✅ Idempotent (no duplicate announcements)
+        ✅ Comprehensive test coverage (25+ test cases)
+
+        **Integration Points:**
+        - cis_controller/router.py: UNLOCK_SCHEDULE and AGENTS_BY_WEEK already implemented
+        - scheduler/scheduler.py: check_and_post() Monday 9:00 AM trigger
+        - database/store.py: New methods for announcement tracking
+        - database/schema.sql: New table for announcement records
+
+        **Next Steps:**
+        - Task 3.5: Implement share-to-showcase flow
+        - Sprint 4: Artifact System + Advanced Features
+
+        **Validation:**
+        - All database methods tested (has_announced_unlock, record_unlock_announcement, etc.)
+        - All announcement message templates tested (Week 4, Week 6, no-announcement weeks)
+        - Idempotency verified (duplicate calls don't spam)
+        - Error handling tested (channel not found, send failures)
+        - Scheduler integration verified (flag reset, timing)
+        - Revolutionary Hope tone verified (celebratory, not prescriptive)
 
     - id: "3.5"
       title: "Implement share-to-showcase flow"

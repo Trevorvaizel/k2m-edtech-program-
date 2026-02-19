@@ -239,3 +239,19 @@ CREATE INDEX IF NOT EXISTS idx_reflections_week ON weekly_reflections(week_numbe
 CREATE INDEX IF NOT EXISTS idx_reflections_submitted ON weekly_reflections(submitted);
 CREATE INDEX IF NOT EXISTS idx_reflections_unlocked ON weekly_reflections(next_week_unlocked);
 
+-- ============================================================
+-- AGENT UNLOCK ANNOUNCEMENTS TABLE (Task 3.4)
+-- Track graduated agent unlock announcements per Decision 11
+-- ============================================================
+CREATE TABLE IF NOT EXISTS agent_unlock_announcements (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    week_number INTEGER NOT NULL,
+    agents_unlocked TEXT NOT NULL,  -- JSON array: ["frame", "diverge", "challenge"]
+    announced_at TEXT NOT NULL,
+    channel_id TEXT,
+    UNIQUE(week_number)
+);
+
+-- Index for unlock announcement queries
+CREATE INDEX IF NOT EXISTS idx_unlock_announcements_week ON agent_unlock_announcements(week_number);
+

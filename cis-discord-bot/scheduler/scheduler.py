@@ -83,6 +83,7 @@ class DailyPromptScheduler:
         self._peer_visibility_today = False  # Task 2.6: 6 PM peer visibility
         self._reflection_summary_today = False  # Task 2.6: Friday 5 PM reflection summary
         self._spot_check_today = False  # Task 2.6: Friday 5 PM spot-check list
+        self._agent_unlock_today = False  # Task 3.4: Agent unlock announcements
 
         logger.info(f"Scheduler initialized for guild {guild_id}")
         logger.info(f"Cohort start date: {cohort_start_date}")
@@ -92,6 +93,7 @@ class DailyPromptScheduler:
         if participation_tracker:
             logger.info("Participation tracker integrated")
         logger.info("Facilitator dashboard integrated")
+        logger.info("Agent unlock announcements enabled")
 
     def get_current_week(self) -> int:
         """
@@ -707,6 +709,117 @@ class DailyPromptScheduler:
             escalation_system=self.escalation_system,
         )
 
+    async def post_agent_unlock_announcement(self, week: int):
+        """
+        Post agent unlock announcement to weekly channel (Task 3.4).
+
+        Announcement messages:
+        - Week 4: /diverge and /challenge unlocked
+        - Week 6: /synthesize and /create-artifact unlocked
+
+        Args:
+            week: Current week number
+        """
+        # Skip if cohort not active or already announced
+        if week == 0 or week > 8:
+            return
+
+        # Check if we already announced for this week
+        if self.store.has_announced_unlock(week):
+            logger.info(f"Agent unlock already announced for week {week}, skipping")
+            return
+
+        # Get current week's agents
+        current_agents = self.store.get_unlocked_agents_for_week(week)
+
+        # Get previous week's agents (if week > 1)
+        if week > 1:
+            previous_agents = self.store.get_unlocked_agents_for_week(week - 1)
+        else:
+            previous_agents = []
+
+        # Find new agents (difference)
+        new_agents = [a for a in current_agents if a not in previous_agents]
+
+        # No new agents? Skip announcement
+        if not new_agents:
+            logger.info(f"No new agents unlocked for week {week}")
+            # Still record that we checked (prevents repeated checks)
+            self.store.record_unlock_announcement(week, current_agents, None)
+            return
+
+        # Create announcement message based on which agents unlocked
+        if "diverge" in new_agents or "challenge" in new_agents:
+            # Week 4: /diverge and /challenge unlock announcement
+            message = (
+                "🎉 **NEW THINKING PARTNERS UNLOCKED!**\n\n"
+                "Your toolkit just expanded. Meet your new CIS agents:\n\n"
+                "🔍 **/diverge** (The Explorer)\n"
+                "Explores possibilities without judgment. Change one thing at a time.\n"
+                "_Example: /diverge What are 3 different career paths I could consider?_\n\n"
+                "⚡ **/challenge** (The Challenger)\n"
+                "Stress-tests your assumptions. Question before you decide.\n"
+                "_Example: /challenge Is university really the only path to success?_\n\n"
+                "**Why now?**\n"
+                "You've built confidence with ⏸️ Pause (Week 1) and 🎯 Context (Weeks 2-3).\n"
+                "Now it's time to practice 🔄 Iterate—exploring options and testing assumptions.\n\n"
+                "**Remember:** Use all three agents:\n"
+                "- /frame to clarify what you want\n"
+                "- /diverge to explore different angles\n"
+                "- /challenge to test your assumptions\n\n"
+                "These tools work together. Try them all this week! ✨"
+            )
+        elif "synthesize" in new_agents or "create-artifact" in new_agents:
+            # Week 6: /synthesize and /create-artifact unlock announcement
+            message = (
+                "🚀 **FINAL TOOLS UNLOCKED!**\n\n"
+                "You've reached the artifact creation phase. Two powerful additions:\n\n"
+                "✨ **/synthesize** (The Synthesizer)\n"
+                "Articulate your conclusions. Pull it all together.\n"
+                "_Example: /synthesize Here's what I've learned about my thinking process..._\n\n"
+                "📝 **/create-artifact** (Graduation Project)\n"
+                "Start your 6-section artifact. Prove your transformation.\n"
+                "_Example: /create-artifact to begin your graduation project_\n\n"
+                "**Why now?**\n"
+                "You've practiced all 4 Habits:\n"
+                "- ⏸️ Pause (Week 1)\n"
+                "- 🎯 Context (Weeks 2-3)\n"
+                "- 🔄 Iterate (Weeks 4-5)\n"
+                "- 🧠 Think First (Week 6)\n\n"
+                "Now you're ready to direct AI toward YOUR standards. You're the director!\n\n"
+                "**This Week:**\n"
+                "Try /synthesize to reflect on what you've learned.\n"
+                "Use /create-artifact when you're ready to start your graduation project.\n\n"
+                "You've come so far. Time to prove your transformation! 🌟"
+            )
+        else:
+            # Generic announcement (shouldn't happen with current schedule)
+            agent_list = ", ".join([f"/{a}" for a in new_agents])
+            message = (
+                f"🎉 **NEW AGENTS UNLOCKED!**\n\n"
+                f"New this week: {agent_list}\n\n"
+                f"Try them out in #thinking-lab!"
+            )
+
+        # Get target channel
+        channel = await self.get_target_channel(week)
+        if not channel:
+            logger.error(f"Cannot post agent unlock announcement: no channel for week {week}")
+            return
+
+        # Post announcement
+        try:
+            await self._send_public_message(channel, message)
+            logger.info(f"Posted agent unlock announcement for week {week} to {channel.name}")
+            self._agent_unlock_today = True
+
+            # Record announcement in database
+            channel_id = str(getattr(channel, "id", None))
+            self.store.record_unlock_announcement(week, new_agents, channel_id)
+
+        except Exception as e:
+            logger.error(f"Failed to post agent unlock announcement for week {week}: {e}")
+
     async def check_and_post(self):
         """
         Main loop: Check current time and post if scheduled.
@@ -729,6 +842,7 @@ class DailyPromptScheduler:
             self._peer_visibility_today = False  # Task 2.6
             self._reflection_summary_today = False  # Task 2.6
             self._spot_check_today = False  # Task 2.6
+            self._agent_unlock_today = False  # Task 3.4
 
         week, day = self.get_week_day()
 
@@ -744,6 +858,11 @@ class DailyPromptScheduler:
             if not self._daily_summary_today:
                 logger.info("Scheduled: 9:00 AM daily summary to dashboard")
                 await self.post_daily_summary(week)
+
+            # Task 3.4: Agent unlock announcements (Monday only)
+            if day == WeekDay.MONDAY and not self._agent_unlock_today:
+                logger.info(f"Scheduled: 9:00 AM agent unlock announcement for week {week}")
+                await self.post_agent_unlock_announcement(week)
 
         # 9:15 AM EAT - Post daily prompt
         if current_time.hour == 9 and current_time.minute == 15 and not self._prompt_posted_today:
