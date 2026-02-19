@@ -600,18 +600,18 @@ class StudentStateStore:
         """
         discord_id = str(discord_id)
         section_columns = {
-            1: "section_1_question",
-            2: "section_2_reframed",
-            3: "section_3_explored",
-            4: "section_4_challenged",
-            5: "section_5_concluded",
-            6: "section_6_reflection"
+            1: ("section_1_question", "section_1_question"),
+            2: ("section_2_reframed", "section_2_reframed"),
+            3: ("section_3_explored", "section_3_explored"),
+            4: ("section_4_challenged", "section_4_challenged"),
+            5: ("section_5_concluded", "section_5_concluded"),
+            6: ("section_6_reflection", "section_6_reflection"),
         }
 
         if section_number not in section_columns:
             raise ValueError(f"Invalid section_number: {section_number}. Must be 1-6.")
 
-        column = section_columns[section_number]
+        column, completed_key = section_columns[section_number]
         now = datetime.now().isoformat()
 
         # Update the specific section
@@ -624,11 +624,12 @@ class StudentStateStore:
         existing = self.get_artifact_progress_row(discord_id)
         if existing:
             completed = json.loads(existing['completed_sections'] or '[]')
-            if section_number not in completed:
-                completed.append(f"section_{section_number}")
+            if completed_key not in completed:
+                completed.append(completed_key)
+            next_section = section_number + 1 if section_number < 6 else 6
             self.conn.execute(
                 "UPDATE artifact_progress SET completed_sections = ?, current_section = ? WHERE student_id = ?",
-                (json.dumps(completed), section_number, discord_id)
+                (json.dumps(completed), next_section, discord_id)
             )
 
         self.conn.commit()

@@ -33,6 +33,8 @@ logger = logging.getLogger(__name__)
 
 # Initialize state store
 store = StudentStateStore()
+_escalation_system = None
+_participation_tracker = None
 
 # Commands managed by CIS Controller (non-core bot commands like /ping bypass this).
 CONTROLLED_COMMANDS = {
@@ -66,6 +68,9 @@ HABIT_BY_COMMAND = {
     "challenge": 4,  # Think First
     "synthesize": 4, # Think First
 }
+
+# Commands that already persist state/habit changes inside their handlers.
+SELF_MANAGED_COMMANDS = {"frame", "diverge", "challenge", "synthesize"}
 
 # Designated public channels where students can trigger CIS routing.
 ALLOWED_CHANNEL_SLUGS = ("thinking-lab", "bot-testing")
@@ -344,14 +349,40 @@ async def route_student_interaction(message: discord.Message):
                 return
 
             from commands.frame import (
-                handle_showcase_share_response,
-                has_pending_showcase_share,
+                handle_showcase_share_response as frame_handle_showcase_share_response,
+                has_pending_showcase_share as frame_has_pending_showcase_share,
+            )
+            from commands.diverge import (
+                handle_showcase_share_response as diverge_handle_showcase_share_response,
+                has_pending_showcase_share as diverge_has_pending_showcase_share,
+            )
+            from commands.challenge import (
+                handle_showcase_share_response as challenge_handle_showcase_share_response,
+                has_pending_showcase_share as challenge_has_pending_showcase_share,
+            )
+            from commands.synthesize import (
+                handle_showcase_share_response as synthesize_handle_showcase_share_response,
+                has_pending_showcase_share as synthesize_has_pending_showcase_share,
             )
 
-            if has_pending_showcase_share(discord_id):
-                handled = await handle_showcase_share_response(message)
-                if handled:
-                    return
+            share_handlers = (
+                (frame_has_pending_showcase_share, frame_handle_showcase_share_response),
+                (diverge_has_pending_showcase_share, diverge_handle_showcase_share_response),
+                (challenge_has_pending_showcase_share, challenge_handle_showcase_share_response),
+                (synthesize_has_pending_showcase_share, synthesize_handle_showcase_share_response),
+            )
+            for has_pending_share, handle_share_response in share_handlers:
+                if has_pending_share(discord_id):
+                    handled = await handle_share_response(message)
+                    if handled:
+                        return
+
+            # Route artifact workflow plain-text progression in DM before NL suggestions.
+            from commands.artifact import handle_artifact_text_input
+
+            artifact_handled = await handle_artifact_text_input(message, student)
+            if artifact_handled:
+                return
 
         # Natural language - classify intent and suggest command
         # Delayed import prevents circular dependency during module load.
@@ -421,8 +452,8 @@ async def handle_command(message: discord.Message, student, command: str):
             from commands.artifact import handle_artifact_commands
             await handle_artifact_commands(message, student, command)
 
-        # /frame already owns its own lifecycle/persistence in handler.
-        if command != "frame":
+        # Some handlers already own lifecycle persistence to avoid double-counting.
+        if command not in SELF_MANAGED_COMMANDS:
             # LAYER 2: STATE MACHINE PERSISTENCE
             transition_state(previous_state, command, student=student, store=store)
 
@@ -537,6 +568,18 @@ def setup_bot_events(bot: commands.Bot):
         if message.author.bot:
             return
 
+        # Track participation/reactions for weekly channels when enabled.
+        if _participation_tracker:
+            try:
+                await _participation_tracker.on_message(message)
+            except Exception as tracker_error:
+                logger.error(
+                    "Participation tracker failed for message from %s: %s",
+                    message.author.id,
+                    tracker_error,
+                    exc_info=True,
+                )
+
         # Task 2.3: SafetyFilter validation for ALL public channel messages
         # DMs are private spaces and don't go through SafetyFilter
         is_public_channel = not isinstance(message.channel, discord.DMChannel)
@@ -546,6 +589,8 @@ def setup_bot_events(bot: commands.Bot):
                 # Check for crisis keywords (Level 4 intervention)
                 crisis_type = safety_filter.detect_crisis(message.content)
                 if crisis_type:
+                    recent_messages = await _collect_recent_public_messages(message, limit=3)
+                    student = store.get_student(str(message.author.id))
                     # Send crisis response and trigger Trevor alert immediately.
                     await message.channel.send(safety_filter.KENYA_CRISIS_RESPONSE)
                     await notify_trevor_safety_violation(
@@ -553,6 +598,11 @@ def setup_bot_events(bot: commands.Bot):
                         violation_type="crisis",
                         message=message.content,
                         student_discord_id=message.author.id,
+                        escalation_system=_escalation_system,
+                        last_messages=recent_messages,
+                        emotional_state=(
+                            student["emotional_state"] if student and student["emotional_state"] else "unknown"
+                        ),
                     )
                     # Message already handled (crisis response sent, Trevor alerted)
                     return
@@ -587,3 +637,42 @@ def setup_bot_events(bot: commands.Bot):
 
         # Always process prefix commands (e.g. /ping, /status)
         await bot.process_commands(message)
+
+
+def set_runtime_services(escalation_system=None, participation_tracker=None):
+    """
+    Inject runtime services created in main.py after bot startup.
+    """
+    global _escalation_system, _participation_tracker
+    _escalation_system = escalation_system
+    _participation_tracker = participation_tracker
+
+
+async def _collect_recent_public_messages(
+    message: discord.Message, limit: int = 3
+) -> list[str]:
+    """
+    Collect the author's most recent public channel messages for Level 4 context.
+    """
+    collected = []
+
+    current_text = " ".join((message.content or "").split())
+    if current_text:
+        collected.append(f"user: {current_text[:160]}")
+
+    try:
+        async for prior in message.channel.history(limit=50):
+            if prior.id == message.id or prior.author.id != message.author.id:
+                continue
+            if prior.author.bot:
+                continue
+            text = " ".join((prior.content or "").split())
+            if not text:
+                continue
+            collected.append(f"user: {text[:160]}")
+            if len(collected) >= limit:
+                break
+    except Exception as exc:
+        logger.warning("Could not collect recent public messages: %s", exc)
+
+    return collected[:limit]

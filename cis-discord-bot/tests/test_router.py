@@ -19,8 +19,10 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import discord
 
 from cis_controller.router import (
+    handle_command,
     is_agent_unlocked,
     normalize_command_name,
+    route_student_interaction,
     setup_bot_events,
 )
 from cis_controller.safety_filter import ComparisonViolationError
@@ -289,3 +291,185 @@ class TestRouterIngressContracts:
         mock_notify.assert_awaited_once()
         mock_route.assert_not_awaited()
         bot.process_commands.assert_not_awaited()
+
+
+class TestPendingShareRouting:
+    @pytest.mark.asyncio
+    async def test_dm_pending_diverge_share_is_processed_before_nl_suggestion(self):
+        message = Mock(spec=discord.Message)
+        message.author = Mock()
+        message.author.id = 123456
+        message.content = "Yes"
+        message.channel = Mock(spec=discord.DMChannel)
+        message.reply = AsyncMock()
+
+        student = {"discord_id": "123456", "current_week": 4, "current_state": "none"}
+
+        with patch(
+            "cis_controller.router.store.get_student", return_value=student
+        ), patch(
+            "cis_controller.router._prepare_response_message",
+            new_callable=AsyncMock,
+            return_value=message,
+        ), patch(
+            "commands.frame.has_pending_showcase_share",
+            return_value=False,
+        ), patch(
+            "commands.diverge.has_pending_showcase_share",
+            return_value=True,
+        ), patch(
+            "commands.challenge.has_pending_showcase_share",
+            return_value=False,
+        ), patch(
+            "commands.synthesize.has_pending_showcase_share",
+            return_value=False,
+        ), patch(
+            "commands.diverge.handle_showcase_share_response",
+            new_callable=AsyncMock,
+            return_value=True,
+        ) as mock_diverge_share_handler, patch(
+            "cis_controller.suggestions.suggest_explicit_command",
+            new_callable=AsyncMock,
+        ) as mock_suggest:
+            await route_student_interaction(message)
+
+        mock_diverge_share_handler.assert_awaited_once_with(message)
+        mock_suggest.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_dm_pending_synthesize_share_is_processed_before_nl_suggestion(self):
+        message = Mock(spec=discord.Message)
+        message.author = Mock()
+        message.author.id = 123456
+        message.content = "Anonymous"
+        message.channel = Mock(spec=discord.DMChannel)
+        message.reply = AsyncMock()
+
+        student = {"discord_id": "123456", "current_week": 6, "current_state": "none"}
+
+        with patch(
+            "cis_controller.router.store.get_student", return_value=student
+        ), patch(
+            "cis_controller.router._prepare_response_message",
+            new_callable=AsyncMock,
+            return_value=message,
+        ), patch(
+            "commands.frame.has_pending_showcase_share",
+            return_value=False,
+        ), patch(
+            "commands.diverge.has_pending_showcase_share",
+            return_value=False,
+        ), patch(
+            "commands.challenge.has_pending_showcase_share",
+            return_value=False,
+        ), patch(
+            "commands.synthesize.has_pending_showcase_share",
+            return_value=True,
+        ), patch(
+            "commands.synthesize.handle_showcase_share_response",
+            new_callable=AsyncMock,
+            return_value=True,
+        ) as mock_synthesize_share_handler, patch(
+            "cis_controller.suggestions.suggest_explicit_command",
+            new_callable=AsyncMock,
+        ) as mock_suggest:
+            await route_student_interaction(message)
+
+        mock_synthesize_share_handler.assert_awaited_once_with(message)
+        mock_suggest.assert_not_awaited()
+
+
+class TestArtifactTextRouting:
+    @pytest.mark.asyncio
+    async def test_dm_artifact_text_is_handled_before_nl_suggestions(self):
+        message = Mock(spec=discord.Message)
+        message.author = Mock()
+        message.author.id = 654321
+        message.content = "start"
+        message.channel = Mock(spec=discord.DMChannel)
+        message.reply = AsyncMock()
+
+        student = {"discord_id": "654321", "current_week": 6, "current_state": "none"}
+
+        with patch(
+            "cis_controller.router.store.get_student", return_value=student
+        ), patch(
+            "cis_controller.router._prepare_response_message",
+            new_callable=AsyncMock,
+            return_value=message,
+        ), patch(
+            "commands.frame.has_pending_showcase_share",
+            return_value=False,
+        ), patch(
+            "commands.diverge.has_pending_showcase_share",
+            return_value=False,
+        ), patch(
+            "commands.challenge.has_pending_showcase_share",
+            return_value=False,
+        ), patch(
+            "commands.synthesize.has_pending_showcase_share",
+            return_value=False,
+        ), patch(
+            "commands.artifact.handle_artifact_text_input",
+            new_callable=AsyncMock,
+            return_value=True,
+        ) as mock_artifact_handler, patch(
+            "cis_controller.suggestions.suggest_explicit_command",
+            new_callable=AsyncMock,
+        ) as mock_suggest:
+            await route_student_interaction(message)
+
+        mock_artifact_handler.assert_awaited_once_with(message, student)
+        mock_suggest.assert_not_awaited()
+
+
+class TestCommandPersistenceOwnership:
+    @pytest.mark.asyncio
+    async def test_diverge_handler_owns_state_and_habit_updates(self):
+        message = Mock(spec=discord.Message)
+        message.author = Mock()
+        message.author.id = 999
+        message.reply = AsyncMock()
+        student = {"discord_id": "999", "current_week": 4, "current_state": "none"}
+
+        with patch(
+            "cis_controller.router.get_student_state",
+            return_value="none",
+        ), patch(
+            "commands.diverge.handle_diverge",
+            new_callable=AsyncMock,
+        ) as mock_handle_diverge, patch(
+            "cis_controller.router.transition_state"
+        ) as mock_transition, patch(
+            "cis_controller.router.store.update_habit_practice"
+        ) as mock_habit_update:
+            await handle_command(message, student, "diverge")
+
+        mock_handle_diverge.assert_awaited_once_with(message, student)
+        mock_transition.assert_not_called()
+        mock_habit_update.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_synthesize_handler_owns_state_and_habit_updates(self):
+        message = Mock(spec=discord.Message)
+        message.author = Mock()
+        message.author.id = 111
+        message.reply = AsyncMock()
+        student = {"discord_id": "111", "current_week": 6, "current_state": "none"}
+
+        with patch(
+            "cis_controller.router.get_student_state",
+            return_value="none",
+        ), patch(
+            "commands.synthesize.handle_synthesize",
+            new_callable=AsyncMock,
+        ) as mock_handle_synthesize, patch(
+            "cis_controller.router.transition_state"
+        ) as mock_transition, patch(
+            "cis_controller.router.store.update_habit_practice"
+        ) as mock_habit_update:
+            await handle_command(message, student, "synthesize")
+
+        mock_handle_synthesize.assert_awaited_once_with(message, student)
+        mock_transition.assert_not_called()
+        mock_habit_update.assert_not_called()
