@@ -134,3 +134,168 @@ async def test_save_command_persists_last_activity():
     assert progress.last_activity is not None
     mock_save.assert_called_once()
     message.reply.assert_awaited()
+
+
+@pytest.mark.asyncio
+async def test_confirm_private_routes_to_private_visibility():
+    message = Mock(spec=discord.Message)
+    message.content = "confirm private"
+    message.author = Mock()
+    message.author.id = 55555
+    message.reply = AsyncMock()
+
+    student = {"current_week": 8}
+    fake_bot = Mock()
+
+    with patch.object(
+        artifact.store,
+        "get_artifact_progress_row",
+        return_value={"status": "completed"},
+    ), patch(
+        "commands.artifact.handle_confirm_publish",
+        new_callable=AsyncMock,
+    ) as mock_confirm:
+        handled = await artifact.handle_artifact_text_input(message, student, bot=fake_bot)
+
+    assert handled is True
+    mock_confirm.assert_awaited_once_with(fake_bot, message, "55555", "private")
+
+
+@pytest.mark.asyncio
+async def test_confirm_anonymous_routes_to_anonymous_visibility():
+    message = Mock(spec=discord.Message)
+    message.content = "confirm anonymous"
+    message.author = Mock()
+    message.author.id = 66666
+    message.reply = AsyncMock()
+
+    student = {"current_week": 8}
+    fake_bot = Mock()
+
+    with patch.object(
+        artifact.store,
+        "get_artifact_progress_row",
+        return_value={"status": "completed"},
+    ), patch(
+        "commands.artifact.handle_confirm_publish",
+        new_callable=AsyncMock,
+    ) as mock_confirm:
+        handled = await artifact.handle_artifact_text_input(message, student, bot=fake_bot)
+
+    assert handled is True
+    mock_confirm.assert_awaited_once_with(fake_bot, message, "66666", "anonymous")
+
+
+@pytest.mark.asyncio
+async def test_public_confirm_uses_safety_wrapper():
+    message = Mock(spec=discord.Message)
+    message.author = Mock()
+    message.author.id = 77777
+    message.reply = AsyncMock()
+
+    posted_message = Mock()
+    posted_message.add_reaction = AsyncMock()
+    showcase_channel = Mock()
+
+    guild = Mock()
+    guild.fetch_member = AsyncMock(return_value=Mock(display_name="Student Name"))
+    bot = Mock()
+    bot.guilds = [guild]
+
+    progress = ArtifactProgress(
+        section_1_question="q1",
+        section_2_reframed="q2",
+        section_3_explored="q3",
+        section_4_challenged="q4",
+        section_5_concluded="q5",
+        section_6_reflection="q6",
+        status="completed",
+    )
+
+    with patch(
+        "database.models._load_artifact_progress",
+        return_value=progress,
+    ), patch(
+        "commands.artifact._find_showcase_channel",
+        return_value=showcase_channel,
+    ), patch(
+        "cis_controller.safety_filter.post_to_discord_safe",
+        new_callable=AsyncMock,
+        return_value=posted_message,
+    ) as mock_safe, patch.object(
+        artifact.store,
+        "create_showcase_publication",
+    ) as mock_create, patch.object(
+        artifact.store,
+        "save_artifact_progress",
+    ) as mock_save:
+        await artifact.handle_confirm_publish(bot, message, "77777", "public")
+
+    mock_safe.assert_awaited_once()
+    kwargs = mock_safe.await_args.kwargs
+    assert kwargs["bot"] is bot
+    assert kwargs["channel"] is showcase_channel
+    assert kwargs["student_discord_id"] == 77777
+    assert kwargs["is_showcase"] is True
+    mock_create.assert_called_once()
+    mock_save.assert_called_once()
+    message.reply.assert_awaited()
+
+
+@pytest.mark.asyncio
+async def test_private_confirm_delivers_to_trevor():
+    message = Mock(spec=discord.Message)
+    message.author = Mock()
+    message.author.id = 88888
+    message.reply = AsyncMock()
+
+    guild = Mock()
+    guild.fetch_member = AsyncMock(return_value=Mock(display_name="Student Name"))
+    bot = Mock()
+    bot.guilds = [guild]
+    trevor_user = Mock()
+    trevor_user.send = AsyncMock()
+    bot.fetch_user = AsyncMock(return_value=trevor_user)
+
+    progress = ArtifactProgress(
+        section_1_question="q1",
+        section_2_reframed="q2",
+        section_3_explored="q3",
+        section_4_challenged="q4",
+        section_5_concluded="q5",
+        section_6_reflection="q6",
+        status="completed",
+    )
+
+    with patch.dict(os.environ, {"TREVOR_DISCORD_ID": "99999"}, clear=False), patch(
+        "database.models._load_artifact_progress",
+        return_value=progress,
+    ), patch.object(
+        artifact.store,
+        "create_showcase_publication",
+    ) as mock_create, patch.object(
+        artifact.store,
+        "save_artifact_progress",
+    ) as mock_save:
+        await artifact.handle_confirm_publish(bot, message, "88888", "private")
+
+    bot.fetch_user.assert_awaited_once_with(99999)
+    trevor_user.send.assert_awaited_once()
+    mock_create.assert_called_once()
+    mock_save.assert_called_once()
+    message.reply.assert_awaited()
+
+
+@pytest.mark.asyncio
+async def test_weekly_aggregate_query_excludes_private_visibility():
+    fake_cursor = Mock()
+    fake_cursor.fetchone.return_value = {"count": 0}
+    mock_conn = Mock()
+    mock_conn.execute.return_value = fake_cursor
+
+    with patch.object(artifact.store, "conn", mock_conn):
+        celebration = await artifact.generate_weekly_artifact_celebration(bot=Mock())
+
+    assert celebration is None
+    query = mock_conn.execute.call_args.args[0]
+    assert "visibility_level IN ('public', 'anonymous')" in query

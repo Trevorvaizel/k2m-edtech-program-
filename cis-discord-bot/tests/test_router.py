@@ -226,7 +226,7 @@ class TestRouterIngressContracts:
 
         mock_detect.assert_not_called()
         mock_validate.assert_not_called()
-        mock_route.assert_awaited_once_with(message)
+        mock_route.assert_awaited_once_with(message, bot=bot)
         bot.process_commands.assert_awaited_once_with(message)
 
     @pytest.mark.asyncio
@@ -257,7 +257,7 @@ class TestRouterIngressContracts:
 
         mock_detect.assert_called_once_with("/frame help me")
         mock_validate.assert_called_once_with("/frame help me")
-        mock_route.assert_awaited_once_with(message)
+        mock_route.assert_awaited_once_with(message, bot=bot)
         bot.process_commands.assert_awaited_once_with(message)
 
     @pytest.mark.asyncio
@@ -419,7 +419,7 @@ class TestArtifactTextRouting:
         ) as mock_suggest:
             await route_student_interaction(message)
 
-        mock_artifact_handler.assert_awaited_once_with(message, student)
+        mock_artifact_handler.assert_awaited_once_with(message, student, bot=None)
         mock_suggest.assert_not_awaited()
 
 

@@ -7,6 +7,9 @@ Available from Week 6 onwards (Decision 11).
 All 4 CIS agents are available during artifact creation.
 """
 
+import logging
+import os
+
 import discord
 from database.store import StudentStateStore
 from database.models import ArtifactProgress
@@ -14,6 +17,7 @@ from datetime import datetime
 from typing import Optional
 
 store = StudentStateStore()
+logger = logging.getLogger(__name__)
 
 
 # ============================================================
@@ -891,16 +895,423 @@ async def handle_artifact_commands(message: discord.Message, student, command: s
             await message.reply("Complete all 6 sections before publishing. Type **continue** to keep going.")
             return
 
-        # Publication handoff is completed in Task 4.2.
-        await message.reply(
-            "**Publish to #thinking-showcase** 🚀\n\n"
-            "Artifact validation passed. Task 4.2 will complete the final publish-to-showcase post."
+        # Task 4.2: Complete publication flow
+        await publish_artifact_to_showcase(message, discord_id, artifact_progress)
+
+
+# ============================================================
+# TASK 4.2: ARTIFACT PUBLICATION TO SHOWCASE
+# ============================================================
+
+async def publish_artifact_to_showcase(
+    message: discord.Message,
+    discord_id: str,
+    artifact_progress
+) -> None:
+    """
+    Task 4.2: Complete publication flow for Thinking Artifacts to #thinking-showcase.
+
+    Args:
+        message: Discord message triggering publish
+        discord_id: Student's Discord ID
+        artifact_progress: Completed ArtifactProgress object
+    """
+    # Step 1: Prompt for publication preference (Public/Anonymous/Private)
+    preference_prompt = (
+        "**Publish Your Thinking Artifact** 🚀\n\n"
+        "Choose one publication option:\n\n"
+        "- **confirm public**: Publish with your name to #thinking-showcase\n"
+        "- **confirm anonymous**: Publish anonymously to #thinking-showcase\n"
+        "- **confirm private**: Share privately with Trevor only\n\n"
+        "**What happens next:**\n"
+        "- Public/anonymous posts go to #thinking-showcase\n"
+        "- Private posts are delivered to Trevor only\n"
+        "- Publication completion awards your 4 Habits badge\n\n"
+        "**Ready to confirm?**\n"
+        "- Type: **confirm public**, **confirm anonymous**, or **confirm private**\n"
+        "- Or type: **cancel** to review more"
+    )
+    await message.reply(preference_prompt)
+
+
+async def generate_weekly_artifact_celebration(
+    bot,
+    days_back: int = 7
+) -> Optional[str]:
+    """
+    Generate aggregate celebration message for artifacts published this week.
+
+    Task 4.2: Weekly summary of artifact publications to #general or #announcements.
+    Guardrail #3 compliant: No comparison/ranking language.
+
+    Args:
+        bot: Discord bot instance
+        days_back: Number of days to look back (default 7)
+
+    Returns:
+        Formatted aggregate celebration message
+    """
+    from datetime import timedelta
+
+    cutoff_date = (datetime.now() - timedelta(days=days_back)).strftime('%Y-%m-%d')
+
+    # Count artifact publications this week
+    cursor = store.conn.execute(
+        """
+        SELECT COUNT(*) as count
+        FROM showcase_publications
+        WHERE publication_type = 'artifact_completion'
+          AND visibility_level IN ('public', 'anonymous')
+          AND timestamp >= ?
+        """,
+        (cutoff_date,)
+    )
+    result = cursor.fetchone()
+    published_count = result['count'] if result else 0
+
+    if published_count == 0:
+        return None  # No artifacts published this week
+
+    # Generate Guardrail #3 compliant celebration message
+    celebration = (
+        f"**Weekly Artifact Celebration** 🎉\n\n"
+        f"{published_count} student{'s' if published_count > 1 else ''} "
+        f"published their Thinking Artifacts to #thinking-showcase this week!\n\n"
+        "Each artifact shows a unique thinking journey. "
+        "Students wrestled with real questions, explored multiple angles, "
+        "challenged their assumptions, and crystalized their conclusions.\n\n"
+        "These artifacts prove real growth. Each student showed how they've "
+        "become someone who can think clearly with AI.\n\n"
+        "**Check out #thinking-showcase** to celebrate your peers' thinking growth!\n\n"
+        "**Want to publish yours?** Type `/publish` to complete your artifact.\n\n"
+        "Tools change. Habits transfer forever. ⏸️ 🎯 🔄 🧠"
+    )
+
+    return celebration
+
+
+async def post_weekly_artifact_celebration(bot, channel_id: str = None) -> bool:
+    """
+    Post weekly artifact celebration to general channel.
+
+    Task 4.2: Aggregate celebration posts.
+    Should be called once per week (e.g., via background job).
+
+    Args:
+        bot: Discord bot instance
+        channel_id: Target channel ID (defaults to #general or env var)
+
+    Returns:
+        True if posted successfully, False otherwise
+    """
+    import os
+
+    # Generate celebration message
+    celebration = await generate_weekly_artifact_celebration(bot)
+    if not celebration:
+        return False  # No artifacts to celebrate
+
+    # Find target channel
+    target_channel = None
+
+    if channel_id:
+        try:
+            target_channel = bot.get_channel(int(channel_id))
+        except Exception:
+            pass
+
+    if not target_channel:
+        # Try #general channel
+        guild = bot.guilds[0] if bot.guilds else None
+        if guild:
+            channels = getattr(guild, "text_channels", None) or getattr(guild, "channels", []) or []
+            for channel in channels:
+                name = str(getattr(channel, "name", "")).lower()
+                if name == "general" or name == "announcements":
+                    target_channel = channel
+                    break
+
+    if not target_channel:
+        return False  # No suitable channel found
+
+    # Post celebration
+    try:
+        await target_channel.send(celebration)
+        return True
+    except Exception:
+        return False
+
+
+
+def _find_showcase_channel(bot):
+    """Find #thinking-showcase channel (reused from showcase.py)"""
+    import os
+
+    CHANNEL_THINKING_SHOWCASE = os.getenv("CHANNEL_THINKING_SHOWCASE", "").strip()
+
+    guild = bot.guilds[0] if bot.guilds else None
+    if not guild:
+        return None
+
+    if CHANNEL_THINKING_SHOWCASE:
+        try:
+            configured_id = int(CHANNEL_THINKING_SHOWCASE)
+            by_id = guild.get_channel(configured_id)
+            if by_id is not None and getattr(by_id, "id", None) == configured_id:
+                return by_id
+        except ValueError:
+            pass
+
+    channels = getattr(guild, "text_channels", None) or getattr(guild, "channels", []) or []
+    for channel in channels:
+        name = str(getattr(channel, "name", "")).lower()
+        if name == "thinking-showcase" or name.endswith("thinking-showcase") or "thinking-showcase" in name:
+            return channel
+    return None
+
+
+def format_artifact_for_showcase(
+    student_name: str,
+    artifact_progress,
+    visibility: str
+) -> str:
+    """
+    Format the complete artifact for #thinking-showcase publication.
+
+    Args:
+        student_name: Student's display name or "Anonymous"
+        artifact_progress: Completed ArtifactProgress object
+        visibility: 'public', 'anonymous', or 'private'
+
+    Returns:
+        Formatted artifact markdown
+    """
+    display_name = student_name if visibility == "public" else "Anonymous"
+
+    formatted = f"""
+**Thinking Artifact: {display_name}** 🌟
+
+*Completed: Week 8*
+
+---
+
+**THE QUESTION I WRESTLED WITH:**
+
+{artifact_progress.section_1_question}
+
+**HOW I REFRAMED IT:** 🎯
+
+{artifact_progress.section_2_reframed}
+
+**WHAT I EXPLORED:** 🔄
+
+{artifact_progress.section_3_explored}
+
+**WHAT I CHALLENGED:** 🧠
+
+{artifact_progress.section_4_challenged}
+
+**WHAT I CONCLUDED:** ✨
+
+{artifact_progress.section_5_concluded}
+
+**WHAT THIS TAUGHT ME:** ⏸️
+
+{artifact_progress.section_6_reflection}
+
+---
+
+**4 Habits Earned:** ⏸️ 🎯 🔄 🧠
+
+*Celebrate with reactions below! 👇*
+"""
+    return formatted.strip()
+
+
+async def handle_confirm_publish(
+    bot,
+    message: discord.Message,
+    discord_id: str,
+    visibility: str
+) -> None:
+    """
+    Handle publication confirmation and post to #thinking-showcase.
+
+    Args:
+        bot: Discord bot instance
+        message: Discord message
+        discord_id: Student's Discord ID
+        visibility: 'public', 'anonymous', or 'private'
+    """
+    discord_id = str(discord_id)
+
+    from cis_controller.safety_filter import (
+        ComparisonViolationError,
+        post_to_discord_safe,
+    )
+    from database.models import _load_artifact_progress
+
+    artifact_progress = _load_artifact_progress(store.conn, discord_id)
+    if not artifact_progress or not artifact_progress.is_complete():
+        await message.reply("Artifact not complete. Type `/create-artifact` to continue.")
+        return
+
+    student_name = "Anonymous"
+    if bot and getattr(bot, "guilds", None):
+        try:
+            member = await bot.guilds[0].fetch_member(int(discord_id))
+            student_name = member.display_name
+        except Exception:
+            student_name = "Anonymous"
+
+    # Handle private publications (Trevor-only)
+    if visibility == "private":
+        trevor_discord_id = os.getenv("TREVOR_DISCORD_ID", "").strip()
+        if not trevor_discord_id:
+            await message.reply(
+                "**Private publish unavailable right now.** Trevor contact is not configured."
+            )
+            return
+
+        private_artifact = format_artifact_for_showcase(
+            student_name=student_name,
+            artifact_progress=artifact_progress,
+            visibility="public",
+        )
+        private_payload = (
+            "**Private Thinking Artifact Submission**\n\n"
+            f"Student: {student_name} (`{discord_id}`)\n\n"
+            f"{private_artifact}"
         )
 
+        try:
+            trevor_user = await bot.fetch_user(int(trevor_discord_id))
+            await trevor_user.send(private_payload)
+        except Exception as exc:
+            logger.error("Failed private artifact handoff to Trevor: %s", exc, exc_info=True)
+            await message.reply(
+                "**Private publish failed.** I could not deliver this to Trevor yet. "
+                "Nothing was published."
+            )
+            return
 
-async def handle_artifact_text_input(message: discord.Message, student) -> bool:
+        store.create_showcase_publication(
+            discord_id=discord_id,
+            publication_type="artifact_completion",
+            visibility_level="private",
+            celebration_message=private_payload,
+            habits_demonstrated=["⏸️", "🎯", "🔄", "🧠"],
+            nodes_mastered=[],
+            parent_email_included=False,
+        )
+        artifact_progress.status = "published"
+        artifact_progress.published_at = datetime.now()
+        store.save_artifact_progress(discord_id, artifact_progress)
+        await message.reply(
+            "**Artifact shared privately with Trevor.**\n\n"
+            "Your artifact was delivered and recorded as a private publication."
+        )
+        return
+
+    showcase_channel = _find_showcase_channel(bot)
+    if not showcase_channel:
+        await message.reply("#thinking-showcase channel not found. Contact Trevor.")
+        return
+
+    formatted_artifact = format_artifact_for_showcase(
+        student_name=student_name,
+        artifact_progress=artifact_progress,
+        visibility=visibility
+    )
+
+    try:
+        posted_message = await post_to_discord_safe(
+            bot=bot,
+            channel=showcase_channel,
+            message_text=formatted_artifact,
+            student_discord_id=int(discord_id),
+            is_showcase=True,
+        )
+
+        # Add star reaction (Task 4.2 requirement)
+        if posted_message and hasattr(posted_message, "add_reaction"):
+            try:
+                import asyncio
+                reaction_result = posted_message.add_reaction("\N{WHITE MEDIUM STAR}")
+                if asyncio.iscoroutine(reaction_result):
+                    await reaction_result
+            except Exception:
+                pass
+
+        store.create_showcase_publication(
+            discord_id=discord_id,
+            publication_type="artifact_completion",
+            visibility_level=visibility,
+            celebration_message=formatted_artifact,
+            habits_demonstrated=["⏸️", "🎯", "🔄", "🧠"],
+            nodes_mastered=[],
+            parent_email_included=False,
+        )
+
+        artifact_progress.status = "published"
+        artifact_progress.published_at = datetime.now()
+        store.save_artifact_progress(discord_id, artifact_progress)
+
+        if visibility == "public":
+            confirm = (
+                "**Posted to #thinking-showcase!** 🎉\n\n"
+                "Your artifact is now live. Your peers can see your thinking growth "
+                "and celebrate with you.\n\n"
+                "**You've officially earned:**\n"
+                "⏸️ **PAUSE** - Habit 1 Badge\n"
+                "🎯 **CONTEXT** - Habit 2 Badge\n"
+                "🔄 **ITERATE** - Habit 3 Badge\n"
+                "🧠 **THINK FIRST** - Habit 4 Badge\n\n"
+                "🔗 **Node 3.4: \"I Made This\"**\n\n"
+                "You're not just someone who \"used AI.\" "
+                "You're someone who directed AI to create something meaningful.\n\n"
+                "That's the Zone 4 director identity - you own your thinking and your outcomes. "
+                "You didn't just use tools - you learned to THINK WITH AI.\n\n"
+                "That skill will follow you forever. Tools change - thinking lasts.\n\n"
+                "**Congratulations!** 🎉🌟"
+            )
+        else:
+            confirm = (
+                "**Posted anonymously to #thinking-showcase!** 🎉\n\n"
+                "Your artifact is now live. Peers can see your thinking growth "
+                "and celebrate with you, but your name is hidden.\n\n"
+                "**You've officially earned:**\n"
+                "⏸️ **PAUSE** - Habit 1 Badge\n"
+                "🎯 **CONTEXT** - Habit 2 Badge\n"
+                "🔄 **ITERATE** - Habit 3 Badge\n"
+                "🧠 **THINK FIRST** - Habit 4 Badge\n\n"
+                "**Congratulations!** 🎉🌟"
+            )
+        await message.reply(confirm)
+
+    except ComparisonViolationError:
+        await message.reply(
+            "I kept this private for now. #thinking-showcase only accepts finished work."
+        )
+    except Exception as exc:
+        await message.reply(
+            "**Something went wrong.** Your artifact is saved; try publishing again later."
+        )
+        raise exc
+
+
+# ============================================================
+# TEXT INPUT HANDLERS
+# ============================================================
+
+async def handle_artifact_text_input(message: discord.Message, student, bot=None) -> bool:
     """
     Handle plain-text DM messages for artifact workflow progression.
+
+    Args:
+        message: Discord message
+        student: Student database row
+        bot: Discord bot instance (required for confirm publish commands)
 
     Returns True when the message was consumed by artifact flow.
     """
@@ -918,6 +1329,36 @@ async def handle_artifact_text_input(message: discord.Message, student) -> bool:
     # Allow text variants of sub-commands in DM.
     if artifact_row and normalized in {"save", "review", "publish"}:
         await handle_artifact_commands(message, student, normalized)
+        return True
+
+    # Task 4.2: Handle publication confirmation commands
+    if normalized in {
+        "confirm public",
+        "confirm private",
+        "confirm anonymous",
+        "public",
+        "private",
+        "anonymous",
+    }:
+        if not bot:
+            await message.reply("Bot instance required for publication. Please try again.")
+            return True
+
+        if not artifact_row or artifact_row["status"] != "completed":
+            await message.reply("Complete your artifact first with `/create-artifact` before publishing.")
+            return True
+
+        if normalized in {"confirm public", "public"}:
+            visibility = "public"
+        elif normalized in {"confirm anonymous", "anonymous"}:
+            visibility = "anonymous"
+        else:
+            visibility = "private"
+        await handle_confirm_publish(bot, message, discord_id, visibility)
+        return True
+
+    if normalized == "cancel":
+        await message.reply("No problem. Type **review** whenever you want to continue.")
         return True
 
     if artifact_row is None:

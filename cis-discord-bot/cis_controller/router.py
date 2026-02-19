@@ -216,7 +216,7 @@ async def route_slash_command(
         await interaction.response.defer(ephemeral=not is_dm, thinking=True)
 
     try:
-        await route_student_interaction(synthetic_message)
+        await route_student_interaction(synthetic_message, bot=interaction.client)
     except Exception as exc:
         logger.error("Error routing slash command %s: %s", normalized, exc, exc_info=True)
         if not synthetic_message.did_reply:
@@ -280,7 +280,7 @@ async def _prepare_response_message(message: discord.Message):
     return PrivateReplyMessage(message, dm_channel)
 
 
-async def route_student_interaction(message: discord.Message):
+async def route_student_interaction(message: discord.Message, bot=None):
     """
     Main routing function for all student interactions.
 
@@ -380,7 +380,7 @@ async def route_student_interaction(message: discord.Message):
             # Route artifact workflow plain-text progression in DM before NL suggestions.
             from commands.artifact import handle_artifact_text_input
 
-            artifact_handled = await handle_artifact_text_input(message, student)
+            artifact_handled = await handle_artifact_text_input(message, student, bot=bot)
             if artifact_handled:
                 return
 
@@ -633,7 +633,7 @@ def setup_bot_events(bot: commands.Bot):
 
         # Only process DMs or messages in designated channels
         if isinstance(message.channel, discord.DMChannel) or _is_designated_channel(message.channel):
-            await route_student_interaction(message)
+            await route_student_interaction(message, bot=bot)
 
         # Always process prefix commands (e.g. /ping, /status)
         await bot.process_commands(message)

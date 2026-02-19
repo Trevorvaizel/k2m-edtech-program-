@@ -63,7 +63,8 @@ class DailyPromptScheduler:
         self.bot = bot
         self.guild_id = guild_id
         self.channel_mapping = channel_mapping
-        self.cohort_start_date = datetime.strptime(cohort_start_date, "%Y-%m-%d").replace(tzinfo=EAT)
+        # Use pytz.localize to avoid incorrect historical offsets from replace().
+        self.cohort_start_date = EAT.localize(datetime.strptime(cohort_start_date, "%Y-%m-%d"))
         self.escalation_system = escalation_system
         self.participation_tracker = participation_tracker
         self.store = store or StudentStateStore()  # Task 2.5: Database access
@@ -84,6 +85,7 @@ class DailyPromptScheduler:
         self._reflection_summary_today = False  # Task 2.6: Friday 5 PM reflection summary
         self._spot_check_today = False  # Task 2.6: Friday 5 PM spot-check list
         self._agent_unlock_today = False  # Task 3.4: Agent unlock announcements
+        self._weekly_artifact_celebration_today = False  # Task 4.2
 
         logger.info(f"Scheduler initialized for guild {guild_id}")
         logger.info(f"Cohort start date: {cohort_start_date}")
@@ -700,6 +702,23 @@ class DailyPromptScheduler:
         except Exception as e:
             logger.error(f"Failed to post spot-check list: {e}")
 
+    async def post_weekly_artifact_celebration(self):
+        """
+        Post weekly artifact publication celebration summary (Task 4.2).
+        """
+        from commands.artifact import post_weekly_artifact_celebration
+
+        try:
+            posted = await post_weekly_artifact_celebration(self.bot)
+            if posted:
+                logger.info("Posted weekly artifact celebration summary")
+            else:
+                logger.info("No weekly artifact celebration post needed")
+        except Exception as exc:
+            logger.error("Failed to post weekly artifact celebration: %s", exc, exc_info=True)
+        finally:
+            self._weekly_artifact_celebration_today = True
+
     async def _send_public_message(self, channel, message_text: str):
         """Route student-facing public posts through Guardrail #3 safety checks."""
         await post_to_discord_safe(
@@ -732,8 +751,11 @@ class DailyPromptScheduler:
         # Get current week's agents
         current_agents = self.store.get_unlocked_agents_for_week(week)
 
-        # Get previous week's agents (if week > 1)
-        if week > 1:
+        # Get previous week's agents.
+        # Week 1 is baseline (/frame), so it should not trigger a "new unlock" post.
+        if week == 1:
+            previous_agents = current_agents
+        elif week > 1:
             previous_agents = self.store.get_unlocked_agents_for_week(week - 1)
         else:
             previous_agents = []
@@ -761,8 +783,8 @@ class DailyPromptScheduler:
                 "Stress-tests your assumptions. Question before you decide.\n"
                 "_Example: /challenge Is university really the only path to success?_\n\n"
                 "**Why now?**\n"
-                "You've built confidence with ⏸️ Pause (Week 1) and 🎯 Context (Weeks 2-3).\n"
-                "Now it's time to practice 🔄 Iterate—exploring options and testing assumptions.\n\n"
+                "You've built confidence with Habit 1 ⏸️ Pause (Week 1) and Habit 2 🎯 Context (Weeks 2-3).\n"
+                "Now it's time to practice Habit 3 🔄 Iterate—exploring options and testing assumptions.\n\n"
                 "**Remember:** Use all three agents:\n"
                 "- /frame to clarify what you want\n"
                 "- /diverge to explore different angles\n"
@@ -843,6 +865,7 @@ class DailyPromptScheduler:
             self._reflection_summary_today = False  # Task 2.6
             self._spot_check_today = False  # Task 2.6
             self._agent_unlock_today = False  # Task 3.4
+            self._weekly_artifact_celebration_today = False  # Task 4.2
 
         week, day = self.get_week_day()
 
@@ -885,6 +908,9 @@ class DailyPromptScheduler:
         if current_time.hour == 17 and current_time.minute == 0 and day == WeekDay.FRIDAY and not self._reflection_summary_today:
             logger.info("Scheduled: 5:00 PM Friday dashboard summaries")
             await self.post_friday_dashboard_summaries(week)
+            if not self._weekly_artifact_celebration_today:
+                logger.info("Scheduled: 5:00 PM weekly artifact celebration post")
+                await self.post_weekly_artifact_celebration()
 
         # 6:00 PM EAT - Level 1 inactive student nudges + dashboard summary
         if current_time.hour == 18 and current_time.minute == 0 and not self._peer_visibility_today:

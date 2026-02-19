@@ -496,8 +496,9 @@ async def post_to_discord_safe(
             safety_filter.validate_showcase_content(message_text)
 
         # All checks passed - post to Discord
-        await channel.send(message_text)
+        posted_message = await channel.send(message_text)
         logger.info(f"Message posted safely: {message_text[:50]}...")
+        return posted_message
 
     except ComparisonViolationError as e:
         # Log violation and alert Trevor

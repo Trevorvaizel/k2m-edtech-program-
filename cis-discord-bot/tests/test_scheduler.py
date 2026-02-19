@@ -448,6 +448,57 @@ class TestCheckAndPostTiming:
         scheduler.post_daily_summary.assert_awaited_once_with(1)
         scheduler.post_friday_reflection.assert_not_called()
 
+    @pytest.mark.asyncio
+    async def test_friday_5pm_runs_dashboard_summaries(self, scheduler):
+        scheduler.post_friday_dashboard_summaries = AsyncMock()
+        scheduler.post_weekly_artifact_celebration = AsyncMock()
+
+        with patch('scheduler.scheduler.datetime') as mock_datetime:
+            mock_datetime.now.return_value = datetime(
+                2026, 2, 6, 17, 0, tzinfo=scheduler.cohort_start_date.tzinfo
+            )
+            with patch.object(scheduler, "get_week_day", return_value=(1, WeekDay.FRIDAY)):
+                await scheduler.check_and_post()
+
+        scheduler.post_friday_dashboard_summaries.assert_awaited_once_with(1)
+        scheduler.post_weekly_artifact_celebration.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_6pm_runs_dashboard_summary_and_wednesday_snapshot(self, scheduler):
+        scheduler.participation_tracker = MagicMock()
+        scheduler.participation_tracker.check_inactive_students = AsyncMock()
+        scheduler.post_peer_visibility_summary = AsyncMock()
+        scheduler.post_peer_visibility_snapshot = AsyncMock()
+
+        with patch('scheduler.scheduler.datetime') as mock_datetime:
+            mock_datetime.now.return_value = datetime(
+                2026, 2, 4, 18, 0, tzinfo=scheduler.cohort_start_date.tzinfo
+            )
+            with patch.object(scheduler, "get_week_day", return_value=(1, WeekDay.WEDNESDAY)):
+                await scheduler.check_and_post()
+
+        scheduler.participation_tracker.check_inactive_students.assert_awaited_once_with(1)
+        scheduler.post_peer_visibility_summary.assert_awaited_once_with(1)
+        scheduler.post_peer_visibility_snapshot.assert_awaited_once_with(1)
+
+    @pytest.mark.asyncio
+    async def test_6pm_non_wednesday_skips_public_snapshot(self, scheduler):
+        scheduler.participation_tracker = MagicMock()
+        scheduler.participation_tracker.check_inactive_students = AsyncMock()
+        scheduler.post_peer_visibility_summary = AsyncMock()
+        scheduler.post_peer_visibility_snapshot = AsyncMock()
+
+        with patch('scheduler.scheduler.datetime') as mock_datetime:
+            mock_datetime.now.return_value = datetime(
+                2026, 2, 2, 18, 0, tzinfo=scheduler.cohort_start_date.tzinfo
+            )
+            with patch.object(scheduler, "get_week_day", return_value=(1, WeekDay.MONDAY)):
+                await scheduler.check_and_post()
+
+        scheduler.participation_tracker.check_inactive_students.assert_awaited_once_with(1)
+        scheduler.post_peer_visibility_summary.assert_awaited_once_with(1)
+        scheduler.post_peer_visibility_snapshot.assert_not_called()
+
 
 # ============================================================
 # EGRESS CONTRACT TESTS

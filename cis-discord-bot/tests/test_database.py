@@ -486,6 +486,54 @@ class TestMultiCohortSupport:
         store2.close()
 
 
+class TestLegacySchemaCompatibility:
+    """Verify startup migrations for older database files."""
+
+    def test_legacy_students_table_adds_cluster_columns(self, tmp_path):
+        """Old students schema should auto-add cluster fields before index creation."""
+        db_path = tmp_path / "legacy_students.db"
+
+        legacy_conn = sqlite3.connect(str(db_path))
+        legacy_conn.execute(
+            """
+            CREATE TABLE students (
+                discord_id TEXT PRIMARY KEY,
+                cohort_id TEXT NOT NULL,
+                start_date TEXT NOT NULL,
+                current_week INTEGER DEFAULT 1,
+                current_state TEXT DEFAULT 'none',
+                zone TEXT DEFAULT 'zone_0',
+                jtbd_concern TEXT DEFAULT 'career_direction',
+                emotional_state TEXT DEFAULT 'curious',
+                unlocked_agents TEXT DEFAULT '["frame"]',
+                artifact_progress INTEGER DEFAULT 0,
+                interaction_count INTEGER DEFAULT 0,
+                last_interaction TEXT,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+            """
+        )
+        legacy_conn.commit()
+        legacy_conn.close()
+
+        store = StudentStateStore(db_path=str(db_path))
+        try:
+            columns = {
+                row["name"]
+                for row in store.conn.execute("PRAGMA table_info(students)").fetchall()
+            }
+            assert "cluster_id" in columns
+            assert "last_name" in columns
+
+            index_names = {
+                row["name"]
+                for row in store.conn.execute("PRAGMA index_list(students)").fetchall()
+            }
+            assert "idx_students_cluster" in index_names
+        finally:
+            store.close()
+
+
 class TestDataIntegrity:
     """Test data integrity and constraints"""
 
