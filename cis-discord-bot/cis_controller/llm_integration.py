@@ -3,9 +3,9 @@ CIS Controller - LLM Integration
 Story 4.7 Implementation: provider-swappable LLM calls.
 
 Supports:
-- zhipu (GLM) now via OpenAI-compatible Chat Completions
-- openai (GPT) via OpenAI Chat Completions
+- openai (GPT) as active runtime provider via Chat Completions
 - anthropic (Claude Sonnet) via env swap
+- zhipu (GLM) via OpenAI-compatible Chat Completions
 """
 
 import asyncio
@@ -57,7 +57,7 @@ def get_active_provider() -> str:
     - zhipu, glm, glm-4.7
     - openai, gpt
     """
-    provider = os.getenv("AI_PROVIDER", "anthropic").strip().lower()
+    provider = os.getenv("AI_PROVIDER", "openai").strip().lower()
     aliases = {
         "anthropic": "anthropic",
         "claude": "anthropic",
@@ -480,5 +480,21 @@ async def call_agent_with_context(
         raise ValueError(f"Unsupported AI_PROVIDER: {provider}")
 
     except Exception as exc:
-        logger.error("Error calling %s agent via %s: %s", agent, provider, exc)
-        raise
+        # LLM Provider Failure Handling (Task 4.5)
+        # Return fallback message encouraging Habit 1 practice independently
+        logger.error("LLM provider failure (%s/%s): %s", provider, agent, exc)
+
+        from cis_controller.health_monitor import get_llm_fallback_message
+
+        fallback_message = get_llm_fallback_message(agent)
+
+        # Return fallback message with zero cost data
+        cost_data = {
+            "total_tokens": 0,
+            "total_cost_usd": 0.0,
+            "provider": provider,
+            "model": model,
+            "fallback": True,
+        }
+
+        return fallback_message, cost_data

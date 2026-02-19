@@ -247,6 +247,33 @@ async def on_ready():
         participation_tracker=runtime_participation_tracker,
     )
 
+    # Initialize health monitor (Task 4.5: Bot failure handling + health checks)
+    health_monitor = None
+    try:
+        if runtime_store:
+            from cis_controller.health_monitor import HealthMonitor
+
+            db_path = os.getenv("DATABASE_PATH", "cohort-1.db")
+            dashboard_channel_id = int(os.getenv("CHANNEL_FACILITATOR_DASHBOARD", "0"))
+            trevor_discord_id = os.getenv("TREVOR_DISCORD_ID", "").strip()
+
+            if dashboard_channel_id and trevor_discord_id:
+                health_monitor = HealthMonitor(
+                    bot=bot,
+                    db_path=db_path,
+                    facilitator_dashboard_id=dashboard_channel_id,
+                    trevor_discord_id=trevor_discord_id,
+                    check_interval_seconds=300,  # 5 minutes
+                )
+                await health_monitor.start()
+                logger.info("Health monitor started (5-minute interval)")
+            else:
+                logger.warning(
+                    "Health monitor not started: set CHANNEL_FACILITATOR_DASHBOARD and TREVOR_DISCORD_ID"
+                )
+    except Exception as exc:
+        logger.error("Failed to start health monitor: %s", exc, exc_info=True)
+
     # Initialize daily prompt scheduler (Story 2.1)
     try:
         if DISCORD_GUILD_ID:
@@ -510,6 +537,171 @@ async def show_milestones_slash(interaction: discord.Interaction, days: int = 7)
     await show_milestones(interaction, store, days)
 
 
+# ============================================================
+# CLUSTER MANAGEMENT COMMANDS (Task 4.3)
+# Trevor-admin commands for cluster assignment and switching
+# ============================================================
+
+@bot.tree.command(name="switch-cluster", description="Switch student to different cluster (Trevor only).")
+@app_commands.describe(
+    student="Student to switch (@mention)",
+    cluster_id="Target cluster (1-8)",
+    reason="Reason for switch (optional)"
+)
+async def switch_cluster_slash(
+    interaction: discord.Interaction,
+    student: discord.Member,
+    cluster_id: int,
+    reason: str = None
+):
+    """Switch a student to a different cluster."""
+    from database.store import StudentStateStore
+    from commands.cluster import switch_cluster
+
+    store = StudentStateStore()
+    await switch_cluster(interaction, store, student, cluster_id, reason)
+
+
+@bot.tree.command(name="cluster-roster", description="Show roster for a cluster (Trevor only).")
+@app_commands.describe(cluster_id="Cluster ID to show (1-8)")
+async def cluster_roster_slash(interaction: discord.Interaction, cluster_id: int):
+    """Show roster for a specific cluster."""
+    from database.store import StudentStateStore
+    from commands.cluster import show_cluster_roster
+
+    store = StudentStateStore()
+    await show_cluster_roster(interaction, store, cluster_id)
+
+
+@bot.tree.command(name="all-cluster-rosters", description="Show all cluster summaries (Trevor only).")
+async def all_cluster_rosters_slash(interaction: discord.Interaction):
+    """Show summary of all clusters."""
+    from database.store import StudentStateStore
+    from commands.cluster import show_all_cluster_rosters
+
+    store = StudentStateStore()
+    await show_all_cluster_rosters(interaction, store)
+
+
+@bot.tree.command(name="post-session-summary", description="Post session summary after cluster session (Trevor only).")
+@app_commands.describe(
+    cluster_id="Cluster ID (1-8)",
+    session_notes="Session summary from Trevor",
+    attendance_count="Number of attendees (optional)"
+)
+async def post_session_summary_slash(
+    interaction: discord.Interaction,
+    cluster_id: int,
+    session_notes: str,
+    attendance_count: int = None
+):
+    """Post session summary after completing a cluster session (Task 4.4)."""
+    from database.store import StudentStateStore
+    from commands.cluster import post_session_summary
+
+    store = StudentStateStore()
+    await post_session_summary(interaction, store, cluster_id, session_notes, attendance_count)
+
+
+@bot.event
+async def on_member_join(member: discord.Member):
+    """
+    Handle new member joining - auto-assign cluster (Task 4.3).
+
+    Per Story 5.1:
+    1. Extract last name from display_name
+    2. Auto-assign to cluster based on last name (8 clusters)
+    3. Assign @Student role
+    4. Assign @Cluster-X role
+    5. Send welcome DM with cluster info
+    """
+    from database.store import StudentStateStore
+
+    # Skip bots
+    if member.bot:
+        return
+
+    try:
+        # Initialize store
+        store = StudentStateStore()
+
+        # Extract last name from display_name
+        # Format: "John Anderson" or "Anderson" or "John"
+        display_name = member.display_name or member.name
+        last_name = display_name.split()[-1] if display_name else None
+
+        # Create student with cluster assignment
+        student = store.create_student(
+            discord_id=str(member.id),
+            last_name=last_name
+        )
+
+        cluster_id = student["cluster_id"]
+
+        # Assign @Student role
+        student_role = discord.utils.get(member.guild.roles, name="Student")
+        if student_role:
+            await member.add_roles(student_role)
+            logger.info(f"Assigned @Student role to {member.display_name}")
+        else:
+            logger.warning(f"@Student role not found for {member.display_name}")
+
+        # Assign @Cluster-X role
+        cluster_role_name = f"Cluster-{cluster_id}"
+        cluster_role = discord.utils.get(member.guild.roles, name=cluster_role_name)
+        if cluster_role:
+            await member.add_roles(cluster_role)
+            logger.info(f"Assigned @{cluster_role_name} to {member.display_name}")
+        else:
+            logger.warning(f"@{cluster_role_name} role not found for {member.display_name}; creating role")
+            try:
+                cluster_role = await member.guild.create_role(name=cluster_role_name, mentionable=False)
+                await member.add_roles(cluster_role)
+                logger.info(f"Created and assigned @{cluster_role_name} to {member.display_name}")
+            except Exception as role_exc:
+                logger.error("Failed to create %s role: %s", cluster_role_name, role_exc, exc_info=True)
+
+        from scheduler.cluster_sessions import ClusterSessionScheduler
+
+        schedule_helper = ClusterSessionScheduler(
+            bot=bot,
+            store=store,
+            guild_id=member.guild.id,
+            channel_mapping=WEEKLY_CHANNEL_MAPPING,
+            cohort_start_date=COHORT_START_DATE,
+        )
+        schedule_text = schedule_helper.get_cluster_schedule_text(cluster_id)
+
+        # Send welcome DM
+        cluster_names = {
+            1: "A-F", 2: "G-L", 3: "M-R", 4: "S-Z",
+            5: "A-F (overflow)", 6: "G-L (overflow)", 7: "M-R (overflow)", 8: "S-Z (overflow)"
+        }
+
+        welcome_message = f"""👋 Welcome to K2M Cohort #1, **{member.display_name}**!
+
+You're in **Cluster {cluster_id}** (Last names: {cluster_names.get(cluster_id, 'Unknown')})
+
+📅 **Cluster Session Schedule:**
+Cluster {cluster_id} meets **{schedule_text}**
+
+🎯 **What to do now:**
+1. Introduce yourself in #week-1-wonder
+2. Check your daily prompts at 9:15 AM EAT
+3. Use `/frame` when you have a question to think through
+
+See you Monday! Let's build some thinking skills together 🚀
+
+— KIRA (K2M Interactive Reasoning Agent)
+"""
+
+        await member.send(welcome_message)
+        logger.info(f"Sent welcome DM to {member.display_name} (Cluster {cluster_id})")
+
+    except Exception as exc:
+        logger.error(f"Error handling member join for {member.display_name}: {exc}", exc_info=True)
+
+
 @bot.event
 async def on_command_error(ctx: commands.Context, error: Exception):
     """Handle command errors."""
@@ -573,6 +765,9 @@ def main():
         # Stop scheduler when bot shuts down
         if daily_prompt_scheduler:
             daily_prompt_scheduler.stop()
+
+        # Stop health monitor when bot shuts down
+        health_monitor = None  # Will be cleaned up by bot closure
 
 
 if __name__ == "__main__":
