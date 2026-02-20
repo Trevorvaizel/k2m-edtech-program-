@@ -44,12 +44,13 @@ source_documents:
 # OVERALL PROGRESS
 # ============================================================
 progress:
-  total_tasks: 49
-  done: 30
+  total_tasks: 61
+  done: 34
   in_progress: 0
   blocked: 0
-  pending: 18
-  percent_complete: 61
+  pending: 27
+  percent_complete: 56
+  decision_7_revised: "2026-02-20 — Context engine building NOW for Cohort 1 (not deferred)"
 
 # ============================================================
 # SPRINT 0: AUTOMATED DISCORD SERVER SETUP
@@ -727,7 +728,7 @@ sprint_4:
 sprint_5:
   name: "Integration Testing + Production Deploy"
   type: "testing_and_deploy"
-  status: "pending"
+  status: "in_progress"
   estimated_days: 4
   dependencies: "sprint_0, sprint_1, sprint_2, sprint_3, sprint_4"
 
@@ -790,7 +791,7 @@ sprint_5:
 
     - id: "5.4"
       title: "Safety and crisis protocol test"
-      status: "pending"
+      status: "done"
       description: |
         Test all safety systems:
         - Post comparison language in public channel â†’ SafetyFilter blocks
@@ -803,10 +804,12 @@ sprint_5:
         load: "source_documents.server_architecture"
         section: "Moderation Workflow + Level 4 Crisis Intervention"
       acceptance: "SafetyFilter catches violations, crisis protocol works, escalations fire, privacy maintained"
+      summary: "✅ Task 5.4 COMPLETE - Added deterministic safety/crisis protocol e2e coverage for Guardrail #3 comparison blocking, Level 4 crisis response + instant Trevor alerts with Kenya resources, 3-day/7-day escalation triggers, moderation-log capture, and DM privacy boundaries; fixed EscalationSystem student query to match current schema (no students.username) on 2026-02-20."
+      notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/5.4.md"
 
     - id: "5.5"
       title: "Performance and cost validation"
-      status: "pending"
+      status: "done"
       description: |
         Verify production readiness:
         - Bot response time <5 seconds for CIS agents
@@ -820,10 +823,24 @@ sprint_5:
         load: "source_documents.bot_technical_spec"
         section: "Bot Performance Requirements + Cost Management"
       acceptance: "Performance within spec. Cost tracking accurate. Backups running. Health checks working."
+      summary: "✅ Task 5.5 COMPLETE - Added deterministic performance/cost validation coverage for <5s CIS response SLA, 50+ concurrent conversations, rate-limit under load, cost+budget thresholds, backup automation, and 5-minute health cadence with full-suite verification on 2026-02-20."
+      notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/5.5.md"
+
+    - id: "5.6a"
+      title: "Run context engine experience design party mode session"
+      status: "pending"
+      description: |
+        PREREQUISITE FOR ALL SPRINT 6 TASKS.
+        Run the party mode prompt from:
+        `_bmad-output/cohort-design-artifacts/party-mode-context-engine-prompt.md`
+        Output: `_bmad-output/cohort-design-artifacts/context-engine-experience-design.md`
+        This document becomes the design bible for Sprint 6.
+        No Sprint 6 task should begin until this session is complete and output reviewed by Trevor.
+      acceptance: "context-engine-experience-design.md exists, Trevor has reviewed and approved"
 
     - id: "5.6"
       title: "Create server template for future cohorts"
-      status: "pending"
+      status: "done"
       description: |
         Per Story 5.1:
         - Save current server as Discord template
@@ -833,10 +850,12 @@ sprint_5:
         load: "source_documents.server_architecture"
         section: "Copy-Paste Server Template"
       acceptance: "Template saved. Deployment checklist verified. Future cohort can spin up in 30 min."
+      summary: "[done] Task 5.6 COMPLETE - Confirmed server template artifact, documented playbook-aligned 30-minute deployment checklist, and updated env baseline with explicit COHORT_ID for repeatable future cohort spin-up (2026-02-20)."
+      notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/5.6.md"
 
     - id: "5.7"
       title: "Production deployment + go-live checklist"
-      status: "pending"
+      status: "done"
       description: |
         Final deployment:
         - Bot deployed to Railway (production)
@@ -850,7 +869,269 @@ sprint_5:
       agent_context:
         load: "source_documents.server_architecture"
         section: "Server Handoff to Trevor"
+        also_load: "source_documents.manual_sops"
+        design_ref: "_bmad-output/cohort-design-artifacts/cohort-production-go-live-checklist.md"
       acceptance: "Bot live in production. Trevor has all access. Invite link ready. Go/no-go decision made."
+      summary: "[done] Task 5.7 COMPLETE - Production Railway project/service is live with persistent /data volume, env + runtime commands configured, Python runtime pinned to 3.12 for discord.py compatibility, scheduler dependency/path blockers fixed (pytz + bundled daily prompt library), invite generated, #announcements updated with cohort start date, and go/no-go marked GO (2026-02-20)."
+      notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/5.7.md"
+
+# ============================================================
+# SPRINT 0 ADDENDUM: STUDENT ONBOARDING AUTOMATION
+# Apps Script + Brevo + M-Pesa gate
+# Decision 7 revised: building for Cohort 1
+# ============================================================
+sprint_0_addendum:
+  name: "Student Onboarding Automation"
+  type: "development"
+  status: "pending"
+  estimated_days: 2
+  dependencies: "5.6a (experience design session must be complete)"
+
+  tasks:
+    - id: "0.7"
+      title: "Student onboarding automation (Apps Script + Brevo + M-Pesa)"
+      status: "pending"
+      description: |
+        Build automated student signup journey:
+        - Google Sheets: Add M-Pesa Code column (AC) + Payment Status dropdown (AD: Pending/Confirmed/Failed)
+        - Apps Script trigger 1: onFormSubmit → Brevo Email #1 (Spot Reserved + M-Pesa instructions)
+        - Apps Script trigger 2: onPaymentConfirm (Column AD = Confirmed) → Brevo Email #2 (You're IN + Discord invite)
+        - Apps Script trigger 3: Sunday before Week 1 → Brevo Email #3 (Week 1 preview)
+        - Apps Script trigger 4: Friday Week 1 → Brevo Email #4 (You made it through Week 1)
+        - Apps Script trigger 5: onArtifactPublished → Brevo Email #5 (Your thinking is permanent)
+        - All emails from Trevor's custom domain via Brevo API
+        - Pre-load hook: trigger 2 also calls preload_student() to write to SQLite
+        See full spec: _bmad-output/cohort-design-artifacts/solutions-and-new-automations.md
+      agent_context:
+        load: "source_documents.google_forms_diagnostic"
+        also_load: "source_documents.sheets_templates"
+        design_ref: "_bmad-output/cohort-design-artifacts/solutions-and-new-automations.md"
+      acceptance: |
+        Form submit → Email #1 fires within 60 seconds.
+        Trevor confirms payment → Email #2 + Discord invite fires automatically.
+        All 5 email triggers tested. Custom domain verified in Brevo.
+        Pre-load hook writes student to SQLite on Email #2 trigger.
+
+# ============================================================
+# SPRINT 5 ADDENDUM: DISCORD UX HARDENING
+# /register command, upgraded welcome DM, juncture coaching DMs
+# ============================================================
+sprint_5_addendum:
+  name: "Discord UX Hardening + KIRA Contextual Coaching"
+  type: "development"
+  status: "pending"
+  estimated_days: 3
+  dependencies: "5.6a (experience design session must be complete)"
+
+  tasks:
+    - id: "5.8a"
+      title: "Upgrade KIRA welcome DM (personalized, map-first)"
+      status: "pending"
+      description: |
+        Replace generic welcome DM (main.py:804) with personalized version:
+        - Reads student profile from SQLite (loaded by pre-load script)
+        - Uses real first name (not display name)
+        - References profession + situation from form
+        - Maps 5 key channels (not 15)
+        - First action is /frame with a personalized prompt seed based on their situation
+        - Falls back to current generic DM if student not pre-loaded (safety net)
+        See full message design: context-engine-experience-design.md (post party mode)
+      agent_context:
+        load: "source_documents.server_architecture"
+        section: "Student Onboarding UX"
+      acceptance: "Welcome DM references student's name, profession, situation. /frame seed is personalized. Generic fallback works."
+
+    - id: "5.8b"
+      title: "Implement /register command (last name fallback)"
+      status: "pending"
+      description: |
+        Slash command for students who join before pre-load:
+        /register last_name:Kamau
+        - Validates last name format
+        - Updates SQLite students.real_last_name
+        - Re-runs cluster assignment from real last name
+        - Reassigns cluster role if changed
+        - Sends confirmation DM
+      acceptance: "/register updates last_name, reassigns cluster if different, confirms to student."
+
+    - id: "5.8c"
+      title: "Implement KIRA contextual coaching (7 juncture DMs)"
+      status: "pending"
+      description: |
+        Proactive DMs at 7 journey junctures (design from context-engine-experience-design.md):
+        1. Post-first-/frame: "That was Habit 1 in action. Here's what I noticed..."
+        2. Post-first-showcase-share: "Your thinking is now visible. Here's what's next..."
+        3. Week N unlock (each): personalized to student's current zone + history
+        4. Week 4 agent unlock (/diverge + /challenge): context-aware intro
+        5. Week 6 agent unlock (/synthesize + /create-artifact): artifact preview
+        6. /create-artifact first use: Section 1 framing based on their journey
+        7. /publish completes: graduation DM with their journey stats
+        All 7 DMs reference student's profile (profession, zone, history).
+        Observability: log juncture_dm_sent event for each.
+      acceptance: "All 7 juncture DMs fire at correct moments. Content is personalized. Events logged."
+
+# ============================================================
+# SPRINT 6: CONTEXT ENGINE + PERSONALIZED CIS AGENTS
+# The core Cohort 2-standard experience upgrade
+# Decision 7 revised: building for Cohort 1
+# Prerequisite: 5.6a party mode session complete
+# Estimated: 6-7 days
+# ============================================================
+sprint_6:
+  name: "Context Engine + Personalized CIS Agents"
+  type: "development"
+  status: "pending"
+  estimated_days: 7
+  decision_basis: "Decision 7 revised 2026-02-20 — build NOW not Cohort 2"
+  dependencies: "5.6a (experience design complete), sprint_4 (CIS agents built)"
+
+  tasks:
+    - id: "6.1"
+      title: "Student pre-load bridge (Sheets → SQLite)"
+      status: "pending"
+      description: |
+        Script: cis-discord-bot/scripts/preload_students.py
+        - Reads confirmed students from Google Sheets (Payment Status = Confirmed)
+        - Maps form fields to SQLite columns:
+            first_name, last_name, email, zone (self-assessed), profession,
+            situation (freeform), goals (freeform), barrier_type (inferred from form),
+            parent_email, preloaded=True
+        - New SQLite columns to add (migration):
+            profession TEXT, barrier_type TEXT, situation TEXT,
+            goals TEXT, real_last_name TEXT, preloaded BOOLEAN DEFAULT 0
+        - Idempotent: safe to run multiple times (upsert, not insert)
+        - Trevor runs this once before cohort opens
+        - Task 0.7 trigger 2 also calls this automatically on payment confirm
+      agent_context:
+        load: "source_documents.google_forms_diagnostic"
+        section: "Google Sheets Column Structure"
+        also_load: "source_documents.bot_technical_spec"
+        section: "Database Schema"
+      acceptance: |
+        preload_students.py runs without errors against live Sheet.
+        SQLite has new columns. Student records populated with form data.
+        Idempotency verified (run twice = same result). Cluster assignment uses real_last_name.
+
+    - id: "6.2"
+      title: "Google Sheets context database + Apps Script webhooks"
+      status: "pending"
+      description: |
+        Extend the existing Student Roster Google Sheet:
+        Tab 2: Example_Library
+          Columns: id, profession, example_text, week_relevant, habit_tag
+          Content: 10 examples × 4 professions = 40 rows minimum
+          (Trevor fills content post party mode session)
+        Tab 3: Intervention_Library
+          Columns: id, barrier_type, week_range, intervention_text
+          Content: 4 barrier types × 2 week ranges = 8 rows minimum
+          (Trevor fills content post party mode session)
+        Apps Script layer (deployed as web app):
+          getStudentContext(discord_id) → JSON profile
+          getExamplesByProfession(profession, week) → Array[3] of examples
+          getIntervention(barrier_type, week) → intervention text
+        Secret token authentication (Trevor stores in .env).
+        Bot calls these webhooks in llm_integration.py before building agent prompts.
+      agent_context:
+        load: "source_documents.sheets_templates"
+        design_ref: "_bmad-output/cohort-design-artifacts/context-engine-experience-design.md"
+      acceptance: |
+        3 Apps Script webhooks deployed and responding.
+        Bot can call all 3 from llm_integration.py with correct auth.
+        Example and intervention libraries have content loaded by Trevor.
+        Response time <200ms (Apps Script native to Sheets).
+
+    - id: "6.3"
+      title: "Personalized CIS agent prompts (all 4 agents)"
+      status: "pending"
+      description: |
+        Modify llm_integration.py: before building ANY CIS agent prompt,
+        call getStudentContext(discord_id) and getExamplesByProfession().
+        Inject into system prompt:
+          - Student profession + situation
+          - Current zone
+          - Known barrier type
+          - 3 profession-specific examples relevant to current week
+        /frame: personalized framing seed + relevant examples
+        /diverge: profession-specific alternative perspectives
+        /challenge: examples from same profession who challenged this idea
+        /synthesize: references their specific journey arc (zone shift, topics)
+        Fallback: if context unavailable → current generic prompt (safety net)
+        Full prompt designs: context-engine-experience-design.md
+      agent_context:
+        load: "source_documents.cis_controller_logic"
+        also_load: "source_documents.framer_agent"
+        also_load: "source_documents.explorer_agent"
+        also_load: "source_documents.challenger_agent"
+        also_load: "source_documents.synthesizer_agent"
+        design_ref: "_bmad-output/cohort-design-artifacts/context-engine-experience-design.md"
+      acceptance: |
+        All 4 agents receive student context in system prompt.
+        Examples are profession-specific and week-relevant.
+        Generic fallback works when context unavailable.
+        Tests verify personalized vs generic prompt paths.
+
+    - id: "6.4"
+      title: "Intelligent barrier-type escalation routing"
+      status: "pending"
+      description: |
+        Replace generic time-based nudges with barrier-type-aware interventions:
+        Trigger: student misses 3 days OR posts low-engagement signal
+        Flow:
+          1. getStudentContext(discord_id) → barrier_type
+          2. getIntervention(barrier_type, current_week) → personalized text
+          3. KIRA DM: references their specific barrier + profession
+        Four intervention tracks (from Intervention_Library):
+          identity: "You mentioned feeling 'not technical'..." (teacher variant, entrepreneur variant, etc.)
+          time: "10 focused minutes beats 60 distracted ones. Here's why..."
+          relevance: "Let's find your actual use case right now..."
+          technical: "The tool is simpler than it looks. Start here..."
+        Trevor still gets escalation alert (unchanged).
+        Observability: log intervention_type + student_id for pattern analysis.
+      agent_context:
+        load: "source_documents.bot_technical_spec"
+        section: "Bot Failure Handling + Escalation"
+        design_ref: "_bmad-output/cohort-design-artifacts/context-engine-experience-design.md"
+      acceptance: |
+        Escalation DM references student's barrier type and profession.
+        All 4 intervention tracks tested with mock student profiles.
+        Trevor alert still fires. Intervention logged to observability_events.
+
+    - id: "6.5"
+      title: "Multi-model cost routing"
+      status: "pending"
+      description: |
+        Route CIS agent calls to appropriate model based on task complexity:
+        /frame, /diverge → claude-haiku-4-5 (volume, fast, cheap)
+        /challenge, /synthesize → claude-sonnet-4-6 (deeper reasoning)
+        /create-artifact → claude-sonnet-4-6 (quality critical)
+        Trevor dashboard summaries → claude-haiku-4-5 (batch processing)
+        Update llm_integration.py model selection logic.
+        Add model_used field to observability_events for cost tracking.
+        Daily cost breakdown by model in facilitator dashboard.
+      agent_context:
+        load: "source_documents.cis_controller_logic"
+      acceptance: |
+        /frame and /diverge use Haiku. /challenge, /synthesize, /create-artifact use Sonnet.
+        Dashboard shows daily cost split by model. Tests verify routing logic.
+
+    - id: "6.6"
+      title: "PostgreSQL migration preparation (schema + script)"
+      status: "pending"
+      description: |
+        NOT deploying to PostgreSQL yet — preparing the migration so it's a 1-hour switch when needed.
+        Tasks:
+        - Document SQLite column types vs PostgreSQL equivalents for all new columns from 6.1
+        - Update database/migration.py with new column mappings (profession, barrier_type, etc.)
+        - Add cohort_id field to students table (for multi-cohort isolation)
+        - Write migration runbook: what Trevor does to switch + estimated downtime
+        - Test migration script against a copy of cohort-1.db
+        Threshold for actual switch: >300 students OR running 2 cohorts simultaneously.
+      agent_context:
+        load: "source_documents.bot_technical_spec"
+        section: "Database + Storage"
+      acceptance: |
+        migration.py handles all new columns. cohort_id field added.
+        Migration runbook written. Test migration succeeds against copy of prod DB.
 
 # ============================================================
 # NOTES FOR AGENTS
@@ -874,5 +1155,5 @@ agent_instructions: |
 
 # Last Updated
 last_updated: "2026-02-20"
-updated_by: "Dev Agent (Amelia) - Task 5.3 complete: CIS graduated introduction end-to-end validated against playbook-v2 with Week 1 lockouts, Week 4/6 unlock announcements, and full artifact publish flow + full-suite pass."
+updated_by: "Dev Agent (Amelia) - Task 5.7 complete: production Railway deployment stabilized (runtime + scheduler blockers fixed), invite and launch announcement posted, and go/no-go set to GO."
 

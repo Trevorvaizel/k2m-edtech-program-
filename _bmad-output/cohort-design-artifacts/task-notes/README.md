@@ -75,3 +75,5 @@
   Summary: [done] Task 5.5 COMPLETE - Deterministic SLA/load/cost/backup/health validation coverage added (2026-02-20).
 - `5.6` Create server template for future cohorts -> `_bmad-output/cohort-design-artifacts/task-notes/5.6.md`
   Summary: [done] Task 5.6 COMPLETE - Playbook-aligned server-template deployment checklist documented and cohort env baseline updated (`COHORT_ID`) for 30-minute future-cohort spin-up (2026-02-20).
+- `5.7` Production deployment + go-live checklist -> `_bmad-output/cohort-design-artifacts/task-notes/5.7.md`
+  Summary: [done] Task 5.7 COMPLETE - Railway production deployment is live and stabilized, credential handoff finalized, invite + launch announcement posted, and go/no-go set to GO (2026-02-20).

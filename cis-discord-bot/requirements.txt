@@ -10,6 +10,7 @@ python-dotenv==1.0.0
 # Async HTTP (required by discord.py)
 aiohttp==3.9.1
 httpx==0.27.2
+pytz==2024.1
 
 # Database
 # (Using sqlite3 - built into Python 3.10+)

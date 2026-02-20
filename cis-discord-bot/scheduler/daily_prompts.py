@@ -7,6 +7,7 @@ Loads and parses the daily-prompt-library.md file for automated posting.
 
 from dataclasses import dataclass
 from enum import Enum
+import os
 from pathlib import Path
 from typing import List, Optional
 import re
@@ -71,15 +72,24 @@ class DailyPromptLibrary:
             library_path: Path to daily-prompt-library.md. If None, uses default.
         """
         if library_path is None:
-            project_root = Path(__file__).resolve().parent.parent.parent
-            library_path = (
-                project_root
-                / "_bmad-output"
-                / "cohort-design-artifacts"
-                / "playbook-v2"
-                / "03-sessions"
-                / "daily-prompt-library.md"
-            )
+            env_override = os.getenv("DAILY_PROMPT_LIBRARY_PATH", "").strip()
+            if env_override:
+                library_path = env_override
+            else:
+                project_root = Path(__file__).resolve().parent.parent.parent
+                candidate_paths = [
+                    project_root
+                    / "_bmad-output"
+                    / "cohort-design-artifacts"
+                    / "playbook-v2"
+                    / "03-sessions"
+                    / "daily-prompt-library.md",
+                    Path(__file__).resolve().parent / "daily-prompt-library.md",
+                ]
+                library_path = next(
+                    (path for path in candidate_paths if path.exists()),
+                    candidate_paths[0],
+                )
 
         self.library_path = Path(library_path)
         self.prompts: dict[tuple[int, WeekDay], DailyPrompt] = {}
