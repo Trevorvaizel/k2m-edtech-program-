@@ -5,7 +5,7 @@ Story 2.4 Implementation: 4-Level Escalation System
 Test coverage for:
 - Level 1 (Yellow): Bot auto-nudge (1 day no post)
 - Level 2 (Orange): Trevor alert (3+ days stuck)
-- Level 3 (Red): Trevor DM (7+ days stuck)
+- Level 3 (Red): Trevor notified to DM student (7+ days stuck)
 - Level 4 (Crisis): Instant Trevor DM (SafetyFilter integration)
 - Database logging
 - Trevor dashboard notifications
@@ -134,15 +134,11 @@ class TestLevel3Escalation:
 
     @pytest.mark.asyncio
     async def test_level_3_trevor_dm(self, escalation_system, mock_bot, mock_store):
-        """Test Level 3 sends DM to Trevor and student."""
+        """Test Level 3 sends DM to Trevor for human-led outreach."""
         # Setup mocks
         trevor = Mock()
         trevor.send = AsyncMock()
         mock_bot.fetch_user.return_value = trevor
-
-        student = Mock()
-        student.send = AsyncMock()
-        mock_bot.fetch_user.side_effect = [trevor, student]
 
         logs_channel = Mock()
         logs_channel.send = AsyncMock()
@@ -167,26 +163,16 @@ class TestLevel3Escalation:
         assert "RED FLAG" in trevor_message
         assert "test_student" in trevor_message
 
-        # Verify student nudged
-        assert student.send.called
-        student_message = student.send.call_args[0][0]
-        assert "test_student" in student_message
+        # Trevor is the only DM target for level 3.
+        mock_bot.fetch_user.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_level_3_handles_student_dm_disabled(self, escalation_system, mock_bot, mock_store):
-        """Test Level 3 continues if student DMs disabled."""
+    async def test_level_3_logs_to_moderation(self, escalation_system, mock_bot, mock_store):
+        """Test Level 3 logs moderation event after notifying Trevor."""
         # Setup mocks
         trevor = Mock()
         trevor.send = AsyncMock()
-        student = Mock()
-        student.send = AsyncMock()
-        mock_bot.fetch_user.side_effect = [trevor, student]
-
-        import discord
-        response = Mock()
-        response.status = 403
-        response.reason = "Forbidden"
-        student.send.side_effect = discord.Forbidden(response, "DMs disabled")
+        mock_bot.fetch_user.return_value = trevor
 
         logs_channel = Mock()
         logs_channel.send = AsyncMock()
@@ -205,8 +191,9 @@ class TestLevel3Escalation:
             emotional_state="disengaged"
         )
 
-        # Verify Trevor still notified
+        # Verify Trevor notified and moderation log emitted.
         assert trevor.send.called
+        assert logs_channel.send.called
 
 
 class TestLevel4Crisis:
@@ -294,8 +281,8 @@ class TestEscalationChecks:
 
         # First query: get all students
         cursor.fetchall.side_effect = [
-            [("111", "student1", "zone_1", "curious"),
-             ("222", "student2", "zone_2", "stuck")]
+            [("111", "zone_1", "curious"),
+             ("222", "zone_2", "stuck")]
         ]
 
         # Second query: get last post date

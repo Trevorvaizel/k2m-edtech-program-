@@ -97,7 +97,7 @@ class EscalationSystem:
             # Get all students in current cohort
             cursor.execute(
                 """
-                SELECT s.discord_id, s.username, s.zone, s.emotional_state
+                SELECT s.discord_id, s.zone, s.emotional_state
                 FROM students s
                 WHERE s.current_week = ?
                 """,
@@ -105,13 +105,23 @@ class EscalationSystem:
             )
             students = cursor.fetchall()
 
-            for discord_id, username, zone, emotional_state in students:
+            for discord_id, zone, emotional_state in students:
+                username = self._student_label(discord_id)
                 await self._check_student_escalation(
                     discord_id, username, zone, emotional_state, current_week
                 )
 
         except Exception as e:
             logger.error(f"Error checking escalations: {e}", exc_info=True)
+
+    def _student_label(self, discord_id: str) -> str:
+        """
+        Build a stable student identifier for human-facing escalation messages.
+
+        We only persist Discord IDs in the current students schema, so use
+        mention format as the canonical label.
+        """
+        return f"<@{discord_id}>"
 
     async def _check_student_escalation(
         self,
@@ -256,7 +266,7 @@ class EscalationSystem:
             # Create alert message
             message = (
                 f"⚠️ **ORANGE FLAG** - Student stuck 3+ days\n\n"
-                f"**Student:** @{username} (ID: {discord_id})\n"
+                f"**Student:** {username} (ID: {discord_id})\n"
                 f"**Days since last post:** {days_since_post}\n"
                 f"**Zone:** {zone}\n"
                 f"**Emotional state:** {emotional_state}\n\n"
@@ -275,10 +285,10 @@ class EscalationSystem:
 
             # Log to moderation-logs
             await self._log_to_moderation_channel(
-                f"**ORANGE FLAG** - @{username} stuck {days_since_post} days"
+                f"**ORANGE FLAG** - {username} stuck {days_since_post} days"
             )
 
-            logger.info(f"Level 2 escalation sent for @{username}")
+            logger.info(f"Level 2 escalation sent for {username}")
 
         except Exception as e:
             logger.error(f"Error sending Level 2 escalation for {username}: {e}", exc_info=True)
@@ -292,7 +302,7 @@ class EscalationSystem:
         emotional_state: str
     ):
         """
-        Level 3 (Red Flag): Send DM to Trevor and DM student.
+        Level 3 (Red Flag): Notify Trevor for direct human outreach.
 
         Trevor reaches out within 24 hours. Student is at risk of dropping out.
 
@@ -310,13 +320,13 @@ class EscalationSystem:
             # Create Trevor DM message
             trevor_message = (
                 f"🚨 **RED FLAG** - Immediate outreach needed\n\n"
-                f"**Student:** @{username} (ID: {discord_id})\n"
+                f"**Student:** {username} (ID: {discord_id})\n"
                 f"**Days since last post:** {days_since_post}\n"
                 f"**Zone:** {zone}\n"
                 f"**Emotional state:** {emotional_state}\n\n"
                 f"**Action needed:** Trevor DM student within 24 hours.\n\n"
                 f"**Template:**\n"
-                f"\"Hey @{username}, haven't seen you in Discord this week. Everything okay?\n"
+                f"\"Hey {username}, haven't seen you in Discord this week. Everything okay?\n"
                 f"You don't have to post, just wanted to check in.\"\n\n"
                 f"If no response in 48 hours, offer phone call.\n\n"
                 f"_Escalated at: {datetime.now(EAT).strftime('%Y-%m-%d %H:%M')} EAT_"
@@ -324,19 +334,6 @@ class EscalationSystem:
 
             await trevor.send(trevor_message)
 
-            # Also DM student (gentle check-in)
-            try:
-                user = await self.bot.fetch_user(int(discord_id))
-                student_message = (
-                    f"Hey @{username}! 👋\n\n"
-                    f"Haven't seen you in the cohort channels for {days_since_post} days. "
-                    f"Just wanted to check in - everything okay?\n\n"
-                    f"No pressure to post. If something's getting in the way, "
-                    f"I'm here to help troubleshoot. 💪"
-                )
-                await user.send(student_message)
-            except discord.Forbidden:
-                logger.warning(f"Cannot send DM to {username} (DMs disabled)")
 
             # Log to database
             await self._log_escalation(
@@ -346,10 +343,10 @@ class EscalationSystem:
 
             # Log to moderation-logs
             await self._log_to_moderation_channel(
-                f"**RED FLAG** - @{username} stuck {days_since_post} days (Trevor notified)"
+                f"**RED FLAG** - {username} stuck {days_since_post} days (Trevor notified)"
             )
 
-            logger.info(f"Level 3 escalation sent for @{username}")
+            logger.info(f"Level 3 escalation sent for {username}")
 
         except Exception as e:
             logger.error(f"Error sending Level 3 escalation for {username}: {e}", exc_info=True)
@@ -386,7 +383,7 @@ class EscalationSystem:
             # Create crisis alert message
             crisis_message = (
                 f"🚨🚨 **LEVEL 4 CRISIS** - IMMEDIATE ACTION REQUIRED 🚨🚨\n\n"
-                f"**Student:** @{username} (ID: {discord_id})\n"
+                f"**Student:** {username} (ID: {discord_id})\n"
                 f"**Crisis type:** {crisis_type}\n"
                 f"**Zone:** {zone}\n"
                 f"**Emotional state:** {emotional_state}\n\n"
@@ -416,10 +413,10 @@ class EscalationSystem:
 
             # Log to moderation-logs
             await self._log_to_moderation_channel(
-                f"**CRISIS** - @{username} {crisis_type} (Trevor notified immediately)"
+                f"**CRISIS** - {username} {crisis_type} (Trevor notified immediately)"
             )
 
-            logger.critical(f"Level 4 crisis escalation sent for @{username}: {crisis_type}")
+            logger.critical(f"Level 4 crisis escalation sent for {username}: {crisis_type}")
 
         except Exception as e:
             logger.error(f"Error sending Level 4 crisis escalation for {username}: {e}", exc_info=True)
