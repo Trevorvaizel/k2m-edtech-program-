@@ -69,3 +69,9 @@
   Summary: ✅ Task 5.2 COMPLETE - Deterministic Week 1 journey e2e coverage added with full-suite verification (2026-02-20).
 - `5.3` End-to-end test: CIS agent graduated introduction -> `_bmad-output/cohort-design-artifacts/task-notes/5.3.md`
   Summary: ✅ Task 5.3 COMPLETE - Week 1 lockouts, Week 4/6 unlock announcements, and full artifact publish/celebration/badge flow validated (2026-02-20).
+- `5.4` Safety and crisis protocol test -> `_bmad-output/cohort-design-artifacts/task-notes/5.4.md`
+  Summary: [done] Task 5.4 COMPLETE - Deterministic safety/crisis/escalation/privacy e2e coverage added and escalation schema drift fixed (2026-02-20).
+- `5.5` Performance and cost validation -> `_bmad-output/cohort-design-artifacts/task-notes/5.5.md`
+  Summary: [done] Task 5.5 COMPLETE - Deterministic SLA/load/cost/backup/health validation coverage added (2026-02-20).
+- `5.6` Create server template for future cohorts -> `_bmad-output/cohort-design-artifacts/task-notes/5.6.md`
+  Summary: [done] Task 5.6 COMPLETE - Playbook-aligned server-template deployment checklist documented and cohort env baseline updated (`COHORT_ID`) for 30-minute future-cohort spin-up (2026-02-20).
