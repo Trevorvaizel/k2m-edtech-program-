@@ -45,11 +45,11 @@ source_documents:
 # ============================================================
 progress:
   total_tasks: 49
-  done: 26
+  done: 28
   in_progress: 0
   blocked: 0
-  pending: 22
-  percent_complete: 53
+  pending: 20
+  percent_complete: 57
 
 # ============================================================
 # SPRINT 0: AUTOMATED DISCORD SERVER SETUP
@@ -569,7 +569,7 @@ sprint_4:
   tasks:
     - id: "4.1"
       title: "Implement /create-artifact command"
-      status: "pending"
+      status: "done"
       description: |
         Per Story 4.6:
         - /create-artifact command available Week 6+
@@ -584,6 +584,8 @@ sprint_4:
         also_load: "source_documents.bot_technical_spec"
         section: "Artifact Creation Flow Implementation"
       acceptance: "/create-artifact creates DM workspace, 6 sections trackable, save/resume works, stuck interventions fire"
+      summary: "✅ Task 4.1 COMPLETE - /create-artifact flow now fully aligned to Story 4.6 with working edit pipeline, proactive inactivity nudges, week-6 gating, DM privacy, and test coverage (2026-02-20)."
+      notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/4.1.md"
 
     - id: "4.2"
       title: "Implement #thinking-showcase publication + celebration"
@@ -732,7 +734,7 @@ sprint_5:
   tasks:
     - id: "5.1"
       title: "Finalize manual SOPs against live bot"
-      status: "pending"
+      status: "done"
       description: |
         Review Story 5.6 SOPs against actual bot behavior:
         - Pre-cohort SOPs (diagnostic review, roster setup, cluster verify, session schedule)
@@ -745,6 +747,8 @@ sprint_5:
       agent_context:
         load: "source_documents.manual_sops"
       acceptance: "All SOPs validated against live bot. Any gaps identified and fixed."
+      summary: "✅ Task 5.1 COMPLETE - Manual SOPs reconciled to live bot runtime (scheduler cadence, escalation triggers, crisis path, and live-session operations) with verification on 2026-02-20."
+      notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/5.1.md"
 
     - id: "5.2"
       title: "End-to-end test: Full Week 1 student journey"
@@ -866,5 +870,5 @@ agent_instructions: |
 
 # Last Updated
 last_updated: "2026-02-20"
-updated_by: "Dev Agent (Amelia) - Task 4.5 hardened to full playbook compliance (in-memory DB backup mode, real provider API health probe, exponential backoff, instant runtime outage alerts, reconnect-safe lifecycle) and validated with full test suite (470 passing)."
+updated_by: "Dev Agent (Amelia) - Task 5.1 complete: manual SOPs reconciled to live bot runtime (scheduler cadence, escalation triggers, crisis path, and live-session operations) with targeted verification."
 

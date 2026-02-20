@@ -97,6 +97,7 @@ class DailyPromptScheduler:
         self._reflection_summary_today = False  # Task 2.6: Friday 5 PM reflection summary
         self._spot_check_today = False  # Task 2.6: Friday 5 PM spot-check list
         self._agent_unlock_today = False  # Task 3.4: Agent unlock announcements
+        self._artifact_inactivity_nudges_today = False  # Task 4.1: proactive artifact nudges
         self._weekly_artifact_celebration_today = False  # Task 4.2
         self._weekly_parent_emails_today = False  # Task 4.6: Monday weekly parent updates
         self._week8_parent_reports_today = False  # Task 4.6: Week 8 Friday parent report batch
@@ -792,6 +793,20 @@ class DailyPromptScheduler:
         finally:
             self._weekly_artifact_celebration_today = True
 
+    async def post_artifact_inactivity_nudges(self):
+        """
+        Send daily proactive artifact nudges for inactive students (Task 4.1).
+        """
+        from commands.artifact import send_artifact_inactivity_nudges
+
+        try:
+            sent_count = await send_artifact_inactivity_nudges(self.bot, inactive_days=3)
+            logger.info("Artifact inactivity nudge run complete: sent=%s", sent_count)
+        except Exception as exc:
+            logger.error("Failed artifact inactivity nudge run: %s", exc, exc_info=True)
+        finally:
+            self._artifact_inactivity_nudges_today = True
+
     async def _send_public_message(self, channel, message_text: str):
         """Route student-facing public posts through Guardrail #3 safety checks."""
         await post_to_discord_safe(
@@ -938,6 +953,7 @@ class DailyPromptScheduler:
             self._reflection_summary_today = False  # Task 2.6
             self._spot_check_today = False  # Task 2.6
             self._agent_unlock_today = False  # Task 3.4
+            self._artifact_inactivity_nudges_today = False  # Task 4.1
             self._weekly_artifact_celebration_today = False  # Task 4.2
             self._weekly_parent_emails_today = False  # Task 4.6
             self._week8_parent_reports_today = False  # Task 4.6
@@ -984,6 +1000,15 @@ class DailyPromptScheduler:
                 logger.info("Scheduled: 10:00 AM escalation check")
                 await self.escalation_system.check_escalations(week)
                 self._escalations_checked_today = True
+
+        # 10:05 AM EAT - Proactive artifact inactivity nudges (Task 4.1)
+        if (
+            current_time.hour == 10
+            and current_time.minute == 5
+            and not self._artifact_inactivity_nudges_today
+        ):
+            logger.info("Scheduled: 10:05 AM artifact inactivity nudges")
+            await self.post_artifact_inactivity_nudges()
 
         # 12:00 PM EAT Saturday - Batch unlock next week (Task 2.5)
         if current_time.hour == 12 and current_time.minute == 0 and day == WeekDay.SATURDAY and not self._week_unlock_today:

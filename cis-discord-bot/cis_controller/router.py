@@ -45,6 +45,7 @@ CONTROLLED_COMMANDS = {
     "create-artifact",
     "save",
     "review",
+    "edit",
     "publish",
 }
 
@@ -86,6 +87,7 @@ UNLOCK_SCHEDULE = {
     "create-artifact": 6,
     "save": 6,
     "review": 6,
+    "edit": 6,
     "publish": 6,
 }
 
@@ -96,9 +98,9 @@ AGENTS_BY_WEEK = {
     3: ["frame"],
     4: ["frame", "diverge", "challenge"],
     5: ["frame", "diverge", "challenge"],
-    6: ["frame", "diverge", "challenge", "synthesize", "create-artifact", "save", "review", "publish"],
-    7: ["frame", "diverge", "challenge", "synthesize", "create-artifact", "save", "review", "publish"],
-    8: ["frame", "diverge", "challenge", "synthesize", "create-artifact", "save", "review", "publish"],
+    6: ["frame", "diverge", "challenge", "synthesize", "create-artifact", "save", "review", "edit", "publish"],
+    7: ["frame", "diverge", "challenge", "synthesize", "create-artifact", "save", "review", "edit", "publish"],
+    8: ["frame", "diverge", "challenge", "synthesize", "create-artifact", "save", "review", "edit", "publish"],
 }
 
 
@@ -323,7 +325,7 @@ async def route_student_interaction(message: discord.Message, bot=None):
         if command in BYPASS_CONTROLLER_COMMANDS:
             return
 
-        await handle_command(response_message, student, command)
+        await handle_command(response_message, student, command, trailing)
     else:
         # Handle pending showcase share decisions in DM before NL intent suggestions.
         if isinstance(message.channel, discord.DMChannel):
@@ -391,7 +393,12 @@ async def route_student_interaction(message: discord.Message, bot=None):
         await suggest_explicit_command(response_message, student)
 
 
-async def handle_command(message: discord.Message, student, command: str):
+async def handle_command(
+    message: discord.Message,
+    student,
+    command: str,
+    command_args: str = "",
+):
     """
     Route command to appropriate handler with temporal awareness check.
 
@@ -402,6 +409,7 @@ async def handle_command(message: discord.Message, student, command: str):
         message: Discord message
         student: Student database row
         command: Command name (frame, diverge, challenge, synthesize, create-artifact)
+        command_args: Optional trailing command arguments
     """
     try:
         current_week = int(student['current_week'])
@@ -448,9 +456,9 @@ async def handle_command(message: discord.Message, student, command: str):
             from commands.artifact import handle_create_artifact
             await handle_create_artifact(message, student)
 
-        elif command in {'save', 'review', 'publish'}:
+        elif command in {'save', 'review', 'edit', 'publish'}:
             from commands.artifact import handle_artifact_commands
-            await handle_artifact_commands(message, student, command)
+            await handle_artifact_commands(message, student, command, command_args)
 
         # Some handlers already own lifecycle persistence to avoid double-counting.
         if command not in SELF_MANAGED_COMMANDS:
@@ -482,10 +490,10 @@ def is_agent_unlocked(agent: str, current_week: int) -> bool:
     Week-based agent unlock schedule:
       Week 1:   /frame
       Week 4+:  /frame, /diverge, /challenge
-      Week 6+:  all agents + /synthesize + /create-artifact
+      Week 6+:  all agents + /synthesize + /create-artifact (+ artifact workflow commands)
 
     Args:
-        agent: Command name (frame, diverge, challenge, synthesize, create-artifact, save, review, publish)
+        agent: Command name (frame, diverge, challenge, synthesize, create-artifact, save, review, edit, publish)
         current_week: Student's current cohort week (1-8)
 
     Returns:

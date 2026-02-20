@@ -19,6 +19,11 @@ class _FakeArtifactProgress:
     def __init__(self, next_section: int, inactive_days: int = 0):
         self._next_section = next_section
         self._inactive_days = inactive_days
+        if next_section <= 0:
+            completed_count = 6
+        else:
+            completed_count = max(next_section - 1, 0)
+        self.completed_sections = [f"section_{idx}" for idx in range(1, completed_count + 1)]
 
     def get_next_section(self) -> int:
         return self._next_section
@@ -28,6 +33,13 @@ class _FakeArtifactProgress:
 
     def is_complete(self) -> bool:
         return self._next_section == 0
+
+
+@pytest.fixture(autouse=True)
+def _clear_pending_edit_state():
+    artifact._PENDING_SECTION_EDITS.clear()
+    yield
+    artifact._PENDING_SECTION_EDITS.clear()
 
 
 @pytest.mark.asyncio
@@ -109,6 +121,55 @@ async def test_continue_sends_stuck_nudge_and_prompt():
 
 
 @pytest.mark.asyncio
+async def test_edit_section_sets_pending_state_and_prompts():
+    message = Mock(spec=discord.Message)
+    message.content = "edit section 4"
+    message.author = Mock()
+    message.author.id = 33334
+    message.reply = AsyncMock()
+    student = {"current_week": 6}
+
+    with patch.object(
+        artifact.store,
+        "get_artifact_progress_row",
+        return_value={"status": "completed"},
+    ):
+        handled = await artifact.handle_artifact_text_input(message, student)
+
+    assert handled is True
+    assert artifact._PENDING_SECTION_EDITS["33334"] == 4
+    payload = message.reply.await_args_list[0].args[0]
+    assert "Editing Section 4" in payload
+
+
+@pytest.mark.asyncio
+async def test_pending_edit_message_updates_requested_section():
+    message = Mock(spec=discord.Message)
+    message.content = "Rewritten content for section 4"
+    message.author = Mock()
+    message.author.id = 33335
+    message.reply = AsyncMock()
+    student = {"current_week": 6}
+    artifact._PENDING_SECTION_EDITS["33335"] = 4
+
+    with patch.object(
+        artifact.store,
+        "get_artifact_progress_row",
+        return_value={"status": "completed"},
+    ), patch.object(
+        artifact.store,
+        "update_artifact_section",
+    ) as mock_update:
+        handled = await artifact.handle_artifact_text_input(message, student)
+
+    assert handled is True
+    mock_update.assert_called_once_with("33335", 4, "Rewritten content for section 4")
+    assert "33335" not in artifact._PENDING_SECTION_EDITS
+    payload = message.reply.await_args_list[0].args[0]
+    assert "Section 4 updated" in payload
+
+
+@pytest.mark.asyncio
 async def test_save_command_persists_last_activity():
     message = Mock(spec=discord.Message)
     message.author = Mock()
@@ -134,6 +195,45 @@ async def test_save_command_persists_last_activity():
     assert progress.last_activity is not None
     mock_save.assert_called_once()
     message.reply.assert_awaited()
+
+
+@pytest.mark.asyncio
+async def test_edit_command_requires_section_argument():
+    message = Mock(spec=discord.Message)
+    message.author = Mock()
+    message.author.id = 44445
+    message.reply = AsyncMock()
+    student = {"current_week": 6}
+
+    with patch.object(
+        artifact.store,
+        "get_artifact_progress_row",
+        return_value={"status": "completed"},
+    ):
+        await artifact.handle_artifact_commands(message, student, "edit", "")
+
+    payload = message.reply.await_args_list[0].args[0]
+    assert "Use `/edit <section-number>`" in payload
+
+
+@pytest.mark.asyncio
+async def test_edit_command_sets_pending_section():
+    message = Mock(spec=discord.Message)
+    message.author = Mock()
+    message.author.id = 44446
+    message.reply = AsyncMock()
+    student = {"current_week": 6}
+
+    with patch.object(
+        artifact.store,
+        "get_artifact_progress_row",
+        return_value={"status": "in_progress"},
+    ):
+        await artifact.handle_artifact_commands(message, student, "edit", "3")
+
+    assert artifact._PENDING_SECTION_EDITS["44446"] == 3
+    payload = message.reply.await_args_list[0].args[0]
+    assert "Editing Section 3" in payload
 
 
 @pytest.mark.asyncio
@@ -299,3 +399,35 @@ async def test_weekly_aggregate_query_excludes_private_visibility():
     assert celebration is None
     query = mock_conn.execute.call_args.args[0]
     assert "visibility_level IN ('public', 'anonymous')" in query
+
+
+@pytest.mark.asyncio
+async def test_send_artifact_inactivity_nudges_sends_only_inactive_students():
+    mock_cursor = Mock()
+    mock_cursor.fetchall.return_value = [
+        {"discord_id": "1001"},
+        {"discord_id": "1002"},
+    ]
+    mock_conn = Mock()
+    mock_conn.execute.return_value = mock_cursor
+    fake_bot = Mock()
+    user = Mock()
+    user.send = AsyncMock()
+    fake_bot.fetch_user = AsyncMock(return_value=user)
+
+    stale_progress = _FakeArtifactProgress(next_section=3, inactive_days=4)
+    fresh_progress = _FakeArtifactProgress(next_section=2, inactive_days=1)
+
+    with patch.object(artifact.store, "conn", mock_conn), patch(
+        "database.models._load_artifact_progress",
+        side_effect=[stale_progress, fresh_progress],
+    ), patch.object(
+        artifact.store,
+        "log_observability_event",
+    ) as mock_log:
+        sent_count = await artifact.send_artifact_inactivity_nudges(fake_bot, inactive_days=3)
+
+    assert sent_count == 1
+    fake_bot.fetch_user.assert_awaited_once_with(1001)
+    user.send.assert_awaited_once()
+    mock_log.assert_called_once()

@@ -472,6 +472,19 @@ class TestCheckAndPostTiming:
         scheduler.post_week8_parent_reports.assert_awaited_once_with(8)
 
     @pytest.mark.asyncio
+    async def test_1005am_runs_artifact_inactivity_nudges(self, scheduler):
+        scheduler.post_artifact_inactivity_nudges = AsyncMock()
+
+        with patch("scheduler.scheduler.datetime") as mock_datetime:
+            mock_datetime.now.return_value = datetime(
+                2026, 2, 2, 10, 5, tzinfo=scheduler.cohort_start_date.tzinfo
+            )
+            with patch.object(scheduler, "get_week_day", return_value=(1, WeekDay.MONDAY)):
+                await scheduler.check_and_post()
+
+        scheduler.post_artifact_inactivity_nudges.assert_awaited_once()
+
+    @pytest.mark.asyncio
     async def test_friday_5pm_runs_dashboard_summaries(self, scheduler):
         scheduler.post_friday_dashboard_summaries = AsyncMock()
         scheduler.post_weekly_artifact_celebration = AsyncMock()

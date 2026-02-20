@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 from unittest.mock import Mock, AsyncMock, MagicMock, patch
 
 from scheduler.scheduler import DailyPromptScheduler
+from scheduler.daily_prompts import WeekDay
 from database.store import StudentStateStore
 
 
@@ -148,6 +149,7 @@ class TestAgentUnlockDatabaseTracking:
         assert "challenge" in week_6_agents
         assert "synthesize" in week_6_agents
         assert "create-artifact" in week_6_agents
+        assert "edit" in week_6_agents
 
     def test_get_announced_agents_no_announcement(self, temp_db):
         """Test get_announced_agents returns empty list when no announcement."""
@@ -428,7 +430,7 @@ class TestAgentUnlockSchedulerIntegration:
         scheduler._last_post_date = (datetime.now() - timedelta(days=1)).date()
 
         # Trigger check_and_post (should reset flags)
-        with patch.object(scheduler, 'get_week_day', return_value=(4, scheduler.library.WeekDay.MONDAY)):
+        with patch.object(scheduler, 'get_week_day', return_value=(4, WeekDay.MONDAY)):
             with patch.object(scheduler, 'get_current_week', return_value=4):
                 await scheduler.check_and_post()
 
@@ -592,6 +594,7 @@ class TestAgentUnlockIntegration:
         # Week 6-8
         assert "synthesize" in temp_db.get_unlocked_agents_for_week(6)
         assert "create-artifact" in temp_db.get_unlocked_agents_for_week(7)
+        assert "edit" in temp_db.get_unlocked_agents_for_week(7)
         assert "synthesize" in temp_db.get_unlocked_agents_for_week(8)
 
     @pytest.mark.asyncio

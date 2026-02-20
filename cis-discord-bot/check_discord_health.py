@@ -57,6 +57,7 @@ REQUIRED_SLASH_COMMANDS = [
     "create-artifact",
     "save",
     "review",
+    "edit",
     "publish",
     "show-aggregate-patterns",
     "inspect-journey",

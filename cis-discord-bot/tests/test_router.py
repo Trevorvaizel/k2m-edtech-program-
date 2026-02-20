@@ -5,7 +5,7 @@ Story 4.7 Implementation
 Tests the temporal awareness and agent unlock schedule (Decision 11):
   Week 1:   /frame only
   Week 4+:  /frame + /diverge + /challenge
-  Week 6+:  all agents + /synthesize + /create-artifact
+  Week 6+:  all agents + /synthesize + /create-artifact + artifact workflow commands
 """
 
 import sys
@@ -111,6 +111,22 @@ class TestCreateArtifactUnlockSchedule:
         assert is_agent_unlocked("create-artifact", 8) is True
 
 
+class TestEditUnlockSchedule:
+    """/edit locked before Week 6, unlocks at Week 6"""
+
+    def test_edit_locked_week_1(self):
+        assert is_agent_unlocked("edit", 1) is False
+
+    def test_edit_locked_week_5(self):
+        assert is_agent_unlocked("edit", 5) is False
+
+    def test_edit_unlocks_week_6(self):
+        assert is_agent_unlocked("edit", 6) is True
+
+    def test_edit_available_week_8(self):
+        assert is_agent_unlocked("edit", 8) is True
+
+
 class TestUnknownCommands:
     """Unknown commands must always be locked"""
 
@@ -129,7 +145,7 @@ class TestWeekBoundaries:
 
     def test_all_agents_available_week_6(self):
         """At Week 6, all 5 commands must be unlocked"""
-        for cmd in ["frame", "diverge", "challenge", "synthesize", "create-artifact"]:
+        for cmd in ["frame", "diverge", "challenge", "synthesize", "create-artifact", "edit"]:
             assert is_agent_unlocked(cmd, 6) is True, f"{cmd} should be unlocked at Week 6"
 
     def test_only_frame_available_week_1(self):

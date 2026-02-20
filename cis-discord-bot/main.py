@@ -113,7 +113,7 @@ def build_status_embed() -> discord.Embed:
         name="Core Commands",
         value=(
             "/frame, /diverge, /challenge, /synthesize, /create-artifact, "
-            "/showcase-preference, /parent-consent"
+            "/save, /review, /edit, /publish, /showcase-preference, /parent-consent"
         ),
         inline=False,
     )
@@ -477,6 +477,12 @@ async def save_slash(interaction: discord.Interaction):
 @bot.tree.command(name="review", description="Artifact workflow command (Week 6+).")
 async def review_slash(interaction: discord.Interaction):
     await route_slash_command(interaction, "review")
+
+
+@bot.tree.command(name="edit", description="Edit one artifact section (Week 6+).")
+@app_commands.describe(section="Section number to edit (1-6).")
+async def edit_slash(interaction: discord.Interaction, section: int):
+    await route_slash_command(interaction, "edit", str(section))
 
 
 @bot.tree.command(name="publish", description="Artifact workflow command (Week 6+).")

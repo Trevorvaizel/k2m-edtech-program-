@@ -1557,7 +1557,7 @@ class StudentStateStore:
         elif week_number <= 5:
             return ["frame", "diverge", "challenge"]
         elif week_number <= 8:
-            return ["frame", "diverge", "challenge", "synthesize", "create-artifact", "save", "review", "publish"]
+            return ["frame", "diverge", "challenge", "synthesize", "create-artifact", "save", "review", "edit", "publish"]
         else:
             return ["frame"]  # Default
 

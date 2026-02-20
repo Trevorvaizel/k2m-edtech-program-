@@ -14,10 +14,14 @@ import discord
 from database.store import StudentStateStore
 from database.models import ArtifactProgress
 from datetime import datetime
-from typing import Optional
+from typing import Dict, Optional
 
 store = StudentStateStore()
 logger = logging.getLogger(__name__)
+
+# Student-level pending edit state for artifact section rewrites.
+# Key: discord_id, Value: section number (1-6).
+_PENDING_SECTION_EDITS: Dict[str, int] = {}
 
 
 # ============================================================
@@ -422,6 +426,24 @@ def _parse_edit_section(content: str) -> Optional[int]:
         return None
 
     section = int(section_raw)
+    if 1 <= section <= 6:
+        return section
+    return None
+
+
+def _parse_section_number_arg(raw_args: str) -> Optional[int]:
+    """Parse `/edit` argument variants such as `3` or `section 3`."""
+    normalized = _normalize_artifact_text(raw_args)
+    if not normalized:
+        return None
+
+    if normalized.startswith("section "):
+        normalized = normalized.replace("section ", "", 1).strip()
+
+    if not normalized.isdigit():
+        return None
+
+    section = int(normalized)
     if 1 <= section <= 6:
         return section
     return None
@@ -841,14 +863,20 @@ Before publishing, review your artifact:
     await message.reply(formatted)
 
 
-async def handle_artifact_commands(message: discord.Message, student, command: str) -> None:
+async def handle_artifact_commands(
+    message: discord.Message,
+    student,
+    command: str,
+    command_args: str = "",
+) -> None:
     """
-    Handle artifact sub-commands: save, review, publish.
+    Handle artifact sub-commands: save, review, edit, publish.
 
     Args:
         message: Discord message
         student: Student database row
-        command: Sub-command name (save, review, publish)
+        command: Sub-command name (save, review, edit, publish)
+        command_args: Optional argument text after slash command
     """
     discord_id = str(message.author.id)
 
@@ -875,6 +903,33 @@ async def handle_artifact_commands(message: discord.Message, student, command: s
             await show_artifact_review(message, artifact_row)
         else:
             await message.reply("You haven't started an artifact yet. Type `/create-artifact` to begin.")
+
+    elif command == 'edit':
+        artifact_row = store.get_artifact_progress_row(discord_id)
+        if not artifact_row:
+            await message.reply("You haven't started an artifact yet. Type `/create-artifact` to begin.")
+            return
+
+        if artifact_row["status"] == "published":
+            await message.reply(
+                "This artifact is already published. Create a new artifact cycle to make post-publication edits."
+            )
+            return
+
+        section_number = _parse_section_number_arg(command_args)
+        if section_number is None:
+            await message.reply(
+                "Use `/edit <section-number>` or `/edit section <section-number>`.\n"
+                "Example: `/edit 3`"
+            )
+            return
+
+        _PENDING_SECTION_EDITS[discord_id] = section_number
+        await message.reply(
+            f"**Editing Section {section_number}**\n\n"
+            "Paste your new version in your next message.\n"
+            "Type **cancel** to abort."
+        )
 
     elif command == 'publish':
         if student['current_week'] < 8:
@@ -1326,9 +1381,50 @@ async def handle_artifact_text_input(message: discord.Message, student, bot=None
     discord_id = str(message.author.id)
     artifact_row = store.get_artifact_progress_row(discord_id)
 
+    # Pending `/edit` or `edit section N` writeback.
+    pending_section = _PENDING_SECTION_EDITS.get(discord_id)
+    if pending_section is not None:
+        if normalized == "cancel":
+            _PENDING_SECTION_EDITS.pop(discord_id, None)
+            await message.reply("Edit canceled. Type **review** to continue polishing.")
+            return True
+
+        if not artifact_row:
+            _PENDING_SECTION_EDITS.pop(discord_id, None)
+            await message.reply("No active artifact found. Type `/create-artifact` to begin again.")
+            return True
+
+        store.update_artifact_section(discord_id, pending_section, content)
+        _PENDING_SECTION_EDITS.pop(discord_id, None)
+        await message.reply(
+            f"✅ **Section {pending_section} updated!** Type **review** to inspect your artifact."
+        )
+        return True
+
     # Allow text variants of sub-commands in DM.
     if artifact_row and normalized in {"save", "review", "publish"}:
         await handle_artifact_commands(message, student, normalized)
+        return True
+
+    # Allow plain-text edit command in DM (week 6+ workflow).
+    edit_section = _parse_edit_section(content)
+    if edit_section is not None:
+        if artifact_row is None:
+            await message.reply("You haven't started an artifact yet. Type `/create-artifact` to begin.")
+            return True
+        if artifact_row["status"] == "published":
+            await message.reply("This artifact is already published and cannot be edited in place.")
+            return True
+        if artifact_row["status"] not in {"in_progress", "completed"}:
+            await message.reply("Start your artifact first with `/create-artifact`.")
+            return True
+
+        _PENDING_SECTION_EDITS[discord_id] = edit_section
+        await message.reply(
+            f"**Editing Section {edit_section}**\n\n"
+            "Paste your updated text in your next message.\n"
+            "Type **cancel** to abort."
+        )
         return True
 
     # Task 4.2: Handle publication confirmation commands
@@ -1397,13 +1493,6 @@ async def handle_artifact_text_input(message: discord.Message, student, bot=None
             await message.reply(_get_next_section_prompt(artifact_progress.get_next_section()))
             return True
 
-        edit_section = _parse_edit_section(content)
-        if edit_section is not None:
-            await message.reply(
-                f"Paste your updated text for **Section {edit_section}** in your next message."
-            )
-            return True
-
         next_section = artifact_progress.get_next_section()
         if next_section == 1:
             await handle_section_1_input(message, content)
@@ -1427,3 +1516,73 @@ async def handle_artifact_text_input(message: discord.Message, student, bot=None
         return True
 
     return False
+
+
+async def send_artifact_inactivity_nudges(bot, inactive_days: int = 3) -> int:
+    """
+    Send proactive DM nudges for students inactive in artifact flow.
+
+    Story 4.6 expects background reminder nudges during Weeks 6-8.
+
+    Args:
+        bot: Discord bot instance (for user lookup + DM send)
+        inactive_days: Minimum inactivity days before nudging
+
+    Returns:
+        Number of nudges successfully sent
+    """
+    from database.models import _load_artifact_progress
+
+    cursor = store.conn.execute(
+        """
+        SELECT s.discord_id
+        FROM students s
+        JOIN artifact_progress ap ON ap.student_id = s.discord_id
+        WHERE s.current_week IN (6, 7, 8)
+          AND ap.status = 'in_progress'
+        """
+    )
+    rows = cursor.fetchall()
+    sent_count = 0
+
+    for row in rows:
+        discord_id = str(row["discord_id"])
+        artifact_progress = _load_artifact_progress(store.conn, discord_id)
+        days_inactive = artifact_progress.days_since_activity()
+
+        if days_inactive < inactive_days:
+            continue
+
+        next_section = artifact_progress.get_next_section()
+        completed_count = len(artifact_progress.completed_sections)
+        targeted_nudge = _build_stuck_pattern_nudge(artifact_progress, force=True) or ""
+
+        reminder_text = (
+            "📝 **Thinking Artifact Reminder**\n\n"
+            f"You've completed **{completed_count}/6** sections.\n"
+            f"It's been **{days_inactive} day(s)** since your last artifact update.\n\n"
+            "No pressure. Small progress counts.\n"
+            "Type **continue** to resume your next section, **review** to inspect your draft, or **help** for support.\n\n"
+            f"{targeted_nudge}"
+        ).strip()
+
+        try:
+            user = await bot.fetch_user(int(discord_id))
+            await user.send(reminder_text)
+            sent_count += 1
+            try:
+                store.log_observability_event(
+                    discord_id,
+                    "artifact_stuck_nudge_sent",
+                    {
+                        "days_inactive": days_inactive,
+                        "next_section": next_section,
+                        "completed_sections": completed_count,
+                    },
+                )
+            except Exception:
+                logger.warning("Failed to log artifact nudge event for %s", discord_id)
+        except Exception as exc:
+            logger.warning("Failed artifact inactivity nudge for %s: %s", discord_id, exc)
+
+    return sent_count
