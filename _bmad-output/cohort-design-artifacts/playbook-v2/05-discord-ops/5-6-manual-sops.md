@@ -20,7 +20,7 @@ so that **Trevor can execute Cohort 1 efficiently within the 10% time budget (10
 
 1. **Pre-Cohort SOPs** with complete workflows for diagnostic review, student roster setup, cluster assignment, and live session scheduling (enabling Trevor's pre-cohort 10% work)
 2. **Daily & Weekly Monitoring SOPs** specifying 5-minute morning scan, weekly setup routine, engagement monitoring, and culture checks with exact time budgets
-3. **Intervention Escalation SOPs** documenting Level 1-4 protocols (bot nudge → Trevor DM → direct call → crisis intervention) with decision trees and response time requirements
+3. **Intervention Escalation SOPs** documenting Level 1-4 protocols (bot nudge â†’ Trevor DM â†’ direct call â†’ crisis intervention) with decision trees and response time requirements
 4. **Crisis Management SOPs** providing step-by-step crisis detection, assessment, parent notification, Kenya resource referral, and post-crisis follow-up workflows
 5. **Communication Template Library** containing message scripts for all scenarios (DMs, calls, emails, Discord announcements) with Guardrail-compliant language
 6. **Live Session SOPs** specifying preparation, delivery, and follow-up workflows with participation strategies, celebration frameworks, and time management
@@ -50,7 +50,7 @@ so that **Trevor can execute Cohort 1 efficiently within the 10% time budget (10
   - [ ] 3.2 Level 2: Trevor DM workflow (trigger, script, escalation timing)
   - [ ] 3.3 Level 3: Direct call workflow (trigger, script, conversation framework, outcome logging)
   - [ ] 3.4 Level 4: Crisis intervention workflow (detection, assessment, parent notification, Kenya resources)
-  - [ ] 3.5 Escalation decision tree (when to move Level 1→2→3→4, red flags, de-escalation)
+  - [ ] 3.5 Escalation decision tree (when to move Level 1â†’2â†’3â†’4, red flags, de-escalation)
 
 - [ ] **4. Create Crisis Management SOPs** (AC: #4)
   - [ ] 4.1 Crisis detection workflow (SafetyFilter flags, keyword monitoring, emotional escalation)
@@ -100,7 +100,7 @@ They enable:
 **Decision 1 (Agent-Facilitated Model):**
 - Agents handle 90% (automated prompts, tracking, nudges, CIS conversations)
 - Trevor handles 10% (these manual SOPs)
-- Clear handoff: Agent automation → Human oversight (when escalation triggers)
+- Clear handoff: Agent automation â†’ Human oversight (when escalation triggers)
 
 **Decision 2 (90/10 Hybrid Model):**
 - Trevor's 10% = 10-18 hours/week (typical: 10-12, high-need: up to 18, not 14+ hours like human facilitators)
@@ -235,25 +235,25 @@ They enable:
 - [ ] Create "K2M Cohort #[X] - Progress Dashboard" (copy Story 5.5 Template 4)
 - [ ] Set sharing: Trevor only (private)
 - [ ] Enable revision history (for audit trail)
-- [ ] Test formulas: Submit sample diagnostic → Verify data appears in Student Roster
+- [ ] Test formulas: Submit sample diagnostic â†’ Verify data appears in Student Roster
 
 **Time Budget:** 30 minutes
 
-### Step 2: Connect Google Forms → Student Roster (5 minutes)
+### Step 2: Connect Google Forms â†’ Student Roster (5 minutes)
 
 **Action:** Link diagnostic form (Story 5.4) to Student Roster sheet
 
 **Steps:**
 1. Open Google Forms diagnostic
-2. Click "Responses" → "Link to Sheets"
+2. Click "Responses" â†’ "Link to Sheets"
 3. Select "K2M Cohort #[X] - Student Roster"
-4. Test: Submit sample form → Verify data appears in Student Roster
+4. Test: Submit sample form â†’ Verify data appears in Student Roster
 
 **Time Budget:** 5 minutes
 
 ### Step 3: Review Diagnostic Data (4-5 hours)
 
-**Action:** Trevor reviews all diagnostic responses (200 students × ~1-2 minutes each)
+**Action:** Trevor reviews all diagnostic responses (200 students Ã— ~1-2 minutes each)
 
 **Workflow:**
 
@@ -295,10 +295,10 @@ Many students feel this way. Want to hop on a quick call? I'd love to hear where
 5. **Belonging:** "People like you succeed in this cohort"
 
 **Follow-Up:**
-- If student answers → Success (document in Intervention Tracking)
-- If no answer in 48 hours → Call parent phone number (safety check)
+- If student answers â†’ Success (document in Intervention Tracking)
+- If no answer in 48 hours â†’ Call parent phone number (safety check)
 
-**Time Budget:** 15-30 minutes per student × 5-10 students = 2-3 hours
+**Time Budget:** 15-30 minutes per student Ã— 5-10 students = 2-3 hours
 
 ### Step 5: Assign Clusters (10 minutes)
 
@@ -308,26 +308,27 @@ Many students feel this way. Want to hop on a quick call? I'd love to hear where
 1. Check formula: =IF(UPPER(LEFT(D2,1))<="F", "Cluster 1 (A-F)", ...)
 2. Verify: All 200 students assigned to Cluster 1-4
 3. Check: No cluster >25 students
-4. If unbalanced → Trevor manually adjusts (override formula, create Cluster 5)
+4. If unbalanced â†’ Trevor manually adjusts (override formula, create Cluster 5)
 5. Document cluster overrides in Column AA (Trevor Review Notes)
 
 **Time Budget:** 10 minutes
 
 ### Step 6: Prepare Live Session Schedule (30 minutes)
 
-**Action:** Schedule 1-hour live sessions (3 sessions/week, 8 clusters)
+**Action:** Confirm 1-hour live sessions (3 session days/week, 8 clusters) using live bot schedule
 
-**Schedule Template:**
-- Cluster 1 (A-F): Mondays 6 PM EAT
-- Cluster 2 (G-L): Tuesdays 6 PM EAT
-- Cluster 3 (M-R): Wednesdays 6 PM EAT
-- Cluster 4 (S-Z): Thursdays 6 PM EAT
-- If Cluster 5 needed: Fridays 6 PM EAT
+**Live Bot Default Schedule (from ClusterSessionScheduler):**
+- Monday 6 PM EAT: Cluster 1 (A-F), Cluster 4 (S-Z), Cluster 7 (M-R overflow)
+- Wednesday 6 PM EAT: Cluster 2 (G-L), Cluster 5 (A-F overflow), Cluster 8 (S-Z overflow)
+- Friday 6 PM EAT: Cluster 3 (M-R), Cluster 6 (G-L overflow)
 
 **Steps:**
-1. Add schedule to Discord #announcements channel
-2. Set calendar reminders (Trevor's calendar)
-3. Create recurring events (Weeks 1-8)
+1. Post cluster day/time map in Discord `#announcements`
+2. Set calendar reminders for all active cluster sessions (Weeks 1-8)
+3. Confirm bot automation cadence:
+   - 24-hour announcement at 6:00 PM EAT (day before)
+   - 1-hour reminder + voice channel open at 5:00 PM EAT
+   - Voice channel cleanup at 8:00 PM EAT
 4. Add session focus to each event (from Epic 2 weekly design)
 
 **Time Budget:** 30 minutes
@@ -340,30 +341,30 @@ Many students feel this way. Want to hop on a quick call? I'd love to hear where
 
 **Time Budget:** 10-18 hours/week (typical: 10-12, high-need weeks with crises: up to 18)
 
-### Daily: 10-15 Minute Morning Scan (Monday-Friday)
+### Daily: 5-Minute Morning Scan (Monday-Friday)
 
-**Time:** 9:00 AM EAT (or Trevor's preferred time)
-**Duration:** 10-15 minutes (realistic)
+**Time:** 9:00 AM EAT (after bot posts daily dashboard summary)
+**Duration:** 5 minutes
 
 **Steps:**
 
-1. **Open Submissions Log** (Google Sheets)
-2. **Filter:** Timestamp = YESTERDAY or TODAY
-3. **Sort:** Emotional Tone (descending) → "Crisis Flag" at top
-4. **Scan for:**
-   - Crisis flags (O = "Crisis Flag")
-   - Escalation needs (S = "Yes")
-   - High anxiety (anxiety >= 7 in diagnostic, increased by >=3)
-5. **If crisis flag:**
-   - IMMEDIATE outreach (Level 4 protocol - see SOP 4)
-   - Document in Intervention Tracking
-6. **If escalation needed:**
-   - Schedule in calendar for afternoon
-   - Send Level 2 DM or schedule Level 3 call
-7. **If normal:**
-   - Continue day
+1. **Open #facilitator-dashboard**
+2. **Review 9:00 AM Daily Summary block:**
+   - Engagement count + students not posted today
+   - /frame usage today/this week
+   - Stuck students (3+ days)
+   - API/system health
+3. **Queue interventions from summary:**
+   - If stuck students listed, queue Level 2 outreach for same day
+4. **Check #moderation-logs for safety events (last 24h):**
+   - Guardrail #3 violations
+   - Crisis logs
+5. **If crisis logged:**
+   - Execute Level 4 protocol immediately (SOP 4)
+   - Start 1-hour response window
+6. **Document actions in Intervention Tracking**
 
-**Time Budget:** 10-15 minutes/day × 5 days = 1.25 hours/week
+**Time Budget:** 5 minutes/day x 5 days = 0.42 hours/week
 
 ### Monday: Weekly Setup (30 minutes)
 
@@ -412,62 +413,47 @@ Many students feel this way. Want to hop on a quick call? I'd love to hear where
 
 **Time Budget:** 35 minutes/week
 
-### Tuesday: Preparation for Live Sessions (20 minutes)
+### Live Session Prep Days: Monday, Wednesday, Friday (20 minutes/day)
 
-**Time:** Tuesday afternoon (before Wednesday sessions)
+**Time:** 30-60 minutes before first session block
 
 **Workflow:**
 
-1. **Review Student Roster: Cluster Attendance** (5 minutes)
-   - Filter: Cluster = "Cluster 1 (A-F)"
-   - Check: Who usually attends? Who often misses?
-   - Note: Any high-need students? (crisis flags, Zone 0, high anxiety)
+1. **Review Student Roster: Today's Clusters** (5 minutes)
+   - Filter to clusters scheduled today (per Step 6 schedule)
+   - Check attendance trends + high-need students
 
 2. **Prepare Session Focus** (10 minutes)
-   - From Epic 2 weekly design, identify this week's node focus:
-     - Week 1: Node 0.1 - AI is not sci-fi
-     - Week 2: Node 1.1 - It actually works for MY tasks
-     - Week 3: Node 1.4 - I'm starting to rely on it
-     - Week 4: Node 2.1 - Context changes everything
-     - Week 5: Node 2.4 - We're getting closer together
-     - Week 6: Node 3.1 - First draft is raw material
-     - Week 7: Node 3.4 - I made this
-     - Week 8: Artifact showcase + celebration
+   - Confirm this week's node focus (Epic 2 weekly design)
+   - Prepare 3-5 discussion questions ("What did YOU notice?", "How did that feel?")
 
 3. **Plan Participation** (3 minutes)
-   - Prepare 3-5 questions: "What did YOU notice?" "How did that feel?"
-   - Note students to call on by name (build belonging)
-   - Prepare examples from this week's reflections (anonymize if needed)
+   - Note students to call on by name (belonging + safety)
+   - Prepare reflection examples (anonymized if needed)
 
-4. **Setup** (2 minutes)
-   - Test microphone, camera
-   - Open Discord voice channel
-   - Have reflection notes open (reference brilliant insights)
+4. **A/V + Voice Setup Check** (2 minutes)
+   - Test microphone/camera
+   - Confirm bot posted 1-hour reminder and opened cluster voice channel(s)
 
-**Time Budget:** 20 minutes/week
+**Time Budget:** 1 hour/week (20 minutes x 3 live-session days)
 
-### Wednesday: Live Session Day + Follow-Up (4 hours)
+### Live Session Delivery + Follow-Up: Monday, Wednesday, Friday (3.5-4 hours/week)
 
-**Time:** Wednesday all-day
+**Time:** 5:00 PM-8:30 PM EAT on live-session days
 
 **Workflow:**
 
-1. **Morning: Final Prep** (30 minutes)
-   - Review Cluster 2 and 3 preparation (from Tuesday)
-   - Note high-need students in each cluster
-   - Prepare session focus questions
-
-2. **Afternoon: Host Live Sessions** (3 hours = 3 sessions × 1 hour)
-   - See SOP 6 (Live Session SOPs) for detailed delivery workflow
-   - Take notes: Student observations, brilliant reflections, concerns
-
-3. **Evening: Follow-Up** (30 minutes)
-   - Log attendance in Student Roster (Column AD: Live Session Attendance)
-   - Send celebration DMs (2-3 students who shared something vulnerable)
-   - Send follow-up DMs (absent high-need students)
+1. **5:00 PM EAT (Automated):** Bot posts 1-hour reminders + opens voice channels
+2. **6:00 PM EAT:** Host scheduled live sessions (60 minutes each; up to 3 cluster blocks/week)
+   - See SOP 6 for facilitation flow
+   - Take notes: observations, brilliant reflections, concerns
+3. **8:00 PM EAT (Automated):** Bot cleans up voice channels
+4. **Post-session follow-up (15-30 minutes):**
+   - Run /post-session-summary for each completed cluster session
+   - Send celebration DMs + absent/high-need follow-up DMs
    - Log interventions in Intervention Tracking
 
-**Time Budget:** 4 hours/week
+**Time Budget:** 3.5-4 hours/week
 
 ### Thursday: Mid-Week Check (20 minutes)
 
@@ -479,7 +465,7 @@ Many students feel this way. Want to hop on a quick call? I'd love to hear where
    - Filter: Week = THIS WEEK
 
 2. **Check Engagement Status** (5 minutes)
-   - Pivot: Student ID → Count of posts (Week Total)
+   - Pivot: Student ID â†’ Count of posts (Week Total)
    - Filter: Count of posts = 0 (not posted this week)
 
 3. **Send Level 2 DMs** (10 minutes)
@@ -494,34 +480,29 @@ Many students feel this way. Want to hop on a quick call? I'd love to hear where
 
 ### Friday: Spot-Check Day (45 minutes)
 
-**Time:** Friday afternoon
+**Time:** Friday 5:00 PM EAT (after bot posts dashboard summaries)
 
 **Workflow:**
 
-1. **Open Submissions Log** (5 minutes)
-   - Filter: Post Type = "Friday Reflection" AND Week = THIS WEEK
-   - Sort: Cluster (to ensure diversity across all clusters)
+1. **Open #facilitator-dashboard** (5 minutes)
+   - Review bot-posted reflection summary (FRIDAY REFLECTIONS)
+   - Review bot-posted random FRIDAY SPOT-CHECK LIST (15-20 reflections)
 
-2. **Select 15-20 Reflections** (5 minutes)
-   - 5 reflections: High-priority students (crisis flags, Zone 0, high anxiety)
-   - 10-15 reflections: Random sample from each cluster (2-3 per cluster)
+2. **Review listed reflections** (25-30 minutes)
+   - Open each `reflection://week-X/record-Y` reference
+   - Check for:
+     - Identity-shift evidence
+     - Habit-practice quality
+     - Support needs / crisis language
 
-3. **Review Reflections** (30 minutes)
-   - For each reflection:
-     - Read for quality (thinking depth, zone shift, habit practice)
-     - Add Thinking Depth Indicator in Submissions Log (Column L)
-     - Note: Zone mentioned? (Column M: Yes/No)
-     - Note: Habit mentioned? (Column N: ⏸️ Pause, 🎯 Context, 🔄 Iterate, 🧠 Think First, None)
-     - Note: Emotional tone? (Column O: Positive, Neutral, Negative, Mixed, Crisis Flag)
+3. **Take action on flagged students** (5-10 minutes)
+   - Celebration DM for strong growth evidence
+   - Support DM for stuck/confused patterns
+   - Escalate per SOP 3/4 if risk language appears
 
-4. **Send Feedback DMs** (5 minutes)
-   - Growth Edge (3-5 students): Send celebration DM (see SOP 5.1)
-   - Synthesizing/Self-Aware (7-10 students): Send encouragement DM
-   - Needs Scaffolding (2-3 students): Send support DM, offer call
-
-5. **Log Spot-Checks** (5 minutes)
-   - Log in Intervention Tracking: Intervention Type = "Friday Spot-Check"
-   - Update Progress Dashboard metrics
+4. **Log outcomes** (5 minutes)
+   - Intervention Tracking entry type: Friday Spot-Check
+   - Note category: Celebrate / Support / Escalate
 
 **Time Budget:** 45 minutes/week
 
@@ -543,7 +524,7 @@ Many students feel this way. Want to hop on a quick call? I'd love to hear where
 4. **If Normal:**
    - Enjoy weekend (10% boundary - Trevor needs rest)
 
-**Time Budget:** 5 minutes/day × 2 days = 10 minutes/weekend
+**Time Budget:** 5 minutes/day Ã— 2 days = 10 minutes/weekend
 
 **Total Weekly Time Budget:**
 - Daily scan: 1.25 hours
@@ -569,11 +550,11 @@ Many students feel this way. Want to hop on a quick call? I'd love to hear where
 
 ### Level 1: Bot Nudge (Automated)
 
-**Trigger:** Engagement = "Posted intermittently" (2-3 posts/week)
+**Trigger:** No post in today's active week channel by 6:00 PM EAT (daily check)
 
 **Action:** Agent sends automated nudge via Discord DM
 
-**Response Time:** Immediate (bot)
+**Response Time:** Immediate at 6:00 PM EAT check
 
 **Bot Script:**
 ```
@@ -582,19 +563,18 @@ Week [X] is about [theme]. Just post one thing in #thinking-lab - no pressure. W
 ```
 
 **Follow-Up:**
-- If student re-engages → Success (bot logs automatically)
-- If no response in 3 days → Escalate to Level 2
+- If student re-engages -> Success (bot logs automatically)
+- If no response in 3 days -> Escalate to Level 2
 
-**Log:** Bot logs automatically in Intervention Tracking (Intervention Type = "Level 1 - Bot Nudge")
+**Log:** Bot logs nudge status in `daily_participation` (`nudge_sent=1`) and exposes pattern to dashboard
 
 **Time Budget:** 0 minutes (automated)
 
 ### Level 2: Trevor DM (Personal Check-In)
 
 **Trigger:**
-- No posts for 3+ consecutive days (exact Decision 16 specification)
-- OR Anxiety >= 6
-- OR No response to Level 1
+- No posts for 3+ consecutive days (detected in 10:00 AM escalation check)
+- OR No response to repeated Level 1 nudges
 
 **Action:** Trevor sends personal DM via Discord
 
@@ -608,25 +588,24 @@ Or if you're busy, no worries. Just post when you can."
 ```
 
 **Follow-Up:**
-- If student responds → Success (document in Intervention Tracking)
-- If no response in 3 days → Escalate to Level 3
+- If student responds -> Success (document in Intervention Tracking)
+- If no response in 3 days -> Escalate to Level 3
 
 **Log:**
 - Document in Intervention Tracking:
   - Intervention Type: "Level 2 - Trevor DM"
-  - Trigger: "Stuck 3+ Days" or "High Anxiety"
+  - Trigger: "Stuck 3+ Days"
   - Outcome: "Re-engaged" / "No response - escalated"
 
-**Time Budget:** 5-10 minutes per student × 5-10 students/week = 0.5-1.5 hours/week
+**Time Budget:** 5-10 minutes per student x 5-10 students/week = 0.5-1.5 hours/week
 
 ### Level 3: Direct Call (High-Priority Outreach)
 
 **Trigger:**
-- Crisis Flag = "HIGH ANXIETY" (Anxiety >= 7)
-- OR Zone 0 + Anxiety >= 7
-- OR No response to Level 2
+- No posts for 7+ consecutive days (detected in 10:00 AM escalation check)
+- OR No response to Level 2 after 3 days
 
-**Action:** Trevor calls student via phone
+**Action:** Trevor receives RED FLAG DM and performs direct outreach (DM immediately, call when needed)
 
 **Response Time:** <= 24 hours
 
@@ -665,8 +644,8 @@ how are you doing?"
    - "I'm here if you need anything"
 
 **Follow-Up:**
-- If anxiety reduces → Success (log in Intervention Tracking)
-- If crisis detected → Escalate to Level 4
+- If anxiety reduces -> Success (log in Intervention Tracking)
+- If crisis detected -> Escalate to Level 4
 
 **Log:**
 - Document in Intervention Tracking:
@@ -674,7 +653,7 @@ how are you doing?"
   - Outcome: "Resolved" / "Improved" / "Escalated"
   - Trevor Notes: [Summary of conversation, student's concerns, response]
 
-**Time Budget:** 15-30 minutes per student × 2-5 students/week = 0.5-2.5 hours/week
+**Time Budget:** 15-30 minutes per student x 2-5 students/week = 0.5-2.5 hours/week
 
 ### Level 4: Crisis Intervention (Emergency Response)
 
@@ -690,35 +669,31 @@ how are you doing?"
 
 **Protocol:** See SOP 4 (Crisis Management SOPs) for complete Level 4 workflow
 
-**Time Budget:** 30-60 minutes per crisis × 0-2 crises/cohort = 0-2 hours/cohort
+**Time Budget:** 30-60 minutes per crisis Ã— 0-2 crises/cohort = 0-2 hours/cohort
 
 ### Escalation Decision Tree
 
 ```
-STUDENT POSTS/ENAGEMENT:
-│
-├─ No posts for 3+ days OR No Level 1 response
-│  └─ LEVEL 2: Trevor DM (<= 24 hours)
-│     ├─ Student responds → SUCCESS
-│     └─ No response (3 days) OR Anxiety >= 6
-│        └─ LEVEL 3: Direct Call (<= 24 hours)
-│           ├─ Anxiety reduces → SUCCESS
-│           └─ Crisis detected → LEVEL 4
-│
-├─ Posted intermittently (2-3 posts/week)
-│  └─ LEVEL 1: Bot Nudge (immediate)
-│     ├─ Student re-engages → SUCCESS
-│     └─ No response (3 days)
-│        └─ LEVEL 2: Trevor DM
-│
-├─ Crisis Flag = "HIGH ANXIETY" OR Zone 0 + Anxiety >= 7
-│  └─ LEVEL 3: Direct Call (<= 24 hours)
-│     ├─ Anxiety reduces → SUCCESS
-│     └─ Crisis detected → LEVEL 4
-│
-└─ Crisis Keyword OR SafetyFilter flag OR High Risk
-   └─ LEVEL 4: Crisis Intervention (<= 1 hour)
-      └─ Follow crisis protocol (SOP 4)
+STUDENT POSTS/ENGAGEMENT:
+|
+|- No post by 6 PM EAT (daily)
+|  -> LEVEL 1: Bot Nudge (automated DM)
+|     |- Student re-engages -> SUCCESS
+|     - No response over 3 days -> LEVEL 2
+|
+|- No posts for 3+ consecutive days
+|  -> LEVEL 2: Trevor DM (<= 24 hours)
+|     |- Student responds -> SUCCESS
+|     - No response (3 days) -> LEVEL 3
+|
+|- No posts for 7+ consecutive days
+|  -> LEVEL 3: Direct Outreach (<= 24 hours)
+|     |- Re-engages -> SUCCESS
+|     - Crisis detected -> LEVEL 4
+|
+`- Crisis Keyword OR SafetyFilter flag OR High Risk
+   `- LEVEL 4: Crisis Intervention (<= 1 hour)
+      `- Follow crisis protocol (SOP 4)
 ```
 
 **Red Flags (Immediate Escalation to Level 4):**
@@ -728,10 +703,10 @@ STUDENT POSTS/ENAGEMENT:
 - No response to Level 3 call + crisis history
 
 **De-escalation Patterns:**
-- Student responds to Level 1 → No escalation needed
-- Student responds to Level 2 → No escalation needed
-- Level 3 call reduces anxiety → No escalation needed
-- Level 4 crisis resolved → De-escalate to weekly monitoring
+- Student responds to Level 1 â†’ No escalation needed
+- Student responds to Level 2 â†’ No escalation needed
+- Level 3 call reduces anxiety â†’ No escalation needed
+- Level 4 crisis resolved â†’ De-escalate to weekly monitoring
 
 ---
 
@@ -744,19 +719,20 @@ STUDENT POSTS/ENAGEMENT:
 **Triggers:**
 
 1. **SafetyFilter Flag (Automated)**
-   - Bot detects crisis keywords in Discord posts or diagnostic
-   - Bot sends Trevor: INSTANT notification (DM, email, SMS)
-   - Notification includes: Student name, crisis keyword, timestamp, post link
+   - Bot detects crisis keywords in student-facing Discord messages
+   - Bot posts immediate crisis-support response in channel
+   - Bot sends Trevor an INSTANT DM and logs event to #moderation-logs
+   - Bot writes/updates Level 4 escalation record in database
 
 2. **Keyword Monitoring (Manual)**
    - Trevor scans Submissions Log during daily 5-minute scan
    - Filter: Emotional Tone = "Crisis Flag"
-   - Keywords: "hopeless", "suicide", "self-harm", "depressed", "end it all", "kill myself", "no point", "giving up", "want to die", "can't go on"
+   - Keywords (runtime list): "self-harm", "suicide", "want to die", "want to end it", "can't go on", "hopeless", "end it all", "kill myself", "no point", "nothing matters", "give up"
 
 3. **Emotional Escalation (Manual)**
    - Filter Student Roster: Anxiety Change >= 3 (increased by 3+ points)
    - Cross-reference: Check recent posts for crisis language
-   - If anxiety spike + crisis language → IMMEDIATE outreach
+   - If anxiety spike + crisis language -> IMMEDIATE outreach
 
 **Action:** IMMEDIATE notification (Trevor drops everything, responds within 1 hour)
 
@@ -845,10 +821,10 @@ I wanted to let you know and see if we can support them together."
 **Provide These Resources to Student AND Parent:**
 
 **Immediate Crisis (24/7):**
-- **Befriending Kenya:** +254 722 178 177 (free, confidential counseling)
-- **Mental Health Kenya:** +254 733 111 000
-- **Youth Crisis Hotline:** +254 1199
-- **Emergency:** 999 or 112
+- **Kenya Crisis Hotline:** 119 (free, 24/7)
+- **Emergency:** 999
+- **Trevor direct line:** 0116 405604
+- **Additional local referrals (optional):** Befriending Kenya, Mental Health Kenya, licensed counselors
 
 **Ongoing Support:**
 - **Kenya Psychiatric Association:** https://www.kenyapsychiatric.org (referral directory)
@@ -889,7 +865,7 @@ I wanted to let you know and see if we can support them together."
 
 **Time Budget:**
 - Initial crisis response: 1-2 hours (call, parent, documentation)
-- Daily check-ins (Week 1): 5 minutes/day × 7 days = 35 minutes
+- Daily check-ins (Week 1): 5 minutes/day Ã— 7 days = 35 minutes
 - Weekly monitoring (Weeks 2-8): 5 minutes/week
 - **Total: 2-3 hours per crisis**
 
@@ -935,7 +911,7 @@ That's okay - Week [X] is tough. Want to hop on a quick call? I'd love to help."
 
 **Template 6: Celebration - Zone Shift**
 ```
-"🎉 Huge congrats on shifting to Zone [X]! I've noticed your thinking
+"ðŸŽ‰ Huge congrats on shifting to Zone [X]! I've noticed your thinking
 evolving over the past few weeks. You're really [habit practice].
 This is what growth looks like. Keep going!"
 ```
@@ -1064,7 +1040,7 @@ Here's [Student Name]'s progress update for Week [X]:
 
 **What We Focused On:**
 This week was all about [theme]. Students explored [node description]
-and practiced [Habit X: ⏸️ Pause / 🎯 Context / 🔄 Iterate / 🧠 Think First].
+and practiced [Habit X: â¸ï¸ Pause / ðŸŽ¯ Context / ðŸ”„ Iterate / ðŸ§  Think First].
 
 **[Student Name]'s Highlights:**
 - Posted [number] reflections this week
@@ -1172,7 +1148,7 @@ Trevor
 
 **Post in:** #announcements channel
 
-**Subject:** "Week [X] - [Theme] 🚀"
+**Subject:** "Week [X] - [Theme] ðŸš€"
 
 **Body:**
 ```
@@ -1213,37 +1189,37 @@ Trevor
 
 **Post in:** #thinking-showcase channel (with student consent)
 
-**Subject:** "🎉 This Week's Zone Shifts!"
+**Subject:** "ðŸŽ‰ This Week's Zone Shifts!"
 
 **Body:**
 ```
 Huge congrats to these students for shifting zones this week!
 
-**Zone 0 → 1 (Wonder):**
+**Zone 0 â†’ 1 (Wonder):**
 - [@Student1] - "I'm realizing AI is already around me"
 - [@Student2] - "I tried AI for [task] and it actually worked"
 
-**Zone 1 → 2 (Trust):**
+**Zone 1 â†’ 2 (Trust):**
 - [@Student3] - "I'm starting to rely on AI for [task]"
 - [@Student4] - "Low-stakes wins are building my confidence"
 
-**Zone 2 → 3 (Converse):**
+**Zone 2 â†’ 3 (Converse):**
 - [@Student5] - "Context changes everything - I get it now"
 - [@Student6] - "AI and I are getting closer together in my thinking"
 
-**Zone 3 → 4 (Direct):**
+**Zone 3 â†’ 4 (Direct):**
 - [@Student7] - "I made this - and I have opinions about quality"
 - [@Student8] - "First draft is raw material, and I know how to improve it"
 
 **What These Shifts Mean:**
 Each zone shift represents an identity transformation:
-- Outsider → Observer → Experimenter → Collaborator → Director
+- Outsider â†’ Observer â†’ Experimenter â†’ Collaborator â†’ Director
 
 These students aren't just "using AI" - they're becoming people who
 think WITH AI. That's what growth looks like.
 
 **Celebrate Them:**
-React with ❤️ or 🎉 to show your support!
+React with â¤ï¸ or ðŸŽ‰ to show your support!
 Ask them: "What did YOU notice that shifted your thinking?"
 
 **Your Turn:**
@@ -1258,7 +1234,7 @@ Trevor
 
 **Post in:** #announcements channel
 
-**Subject:** "📝 Friday Reflection Reminder"
+**Subject:** "ðŸ“ Friday Reflection Reminder"
 
 **Body:**
 ```
@@ -1271,7 +1247,7 @@ Share your Week [X] reflection in #thinking-lab.
 "What did YOU notice this week?
 
 - Did you shift your thinking about AI?
-- Which habit felt most natural: ⏸️ Pause, 🎯 Context, 🔄 Iterate, or 🧠 Think First?
+- Which habit felt most natural: â¸ï¸ Pause, ðŸŽ¯ Context, ðŸ”„ Iterate, or ðŸ§  Think First?
 - What's one thing you're proud of?
 
 Just share your honest thoughts - no right or wrong answers."
@@ -1285,7 +1261,7 @@ I'll read 15-20 reflections this afternoon and send feedback DMs.
 If you want detailed feedback, post by 3 PM EAT.
 
 **Celebrate Each Other:**
-Read others' reflections and react with ❤️ if their thinking resonates with you.
+Read others' reflections and react with â¤ï¸ if their thinking resonates with you.
 
 You've got this!
 Trevor
@@ -1392,7 +1368,14 @@ My number: [Trevor's phone]
 
 ## SOP 6: Live Session Delivery
 
-**Time Budget:** 1 hour/session × 3 sessions/week = 3 hours + 30 min prep = 3.5 hours/week
+**Time Budget:** 1 hour/session x 3 sessions/week = 3 hours + 30 min prep = 3.5 hours/week
+
+**Live Bot Canonical Session Automation:**
+- Session days: Monday, Wednesday, Friday at 6:00 PM EAT
+- 24-hour announcement: 6:00 PM EAT previous day (cluster-targeted)
+- 1-hour reminder + voice channel open: 5:00 PM EAT session day
+- Voice cleanup: 8:00 PM EAT session day
+- Trevor follow-up command: /post-session-summary cluster_id session_notes [attendance_count]
 
 ### 6.1 Preparation Checklist (30 minutes before session)
 
@@ -1424,7 +1407,7 @@ My number: [Trevor's phone]
 
 **Setup (2 minutes):**
 - [ ] Test microphone, camera
-- [ ] Open Discord voice channel
+- [ ] Confirm bot-opened cluster voice channel is available (from 5:00 PM reminder)
 - [ ] Have reflection notes open (reference brilliant insights to celebrate)
 
 ### 6.2 Delivery Workflow (60 minutes)
@@ -1525,12 +1508,13 @@ Great session, everyone. See you next week!"
 
 ### 6.3 Follow-Up Workflow (15 minutes after session)
 
-**Log Attendance (5 minutes):**
-- [ ] Open Student Roster
-- [ ] Filter: Cluster = "[Cluster Name]"
-- [ ] Update Column AD (Live Session Attendance):
-  - Attended / No show / Late
-  - Note: Who participated? Who was quiet?
+**Post Session Summary + Attendance (5 minutes):**
+- [ ] Run `/post-session-summary` in Discord:
+  - `cluster_id`: 1-8
+  - `session_notes`: key takeaways + observations
+  - `attendance_count`: optional (recommended)
+- [ ] Confirm summary posted to current week channel
+- [ ] Confirm attendance recorded in database
 
 **Note Observations (5 minutes):**
 - [ ] Add notes in Student Roster (Column AM: Notes):
@@ -1564,18 +1548,18 @@ Great session, everyone. See you next week!"
 **How to Celebrate Thinking (Not Outputs):**
 
 **DO:**
-- ✅ "I love how you paused before asking that question" (Habit 1)
-- ✅ "You really gave AI context to work with" (Habit 2)
-- ✅ "You changed one thing and tried again - that's iteration" (Habit 3)
-- ✅ "You used AI to think through your options before deciding" (Habit 4)
-- ✅ "Your thinking is shifting from [Zone X] to [Zone Y]"
-- ✅ "That's what growth looks like"
+- âœ… "I love how you paused before asking that question" (Habit 1)
+- âœ… "You really gave AI context to work with" (Habit 2)
+- âœ… "You changed one thing and tried again - that's iteration" (Habit 3)
+- âœ… "You used AI to think through your options before deciding" (Habit 4)
+- âœ… "Your thinking is shifting from [Zone X] to [Zone Y]"
+- âœ… "That's what growth looks like"
 
 **DON'T:**
-- ❌ "Great job!" (too vague)
-- ❌ "You're getting good at AI" (wrong identity - we build thinkers, not AI users)
-- ❌ "That's the right answer" (there are no right answers)
-- ❌ "You're ahead of everyone else" (comparison - Guardrail #3 violation)
+- âŒ "Great job!" (too vague)
+- âŒ "You're getting good at AI" (wrong identity - we build thinkers, not AI users)
+- âŒ "That's the right answer" (there are no right answers)
+- âŒ "You're ahead of everyone else" (comparison - Guardrail #3 violation)
 
 **Celebration Templates:**
 
@@ -1660,7 +1644,7 @@ I'd love to read your reflection. You can also DM me anytime."
 
 **Action:** Trevor sends weekly update email to parent
 
-**Time Budget:** 5-10 minutes per email × 20-40 parents = 1.5-6.5 hours/week
+**Time Budget:** 5-10 minutes per email Ã— 20-40 parents = 1.5-6.5 hours/week
 
 **REALISTIC TIME BUDGET:**
 - Send batch emails (personalize with mail merge)
@@ -1741,7 +1725,7 @@ I'd love to read your reflection. You can also DM me anytime."
 
 **When Student Changes Consent:**
 
-**From "No" → "Yes":**
+**From "No" â†’ "Yes":**
 - Student DMs Trevor: "I want to start sending weekly updates to my parent"
 - Trevor updates Student Roster (Column W): Change to "Yes"
 - Trevor sends parent welcome email:
@@ -1761,7 +1745,7 @@ I'd love to read your reflection. You can also DM me anytime."
   ```
 - Start sending weekly updates (next Friday)
 
-**From "Yes" → "No":**
+**From "Yes" â†’ "No":**
 - Student DMs Trevor: "I want to stop sending updates to my parent"
 - Trevor updates Student Roster (Column W): Change to "No"
 - Trevor sends parent closure email:
@@ -1781,7 +1765,7 @@ I'd love to read your reflection. You can also DM me anytime."
   ```
 - Stop sending updates immediately
 
-**From "Not sure yet" → "Yes" or "No":**
+**From "Not sure yet" â†’ "Yes" or "No":**
 - Same as above (treat "Not sure yet" as "No" until decision)
 
 **Follow-Up on "Not sure yet" (Week 4 Live Session):**
@@ -1868,10 +1852,10 @@ Let me know if you still feel stuck. Happy to hop on a call!"
 ```
 
 **Follow-Up:**
-- If student figures it out → Success
-- If still confused → Offer 15-minute call (Level 3 outreach)
+- If student figures it out â†’ Success
+- If still confused â†’ Offer 15-minute call (Level 3 outreach)
 
-**Time Budget:** 5-10 minutes per student × 2-5 students/week = 0.25-1 hour/week
+**Time Budget:** 5-10 minutes per student Ã— 2-5 students/week = 0.25-1 hour/week
 
 ### 8.2 Technical Issue Resolution
 
@@ -1882,7 +1866,7 @@ Let me know if you still feel stuck. Happy to hop on a call!"
 **Step 1: Verify Bot Status (1 minute)**
 - Check: Is the CIS bot online? (Discord bot status)
 - Check: Are other students using it successfully?
-- If bot down → Notify bot developer, post in #announcements: "Bot temporarily down - will be back soon"
+- If bot down â†’ Notify bot developer, post in #announcements: "Bot temporarily down - will be back soon"
 
 **Step 2: Guide Student (3-5 minutes)**
 - Most issues are user error (not technical)
@@ -1903,10 +1887,10 @@ Let me know if you still feel stuck. Happy to hop on a call!"
 - See SOP 8.4 (Agent Behavior Monitoring)
 
 **Step 3: Escalate if Needed**
-- If issue persists >24 hours → DM Trevor (manual intervention)
-- If issue affects multiple students → Post in #announcements, notify bot developer
+- If issue persists >24 hours â†’ DM Trevor (manual intervention)
+- If issue affects multiple students â†’ Post in #announcements, notify bot developer
 
-**Time Budget:** 3-5 minutes per issue × 1-3 issues/week = 0.1-0.3 hours/week
+**Time Budget:** 3-5 minutes per issue Ã— 1-3 issues/week = 0.1-0.3 hours/week
 
 ### 8.3 Agent Escalation Workflow
 
@@ -1932,7 +1916,7 @@ Let me know if you still feel stuck. Happy to hop on a call!"
 
 What's going on? [Listen to student's concern]
 
-[If personal crisis] → Follow Level 3 or Level 4 SOP (see SOP 3 and 4)
+[If personal crisis] â†’ Follow Level 3 or Level 4 SOP (see SOP 3 and 4)
 
 [If confused about bot]:
 The CIS agents are great for thinking through questions, but they're not
@@ -1946,7 +1930,7 @@ What would be most helpful?
 I'm here for you. What works best?"
 ```
 
-**Time Budget:** 5-30 minutes per escalation × 2-5 escalations/week = 0.25-2.5 hours/week
+**Time Budget:** 5-30 minutes per escalation Ã— 2-5 escalations/week = 0.25-2.5 hours/week
 
 ### 8.4 Agent Behavior Monitoring
 
@@ -1968,8 +1952,8 @@ I'm here for you. What works best?"
 
 **Method 2: Friday Spot-Checks**
 - Trevor reviews CIS agent interactions in Submissions Log
-- If flagged with "Needs Scaffolding" → Trevor reads conversation
-- If agent violated guardrails → Trevor documents issue
+- If flagged with "Needs Scaffolding" â†’ Trevor reads conversation
+- If agent violated guardrails â†’ Trevor documents issue
 
 **Method 3: Culture Monitoring**
 - Trevor scans #thinking-lab for complaints about agents
@@ -1995,10 +1979,10 @@ I'm here for you. What works best?"
 
 **Step 4: Monitor for Recurrence (Ongoing)**
 - Check if issue happens again with other students
-- If recurring → High priority bug fix
-- If isolated → Documentation only
+- If recurring â†’ High priority bug fix
+- If isolated â†’ Documentation only
 
-**Time Budget:** 15-20 minutes per violation × 0-2 violations/week = 0-0.7 hours/week
+**Time Budget:** 15-20 minutes per violation Ã— 0-2 violations/week = 0-0.7 hours/week
 
 ### 8.5 Student Education Workflow
 
@@ -2044,10 +2028,10 @@ Try one out this week! If you need help, DM me."
 ```
 "CIS Agent Troubleshooting:
 
-✅ Bot not responding? Wait 10 seconds, then try again.
-✅ Didn't get a DM? Check your Discord DMs (not this channel).
-✅ Confused about what to type? Just be honest: /frame I'm confused
-✅ Bot giving weird responses? DM Trevor - I'll help troubleshoot.
+âœ… Bot not responding? Wait 10 seconds, then try again.
+âœ… Didn't get a DM? Check your Discord DMs (not this channel).
+âœ… Confused about what to type? Just be honest: /frame I'm confused
+âœ… Bot giving weird responses? DM Trevor - I'll help troubleshoot.
 
 Remember: These agents scaffold thinking, they don't give answers.
 If you want advice, ask me (Trevor), not the bot."
@@ -2083,7 +2067,7 @@ If you want advice, ask me (Trevor), not the bot."
 - [ ] **Emotional Job (Anxiety Reduction):** Crisis SOPs (Level 3-4), outreach templates validate emotions, celebrate anxiety reduction
 - [ ] **Emotional Job (Belonging):** Live session SOPs build belonging (call students by name), DM templates use "people like you" language
 - [ ] **Social Job (Parent Proof):** Parent outreach SOPs provide weekly updates (with consent), artifact celebration in Week 8
-- [ ] **Identity Shifts:** All SOPs celebrate zone shifts (outsider→observer→experimenter→collaborator→director)
+- [ ] **Identity Shifts:** All SOPs celebrate zone shifts (outsiderâ†’observerâ†’experimenterâ†’collaboratorâ†’director)
 
 **Node Architecture (Epic 1.3):**
 
@@ -2095,7 +2079,7 @@ If you want advice, ask me (Trevor), not the bot."
 
 - [ ] **Habit Practice Tracking:** Friday spot-check SOPs track habit demonstrations in reflections
 - [ ] **Habit Reinforcement:** Celebration templates highlight specific habit practice (Templates 7, 9, 10)
-- [ ] **Graduation Proof:** Parent updates celebrate habit practice → graduation evidence
+- [ ] **Graduation Proof:** Parent updates celebrate habit practice â†’ graduation evidence
 
 **Epic 5 Integration (Discord Architecture):**
 
@@ -2119,21 +2103,21 @@ Claude Sonnet 4.5 (December 2024 version)
 
 **Key Deliverables:**
 
-1. ✅ **Pre-Cohort SOPs (SOP 1):** Diagnostic review workflow, student roster setup, cluster assignment verification, live session scheduling, pre-cohort outreach (Time: 5-6 hours one-time)
+1. âœ… **Pre-Cohort SOPs (SOP 1):** Diagnostic review workflow, student roster setup, cluster assignment verification, live session scheduling, pre-cohort outreach (Time: 5-6 hours one-time)
 
-2. ✅ **Daily & Weekly Monitoring SOPs (SOP 2):** 5-minute morning scan, Monday weekly setup, Tuesday session prep, Wednesday live sessions, Thursday mid-week check, Friday spot-checks, weekend crisis checks (Time: 7.33 hours/week)
+2. âœ… **Daily & Weekly Monitoring SOPs (SOP 2):** 5-minute morning scan, Monday weekly setup, Tuesday session prep, Wednesday live sessions, Thursday mid-week check, Friday spot-checks, weekend crisis checks (Time: 7.33 hours/week)
 
-3. ✅ **Intervention Escalation SOPs (SOP 3):** Level 1 (bot nudge), Level 2 (Trevor DM), Level 3 (direct call), Level 4 (crisis intervention), escalation decision tree (Time: 1-4 hours/week depending on need)
+3. âœ… **Intervention Escalation SOPs (SOP 3):** Level 1 (bot nudge), Level 2 (Trevor DM), Level 3 (direct call), Level 4 (crisis intervention), escalation decision tree (Time: 1-4 hours/week depending on need)
 
-4. ✅ **Crisis Management SOPs (SOP 4):** Crisis detection, risk assessment, parent notification, Kenya resource referral, post-crisis follow-up (Time: 2-3 hours per crisis, 0-2 crises/cohort)
+4. âœ… **Crisis Management SOPs (SOP 4):** Crisis detection, risk assessment, parent notification, Kenya resource referral, post-crisis follow-up (Time: 2-3 hours per crisis, 0-2 crises/cohort)
 
-5. ✅ **Communication Template Library (SOP 5):** DM templates (10 templates), call scripts (4 scripts), email templates (3 templates), Discord announcement templates (3 templates), crisis response scripts (3 scripts)
+5. âœ… **Communication Template Library (SOP 5):** DM templates (10 templates), call scripts (4 scripts), email templates (3 templates), Discord announcement templates (3 templates), crisis response scripts (3 scripts)
 
-6. ✅ **Live Session SOPs (SOP 6):** Preparation checklist (30 min), delivery workflow (60 min session structure), follow-up workflow (15 min), celebration framework (how to celebrate thinking), time management (keep to 60 minutes) (Time: 3.5 hours/week)
+6. âœ… **Live Session SOPs (SOP 6):** Preparation checklist (30 min), delivery workflow (60 min session structure), follow-up workflow (15 min), celebration framework (how to celebrate thinking), time management (keep to 60 minutes) (Time: 3.5 hours/week)
 
-7. ✅ **Parent Outreach SOPs (SOP 7):** Weekly update emails (1-2 hours/week), crisis notification calls (15-30 min per crisis), consent management (ongoing), live session reminders (15 min/week), parent engagement tracking (15 min/week)
+7. âœ… **Parent Outreach SOPs (SOP 7):** Weekly update emails (1-2 hours/week), crisis notification calls (15-30 min per crisis), consent management (ongoing), live session reminders (15 min/week), parent engagement tracking (15 min/week)
 
-8. ✅ **CIS Agent Troubleshooting SOPs (SOP 8):** Confused student support (0.25-1 hour/week), technical issue resolution (0.1-0.3 hours/week), agent escalation workflow (0.25-2.5 hours/week), agent behavior monitoring (0-0.7 hours/week), student education (included in live session prep)
+8. âœ… **CIS Agent Troubleshooting SOPs (SOP 8):** Confused student support (0.25-1 hour/week), technical issue resolution (0.1-0.3 hours/week), agent escalation workflow (0.25-2.5 hours/week), agent behavior monitoring (0-0.7 hours/week), student education (included in live session prep)
 
 **Total Time Budget:**
 - Pre-cohort: 5-6 hours (one-time)
@@ -2146,11 +2130,11 @@ Claude Sonnet 4.5 (December 2024 version)
 **Note:** Time budget is HONEST about variability. Typical weeks: 10-12 hours. High-need weeks (with crises or many interventions) may exceed 12 hours - this is acceptable as student safety takes priority.
 
 **Integration with ALL Foundation Documents:**
-- ✅ **Epic 1 (Guardrails):** All 11 guardrails enforced through template language, celebration framework, crisis protocols
-- ✅ **Epic 1 (JTBD):** Emotional job (crisis intervention, anxiety reduction), social job (parent proof, artifact celebration), identity shifts (zone shift celebrations)
-- ✅ **Epic 1 (Node Architecture):** Live session SOPs reference weekly nodes, intervention SOPs tailor to zone placement
-- ✅ **Epic 1 (4 Habits):** Celebration templates highlight habit practice, spot-check SOPs track habit demonstrations
-- ✅ **Epic 5 (Discord Architecture):** All SOPs reference cluster system, live sessions, CIS agents, crisis protocol
+- âœ… **Epic 1 (Guardrails):** All 11 guardrails enforced through template language, celebration framework, crisis protocols
+- âœ… **Epic 1 (JTBD):** Emotional job (crisis intervention, anxiety reduction), social job (parent proof, artifact celebration), identity shifts (zone shift celebrations)
+- âœ… **Epic 1 (Node Architecture):** Live session SOPs reference weekly nodes, intervention SOPs tailor to zone placement
+- âœ… **Epic 1 (4 Habits):** Celebration templates highlight habit practice, spot-check SOPs track habit demonstrations
+- âœ… **Epic 5 (Discord Architecture):** All SOPs reference cluster system, live sessions, CIS agents, crisis protocol
 
 **Trevor can now execute Cohort 1 efficiently using these SOPs:**
 - Every workflow has step-by-step instructions
@@ -2168,7 +2152,7 @@ Claude Sonnet 4.5 (December 2024 version)
 
 ---
 
-**Story 5.6 Status: ✅ READY FOR DEVELOPMENT (Post-Adversarial Review Fixes Applied)**
+**Story 5.6 Status: âœ… READY FOR DEVELOPMENT (Post-Adversarial Review Fixes Applied)**
 
 **Adversarial Review (2026-01-25):**
 - **Review Type:** ADVERSARIAL MODE - Winston (Architect) + CIS team (John, Maya, Bob, Dr. Quinn)
@@ -2176,28 +2160,29 @@ Claude Sonnet 4.5 (December 2024 version)
 - **Fixes Applied:** All HIGH priority issues fixed (6 critical issues addressed below)
 
 **HIGH Priority Fixes Applied:**
-1. ✅ **Time Budget Honesty** - Updated from "8-12 hours/week" to honest "10-18 hours/week (typical: 10-12, high-need: up to 18)"
-2. ✅ **Engagement Tracking Language** - Changed "Lagging/Stuck" to neutral: "Posted intermittently/Not posted" (Guardrail #3 compliance)
-3. ✅ **Quality-Based Sorting Removed** - Friday spot-checks now use cluster-based random selection, not quality ranking (Guardrail #3 compliance)
-4. ✅ **Directive Language Fixed** - Email template changed from "How to Support: Ask/Celebrate/Normalize" to invitational "Ways to Connect: Try asking/When they share/If they're struggling" (Guardrail #2 compliance)
-5. ✅ **Generic Examples Replaced** - Changed "Netflix recommendations" to pre-university contexts: "University applications, course selection, career exploration" (Guardrail #11 compliance)
-6. ✅ **Laggard Handling Added** - New Monday SOP for Story 5.1 channel unlock enforcement (5 minutes, chronic no-post detection, channel withholding until engagement)
+1. âœ… **Time Budget Honesty** - Updated from "8-12 hours/week" to honest "10-18 hours/week (typical: 10-12, high-need: up to 18)"
+2. âœ… **Engagement Tracking Language** - Changed "Lagging/Stuck" to neutral: "Posted intermittently/Not posted" (Guardrail #3 compliance)
+3. âœ… **Quality-Based Sorting Removed** - Friday spot-checks now use cluster-based random selection, not quality ranking (Guardrail #3 compliance)
+4. âœ… **Directive Language Fixed** - Email template changed from "How to Support: Ask/Celebrate/Normalize" to invitational "Ways to Connect: Try asking/When they share/If they're struggling" (Guardrail #2 compliance)
+5. âœ… **Generic Examples Replaced** - Changed "Netflix recommendations" to pre-university contexts: "University applications, course selection, career exploration" (Guardrail #11 compliance)
+6. âœ… **Laggard Handling Added** - New Monday SOP for Story 5.1 channel unlock enforcement (5 minutes, chronic no-post detection, channel withholding until engagement)
 
 **MEDIUM Priority Issues Deferred:**
 - MEDIUM fixes documented in `_bmad-output/cohort-design-artifacts/adversarial-review-story-5.6-findings.md` for future iterations
 
 The Manual Workflow SOPs specification is complete with:
-- ✅ 8 comprehensive SOPs (Pre-Cohort, Monitoring, Interventions, Crisis, Communication, Live Sessions, Parent Outreach, CIS Troubleshooting)
-- ✅ 23 communication templates (DMs, calls, emails, Discord announcements, crisis scripts)
-- ✅ Escalation decision tree (Level 1-4 with red flags and de-escalation patterns)
-- ✅ Time budgets specified for all workflows (HONEST: 10-18 hours/week typical range)
-- ✅ Crisis management protocols (Kenya resources, parent notification, post-crisis follow-up)
-- ✅ All 8 Acceptance Criteria met (after adversarial review fixes)
-- ✅ All Epic 1, 5 foundations integrated with guardrail compliance verified
+- âœ… 8 comprehensive SOPs (Pre-Cohort, Monitoring, Interventions, Crisis, Communication, Live Sessions, Parent Outreach, CIS Troubleshooting)
+- âœ… 23 communication templates (DMs, calls, emails, Discord announcements, crisis scripts)
+- âœ… Escalation decision tree (Level 1-4 with red flags and de-escalation patterns)
+- âœ… Time budgets specified for all workflows (HONEST: 10-18 hours/week typical range)
+- âœ… Crisis management protocols (Kenya resources, parent notification, post-crisis follow-up)
+- âœ… All 8 Acceptance Criteria met (after adversarial review fixes)
+- âœ… All Epic 1, 5 foundations integrated with guardrail compliance verified
 
 **Trevor can now execute Cohort 1 with confidence using these step-by-step operational guides.**
 
-**Epic 5 (Discord Architecture & Operations) is now COMPLETE!** ✅
+**Epic 5 (Discord Architecture & Operations) is now COMPLETE!** âœ…
 All 6 stories (5.1-5.6) are ready for development.
 
 Next: Epic 6 (Artifact System & Measurement) or Epic 7 (Final Assembly & Validation).
+
