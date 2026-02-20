@@ -419,6 +419,7 @@ class TestCheckAndPostTiming:
         scheduler.post_friday_reflection = AsyncMock()
         scheduler.post_node_link = AsyncMock()
         scheduler.post_daily_summary = AsyncMock()
+        scheduler.post_week8_parent_reports = AsyncMock()
 
         with patch('scheduler.scheduler.datetime') as mock_datetime:
             mock_datetime.now.return_value = datetime(
@@ -430,12 +431,15 @@ class TestCheckAndPostTiming:
         scheduler.post_friday_reflection.assert_awaited_once_with(1)
         scheduler.post_daily_summary.assert_awaited_once_with(1)
         scheduler.post_node_link.assert_not_called()
+        scheduler.post_week8_parent_reports.assert_not_called()
 
     @pytest.mark.asyncio
     async def test_weekday_9am_runs_node_and_dashboard_summary(self, scheduler):
         scheduler.post_friday_reflection = AsyncMock()
         scheduler.post_node_link = AsyncMock()
         scheduler.post_daily_summary = AsyncMock()
+        scheduler.post_agent_unlock_announcement = AsyncMock()
+        scheduler.post_weekly_parent_emails = AsyncMock()
 
         with patch('scheduler.scheduler.datetime') as mock_datetime:
             mock_datetime.now.return_value = datetime(
@@ -447,6 +451,25 @@ class TestCheckAndPostTiming:
         scheduler.post_node_link.assert_awaited_once_with(1, WeekDay.MONDAY)
         scheduler.post_daily_summary.assert_awaited_once_with(1)
         scheduler.post_friday_reflection.assert_not_called()
+        scheduler.post_agent_unlock_announcement.assert_awaited_once_with(1)
+        scheduler.post_weekly_parent_emails.assert_awaited_once_with(1)
+
+    @pytest.mark.asyncio
+    async def test_week8_friday_9am_runs_parent_reports(self, scheduler):
+        scheduler.post_friday_reflection = AsyncMock()
+        scheduler.post_daily_summary = AsyncMock()
+        scheduler.post_week8_parent_reports = AsyncMock()
+
+        with patch('scheduler.scheduler.datetime') as mock_datetime:
+            mock_datetime.now.return_value = datetime(
+                2026, 3, 27, 9, 0, tzinfo=scheduler.cohort_start_date.tzinfo
+            )
+            with patch.object(scheduler, "get_week_day", return_value=(8, WeekDay.FRIDAY)):
+                await scheduler.check_and_post()
+
+        scheduler.post_friday_reflection.assert_awaited_once_with(8)
+        scheduler.post_daily_summary.assert_awaited_once_with(8)
+        scheduler.post_week8_parent_reports.assert_awaited_once_with(8)
 
     @pytest.mark.asyncio
     async def test_friday_5pm_runs_dashboard_summaries(self, scheduler):

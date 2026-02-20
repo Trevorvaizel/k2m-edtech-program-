@@ -47,7 +47,22 @@ cp .env.template .env
 # Edit .env with your credentials
 # Required:
 # - DISCORD_TOKEN (from Discord Developer Portal)
-# - ANTHROPIC_API_KEY (from Anthropic Console)
+# - AI_PROVIDER (openai active default; also supports anthropic | zhipu)
+# - Matching provider key (OPENAI_API_KEY for default runtime)
+# Optional but recommended:
+# - DISCORD_GUILD_ID (for fast slash command sync in your server)
+# - SYNC_GLOBAL_COMMANDS=false (avoid duplicate global+guild command listings)
+# - CHANNEL_FACILITATOR_DASHBOARD (budget + escalation alerts)
+# Required for admin observability commands:
+# - TREVOR_DISCORD_ID (only this user can run admin commands)
+# Development only:
+# - ALLOW_INSECURE_ADMIN=true (do not enable in production)
+# Parent email system (Task 4.6):
+# - SENDGRID_API_KEY or MAILGUN_API_KEY (+ MAILGUN_DOMAIN if using Mailgun)
+# - EMAIL_FROM / EMAIL_FROM_NAME
+# - PARENT_EMAIL_FROM / PARENT_EMAIL_FROM_NAME / PARENT_EMAIL_REPLY_TO
+# - PARENT_UNSUBSCRIBE_BASE (optional override)
+# - EMAIL_DRY_RUN=true for non-production testing
 ```
 
 ### 3. Run the Bot
@@ -63,7 +78,20 @@ In Discord, type:
 /ping
 ```
 
-Expected response: `🏓 Pong! {latency}ms`
+Expected response: `Pong! {latency}ms`
+
+### 5. Run Full Discord Health Check
+
+```bash
+python check_discord_health.py
+```
+
+What it verifies:
+- Discord token auth (`/users/@me`)
+- Guild access (`DISCORD_GUILD_ID`)
+- Required channels (`CHANNEL_*`)
+- Required slash commands registered in guild
+- Active LLM provider configuration
 
 ## Project Structure
 
@@ -78,7 +106,7 @@ cis-discord-bot/
 ├── cis_controller/             # CIS Controller (Task 1.3)
 │   ├── router.py               # Intent recognition & routing
 │   ├── state_machine.py        # Student state management
-│   ├── llm_integration.py      # Claude API calls
+│   ├── llm_integration.py      # Active LLM Provider calls
 │   ├── suggestions.py          # "Did you mean...?" system
 │   └── safety_filter.py        # Anti-comparison validation
 │
@@ -112,14 +140,14 @@ cis-discord-bot/
 |-----------|------|---------|---------|
 | **Language** | Python | 3.10+ | Bot implementation |
 | **Discord Library** | discord.py | 2.3.2 | Discord API wrapper |
-| **LLM Provider** | Anthropic Claude | Sonnet 4.5 | CIS agent intelligence |
+| **LLM Provider** | OpenAI (active) / Anthropic / Zhipu | Env-swappable | CIS agent intelligence |
 | **Database** | SQLite | 3.38+ | State persistence |
 | **Environment** | python-dotenv | 1.0.0 | Configuration management |
 
 ## Architecture
 
 ```
-Discord Events → Intent Recognition → State Machine → Agent Router → Claude API → SafetyFilter → Discord Response
+Discord Events → Intent Recognition → State Machine → Agent Router → Active LLM Provider → SafetyFilter → Discord Response
 ```
 
 ### Three-Layer Controller
@@ -162,6 +190,7 @@ railway up
 - **Expected:** $5-33/week with prompt caching
 - **Rate Limiting:** 50 interactions/day per student
 - **Monitoring:** Daily budget alerts at $10
+- **Dashboard Alerts:** Daily/weekly budget alerts posted to #facilitator-dashboard
 
 ## Security Notes
 
@@ -187,3 +216,5 @@ See [discord-implementation-sprint.yaml](../_bmad-output/cohort-design-artifacts
 **Bot Name:** KIRA (K2M Interactive Reasoning Agent)
 **Cohort:** K2M Cohort #1 - AI Thinking Skills
 **Developer:** Trevor (with BMAD agents)
+
+

@@ -19,6 +19,7 @@ from cis_controller.llm_integration import (
     get_active_model,
     get_active_provider,
     load_system_prompts,
+    set_runtime_failure_notifier,
     validate_provider_configuration,
 )
 from cis_controller.router import route_slash_command, setup_bot_events, set_runtime_services
@@ -62,6 +63,8 @@ WEEKLY_CHANNEL_MAPPING = {
 
 # Daily prompt scheduler instance (initialized in on_ready)
 daily_prompt_scheduler = None
+health_monitor = None
+parent_unsubscribe_server = None
 
 # Validate required environment variables
 if not DISCORD_TOKEN:
@@ -108,7 +111,10 @@ def build_status_embed() -> discord.Embed:
     )
     embed.add_field(
         name="Core Commands",
-        value="/frame, /diverge, /challenge, /synthesize, /create-artifact, /showcase-preference",
+        value=(
+            "/frame, /diverge, /challenge, /synthesize, /create-artifact, "
+            "/showcase-preference, /parent-consent"
+        ),
         inline=False,
     )
     return embed
@@ -175,7 +181,7 @@ async def sync_slash_commands() -> None:
 @bot.event
 async def on_ready():
     """Bot startup initialization."""
-    global _slash_synced, daily_prompt_scheduler
+    global _slash_synced, daily_prompt_scheduler, health_monitor, parent_unsubscribe_server
 
     logger.info("%s has connected to Discord!", bot.user)
     logger.info("Serving %s guilds", len(bot.guilds))
@@ -197,7 +203,20 @@ async def on_ready():
         logger.info("Tracking %s students", student_count)
     except Exception as exc:
         logger.warning("Database not initialized yet: %s", exc)
-        logger.info("Database will be created automatically in Task 1.2")
+        logger.warning("Switching to in-memory backup mode until disk DB is restored.")
+        try:
+            from database.store import StudentStateStore
+
+            StudentStateStore.activate_in_memory_fallback(
+                reason=f"Startup DB initialization failed: {exc}"
+            )
+            runtime_store = StudentStateStore()
+        except Exception as fallback_exc:
+            logger.error(
+                "Failed to initialize in-memory backup store: %s",
+                fallback_exc,
+                exc_info=True,
+            )
 
     # Initialize participation tracker for weekly channels (Task 2.2 / 2.4 Level 1).
     try:
@@ -248,16 +267,15 @@ async def on_ready():
     )
 
     # Initialize health monitor (Task 4.5: Bot failure handling + health checks)
-    health_monitor = None
     try:
-        if runtime_store:
-            from cis_controller.health_monitor import HealthMonitor
+        from cis_controller.health_monitor import HealthMonitor
 
-            db_path = os.getenv("DATABASE_PATH", "cohort-1.db")
-            dashboard_channel_id = int(os.getenv("CHANNEL_FACILITATOR_DASHBOARD", "0"))
-            trevor_discord_id = os.getenv("TREVOR_DISCORD_ID", "").strip()
+        db_path = os.getenv("DATABASE_PATH", "cohort-1.db")
+        dashboard_channel_id = int(os.getenv("CHANNEL_FACILITATOR_DASHBOARD", "0"))
+        trevor_discord_id = os.getenv("TREVOR_DISCORD_ID", "").strip()
 
-            if dashboard_channel_id and trevor_discord_id:
+        if dashboard_channel_id and trevor_discord_id:
+            if health_monitor is None:
                 health_monitor = HealthMonitor(
                     bot=bot,
                     db_path=db_path,
@@ -265,13 +283,19 @@ async def on_ready():
                     trevor_discord_id=trevor_discord_id,
                     check_interval_seconds=300,  # 5 minutes
                 )
+
+            if not health_monitor.is_running:
                 await health_monitor.start()
                 logger.info("Health monitor started (5-minute interval)")
-            else:
-                logger.warning(
-                    "Health monitor not started: set CHANNEL_FACILITATOR_DASHBOARD and TREVOR_DISCORD_ID"
-                )
+
+            set_runtime_failure_notifier(health_monitor.notify_llm_runtime_failure)
+        else:
+            set_runtime_failure_notifier(None)
+            logger.warning(
+                "Health monitor not started: set CHANNEL_FACILITATOR_DASHBOARD and TREVOR_DISCORD_ID"
+            )
     except Exception as exc:
+        set_runtime_failure_notifier(None)
         logger.error("Failed to start health monitor: %s", exc, exc_info=True)
 
     # Initialize daily prompt scheduler (Story 2.1)
@@ -303,6 +327,33 @@ async def on_ready():
             logger.warning("Daily prompt scheduler not started: missing DISCORD_GUILD_ID")
     except Exception as exc:
         logger.error("Failed to start daily prompt scheduler: %s", exc, exc_info=True)
+
+    # Optional lightweight unsubscribe endpoint for parent email links.
+    try:
+        enable_unsubscribe_server = os.getenv(
+            "ENABLE_PARENT_UNSUBSCRIBE_SERVER",
+            "true",
+        ).strip().lower() in {"1", "true", "yes", "on"}
+
+        if enable_unsubscribe_server and runtime_store:
+            from cis_controller.parent_unsubscribe_server import ParentUnsubscribeServer
+
+            host = os.getenv("PARENT_UNSUBSCRIBE_HOST", "0.0.0.0")
+            port = int(os.getenv("PARENT_UNSUBSCRIBE_PORT", "8080"))
+            path = os.getenv("PARENT_UNSUBSCRIBE_PATH", "/parent/unsubscribe")
+
+            if parent_unsubscribe_server is None:
+                parent_unsubscribe_server = ParentUnsubscribeServer(
+                    store=runtime_store,
+                    host=host,
+                    port=port,
+                    path=path,
+                )
+            await parent_unsubscribe_server.start()
+        elif not enable_unsubscribe_server:
+            logger.info("Parent unsubscribe server disabled by ENABLE_PARENT_UNSUBSCRIBE_SERVER=false")
+    except Exception as exc:
+        logger.error("Failed to start parent unsubscribe server: %s", exc, exc_info=True)
 
     # Set bot status
     await bot.change_presence(
@@ -455,6 +506,71 @@ async def submit_reflection_slash(
         habit_practice=habit_practice,
         identity_shift=identity_shift,
         proof_of_work=proof_of_work,
+    )
+
+
+@bot.tree.command(name="parent-consent", description="Set parent email consent preferences.")
+@app_commands.describe(
+    parent_email="Parent or guardian email address",
+    consent_preference="Share weekly updates, or keep private until Week 8",
+)
+@app_commands.choices(
+    consent_preference=[
+        app_commands.Choice(name="Share weekly updates", value="share_weekly"),
+        app_commands.Choice(name="Privacy first (until Week 8)", value="privacy_first"),
+    ]
+)
+async def parent_consent_slash(
+    interaction: discord.Interaction,
+    parent_email: str,
+    consent_preference: app_commands.Choice[str],
+):
+    from database.store import StudentStateStore
+    from commands.parent_consent import set_parent_consent_handler
+
+    store = StudentStateStore()
+    await set_parent_consent_handler(
+        interaction=interaction,
+        store=store,
+        parent_email=parent_email,
+        consent_preference=consent_preference.value,
+    )
+
+
+@bot.tree.command(name="update-parent-consent", description="Update parent email consent preference.")
+@app_commands.describe(
+    consent_preference="Share weekly updates, or keep private until Week 8",
+)
+@app_commands.choices(
+    consent_preference=[
+        app_commands.Choice(name="Share weekly updates", value="share_weekly"),
+        app_commands.Choice(name="Privacy first (until Week 8)", value="privacy_first"),
+    ]
+)
+async def update_parent_consent_slash(
+    interaction: discord.Interaction,
+    consent_preference: app_commands.Choice[str],
+):
+    from database.store import StudentStateStore
+    from commands.parent_consent import update_parent_consent_handler
+
+    store = StudentStateStore()
+    await update_parent_consent_handler(
+        interaction=interaction,
+        store=store,
+        consent_preference=consent_preference.value,
+    )
+
+
+@bot.tree.command(name="view-parent-consent", description="View your current parent consent settings.")
+async def view_parent_consent_slash(interaction: discord.Interaction):
+    from database.store import StudentStateStore
+    from commands.parent_consent import view_parent_consent_handler
+
+    store = StudentStateStore()
+    await view_parent_consent_handler(
+        interaction=interaction,
+        store=store,
     )
 
 
@@ -747,6 +863,7 @@ async def on_app_command_error(
 
 def main():
     """Run the bot."""
+    global health_monitor, parent_unsubscribe_server
     setup_bot_events(bot)
     load_system_prompts()
 
@@ -767,7 +884,16 @@ def main():
             daily_prompt_scheduler.stop()
 
         # Stop health monitor when bot shuts down
-        health_monitor = None  # Will be cleaned up by bot closure
+        if health_monitor:
+            health_monitor.stop_sync()
+            health_monitor = None
+
+        # Stop unsubscribe endpoint when bot shuts down
+        if parent_unsubscribe_server:
+            parent_unsubscribe_server.stop_sync()
+            parent_unsubscribe_server = None
+
+        set_runtime_failure_notifier(None)
 
 
 if __name__ == "__main__":

@@ -11,6 +11,7 @@ import json
 import hashlib
 import os
 import inspect
+import weakref
 from datetime import datetime, timedelta
 from typing import Optional, List, Dict
 from pathlib import Path
@@ -30,6 +31,12 @@ VALID_PUBLICATION_PREFERENCES = {
 class StudentStateStore:
     """Database operations for student state and conversations"""
 
+    IN_MEMORY_FALLBACK_URI = "file:k2m-backup-mode?mode=memory&cache=shared"
+    _fallback_mode_active = False
+    _fallback_anchor_conn = None
+    _fallback_reason = ""
+    _instances = weakref.WeakSet()
+
     def __init__(self, db_path: str = None):
         """
         Initialize database connection
@@ -38,21 +45,90 @@ class StudentStateStore:
             db_path: Path to SQLite database file. Defaults to cohort-1.db
         """
         if db_path is None:
-            # Default: database in project root
-            project_root = Path(__file__).parent.parent
-            db_path = project_root / "cohort-1.db"
+            env_db_path = os.getenv("DATABASE_PATH", "").strip()
+            if env_db_path:
+                db_path = env_db_path
+            else:
+                # Default: database in project root
+                project_root = Path(__file__).parent.parent
+                db_path = project_root / "cohort-1.db"
 
-        self.db_path = db_path
+        self.db_path = str(db_path)
         self.conn = None
-        self._connect()
+        self._using_uri = False
+        StudentStateStore._instances.add(self)
+
+        if StudentStateStore._fallback_mode_active:
+            self._connect(StudentStateStore.IN_MEMORY_FALLBACK_URI, force_uri=True)
+        else:
+            self._connect()
         self._initialize_schema()
 
-    def _connect(self):
+    def _connect(self, target_db_path: Optional[str] = None, force_uri: bool = False):
         """Establish database connection"""
-        self.conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
+        db_target = str(target_db_path or self.db_path)
+        self._using_uri = force_uri or db_target.startswith("file:")
+        self.conn = sqlite3.connect(
+            db_target,
+            check_same_thread=False,
+            uri=self._using_uri,
+        )
         self.conn.row_factory = sqlite3.Row  # Enable column access by name
         # SQLite does not enforce foreign keys unless explicitly enabled per connection.
         self.conn.execute("PRAGMA foreign_keys = ON")
+
+    @classmethod
+    def is_in_memory_fallback_active(cls) -> bool:
+        """Return True when all stores should run in backup in-memory mode."""
+        return cls._fallback_mode_active
+
+    @classmethod
+    def activate_in_memory_fallback(cls, reason: str = "") -> None:
+        """
+        Switch all StudentStateStore instances to a shared in-memory SQLite backend.
+
+        This keeps command routing alive during disk DB failures while Trevor restores
+        from backups.
+        """
+        if not cls._fallback_mode_active:
+            cls._fallback_mode_active = True
+            cls._fallback_reason = reason or ""
+
+        if cls._fallback_anchor_conn is None:
+            cls._fallback_anchor_conn = sqlite3.connect(
+                cls.IN_MEMORY_FALLBACK_URI,
+                check_same_thread=False,
+                uri=True,
+            )
+            cls._fallback_anchor_conn.row_factory = sqlite3.Row
+            cls._fallback_anchor_conn.execute("PRAGMA foreign_keys = ON")
+
+        for instance in list(cls._instances):
+            instance._switch_to_in_memory_fallback()
+
+        if reason:
+            logger.critical("Database fallback mode activated: %s", reason)
+        else:
+            logger.critical("Database fallback mode activated")
+
+    def _switch_to_in_memory_fallback(self) -> None:
+        """Reconnect this store instance to the shared in-memory fallback DB."""
+        if (
+            self.conn
+            and self._using_uri
+            and str(self.db_path) == StudentStateStore.IN_MEMORY_FALLBACK_URI
+        ):
+            return
+
+        try:
+            if self.conn:
+                self.conn.close()
+        except Exception:
+            pass
+
+        self.db_path = StudentStateStore.IN_MEMORY_FALLBACK_URI
+        self._connect(StudentStateStore.IN_MEMORY_FALLBACK_URI, force_uri=True)
+        self._initialize_schema()
 
     @property
     def db(self):
@@ -115,6 +191,25 @@ class StudentStateStore:
         if not self._column_exists("students", "last_name"):
             logger.info("Applying legacy migration: adding students.last_name")
             self.conn.execute("ALTER TABLE students ADD COLUMN last_name TEXT")
+
+        if self._table_exists("parent_engagement"):
+            if not self._column_exists("parent_engagement", "parent_opted_out"):
+                logger.info("Applying legacy migration: adding parent_engagement.parent_opted_out")
+                self.conn.execute(
+                    "ALTER TABLE parent_engagement ADD COLUMN parent_opted_out INTEGER DEFAULT 0"
+                )
+
+            if not self._column_exists("parent_engagement", "parent_opted_out_at"):
+                logger.info("Applying legacy migration: adding parent_engagement.parent_opted_out_at")
+                self.conn.execute(
+                    "ALTER TABLE parent_engagement ADD COLUMN parent_opted_out_at TEXT"
+                )
+
+            if not self._column_exists("parent_engagement", "parent_email_status"):
+                logger.info("Applying legacy migration: adding parent_engagement.parent_email_status")
+                self.conn.execute(
+                    "ALTER TABLE parent_engagement ADD COLUMN parent_email_status TEXT DEFAULT 'active'"
+                )
 
         self.conn.commit()
 
@@ -1611,39 +1706,56 @@ class StudentStateStore:
     # Implement cluster assignment by last name + voice channels
     # ============================================================
 
-    @staticmethod
-    def assign_cluster_by_last_name(last_name: str) -> int:
+    def assign_cluster_by_last_name(self, last_name: str) -> int:
         """
-        Assign cluster based on last name (Story 5.1 spec).
+        Assign cluster based on last name with capacity checking (Story 5.1 spec).
 
-        Cluster assignments:
-        - Cluster 1: A-F
-        - Cluster 2: G-L
-        - Cluster 3: M-R
-        - Cluster 4: S-Z
+        Cluster assignments (8 clusters total):
+        - Cluster 1: A-F (first 25 students)
+        - Cluster 2: G-L (first 25 students)
+        - Cluster 3: M-R (first 25 students)
+        - Cluster 4: S-Z (first 25 students)
+        - Cluster 5: A-F (26th-50th students)
+        - Cluster 6: G-L (26th-50th students)
+        - Cluster 7: M-R (26th-50th students)
+        - Cluster 8: S-Z (26th-50th students)
 
         Args:
             last_name: Student's last name
 
         Returns:
-            Cluster ID (1-4)
+            Cluster ID (1-8)
         """
         if not last_name:
             return 1  # Default to Cluster 1 if no last name
 
-        # Normalize: case-insensitive, remove special characters, get first letter
+        # Normalize: case-insensitive, get first letter
         last_name = last_name.strip().upper()
         first_char = last_name[0] if last_name else 'A'
 
-        # Cluster assignments by first letter
+        # Determine base cluster group (1-4) by first letter
         if 'A' <= first_char <= 'F':
-            return 1
+            base_cluster = 1
         elif 'G' <= first_char <= 'L':
-            return 2
+            base_cluster = 2
         elif 'M' <= first_char <= 'R':
-            return 3
+            base_cluster = 3
         else:  # S-Z and everything else
-            return 4
+            base_cluster = 4
+
+        # Check if base cluster is at capacity (25 students max)
+        cursor = self.conn.execute(
+            "SELECT COUNT(*) as count FROM students WHERE cluster_id = ?",
+            (base_cluster,)
+        )
+        row = cursor.fetchone()
+        current_count = row['count'] if row else 0
+
+        # If base cluster is full, assign to overflow cluster (5-8)
+        if current_count >= 25:
+            return base_cluster + 4  # Cluster 1→5, 2→6, 3→7, 4→8
+
+        return base_cluster
 
     def create_student(
         self,
@@ -1864,22 +1976,24 @@ class StudentStateStore:
         if not isinstance(voice_channels, (list, tuple, set)):
             voice_channels = []
 
+        channel = None
         for existing in voice_channels:
             existing_name = str(getattr(existing, "name", "")).lower()
             if channel_prefix in existing_name:
-                return existing
+                channel = existing
+                break
 
-        channel = None
-        create_channel = getattr(guild, "create_voice_channel", None)
-        if callable(create_channel):
-            try:
-                channel = await self._call_maybe_async(create_channel, channel_name)
-            except Exception as exc:
-                logger.warning(
-                    "Failed to create Discord voice channel for cluster %s: %s",
-                    cluster_id,
-                    exc,
-                )
+        if channel is None:
+            create_channel = getattr(guild, "create_voice_channel", None)
+            if callable(create_channel):
+                try:
+                    channel = await self._call_maybe_async(create_channel, channel_name)
+                except Exception as exc:
+                    logger.warning(
+                        "Failed to create Discord voice channel for cluster %s: %s",
+                        cluster_id,
+                        exc,
+                    )
 
         if channel is None:
             # Test-friendly fallback when guild mocks do not implement channel creation.
@@ -1895,9 +2009,23 @@ class StudentStateStore:
         if not isinstance(channel_current_id, (str, int)) or channel_current_id in ("", 0):
             channel.id = int(datetime.now().timestamp() * 1000)
 
-        # Apply basic permissions if available.
+        # Apply role permissions if available.
         set_permissions = getattr(channel, "set_permissions", None)
         if callable(set_permissions):
+            guild_roles = getattr(guild, "roles", []) or []
+            cluster_role = None
+            if isinstance(guild_roles, (list, tuple, set)):
+                for role in guild_roles:
+                    if str(getattr(role, "name", "")) == f"Cluster-{cluster_id}":
+                        cluster_role = role
+                        break
+
+                if trevor_role is None:
+                    for role in guild_roles:
+                        if str(getattr(role, "name", "")) == "Trevor":
+                            trevor_role = role
+                            break
+
             default_role = getattr(guild, "default_role", None)
             if default_role is not None:
                 await self._call_maybe_async(
@@ -1906,6 +2034,15 @@ class StudentStateStore:
                     connect=False,
                     speak=False,
                     view_channel=False,
+                )
+
+            if cluster_role is not None:
+                await self._call_maybe_async(
+                    set_permissions,
+                    cluster_role,
+                    connect=True,
+                    speak=True,
+                    view_channel=True,
                 )
 
             if trevor_role is not None:
@@ -1959,11 +2096,43 @@ class StudentStateStore:
             )
             self.conn.commit()
 
+    def get_active_voice_channel_id(self, cluster_id: int) -> Optional[str]:
+        """
+        Return the most recently tracked active voice channel for a cluster.
+
+        Used to recover cleanup state after bot restarts.
+        """
+        cursor = self.conn.execute(
+            """
+            SELECT channel_id
+            FROM voice_channels
+            WHERE cluster_id = ? AND is_active = 1
+            ORDER BY created_at DESC
+            LIMIT 1
+            """,
+            (cluster_id,),
+        )
+        row = cursor.fetchone()
+        return row["channel_id"] if row else None
+
+    def mark_voice_channel_deleted(self, channel_id: str) -> None:
+        """Mark a voice channel inactive when it no longer exists in Discord."""
+        self.conn.execute(
+            """
+            UPDATE voice_channels
+            SET deleted_at = ?, is_active = 0
+            WHERE channel_id = ?
+            """,
+            (datetime.now().isoformat(), str(channel_id)),
+        )
+        self.conn.commit()
+
     def record_session_attendance(
         self,
         cluster_id: int,
         session_date: str,
-        attendees: List[str]
+        attendees: List[str] = None,
+        attendance_count: Optional[int] = None,
     ) -> None:
         """
         Record attendance for a cluster live session.
@@ -1972,7 +2141,9 @@ class StudentStateStore:
             cluster_id: Cluster ID (1-8)
             session_date: ISO timestamp of session
             attendees: List of discord_id strings who attended
+            attendance_count: Optional numeric attendance when only count is known
         """
+        attendees = attendees or []
         attendees_json = json.dumps(attendees)
 
         # Get total students in cluster
@@ -1981,7 +2152,13 @@ class StudentStateStore:
             (cluster_id,)
         )
         total_students = cursor.fetchone()['count']
-        absent_count = total_students - len(attendees)
+        attendee_count = len(attendees)
+
+        # If caller only provides an attendance count, persist accurate absent totals.
+        if attendee_count == 0 and attendance_count is not None:
+            attendee_count = max(0, min(int(attendance_count), total_students))
+
+        absent_count = max(total_students - attendee_count, 0)
 
         self.conn.execute(
             """
@@ -2021,10 +2198,13 @@ class StudentStateStore:
         sessions = []
         for row in cursor.fetchall():
             attendees = json.loads(row['attendees']) if row['attendees'] else []
+            attendee_count = len(attendees)
+            if attendee_count == 0 and row['total_students'] is not None and row['absent_count'] is not None:
+                attendee_count = max(row['total_students'] - row['absent_count'], 0)
             sessions.append({
                 'session_date': row['session_date'],
                 'attendees': attendees,
-                'attendee_count': len(attendees),
+                'attendee_count': attendee_count,
                 'absent': row['absent_count'],
                 'total': row['total_students']
             })
@@ -2099,3 +2279,453 @@ class StudentStateStore:
     def __del__(self):
         """Cleanup on deletion"""
         self.close()
+
+    # ============================================================
+    # PARENT ENGAGEMENT METHODS (Task 4.6)
+    # Parent consent tracking and email communication
+    # ============================================================
+
+    def set_parent_consent(
+        self,
+        discord_id: str,
+        parent_email: str,
+        consent_preference: str = 'privacy_first'
+    ) -> None:
+        """
+        Set parent email consent preference for a student.
+
+        Args:
+            discord_id: Student's Discord user ID
+            parent_email: Parent's email address
+            consent_preference: 'share_weekly' OR 'privacy_first'
+        """
+        discord_id = str(discord_id)
+        if consent_preference not in ('share_weekly', 'privacy_first'):
+            raise ValueError(
+                f"Invalid consent_preference '{consent_preference}'. "
+                "Must be 'share_weekly' or 'privacy_first'."
+            )
+
+        self._ensure_student_record(discord_id)
+        import secrets
+        now = datetime.now().isoformat()
+
+        # Generate unsubscribe token if not exists
+        cursor = self.conn.execute(
+            "SELECT unsubscribe_token FROM parent_engagement WHERE student_id = ?",
+            (discord_id,)
+        )
+        existing = cursor.fetchone()
+
+        unsubscribe_token = existing['unsubscribe_token'] if existing else secrets.token_urlsafe(32)
+
+        self.conn.execute(
+            """
+            INSERT INTO parent_engagement (
+                student_id,
+                parent_email,
+                consent_preference,
+                consent_date,
+                unsubscribe_token,
+                parent_opted_out,
+                parent_opted_out_at,
+                parent_email_status
+            ) VALUES (?, ?, ?, ?, ?, 0, NULL, 'active')
+            ON CONFLICT(student_id) DO UPDATE SET
+                parent_email = excluded.parent_email,
+                consent_preference = excluded.consent_preference,
+                consent_date = excluded.consent_date,
+                unsubscribe_token = excluded.unsubscribe_token,
+                parent_opted_out = 0,
+                parent_opted_out_at = NULL,
+                parent_email_status = 'active'
+            """,
+            (discord_id, parent_email, consent_preference, now, unsubscribe_token)
+        )
+        self.conn.commit()
+
+    def get_parent_consent(self, discord_id: str) -> Optional[sqlite3.Row]:
+        """
+        Get parent consent record for a student.
+
+        Args:
+            discord_id: Student's Discord user ID
+
+        Returns:
+            Parent engagement row or None if not found
+        """
+        discord_id = str(discord_id)
+        cursor = self.conn.execute(
+            "SELECT * FROM parent_engagement WHERE student_id = ?",
+            (discord_id,)
+        )
+        return cursor.fetchone()
+
+    def update_parent_consent(
+        self,
+        discord_id: str,
+        consent_preference: str
+    ) -> None:
+        """
+        Update parent consent preference.
+
+        Args:
+            discord_id: Student's Discord user ID
+            consent_preference: 'share_weekly' OR 'privacy_first'
+        """
+        discord_id = str(discord_id)
+        if consent_preference not in ('share_weekly', 'privacy_first'):
+            raise ValueError(
+                f"Invalid consent_preference '{consent_preference}'. "
+                "Must be 'share_weekly' or 'privacy_first'."
+            )
+
+        self.conn.execute(
+            """
+            UPDATE parent_engagement
+            SET consent_preference = ?,
+                consent_date = ?,
+                parent_opted_out = 0,
+                parent_opted_out_at = NULL,
+                parent_email_status = 'active'
+            WHERE student_id = ?
+            """,
+            (consent_preference, datetime.now().isoformat(), discord_id)
+        )
+        self.conn.commit()
+
+    def get_weekly_email_recipients(self) -> List[Dict]:
+        """
+        Get all students whose parents opted in for weekly updates.
+
+        Returns:
+            List of dicts with student_id, parent_email, student_name, etc.
+        """
+        cursor = self.conn.execute(
+            """
+            SELECT
+                pe.student_id,
+                pe.parent_email,
+                pe.unsubscribe_token,
+                s.discord_id,
+                s.current_week,
+                s.zone,
+                s.interaction_count
+            FROM parent_engagement pe
+            JOIN students s ON pe.student_id = s.discord_id
+            WHERE pe.consent_preference = 'share_weekly'
+              AND COALESCE(pe.parent_opted_out, 0) = 0
+            ORDER BY s.current_week DESC
+            """
+        )
+
+        return [dict(row) for row in cursor.fetchall()]
+
+    def _get_week_time_window(self, week_number: int) -> tuple[str, str]:
+        """
+        Build ISO date window for a cohort week.
+
+        Args:
+            week_number: Cohort week number (1-8)
+
+        Returns:
+            Tuple of (week_start_iso, week_end_iso) for SQL filtering.
+        """
+        start_date_str = os.getenv('COHORT_START_DATE', datetime.now().strftime('%Y-%m-%d'))
+        cohort_start = datetime.strptime(start_date_str, '%Y-%m-%d')
+        week_index = max(week_number - 1, 0)
+        week_start = cohort_start + timedelta(days=week_index * 7)
+        week_end = week_start + timedelta(days=7)
+        return (week_start.isoformat(), week_end.isoformat())
+
+    def get_weekly_conversation_count(self, discord_id: str, week_number: int) -> int:
+        """
+        Count student conversations within a specific cohort week.
+
+        Args:
+            discord_id: Student's Discord user ID
+            week_number: Cohort week number (1-8)
+
+        Returns:
+            Number of conversation messages in the target week window.
+        """
+        discord_id = str(discord_id)
+        week_start, week_end = self._get_week_time_window(week_number)
+        cursor = self.conn.execute(
+            """
+            SELECT COUNT(*) AS count
+            FROM conversations
+            WHERE student_id = ?
+              AND created_at >= ?
+              AND created_at < ?
+            """,
+            (discord_id, week_start, week_end)
+        )
+        row = cursor.fetchone()
+        return row['count'] if row else 0
+
+    def get_weekly_reflection_highlight(self, discord_id: str, week_number: int) -> Dict[str, Optional[str]]:
+        """
+        Fetch reflection context for parent weekly highlights.
+
+        Args:
+            discord_id: Student's Discord user ID
+            week_number: Cohort week number (1-8)
+
+        Returns:
+            Dict containing habit_focus, habit_practice, identity_shift, proof_of_work.
+        """
+        row = self.get_weekly_reflection(discord_id, week_number)
+        result = {
+            'habit_focus': None,
+            'habit_practice': None,
+            'identity_shift': None,
+            'proof_of_work': None,
+        }
+
+        if not row:
+            return result
+
+        reflection_content = row['reflection_content'] or ''
+        for raw_line in reflection_content.splitlines():
+            line = raw_line.strip()
+            if line.lower().startswith('habit focus:'):
+                result['habit_focus'] = line.split(':', 1)[1].strip()
+            elif line.lower().startswith('habit practice:'):
+                result['habit_practice'] = line.split(':', 1)[1].strip().lower()
+            elif line.lower().startswith('identity shift:'):
+                result['identity_shift'] = line.split(':', 1)[1].strip()
+
+        result['proof_of_work'] = row['proof_of_work']
+        return result
+
+    def get_week8_email_recipients(self) -> List[Dict]:
+        """
+        Get recipients for Week 8 parent report emails.
+
+        Includes students with published artifacts and active (non-opted-out) parent records.
+        Includes both share_weekly and privacy_first students so "privacy until Week 8"
+        can still receive the final report when allowed.
+
+        Returns:
+            List of recipient/context dictionaries.
+        """
+        cursor = self.conn.execute(
+            """
+            SELECT
+                pe.student_id,
+                pe.parent_email,
+                pe.unsubscribe_token,
+                pe.consent_preference,
+                s.discord_id,
+                s.zone,
+                ap.section_1_question,
+                ap.section_2_reframed,
+                ap.section_3_explored,
+                ap.section_4_challenged,
+                ap.section_5_concluded,
+                ap.section_6_reflection,
+                ap.status AS artifact_status,
+                COALESCE(pub.visibility_level, 'private') AS visibility_level
+            FROM parent_engagement pe
+            JOIN students s ON pe.student_id = s.discord_id
+            JOIN artifact_progress ap ON ap.student_id = s.discord_id
+            LEFT JOIN (
+                SELECT sp.student_id, sp.visibility_level
+                FROM showcase_publications sp
+                JOIN (
+                    SELECT student_id, MAX(timestamp) AS max_ts
+                    FROM showcase_publications
+                    WHERE publication_type = 'artifact_completion'
+                    GROUP BY student_id
+                ) latest
+                  ON latest.student_id = sp.student_id
+                 AND latest.max_ts = sp.timestamp
+            ) pub ON pub.student_id = s.discord_id
+            WHERE COALESCE(pe.parent_opted_out, 0) = 0
+              AND ap.status = 'published'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM parent_email_log pel
+                  WHERE pel.student_id = s.discord_id
+                    AND pel.email_type = 'week8_showcase'
+                    AND pel.status = 'sent'
+              )
+            ORDER BY s.discord_id
+            """
+        )
+        return [dict(row) for row in cursor.fetchall()]
+
+    def has_weekly_update_sent(self, discord_id: str, report_week: int) -> bool:
+        """
+        Return True if this student already received a successful weekly update for report_week.
+
+        Used to make weekly sends idempotent across process restarts.
+        """
+        discord_id = str(discord_id)
+        subject_pattern = f"%Week {report_week}"
+        cursor = self.conn.execute(
+            """
+            SELECT 1
+            FROM parent_email_log
+            WHERE student_id = ?
+              AND email_type = 'weekly_update'
+              AND status = 'sent'
+              AND subject LIKE ?
+            LIMIT 1
+            """,
+            (discord_id, subject_pattern),
+        )
+        return cursor.fetchone() is not None
+
+    def log_parent_email(
+        self,
+        discord_id: str,
+        parent_email: str,
+        email_type: str,
+        subject: str,
+        status: str = 'sent',
+        error_message: str = None
+    ) -> int:
+        """
+        Log a parent email sent for monitoring and debugging.
+
+        Args:
+            discord_id: Student's Discord user ID
+            parent_email: Parent's email address
+            email_type: 'weekly_update', 'week8_showcase', 'artifact_completion'
+            subject: Email subject line
+            status: 'sent', 'failed', 'bounced', 'skipped'
+            error_message: Error details if failed
+
+        Returns:
+            Email log ID
+        """
+        discord_id = str(discord_id)
+        cursor = self.conn.execute(
+            """
+            INSERT INTO parent_email_log (
+                student_id, parent_email, email_type, subject, status, error_message
+            ) VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (discord_id, parent_email, email_type, subject, status, error_message)
+        )
+        self.conn.commit()
+        return cursor.lastrowid
+
+    def update_parent_email_sent(self, discord_id: str) -> None:
+        """
+        Update last_email_sent timestamp after successful send.
+
+        Args:
+            discord_id: Student's Discord user ID
+        """
+        discord_id = str(discord_id)
+        self.conn.execute(
+            """
+            UPDATE parent_engagement
+            SET last_email_sent = ?,
+                parent_email_status = 'active'
+            WHERE student_id = ?
+            """,
+            (datetime.now().isoformat(), discord_id)
+        )
+        self.conn.commit()
+
+    def update_parent_email_status(self, discord_id: str, status: str) -> None:
+        """
+        Update parent email deliverability status.
+
+        Args:
+            discord_id: Student's Discord user ID
+            status: 'active', 'bounced', or 'opted_out'
+        """
+        if status not in ("active", "bounced", "opted_out"):
+            raise ValueError(f"Invalid parent email status: {status}")
+
+        discord_id = str(discord_id)
+        self.conn.execute(
+            """
+            UPDATE parent_engagement
+            SET parent_email_status = ?
+            WHERE student_id = ?
+            """,
+            (status, discord_id)
+        )
+        self.conn.commit()
+
+    def get_parent_email_stats(self, days: int = 7) -> Dict:
+        """
+        Get parent email statistics for Trevor dashboard.
+
+        Args:
+            days: Number of days to look back
+
+        Returns:
+            Dict with email stats (sent, failed, bounced counts)
+        """
+        cutoff_date = (datetime.now() - timedelta(days=days)).strftime('%Y-%m-%d')
+
+        cursor = self.conn.execute(
+            """
+            SELECT
+                email_type,
+                status,
+                COUNT(*) as count
+            FROM parent_email_log
+            WHERE sent_at >= ?
+            GROUP BY email_type, status
+            """,
+            (cutoff_date,)
+        )
+
+        stats = {
+            'period_days': days,
+            'total_sent': 0,
+            'total_failed': 0,
+            'by_type': {}
+        }
+
+        for row in cursor.fetchall():
+            email_type = row['email_type']
+            status = row['status']
+            count = row['count']
+
+            if email_type not in stats['by_type']:
+                stats['by_type'][email_type] = {'sent': 0, 'failed': 0, 'bounced': 0, 'skipped': 0}
+
+            if status not in stats['by_type'][email_type]:
+                stats['by_type'][email_type][status] = 0
+
+            stats['by_type'][email_type][status] = count
+
+            if status == 'sent':
+                stats['total_sent'] += count
+            elif status in ('failed', 'bounced'):
+                stats['total_failed'] += count
+
+        return stats
+
+    def revoke_parent_consent_by_token(self, unsubscribe_token: str) -> bool:
+        """
+        Revoke parent consent via unsubscribe token.
+
+        Args:
+            unsubscribe_token: Unique unsubscribe token from email
+
+        Returns:
+            True if revoked, False if token not found
+        """
+        cursor = self.conn.execute(
+            """
+            UPDATE parent_engagement
+            SET consent_preference = 'privacy_first',
+                parent_opted_out = 1,
+                parent_opted_out_at = ?,
+                parent_email_status = 'opted_out'
+            WHERE unsubscribe_token = ?
+            """,
+            (datetime.now().isoformat(), unsubscribe_token)
+        )
+        self.conn.commit()
+        return cursor.rowcount > 0

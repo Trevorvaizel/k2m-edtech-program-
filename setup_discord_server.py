@@ -17,6 +17,7 @@ from discord.ext import commands
 import asyncio
 import os
 import sys
+import re
 from dotenv import load_dotenv
 
 # Fix Windows console encoding for Unicode characters
@@ -318,17 +319,20 @@ async def create_channels(guild, roles):
         # Create channels in category
         for channel_config in category_data["channels"]:
             channel_name = channel_config["name"]
-            full_channel_name = f"{channel_config['emoji']}{channel_name}"
+            channel_name_with_emoji = f"{channel_config['emoji']}{channel_name}"
 
-            # Find existing channel
-            existing_channel = discord.utils.get(guild.text_channels, name=channel_name)
+            # Find existing channel by normalized slug so reruns are idempotent
+            # even when channel names are emoji-prefixed.
+            existing_channel = find_existing_text_channel(
+                guild=guild,
+                channel_slug=channel_name,
+                category=category,
+            )
 
             if existing_channel:
                 print(f"    ✓ Channel '{channel_name}' already exists")
                 channel = existing_channel
             else:
-                # Create channel with emoji
-                channel_name_with_emoji = f"{channel_config['emoji']}{channel_name}"
                 channel = await category.create_text_channel(
                     name=channel_name_with_emoji,
                     topic=channel_config["topic"]
@@ -421,7 +425,7 @@ async def post_welcome_content(guild):
     """Post welcome content to #welcome and #resources channels"""
 
     # Post to #welcome (split into chunks due to 2000 char limit)
-    welcome_channel = discord.utils.get(guild.text_channels, name="welcome")
+    welcome_channel = find_existing_text_channel(guild, "welcome")
     if welcome_channel:
         # Check if content already posted
         async for message in welcome_channel.history(limit=10):
@@ -437,7 +441,7 @@ async def post_welcome_content(guild):
             print(f"  ✅ Posted welcome content to #welcome ({len(chunks)} messages)")
 
     # Post to #resources
-    resources_channel = discord.utils.get(guild.text_channels, name="resources")
+    resources_channel = find_existing_text_channel(guild, "resources")
     if resources_channel:
         # Check if content already posted
         async for message in resources_channel.history(limit=10):
@@ -474,6 +478,67 @@ def split_message(content, max_length=2000):
         chunks.append(current_chunk.rstrip())
 
     return chunks
+
+
+def normalize_channel_slug(name: str) -> str:
+    """
+    Normalize Discord channel names to the canonical slug used in config.
+
+    Examples:
+    - "👋welcome" -> "welcome"
+    - "⚖️moderation-logs" -> "moderation-logs"
+    - "welcome" -> "welcome"
+    """
+    normalized = re.sub(r"^[^a-zA-Z0-9]+", "", name or "")
+    return normalized.lower()
+
+
+def find_existing_text_channel(guild, channel_slug: str, category=None):
+    """
+    Return an existing text channel by normalized slug.
+
+    Preference order:
+    1. matching channel under the target category
+    2. matching channel anywhere in guild
+
+    This keeps setup reruns idempotent across emoji/no-emoji naming variants.
+    """
+    target_slug = normalize_channel_slug(channel_slug)
+    candidates = []
+    for ch in getattr(guild, "text_channels", []):
+        if normalize_channel_slug(getattr(ch, "name", "")) == target_slug:
+            candidates.append(ch)
+
+    if not candidates:
+        return None
+
+    if category is not None:
+        category_id = getattr(category, "id", None)
+        in_category = [
+            ch for ch in candidates
+            if getattr(getattr(ch, "category", None), "id", None) == category_id
+            or getattr(ch, "category_id", None) == category_id
+        ]
+        if in_category:
+            candidates = in_category
+
+    # Prefer oldest channel ID when duplicates already exist.
+    def _channel_sort_key(ch):
+        channel_id = getattr(ch, "id", 0)
+        try:
+            return int(channel_id)
+        except Exception:
+            return 0
+
+    candidates = sorted(candidates, key=_channel_sort_key)
+
+    if len(candidates) > 1:
+        print(
+            f"  ⚠️ Multiple channels found for '{channel_slug}'. "
+            f"Using #{getattr(candidates[0], 'name', channel_slug)}"
+        )
+
+    return candidates[0]
 
 
 async def create_server_template(guild):

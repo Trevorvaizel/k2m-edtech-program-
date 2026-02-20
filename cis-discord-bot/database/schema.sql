@@ -19,6 +19,8 @@ CREATE TABLE IF NOT EXISTS students (
     artifact_progress INTEGER DEFAULT 0,  -- 0-100
     interaction_count INTEGER DEFAULT 0,
     last_interaction TEXT,  -- ISO timestamp
+    cluster_id INTEGER DEFAULT 1,  -- Task 4.3: Cluster assignment (1-8)
+    last_name TEXT,  -- Task 4.3: Last name for cluster assignment
     created_at TEXT DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -26,6 +28,7 @@ CREATE TABLE IF NOT EXISTS students (
 CREATE INDEX IF NOT EXISTS idx_students_cohort ON students(cohort_id);
 CREATE INDEX IF NOT EXISTS idx_students_week ON students(current_week);
 CREATE INDEX IF NOT EXISTS idx_students_zone ON students(zone);
+CREATE INDEX IF NOT EXISTS idx_students_cluster ON students(cluster_id);  -- Task 4.3
 
 -- ============================================================
 -- HABIT PRACTICE TABLE
@@ -293,3 +296,103 @@ CREATE TABLE IF NOT EXISTS student_publication_preferences (
 -- Index for preference queries
 CREATE INDEX IF NOT EXISTS idx_pub_prefs_student ON student_publication_preferences(student_id);
 
+-- ============================================================
+-- CLUSTER ASSIGNMENT TABLE (Task 4.3)
+-- Track cluster assignments and voice channels for live sessions
+-- ============================================================
+CREATE TABLE IF NOT EXISTS cluster_assignments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    discord_id TEXT NOT NULL,
+    cluster_id INTEGER NOT NULL,  -- 1-8 (A-F, G-L, M-R, S-Z, repeated)
+    last_name TEXT,  -- Student's last name for assignment
+    assigned_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (discord_id) REFERENCES students(discord_id) ON DELETE CASCADE,
+    UNIQUE(discord_id)
+);
+
+-- Index for cluster queries
+CREATE INDEX IF NOT EXISTS idx_cluster_student ON cluster_assignments(discord_id);
+CREATE INDEX IF NOT EXISTS idx_cluster_id ON cluster_assignments(cluster_id);
+
+-- ============================================================
+-- VOICE CHANNELS TABLE (Task 4.3)
+-- Track temporary voice channels for cluster live sessions
+-- ============================================================
+CREATE TABLE IF NOT EXISTS voice_channels (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    cluster_id INTEGER NOT NULL,
+    channel_id TEXT NOT NULL,  -- Discord channel ID
+    channel_name TEXT NOT NULL,
+    session_date TEXT NOT NULL,  -- ISO timestamp of session
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    deleted_at TEXT,
+    is_active INTEGER DEFAULT 1,  -- 0=deleted, 1=active
+    UNIQUE(channel_id)
+);
+
+-- Index for voice channel queries
+CREATE INDEX IF NOT EXISTS idx_voice_cluster ON voice_channels(cluster_id);
+CREATE INDEX IF NOT EXISTS idx_voice_active ON voice_channels(is_active);
+
+-- ============================================================
+-- CLUSTER SESSION ATTENDANCE TABLE (Task 4.3)
+-- Track attendance for cluster live sessions
+-- ============================================================
+CREATE TABLE IF NOT EXISTS cluster_session_attendance (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    cluster_id INTEGER NOT NULL,
+    session_date TEXT NOT NULL,  -- ISO timestamp
+    attendees TEXT,  -- JSON array of discord_ids
+    absent_count INTEGER DEFAULT 0,
+    total_students INTEGER DEFAULT 0,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(cluster_id, session_date)
+);
+
+-- Index for attendance queries
+CREATE INDEX IF NOT EXISTS idx_attendance_cluster ON cluster_session_attendance(cluster_id);
+CREATE INDEX IF NOT EXISTS idx_attendance_date ON cluster_session_attendance(session_date);
+
+-- ============================================================
+-- PARENT ENGAGEMENT TABLE (Task 4.6)
+-- Store parent email consent and contact information per Story 5.3
+-- ============================================================
+CREATE TABLE IF NOT EXISTS parent_engagement (
+    student_id TEXT PRIMARY KEY,  -- Discord user ID
+    parent_email TEXT NOT NULL,
+    consent_preference TEXT NOT NULL,  -- 'share_weekly' OR 'privacy_first'
+    consent_date TEXT DEFAULT CURRENT_TIMESTAMP,
+    last_email_sent TEXT,
+    unsubscribe_token TEXT UNIQUE,  -- For parent opt-out link
+    parent_opted_out INTEGER DEFAULT 0,  -- Parent unsubscribed from all future emails
+    parent_opted_out_at TEXT,
+    parent_email_status TEXT DEFAULT 'active',  -- active, opted_out, bounced
+    FOREIGN KEY (student_id) REFERENCES students(discord_id) ON DELETE CASCADE
+);
+
+-- Indexes for parent engagement queries
+CREATE INDEX IF NOT EXISTS idx_parent_consent ON parent_engagement(consent_preference);
+CREATE INDEX IF NOT EXISTS idx_parent_email_sent ON parent_engagement(last_email_sent);
+CREATE INDEX IF NOT EXISTS idx_parent_unsubscribe ON parent_engagement(unsubscribe_token);
+CREATE INDEX IF NOT EXISTS idx_parent_opted_out ON parent_engagement(parent_opted_out);
+
+-- ============================================================
+-- PARENT EMAIL LOG TABLE (Task 4.6)
+-- Track all parent emails sent for monitoring and debugging
+-- ============================================================
+CREATE TABLE IF NOT EXISTS parent_email_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    student_id TEXT NOT NULL,
+    parent_email TEXT NOT NULL,
+    email_type TEXT NOT NULL,  -- 'weekly_update', 'week8_showcase', 'artifact_completion'
+    subject TEXT NOT NULL,
+    sent_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    status TEXT NOT NULL,  -- 'sent', 'failed', 'bounced', 'skipped'
+    error_message TEXT,
+    FOREIGN KEY (student_id) REFERENCES students(discord_id) ON DELETE CASCADE
+);
+
+-- Indexes for email log queries
+CREATE INDEX IF NOT EXISTS idx_email_log_student ON parent_email_log(student_id);
+CREATE INDEX IF NOT EXISTS idx_email_log_date ON parent_email_log(sent_at);
+CREATE INDEX IF NOT EXISTS idx_email_log_status ON parent_email_log(status);

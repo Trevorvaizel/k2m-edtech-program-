@@ -19,6 +19,8 @@ from discord.ext import tasks
 from cis_controller.safety_filter import post_to_discord_safe
 from cis_controller.facilitator_dashboard import FacilitatorDashboard
 from scheduler.daily_prompts import DailyPromptLibrary, WeekDay
+from scheduler.cluster_sessions import ClusterSessionScheduler
+from scheduler.parent_email_scheduler import get_parent_email_scheduler
 from database.store import StudentStateStore
 
 logger = logging.getLogger(__name__)
@@ -69,6 +71,16 @@ class DailyPromptScheduler:
         self.participation_tracker = participation_tracker
         self.store = store or StudentStateStore()  # Task 2.5: Database access
         self.dashboard = FacilitatorDashboard(self.store)  # Task 2.6: Dashboard automation
+        self.parent_email_scheduler = get_parent_email_scheduler(store=self.store)
+
+        # Task 4.4: Cluster session scheduler
+        self.cluster_scheduler = ClusterSessionScheduler(
+            bot=bot,
+            store=self.store,
+            guild_id=guild_id,
+            channel_mapping=channel_mapping,
+            cohort_start_date=cohort_start_date,
+        )
 
         # Load prompt library
         self.library = DailyPromptLibrary()
@@ -86,6 +98,8 @@ class DailyPromptScheduler:
         self._spot_check_today = False  # Task 2.6: Friday 5 PM spot-check list
         self._agent_unlock_today = False  # Task 3.4: Agent unlock announcements
         self._weekly_artifact_celebration_today = False  # Task 4.2
+        self._weekly_parent_emails_today = False  # Task 4.6: Monday weekly parent updates
+        self._week8_parent_reports_today = False  # Task 4.6: Week 8 Friday parent report batch
 
         logger.info(f"Scheduler initialized for guild {guild_id}")
         logger.info(f"Cohort start date: {cohort_start_date}")
@@ -96,6 +110,7 @@ class DailyPromptScheduler:
             logger.info("Participation tracker integrated")
         logger.info("Facilitator dashboard integrated")
         logger.info("Agent unlock announcements enabled")
+        logger.info("Parent email scheduler integrated")
 
     def get_current_week(self) -> int:
         """
@@ -702,6 +717,64 @@ class DailyPromptScheduler:
         except Exception as e:
             logger.error(f"Failed to post spot-check list: {e}")
 
+    async def _notify_parent_email_batch_result(
+        self,
+        batch_type: str,
+        stats: dict,
+    ):
+        """
+        Send a compact parent-email batch status to Trevor dashboard.
+        """
+        dashboard_channel_id = int(os.getenv('CHANNEL_FACILITATOR_DASHBOARD', 0))
+        if not dashboard_channel_id:
+            return
+
+        try:
+            guild = self.bot.get_guild(self.guild_id)
+            if not guild:
+                return
+            dashboard = guild.get_channel(dashboard_channel_id)
+            if not dashboard or not hasattr(dashboard, "send"):
+                return
+
+            message = (
+                f"PARENT EMAIL BATCH: {batch_type}\n"
+                f"- sent: {stats.get('sent', 0)}\n"
+                f"- failed: {stats.get('failed', 0)}\n"
+                f"- skipped: {stats.get('skipped', 0)}\n"
+                f"- total: {stats.get('total', 0)}"
+            )
+            if stats.get('report_week'):
+                message += f"\n- report_week: {stats['report_week']}"
+
+            failures = stats.get('failures') or []
+            if failures:
+                first_failure = failures[0]
+                message += (
+                    f"\n- first_failure: {first_failure.get('parent_email', 'unknown')} "
+                    f"({first_failure.get('error', 'unknown error')})"
+                )
+
+            await dashboard.send(message)
+        except Exception as exc:
+            logger.error("Failed to notify parent email batch result: %s", exc, exc_info=True)
+
+    async def post_weekly_parent_emails(self, week: int):
+        """
+        Send Monday 9:00 AM parent updates (summarizes previous week).
+        """
+        stats = await self.parent_email_scheduler.send_weekly_parent_emails(week)
+        await self._notify_parent_email_batch_result("weekly_update", stats)
+        self._weekly_parent_emails_today = True
+
+    async def post_week8_parent_reports(self, week: int):
+        """
+        Send Friday 9:00 AM Week 8 parent reports.
+        """
+        stats = await self.parent_email_scheduler.send_week8_parent_reports(week)
+        await self._notify_parent_email_batch_result("week8_showcase", stats)
+        self._week8_parent_reports_today = True
+
     async def post_weekly_artifact_celebration(self):
         """
         Post weekly artifact publication celebration summary (Task 4.2).
@@ -866,6 +939,8 @@ class DailyPromptScheduler:
             self._spot_check_today = False  # Task 2.6
             self._agent_unlock_today = False  # Task 3.4
             self._weekly_artifact_celebration_today = False  # Task 4.2
+            self._weekly_parent_emails_today = False  # Task 4.6
+            self._week8_parent_reports_today = False  # Task 4.6
 
         week, day = self.get_week_day()
 
@@ -886,6 +961,17 @@ class DailyPromptScheduler:
             if day == WeekDay.MONDAY and not self._agent_unlock_today:
                 logger.info(f"Scheduled: 9:00 AM agent unlock announcement for week {week}")
                 await self.post_agent_unlock_announcement(week)
+
+            # Task 4.6 canonical cadence:
+            # - Monday 9:00 AM weekly parent updates (reporting prior week)
+            if day == WeekDay.MONDAY and not self._weekly_parent_emails_today:
+                logger.info("Scheduled: 9:00 AM Monday weekly parent email batch")
+                await self.post_weekly_parent_emails(week)
+
+            # - Friday 9:00 AM Week 8 parent report batch
+            if week == 8 and day == WeekDay.FRIDAY and not self._week8_parent_reports_today:
+                logger.info("Scheduled: 9:00 AM Friday Week 8 parent report batch")
+                await self.post_week8_parent_reports(week)
 
         # 9:15 AM EAT - Post daily prompt
         if current_time.hour == 9 and current_time.minute == 15 and not self._prompt_posted_today:
@@ -924,6 +1010,22 @@ class DailyPromptScheduler:
                 logger.info("Scheduled: 6:00 PM peer visibility snapshot to weekly channel")
                 await self.post_peer_visibility_snapshot(week)
 
+        # Task 4.4: Cluster session automation
+        # 6:00 PM EAT (18:00) - Schedule 24-hour announcements for tomorrow's sessions
+        if current_time.hour == 18 and current_time.minute == 0:
+            logger.info("Scheduled: 6:00 PM cluster session 24h announcements")
+            await self._schedule_cluster_announcements_24h()
+
+        # 5:00 PM EAT (17:00) - Create voice channels + send 1-hour reminders for today's sessions
+        if current_time.hour == 17 and current_time.minute == 0:
+            logger.info("Scheduled: 5:00 PM cluster session 1h reminders")
+            await self._send_cluster_reminders_1h()
+
+        # 8:00 PM EAT (20:00) - Cleanup voice channels after sessions
+        if current_time.hour == 20 and current_time.minute == 0:
+            logger.info("Scheduled: 8:00 PM cluster voice channel cleanup")
+            await self._cleanup_cluster_voice_channels()
+
     def start(self):
         """Start the scheduler background task."""
         self.scheduler_task.start()
@@ -947,3 +1049,56 @@ class DailyPromptScheduler:
         """Wait for bot to be ready before starting scheduler."""
         await self.bot.wait_until_ready()
         logger.info("Scheduler task waiting for bot ready...")
+
+    async def _schedule_cluster_announcements_24h(self):
+        """
+        Schedule 24-hour pre-session announcements for tomorrow's cluster sessions (Task 4.4).
+
+        This runs at 6:00 PM EAT and announces sessions for the next day.
+        """
+        now = datetime.now(EAT)
+        weekday = now.weekday()  # 0=Monday, 6=Sunday
+
+        # Map tomorrow's weekday to cluster IDs
+        tomorrow_weekday = (weekday + 1) % 7
+        cluster_ids = self.cluster_scheduler.get_clusters_for_weekday(tomorrow_weekday)
+
+        for cluster_id in cluster_ids:
+            try:
+                await self.cluster_scheduler.announce_cluster_session_24h(cluster_id)
+            except Exception as e:
+                logger.error(f"Failed to announce cluster {cluster_id} session (24h): {e}")
+
+    async def _send_cluster_reminders_1h(self):
+        """
+        Send 1-hour pre-session reminders and create voice channels (Task 4.4).
+
+        This runs at 5:00 PM EAT (1 hour before sessions) and creates voice channels.
+        """
+        now = datetime.now(EAT)
+        weekday = now.weekday()  # 0=Monday, 6=Sunday
+
+        cluster_ids = self.cluster_scheduler.get_clusters_for_weekday(weekday)
+
+        for cluster_id in cluster_ids:
+            try:
+                await self.cluster_scheduler.send_session_reminder_1h(cluster_id)
+            except Exception as e:
+                logger.error(f"Failed to send 1h reminder for cluster {cluster_id}: {e}")
+
+    async def _cleanup_cluster_voice_channels(self):
+        """
+        Cleanup voice channels after cluster sessions end (Task 4.4).
+
+        This runs at 8:00 PM EAT (1 hour after sessions end) and deletes voice channels.
+        """
+        now = datetime.now(EAT)
+        weekday = now.weekday()  # 0=Monday, 6=Sunday
+
+        cluster_ids = self.cluster_scheduler.get_clusters_for_weekday(weekday)
+
+        for cluster_id in cluster_ids:
+            try:
+                await self.cluster_scheduler.cleanup_voice_channel(cluster_id)
+            except Exception as e:
+                logger.error(f"Failed to cleanup voice channel for cluster {cluster_id}: {e}")
