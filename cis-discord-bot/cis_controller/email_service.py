@@ -1,7 +1,7 @@
 """
 Email Service Integration (Task 4.6)
 
-Handles sending emails via SendGrid or Mailgun for parent updates.
+Handles sending emails via Brevo, SendGrid, or Mailgun for parent updates.
 Implements Story 5.3 parent email delivery system.
 """
 
@@ -26,16 +26,20 @@ class EmailResult:
 
 class EmailService:
     """
-    Email service abstraction supporting SendGrid and Mailgun.
+    Email service abstraction supporting Brevo, SendGrid, and Mailgun.
 
     Environment variables:
-        SENDGRID_API_KEY: SendGrid API key (preferred)
+        BREVO_API_KEY: Brevo API key (preferred)
+        BREVO_BASE_URL: Optional Brevo API base URL override
+        SENDGRID_API_KEY: SendGrid API key (optional compatibility fallback)
         MAILGUN_API_KEY: Mailgun private API key (fallback)
         MAILGUN_DOMAIN: Optional Mailgun sending domain override
         EMAIL_FROM: Default sender email (default: trevor@k2mlabs.com)
     """
 
     def __init__(self):
+        self.brevo_key = os.getenv('BREVO_API_KEY')
+        self.brevo_base_url = os.getenv('BREVO_BASE_URL', 'https://api.brevo.com/v3').strip().rstrip('/')
         self.sendgrid_key = os.getenv('SENDGRID_API_KEY')
         self.mailgun_key = os.getenv('MAILGUN_API_KEY')
         self.mailgun_domain = os.getenv('MAILGUN_DOMAIN', '').strip()
@@ -44,7 +48,10 @@ class EmailService:
         self.dry_run = os.getenv('EMAIL_DRY_RUN', 'false').strip().lower() in {"1", "true", "yes", "on"}
 
         # Determine active provider
-        if self.sendgrid_key:
+        if self.brevo_key:
+            self.provider = 'brevo'
+            logger.info("EmailService initialized with Brevo provider")
+        elif self.sendgrid_key:
             self.provider = 'sendgrid'
             logger.info("EmailService initialized with SendGrid provider")
         elif self.mailgun_key:
@@ -55,7 +62,10 @@ class EmailService:
             if self.dry_run:
                 logger.warning("EmailService initialized without provider in dry-run mode")
             else:
-                logger.error("EmailService initialized without provider keys (set SENDGRID_API_KEY or MAILGUN_API_KEY)")
+                logger.error(
+                    "EmailService initialized without provider keys "
+                    "(set BREVO_API_KEY, SENDGRID_API_KEY, or MAILGUN_API_KEY)"
+                )
 
     async def send_email(
         self,
@@ -105,11 +115,24 @@ class EmailService:
             logger.error("Email send aborted: no provider configured and dry-run disabled")
             return EmailResult(
                 success=False,
-                error="No email provider configured. Set SENDGRID_API_KEY or MAILGUN_API_KEY (or EMAIL_DRY_RUN=true)."
+                error=(
+                    "No email provider configured. Set BREVO_API_KEY, "
+                    "SENDGRID_API_KEY, or MAILGUN_API_KEY (or EMAIL_DRY_RUN=true)."
+                )
             )
 
         try:
-            if self.provider == 'sendgrid':
+            if self.provider == 'brevo':
+                return await self._send_via_brevo(
+                    to_email=to_email,
+                    subject=subject,
+                    html_content=html_content,
+                    text_content=text_content,
+                    from_email=from_email,
+                    from_name=from_name,
+                    reply_to=reply_to,
+                )
+            elif self.provider == 'sendgrid':
                 return await self._send_via_sendgrid(
                     to_email=to_email,
                     subject=subject,
@@ -140,6 +163,71 @@ class EmailService:
             return EmailResult(
                 success=False,
                 error=str(exc)
+            )
+
+    async def _send_via_brevo(
+        self,
+        to_email: str,
+        subject: str,
+        html_content: str,
+        text_content: Optional[str],
+        from_email: str,
+        from_name: str,
+        reply_to: Optional[str],
+    ) -> EmailResult:
+        """Send email via Brevo Transactional API."""
+        url = f"{self.brevo_base_url}/smtp/email"
+        headers = {
+            "api-key": str(self.brevo_key),
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        }
+        payload = {
+            "sender": {
+                "email": from_email,
+                "name": from_name,
+            },
+            "to": [{"email": to_email}],
+            "subject": subject,
+            "htmlContent": html_content,
+        }
+        if text_content:
+            payload["textContent"] = text_content
+        if reply_to:
+            payload["replyTo"] = {"email": reply_to}
+
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                url,
+                headers=headers,
+                json=payload,
+                timeout=30.0,
+            )
+
+            # Brevo commonly returns 201 Created for successful sends.
+            if response.status_code in (200, 201, 202):
+                message_id = None
+                try:
+                    result = response.json()
+                    message_id = result.get("messageId") or result.get("message_id")
+                except Exception:
+                    message_id = None
+                logger.info("Brevo email sent to %s: %s", to_email, message_id)
+                return EmailResult(
+                    success=True,
+                    message_id=message_id,
+                    status_code=response.status_code,
+                )
+
+            logger.error(
+                "Brevo error %s: %s",
+                response.status_code,
+                response.text[:200],
+            )
+            return EmailResult(
+                success=False,
+                status_code=response.status_code,
+                error=response.text[:500],
             )
 
     async def _send_via_sendgrid(

@@ -326,6 +326,7 @@ class TestWeeklySchedulerFlow:
 class TestEmailServiceSemantics:
     @pytest.mark.asyncio
     async def test_no_provider_is_failure_without_dry_run(self, monkeypatch):
+        monkeypatch.delenv("BREVO_API_KEY", raising=False)
         monkeypatch.delenv("SENDGRID_API_KEY", raising=False)
         monkeypatch.delenv("MAILGUN_API_KEY", raising=False)
         monkeypatch.setenv("EMAIL_DRY_RUN", "false")
@@ -341,6 +342,7 @@ class TestEmailServiceSemantics:
 
     @pytest.mark.asyncio
     async def test_no_provider_can_run_in_dry_run_mode(self, monkeypatch):
+        monkeypatch.delenv("BREVO_API_KEY", raising=False)
         monkeypatch.delenv("SENDGRID_API_KEY", raising=False)
         monkeypatch.delenv("MAILGUN_API_KEY", raising=False)
         monkeypatch.setenv("EMAIL_DRY_RUN", "true")
@@ -356,6 +358,7 @@ class TestEmailServiceSemantics:
 
     @pytest.mark.asyncio
     async def test_sendgrid_reply_to_is_top_level_payload(self, monkeypatch):
+        monkeypatch.delenv("BREVO_API_KEY", raising=False)
         monkeypatch.setenv("SENDGRID_API_KEY", "SG.test")
         monkeypatch.delenv("MAILGUN_API_KEY", raising=False)
         monkeypatch.delenv("MAILGUN_DOMAIN", raising=False)
@@ -388,7 +391,45 @@ class TestEmailServiceSemantics:
         assert "reply_to" not in payload["personalizations"][0]
 
     @pytest.mark.asyncio
+    async def test_brevo_uses_transactional_endpoint_and_reply_to(self, monkeypatch):
+        monkeypatch.setenv("BREVO_API_KEY", "brevo-test-key")
+        monkeypatch.delenv("SENDGRID_API_KEY", raising=False)
+        monkeypatch.delenv("MAILGUN_API_KEY", raising=False)
+        monkeypatch.setenv("EMAIL_DRY_RUN", "false")
+
+        calls = []
+        fake_response = _FakeHttpResponse(
+            status_code=201,
+            json_data={"messageId": "<brevo-msg-1>"},
+        )
+        monkeypatch.setattr(
+            email_service_module.httpx,
+            "AsyncClient",
+            lambda *args, **kwargs: _FakeAsyncClient(calls, fake_response),
+        )
+
+        service = EmailService()
+        result = await service.send_email(
+            to_email="parent@example.com",
+            subject="Subject",
+            html_content="<p>Body</p>",
+            text_content="Body",
+            reply_to="trevor@k2mlabs.com",
+        )
+
+        assert result.success is True
+        assert len(calls) == 1
+        assert calls[0]["url"] == "https://api.brevo.com/v3/smtp/email"
+        assert calls[0]["headers"]["api-key"] == "brevo-test-key"
+        payload = calls[0]["json"]
+        assert payload["sender"]["email"]
+        assert payload["to"][0]["email"] == "parent@example.com"
+        assert payload["subject"] == "Subject"
+        assert payload["replyTo"]["email"] == "trevor@k2mlabs.com"
+
+    @pytest.mark.asyncio
     async def test_mailgun_uses_configured_domain_override(self, monkeypatch):
+        monkeypatch.delenv("BREVO_API_KEY", raising=False)
         monkeypatch.delenv("SENDGRID_API_KEY", raising=False)
         monkeypatch.setenv("MAILGUN_API_KEY", "mg-key")
         monkeypatch.setenv("MAILGUN_DOMAIN", "mg.k2mlabs.com")

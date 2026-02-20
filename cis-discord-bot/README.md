@@ -58,11 +58,21 @@ cp .env.template .env
 # Development only:
 # - ALLOW_INSECURE_ADMIN=true (do not enable in production)
 # Parent email system (Task 4.6):
-# - SENDGRID_API_KEY or MAILGUN_API_KEY (+ MAILGUN_DOMAIN if using Mailgun)
+# - BREVO_API_KEY (preferred) or SENDGRID_API_KEY or MAILGUN_API_KEY (+ MAILGUN_DOMAIN if using Mailgun)
 # - EMAIL_FROM / EMAIL_FROM_NAME
 # - PARENT_EMAIL_FROM / PARENT_EMAIL_FROM_NAME / PARENT_EMAIL_REPLY_TO
+# - Optional template styling links: PARENT_EMAIL_LOGO_URL, PARENT_EMAIL_LOGO_SVG_PATH,
+#   PARENT_EMAIL_LOGO_SIZE_PX, PARENT_EMAIL_CTA_URL,
+#   PARENT_EMAIL_SOCIAL_INSTAGRAM_URL, PARENT_EMAIL_SOCIAL_X_URL,
+#   PARENT_EMAIL_SOCIAL_WHATSAPP_URL, PARENT_EMAIL_SOCIAL_DISCORD_URL
 # - PARENT_UNSUBSCRIBE_BASE (optional override)
 # - EMAIL_DRY_RUN=true for non-production testing
+```
+
+Optional secure Brevo key setup (hidden prompt, no key echo):
+
+```bash
+powershell -ExecutionPolicy Bypass -File .\scripts\set-brevo-key.ps1
 ```
 
 ### 3. Run the Bot
