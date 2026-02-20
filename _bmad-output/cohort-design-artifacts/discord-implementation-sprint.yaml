@@ -45,11 +45,11 @@ source_documents:
 # ============================================================
 progress:
   total_tasks: 49
-  done: 28
+  done: 30
   in_progress: 0
   blocked: 0
-  pending: 20
-  percent_complete: 57
+  pending: 18
+  percent_complete: 61
 
 # ============================================================
 # SPRINT 0: AUTOMATED DISCORD SERVER SETUP
@@ -752,7 +752,7 @@ sprint_5:
 
     - id: "5.2"
       title: "End-to-end test: Full Week 1 student journey"
-      status: "pending"
+      status: "done"
       description: |
         Simulate complete Week 1 flow in #bot-testing:
         1. Student joins â†’ welcome DM + cluster assignment
@@ -769,10 +769,12 @@ sprint_5:
         load: "source_documents.server_architecture"
         section: "Week 1 Channel (#week-1-wonder)"
       acceptance: "Complete Week 1 flow works end-to-end with no errors"
+      summary: "✅ Task 5.2 COMPLETE - Added deterministic Week 1 end-to-end integration test (join/welcome+cluster, node+prompt cadence, reaction tracking, /frame DM flow, showcase share, evening snapshot, Friday reflection submission, Saturday unlock+laggard handling, dashboard summaries) with full-suite verification on 2026-02-20."
+      notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/5.2.md"
 
     - id: "5.3"
       title: "End-to-end test: CIS agent graduated introduction"
-      status: "pending"
+      status: "done"
       description: |
         Verify agent unlock schedule:
         - Week 1: Only /frame works, others blocked with helpful message
@@ -783,6 +785,8 @@ sprint_5:
         load: "source_documents.cis_controller_logic"
         section: "Temporal Awareness Logic"
       acceptance: "All agents locked/unlocked per schedule. Announcements fire. Artifact flow complete."
+      summary: "✅ Task 5.3 COMPLETE - Added deterministic graduated-introduction e2e coverage for Week 1 lockouts, Week 4/6 unlock announcements, unlocked command routing, and full 6-section artifact publish/celebration/badge flow with full-suite verification on 2026-02-20."
+      notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/5.3.md"
 
     - id: "5.4"
       title: "Safety and crisis protocol test"
@@ -870,5 +874,5 @@ agent_instructions: |
 
 # Last Updated
 last_updated: "2026-02-20"
-updated_by: "Dev Agent (Amelia) - Task 5.1 complete: manual SOPs reconciled to live bot runtime (scheduler cadence, escalation triggers, crisis path, and live-session operations) with targeted verification."
+updated_by: "Dev Agent (Amelia) - Task 5.3 complete: CIS graduated introduction end-to-end validated against playbook-v2 with Week 1 lockouts, Week 4/6 unlock announcements, and full artifact publish flow + full-suite pass."
 
