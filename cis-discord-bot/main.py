@@ -229,6 +229,7 @@ async def on_ready():
                     bot=bot,
                     store=runtime_store,
                     weekly_channel_ids=weekly_channel_ids,
+                    cohort_start_date=COHORT_START_DATE,
                 )
             else:
                 logger.warning("Participation tracker not started: no weekly channels configured")

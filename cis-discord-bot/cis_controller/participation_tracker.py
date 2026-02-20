@@ -6,9 +6,9 @@ Monitors student posts in weekly channels, reacts with emojis, tracks participat
 and sends gentle nudges to inactive students.
 """
 
-import hashlib
 import logging
-from datetime import datetime, time
+import os
+from datetime import datetime
 from typing import List, Optional
 
 import discord
@@ -40,7 +40,13 @@ class ParticipationTracker:
     - Generate evening peer visibility snapshot (anonymized patterns, no names)
     """
 
-    def __init__(self, bot: commands.Bot, store: StudentStateStore, weekly_channel_ids: List[int]):
+    def __init__(
+        self,
+        bot: commands.Bot,
+        store: StudentStateStore,
+        weekly_channel_ids: List[int],
+        cohort_start_date: Optional[str] = None,
+    ):
         """
         Initialize the participation tracker.
 
@@ -48,11 +54,14 @@ class ParticipationTracker:
             bot: Discord bot instance
             store: StudentStateStore instance
             weekly_channel_ids: List of weekly channel IDs to monitor
+            cohort_start_date: Cohort start date in YYYY-MM-DD (defaults to env COHORT_START_DATE)
         """
         self.bot = bot
         self.store = store
         self.weekly_channel_ids = set(weekly_channel_ids)
         self._reaction_queue = []  # Queue of (message_id, channel_id) to react to
+        cohort_start_raw = cohort_start_date or os.getenv("COHORT_START_DATE", "2026-02-01")
+        self.cohort_start = EAT.localize(datetime.strptime(cohort_start_raw, "%Y-%m-%d"))
 
         logger.info(f"Participation tracker initialized for {len(weekly_channel_ids)} channels")
 
@@ -79,7 +88,7 @@ class ParticipationTracker:
         if not self.is_weekly_channel(message.channel):
             return
 
-        # Queue reaction
+        # React immediately when possible; queue only as fallback retry path.
         await self._queue_reaction(message)
 
         # Track participation
@@ -92,9 +101,26 @@ class ParticipationTracker:
         Args:
             message: Discord message to react to
         """
+        try:
+            await message.add_reaction(WITNESS_EMOJI)
+            return
+        except discord.NotFound:
+            # Message removed before reaction; nothing to retry.
+            return
+        except discord.Forbidden:
+            logger.error(f"Missing permissions to add reaction in channel {message.channel.id}")
+            return
+        except Exception as exc:
+            logger.warning(
+                "Immediate reaction failed for message %s (channel %s), queuing retry: %s",
+                message.id,
+                message.channel.id,
+                exc,
+            )
+
         self._reaction_queue.append((message.id, message.channel.id))
 
-        # Process queue if it's getting large
+        # Process queue if it's getting large.
         if len(self._reaction_queue) >= 10:
             await self._process_reaction_queue()
 
@@ -103,16 +129,18 @@ class ParticipationTracker:
         if not self._reaction_queue:
             return
 
-        processed = 0
+        success_count = 0
+        retry_queue = []
         for message_id, channel_id in self._reaction_queue[:10]:  # Batch of 10
             try:
                 channel = self.bot.get_channel(channel_id)
                 if not channel:
+                    retry_queue.append((message_id, channel_id))
                     continue
 
                 message = await channel.fetch_message(message_id)
                 await message.add_reaction(WITNESS_EMOJI)
-                processed += 1
+                success_count += 1
 
             except discord.NotFound:
                 logger.warning(f"Message {message_id} not found for reaction")
@@ -120,12 +148,13 @@ class ParticipationTracker:
                 logger.error(f"Missing permissions to add reaction in channel {channel_id}")
             except Exception as e:
                 logger.error(f"Error adding reaction: {e}", exc_info=True)
+                retry_queue.append((message_id, channel_id))
 
-        # Remove processed items from queue
-        self._reaction_queue = self._reaction_queue[processed:]
+        # Keep only retryable failures plus untouched items.
+        self._reaction_queue = retry_queue + self._reaction_queue[10:]
 
-        if processed > 0:
-            logger.info(f"Added {WITNESS_EMOJI} reaction to {processed} messages")
+        if success_count > 0:
+            logger.info(f"Added {WITNESS_EMOJI} reaction to {success_count} messages")
 
     async def _track_participation(self, message: discord.Message):
         """
@@ -140,9 +169,7 @@ class ParticipationTracker:
         day_name = now.strftime("%A")
 
         # Calculate current week
-        # TODO: Extract this logic into a shared utility
-        cohort_start = datetime.strptime("2026-02-01", "%Y-%m-%d").replace(tzinfo=EAT)
-        days_since_start = (now - cohort_start).days
+        days_since_start = (now - self.cohort_start).days
         week_number = max(1, min(8, (days_since_start // 7) + 1))
 
         # Calculate engagement score (1-6 scale)
@@ -241,9 +268,10 @@ class ParticipationTracker:
         """
         now = datetime.now(EAT)
         date_str = now.strftime("%Y-%m-%d")
+        day_name = now.strftime("%A")
 
         # Only check at 6:00 PM EAT
-        if now.time() != time(18, 0):
+        if now.hour != 18 or now.minute != 0:
             return
 
         logger.info(f"Checking for inactive students on {date_str} (week {week})")
@@ -259,8 +287,10 @@ class ParticipationTracker:
                 FROM students s
                 LEFT JOIN daily_participation dp ON s.discord_id = dp.discord_id AND dp.date = ?
                 WHERE s.current_week = ?
-                AND dp.has_posted IS NULL OR dp.has_posted = 0
-                AND dp.nudge_sent = 0
+                AND (
+                    dp.id IS NULL
+                    OR (COALESCE(dp.has_posted, 0) = 0 AND COALESCE(dp.nudge_sent, 0) = 0)
+                )
                 LIMIT 20
                 """,
                 (date_str, week)
@@ -278,14 +308,19 @@ class ParticipationTracker:
                 try:
                     await self._send_nudge_dm(discord_id, week)
 
-                    # Mark as nudged
+                    # Upsert and mark as nudged, even if no participation row existed yet.
                     cursor.execute(
                         """
-                        UPDATE daily_participation
-                        SET nudge_sent = 1, nudge_time = ?, flagged_inactive = 1
-                        WHERE discord_id = ? AND date = ?
+                        INSERT INTO daily_participation (
+                            discord_id, date, week_number, day_of_week, has_posted,
+                            post_count, engagement_score, flagged_inactive, nudge_sent, nudge_time
+                        ) VALUES (?, ?, ?, ?, 0, 0, 0, 1, 1, ?)
+                        ON CONFLICT(discord_id, date) DO UPDATE SET
+                            flagged_inactive = 1,
+                            nudge_sent = 1,
+                            nudge_time = excluded.nudge_time
                         """,
-                        (now.isoformat(), discord_id, date_str)
+                        (discord_id, date_str, week, day_name, now.isoformat())
                     )
 
                     logger.info(f"Sent nudge to {username}")
