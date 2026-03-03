@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>V1: Horizontal Gradient Wipe</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700;900&family=Inter:wght@300;400;600&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #000; color: #fff; overflow-x: hidden; }
+
+    .bridge-opening { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle at center, #0A0A0A 0%, #000 100%); position: relative; overflow: hidden; }
+    .marquee-band { position: absolute; width: 200%; height: 100%; display: flex; align-items: center; font-family: 'Space Grotesk', sans-serif; font-size: clamp(8rem, 20vw, 20rem); font-weight: 900; color: rgba(64,224,208,0.04); text-transform: uppercase; white-space: nowrap; user-select: none; pointer-events: none; }
+    .marquee-band-top { top: -15%; animation: marquee-scroll 25s linear infinite; }
+    .marquee-band-bottom { bottom: -15%; animation: marquee-scroll-reverse 22s linear infinite; }
+    @keyframes marquee-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    @keyframes marquee-scroll-reverse { 0% { transform: translateX(-50%); } 100% { transform: translateX(0); } }
+    .bridge-content { text-align: center; z-index: 10; padding: 2rem; max-width: 900px; }
+    .bridge-eyebrow { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.4em; color: #40E0D0; margin-bottom: 2rem; opacity: 0; animation: reveal-up 1s ease forwards 0.5s; }
+    .bridge-headline { font-family: 'Space Grotesk', sans-serif; font-size: clamp(2.5rem, 7vw, 7rem); font-weight: 300; line-height: 1.1; margin-bottom: 2rem; opacity: 0; animation: reveal-up 1s ease forwards 0.7s; }
+    .bridge-headline strong { font-weight: 700; background: linear-gradient(135deg, #40E0D0 0%, #2dd4bf 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .bridge-sub { font-size: clamp(1rem, 2.5vw, 1.5rem); color: #999; line-height: 1.6; margin-bottom: 2rem; opacity: 0; animation: reveal-up 1s ease forwards 0.9s; }
+    @keyframes reveal-up { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ===== ZONES WITH HORIZONTAL GRADIENT WIPE ===== */
+    .zone-section { min-height: 150vh; display: flex; align-items: center; justify-content: center; position: relative; perspective: 1000px; }
+
+    /* Wipe overlay */
+    .gradient-wipe {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      transform: scaleX(0); transform-origin: left;
+      transition: transform 1s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 1; pointer-events: none;
+    }
+
+    .zone-0 .gradient-wipe { background: linear-gradient(90deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.05) 100%); }
+    .zone-1 .gradient-wipe { background: linear-gradient(90deg, rgba(249, 115, 22, 0.2) 0%, rgba(249, 115, 22, 0.05) 100%); }
+    .zone-2 .gradient-wipe { background: linear-gradient(90deg, rgba(234, 179, 8, 0.2) 0%, rgba(234, 179, 8, 0.05) 100%); }
+    .zone-3 .gradient-wipe { background: linear-gradient(90deg, rgba(34, 197, 94, 0.2) 0%, rgba(34, 197, 94, 0.05) 100%); }
+    .zone-4 .gradient-wipe { background: linear-gradient(90deg, rgba(64,224,208, 0.2) 0%, rgba(64,224,208, 0.05) 100%); }
+
+    .zone-0.active .gradient-wipe { transform: scaleX(1); }
+    .zone-1.active .gradient-wipe { transform: scaleX(1); }
+    .zone-2.active .gradient-wipe { transform: scaleX(1); }
+    .zone-3.active .gradient-wipe { transform: scaleX(1); }
+    .zone-4.active .gradient-wipe { transform: scaleX(1); }
+
+    .shape-3d-container { position: absolute; top: 50%; left: 50%; width: 400px; height: 400px; transform-style: preserve-3d; transform: translate(-50%, -50%); z-index: 2; }
+    .shape-3d { width: 100%; height: 100%; transform-style: preserve-3d; position: relative; }
+    .shape-layer { position: absolute; width: 100%; height: 100%; top: 0; left: 0; transform-style: preserve-3d; }
+    .shape-layer svg { width: 100%; height: 100%; filter: drop-shadow(0 0 30px currentColor); }
+
+    .zone-0 .shape-3d svg { fill: none; stroke: #ef4444; stroke-width: 3; }
+    .zone-0 .zone-voice { color: #ef4444; }
+    .zone-0 .zone-number { color: #ef4444; }
+    .zone-1 .shape-3d svg { fill: none; stroke: #f97316; stroke-width: 3; }
+    .zone-1 .zone-voice { color: #f97316; }
+    .zone-1 .zone-number { color: #f97316; }
+    .zone-2 .shape-3d svg { fill: none; stroke: #eab308; stroke-width: 3; }
+    .zone-2 .zone-voice { color: #eab308; }
+    .zone-2 .zone-number { color: #eab308; }
+    .zone-3 .shape-3d svg { fill: none; stroke: #22c55e; stroke-width: 3; }
+    .zone-3 .zone-voice { color: #22c55e; }
+    .zone-3 .zone-number { color: #22c55e; }
+    .zone-4 .shape-3d svg { fill: none; stroke: #40e0d0; stroke-width: 3; }
+    .zone-4 .zone-voice { color: #40e0d0; }
+    .zone-4 .zone-number { color: #40e0d0; }
+
+    .zone-content { max-width: 900px; padding: 4rem 3rem; text-align: center; position: relative; z-index: 10; }
+    .zone-number { font-family: 'Space Grotesk', sans-serif; font-size: clamp(6rem, 15vw, 12rem); font-weight: 900; line-height: 1; margin-bottom: 2rem; opacity: 0.15; }
+    .zone-voice { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.3em; margin-bottom: 2rem; }
+    .zone-title { font-family: 'Space Grotesk', sans-serif; font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 700; margin-bottom: 2rem; line-height: 1.1; }
+    .zone-quote { font-size: clamp(1.2rem, 3vw, 2rem); line-height: 1.6; font-style: italic; margin-bottom: 2rem; }
+    .zone-quote::before { content: '"'; }
+    .char { display: inline-block; opacity: 0; transform: translateY(50px); }
+
+    .survey-cta { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle at center, rgba(64,224,208,0.1) 0%, #000 70%); text-align: center; padding: 2rem; }
+    .survey-content { max-width: 800px; }
+    .survey-headline { font-family: 'Space Grotesk', sans-serif; font-size: clamp(2.5rem, 7vw, 5rem); font-weight: 700; margin-bottom: 2rem; line-height: 1.1; }
+    .survey-headline span { background: linear-gradient(135deg, #40E0D0 0%, #2dd4bf 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .survey-sub { font-size: clamp(1rem, 2.5vw, 1.5rem); color: #ccc; line-height: 1.6; margin-bottom: 3rem; }
+    .survey-button { display: inline-block; padding: 1.5rem 4rem; background: linear-gradient(135deg, #40E0D0 0%, #2dd4bf 100%); color: #000; text-decoration: none; font-size: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.15em; border-radius: 50px; box-shadow: 0 15px 50px rgba(64,224,208,0.5); transition: all 0.4s ease; }
+    .survey-button:hover { transform: translateY(-8px) scale(1.05); box-shadow: 0 25px 70px rgba(64,224,208,0.7); }
+
+    @media (max-width: 768px) { .shape-3d-container { width: 300px; height: 300px; } .zone-content { padding: 3rem 2rem; } }
+  </style>
+</head>
+<body>
+  <section class="bridge-opening">
+    <div class="marquee-band marquee-band-top">5 VOICES — YOUR JOURNEY — FIND YOUR ZONE — 5 VOICES — YOUR JOURNEY — FIND YOUR ZONE — 5 VOICES — YOUR JOURNEY — FIND YOUR ZONE</div>
+    <div class="bridge-content"><div class="bridge-eyebrow">The Territory Map</div><h1 class="bridge-headline">There are <strong>5 voices</strong><br>in the AI journey.</h1><p class="bridge-sub"><strong>Horizontal gradient wipe.</strong><br>Find the one that sounds like you.</p></div>
+    <div class="marquee-band marquee-band-bottom">DISCOVER YOURSELF — WHERE DO YOU FIT? — DISCOVER YOURSELF — WHERE DO YOU FIT? — DISCOVER YOURSELF — WHERE DO YOU FIT?</div>
+  </section>
+
+  <section class="zone-section zone-0"><div class="gradient-wipe"></div><div class="shape-3d-container"><div class="shape-3d" id="shape-3d-0"><div class="shape-layer" style="transform: translateZ(0px);"><svg viewBox="0 0 400 400"><polygon points="100,200 100,133 133,100 200,100 267,100 300,133 300,200 300,267 267,300 200,300 133,300 100,267 100,200 200,100 200,300 100,200" fill="none" stroke-width="2"/></svg></div><div class="shape-layer" style="transform: translateZ(20px);"><svg viewBox="0 0 400 400"><polygon points="100,200 100,133 133,100 200,100 267,100 300,133 300,200 300,267 267,300 200,300 133,300 100,267 100,200 200,100 200,300 100,200" fill="none" stroke-width="2"/></svg></div><div class="shape-layer" style="transform: translateZ(40px);"><svg viewBox="0 0 400 400"><polygon points="100,200 100,133 133,100 200,100 267,100 300,133 300,200 300,267 267,300 200,300 133,300 100,267 100,200 200,100 200,300 100,200" fill="none" stroke-width="2"/></svg></div></div></div><div class="zone-content"><div class="zone-number">0</div><div class="zone-voice">Voice of Confusion</div><h2 class="zone-title">"AI isn't for me"</h2><p class="zone-quote">I'm too old for this. AI is tech for young people. I'll never catch up.</p></div></section>
+  <section class="zone-section zone-1"><div class="gradient-wipe"></div><div class="shape-3d-container"><div class="shape-3d" id="shape-3d-1"><div class="shape-layer" style="transform: translateZ(0px);"><svg viewBox="0 0 400 400"><circle cx="200" cy="200" r="150" fill="none" stroke-width="2"/></svg></div><div class="shape-layer" style="transform: translateZ(30px);"><svg viewBox="0 0 400 400"><circle cx="200" cy="200" r="130" fill="none" stroke-width="2"/></svg></div><div class="shape-layer" style="transform: translateZ(60px);"><svg viewBox="0 0 400 400"><circle cx="200" cy="200" r="110" fill="none" stroke-width="2"/></svg></div></div></div><div class="zone-content"><div class="zone-number">1</div><div class="zone-voice">Voice of Curiosity</div><h2 class="zone-title">"I could try this"</h2><p class="zone-quote">Maybe I'm overthinking it. Let me try one thing and see what happens.</p></div></section>
+  <section class="zone-section zone-2"><div class="gradient-wipe"></div><div class="shape-3d-container"><div class="shape-3d" id="shape-3d-2"><div class="shape-layer" style="transform: translateZ(0px);"><svg viewBox="0 0 400 400"><polygon points="200,50 350,350 50,350" fill="none" stroke-width="2"/></svg></div><div class="shape-layer" style="transform: translateZ(30px);"><svg viewBox="0 0 400 400"><polygon points="200,80 320,320 80,320" fill="none" stroke-width="2"/></svg></div><div class="shape-layer" style="transform: translateZ(60px);"><svg viewBox="0 0 400 400"><polygon points="200,110 290,290 110,290" fill="none" stroke-width="2"/></svg></div></div></div><div class="zone-content"><div class="zone-number">2</div><div class="zone-voice">Voice of Trial & Error</div><h2 class="zone-title">"AI does tasks for me"</h2><p class="zone-quote">Sometimes it works, sometimes not. Finding my rhythm.</p></div></section>
+  <section class="zone-section zone-3"><div class="gradient-wipe"></div><div class="shape-3d-container"><div class="shape-3d" id="shape-3d-3"><div class="shape-layer" style="transform: translateZ(0px);"><svg viewBox="0 0 400 400"><rect x="50" y="50" width="300" height="300" fill="none" stroke-width="2"/></svg></div><div class="shape-layer" style="transform: translateZ(30px);"><svg viewBox="0 0 400 400"><rect x="80" y="80" width="240" height="240" fill="none" stroke-width="2"/></svg></div><div class="shape-layer" style="transform: translateZ(60px);"><svg viewBox="0 0 400 400"><rect x="110" y="110" width="180" height="180" fill="none" stroke-width="2"/></svg></div></div></div><div class="zone-content"><div class="zone-number">3</div><div class="zone-voice">Voice of Collaboration</div><h2 class="zone-title">"AI understands my intent"</h2><p class="zone-quote">It's a thought partner. We're working together.</p></div></section>
+  <section class="zone-section zone-4"><div class="gradient-wipe"></div><div class="shape-3d-container"><div class="shape-3d" id="shape-3d-4"><div class="shape-layer" style="transform: translateZ(0px);"><svg viewBox="0 0 400 400"><polygon points="200,40 260,160 380,180 280,280 300,380 200,320 100,380 120,280 20,180 140,160" fill="none" stroke-width="2"/></svg></div><div class="shape-layer" style="transform: translateZ(30px);"><svg viewBox="0 0 400 400"><polygon points="200,60 240,160 340,180 270,270 290,350 200,300 110,350 130,270 30,180 130,160" fill="none" stroke-width="2"/></svg></div><div class="shape-layer" style="transform: translateZ(60px);"><svg viewBox="0 0 400 400"><polygon points="200,80 220,160 300,180 260,260 280,320 200,280 120,320 140,260 40,180 120,160" fill="none" stroke-width="2"/></svg></div></div></div><div class="zone-content"><div class="zone-number">4</div><div class="zone-voice">Voice of Confidence</div><h2 class="zone-title">"I control the quality"</h2><p class="zone-quote">I know what I want. AI helps me get there, faster.</p></div></section>
+
+  <section class="survey-cta"><div class="survey-content"><h2 class="survey-headline">Which <span>shape</span> resonated with you?</h2><p class="survey-sub">Take the 2-minute assessment to discover your zone<br>and unlock your personalized AI mastery path.</p><a href="#survey" class="survey-button">Find My Zone →</a></div></section>
+
+  <script>gsap.registerPlugin(ScrollTrigger);const shapes=[{id:'#shape-3d-0',rotateX:360,rotateY:180},{id:'#shape-3d-1',rotateX:0,rotateY:360},{id:'#shape-3d-2',rotateX:180,rotateY:180},{id:'#shape-3d-3',rotateX:360,rotateY:0},{id:'#shape-3d-4',rotateX:180,rotateY:360}];shapes.forEach(shape=>{gsap.to(shape.id,{rotateX:shape.rotateX,rotateY:shape.rotateY,rotationZ:180,duration:1,ease:'none',scrollTrigger:{trigger:shape.id,start:'top bottom',end:'bottom top',scrub:1})});const zones=document.querySelectorAll('.zone-section');zones.forEach(zone=>{const title=zone.querySelector('.zone-title');const quote=zone.querySelector('.zone-quote');const titleText=title.textContent;title.innerHTML='';titleText.split('').forEach(char=>{const span=document.createElement('span');span.className='char';span.textContent=char===' '?'\\u00A0':char;title.appendChild(span)});const quoteText=quote.textContent;quote.innerHTML='';quoteText.split(' ').forEach((word,i)=>{const span=document.createElement('span');span.className='char';span.textContent=word;quote.appendChild(span);if(i<quoteText.split(' ').length-1){quote.appendChild(document.createTextNode(' '))}});gsap.to(zone.querySelectorAll('.char'),{opacity:1,y:0,duration:0.8,stagger:0.05,ease:'power3.out',scrollTrigger:{trigger:zone,start:'top 60%',toggleActions:'play none none reverse'}});gsap.to(zone,{duration:0.5,onComplete:()=>zone.classList.add('active'),scrollTrigger:{trigger:zone,start:'top center',end:'bottom center',toggleActions:'play reverse play reverse'}})});});</script>
+</body>
+</html>

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mockup 4: Card Stack - Zone Expansion</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      background: #000;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    .intro {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .intro h1 {
+      font-size: clamp(2rem, 5vw, 4rem);
+      margin-bottom: 1rem;
+      color: #40E0D0;
+    }
+
+    .intro p {
+      font-size: clamp(1rem, 2vw, 1.5rem);
+      color: #ccc;
+    }
+
+    .card-stack-container {
+      position: relative;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
+    }
+
+    .zones-wrapper {
+      position: relative;
+      width: 500px;
+      height: 600px;
+    }
+
+    .zone {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      padding: 3rem 2rem;
+      border-radius: 20px;
+      background: rgba(26, 26, 26, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    }
+
+    /* Stacked initially, will animate on scroll */
+    .zone-0 {
+      z-index: 5;
+      transform: translateY(0) scale(1);
+      opacity: 1;
+    }
+
+    .zone-1 {
+      z-index: 4;
+      transform: translateY(-20px) scale(0.98);
+      opacity: 0.8;
+    }
+
+    .zone-2 {
+      z-index: 3;
+      transform: translateY(-40px) scale(0.96);
+      opacity: 0.6;
+    }
+
+    .zone-3 {
+      z-index: 2;
+      transform: translateY(-60px) scale(0.94);
+      opacity: 0.4;
+    }
+
+    .zone-4 {
+      z-index: 1;
+      transform: translateY(-80px) scale(0.92);
+      opacity: 0.2;
+      border: 2px solid #40E0D0;
+      box-shadow: 0 0 30px rgba(64,224,208,0.3);
+    }
+
+    .zone-number {
+      font-size: 5rem;
+      font-weight: 900;
+      opacity: 0.15;
+      margin-bottom: 1.5rem;
+    }
+
+    .zone-title {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      line-height: 1.2;
+    }
+
+    .zone-description {
+      font-size: 1.1rem;
+      color: #ccc;
+      line-height: 1.6;
+    }
+
+    .zone-4 .zone-title {
+      color: #40E0D0;
+      text-shadow: 0 0 20px rgba(64,224,208,0.5);
+    }
+
+    .outro {
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .outro p {
+      font-size: clamp(1.5rem, 3vw, 2.5rem);
+      color: #40E0D0;
+    }
+
+    @media (max-width: 768px) {
+      .zones-wrapper {
+        width: 90%;
+        height: 500px;
+      }
+
+      .zone {
+        padding: 2rem 1.5rem;
+      }
+
+      .zone-number {
+        font-size: 3rem;
+      }
+
+      .zone-title {
+        font-size: 1.5rem;
+      }
+
+      .zone-description {
+        font-size: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <section class="intro">
+    <h1>The Learning Journey</h1>
+    <p>Scroll to flip through the zones</p>
+  </section>
+
+  <div class="card-stack-container">
+    <div class="zones-wrapper">
+      <div class="zone zone-0">
+        <div class="zone-number">0</div>
+        <h2 class="zone-title">AI isn't for me</h2>
+        <p class="zone-description">Where most students start. Feeling overwhelmed by the possibilities and unsure where to begin.</p>
+      </div>
+
+      <div class="zone zone-1">
+        <div class="zone-number">1</div>
+        <h2 class="zone-title">I could try this</h2>
+        <p class="zone-description">First sparks of curiosity. You see glimpses of what's possible and feel ready to take the first step.</p>
+      </div>
+
+      <div class="zone zone-2">
+        <div class="zone-number">2</div>
+        <h2 class="zone-title">AI does tasks for me</h2>
+        <p class="zone-description">Using it for real work. But still learning consistency and finding your rhythm with AI collaboration.</p>
+      </div>
+
+      <div class="zone zone-3">
+        <div class="zone-number">3</div>
+        <h2 class="zone-title">AI understands my intent</h2>
+        <p class="zone-description">True collaboration begins. You and AI are working together, not just you giving commands.</p>
+      </div>
+
+      <div class="zone zone-4">
+        <div class="zone-number">4</div>
+        <h2 class="zone-title">I control the quality</h2>
+        <p class="zone-description">You direct. You refine. You own the outcome. This is where confidence lives. You are the architect of your AI-powered work.</p>
+      </div>
+    </div>
+  </div>
+
+  <section class="outro">
+    <p>Ready to begin your journey?</p>
+  </section>
+
+  <script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    const zones = document.querySelectorAll('.zone');
+    const container = document.querySelector('.card-stack-container');
+
+    // Create master timeline for card flipping effect
+    const masterTl = gsap.timeline({
+      scrollTrigger: {
+        trigger: container,
+        start: 'top center',
+        end: 'bottom center',
+        scrub: 1
+      }
+    });
+
+    // Animate each zone card flying away
+    zones.forEach((zone, i) => {
+      if (i === 0) return; // Skip zone 0 (it stays until the end)
+
+      // Card flies up and fades out
+      masterTl.to(zone, {
+        y: -800,
+        rotation: -15 + (i * 5), // Slight rotation variation
+        scale: 0.5,
+        opacity: 0,
+        duration: 1,
+        ease: 'power2.inOut'
+      }, i * 0.2);
+    });
+
+    // Zone 4 (bottom card) special treatment
+    const zone4 = document.querySelector('.zone-4');
+    const zone4Title = zone4.querySelector('.zone-title');
+
+    // When zone 4 is revealed, make it pop
+    gsap.to(zone4, {
+      scrollTrigger: {
+        trigger: container,
+        start: '40% center',
+        end: 'center center',
+        scrub: 1
+      },
+      scale: 1.05,
+      borderColor: '#40E0D0',
+      boxShadow: '0 0 50px rgba(64,224,208,0.5)',
+      ease: 'power2.inOut'
+    });
+
+    // Zone 4 title gets HUGE
+    gsap.to(zone4Title, {
+      scrollTrigger: {
+        trigger: container,
+        start: '40% center',
+        end: 'center center',
+        scrub: 1
+      },
+      fontSize: '2.5rem',
+      ease: 'power2.inOut'
+    });
+
+    // Add subtle parallax to zone numbers
+    const zoneNumbers = document.querySelectorAll('.zone-number');
+    zoneNumbers.forEach((number) => {
+      gsap.to(number, {
+        scrollTrigger: {
+          trigger: container,
+          start: 'top bottom',
+          end: 'bottom top',
+          scrub: 0.5
+        },
+        y: -50,
+        ease: 'none'
+      });
+    });
+  </script>
+</body>
+</html>

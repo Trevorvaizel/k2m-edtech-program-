@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spotlight Theater - Intimate Zone Reveal</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700;900&family=Inter:wght@300;400;600&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', sans-serif; background: #000; color: #fff; overflow-x: hidden; }
+
+    /* ===== HERO SECTION ===== */
+    .bridge-opening {
+      min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: radial-gradient(circle at center, #0A0A0A 0%, #000 100%); position: relative; overflow: hidden;
+    }
+
+    .marquee-band {
+      position: absolute; width: 200%; height: 100%; display: flex; align-items: center;
+      font-family: 'Space Grotesk', sans-serif; font-size: clamp(8rem, 20vw, 20rem); font-weight: 900;
+      color: rgba(64,224,208,0.04); text-transform: uppercase; white-space: nowrap; user-select: none; pointer-events: none;
+    }
+
+    .marquee-band-top { top: -15%; animation: marquee-scroll 25s linear infinite; }
+    .marquee-band-bottom { bottom: -15%; animation: marquee-scroll-reverse 22s linear infinite; }
+
+    @keyframes marquee-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    @keyframes marquee-scroll-reverse { 0% { transform: translateX(-50%); } 100% { transform: translateX(0); } }
+
+    .bridge-content { text-align: center; z-index: 10; padding: 2rem; max-width: 900px; }
+    .bridge-eyebrow { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.4em; color: #40E0D0; margin-bottom: 2rem; opacity: 0; animation: reveal-up 1s ease forwards 0.5s; }
+    .bridge-headline { font-family: 'Space Grotesk', sans-serif; font-size: clamp(2.5rem, 7vw, 7rem); font-weight: 300; line-height: 1.1; margin-bottom: 2rem; opacity: 0; animation: reveal-up 1s ease forwards 0.7s; }
+    .bridge-headline strong { font-weight: 700; background: linear-gradient(135deg, #40E0D0 0%, #2dd4bf 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .bridge-sub { font-size: clamp(1rem, 2.5vw, 1.5rem); color: #999; line-height: 1.6; margin-bottom: 2rem; opacity: 0; animation: reveal-up 1s ease forwards 0.9s; }
+
+    @keyframes reveal-up { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+
+    .scroll-hint {
+      position: absolute; bottom: 3rem; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+      opacity: 0; animation: reveal-up 1s ease forwards 1.2s;
+    }
+    .scroll-hint span { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.2em; color: #666; }
+    .scroll-hint .arrow { width: 20px; height: 20px; border-right: 2px solid #40E0D0; border-bottom: 2px solid #40E0D0;
+      transform: rotate(45deg); animation: bounce-arrow 1.5s ease infinite; }
+    @keyframes bounce-arrow { 0%, 100% { transform: rotate(45deg) translateY(0); } 50% { transform: rotate(45deg) translateY(8px); } }
+
+    /* ===== THEATER STAGE ===== */
+    .theater-stage {
+      position: relative;
+    }
+
+    .stage-section {
+      min-height: 100vh; position: relative; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* Spotlight effect */
+    .spotlight {
+      position: absolute; width: 100%; height: 100%;
+      background: radial-gradient(ellipse 40% 50% at 50% 50%, rgba(64,224,208,0.08) 0%, transparent 70%);
+      opacity: 0; transition: opacity 1s ease;
+      pointer-events: none;
+    }
+
+    .stage-section.in-spotlight .spotlight { opacity: 1; }
+
+    /* Parallax background layers */
+    .parallax-layer {
+      position: absolute; inset: 0; pointer-events: none;
+    }
+
+    .parallax-layer.slow { /* data-speed="0.5" */ }
+    .parallax-layer.medium { /* data-speed="0.8" */ }
+    .parallax-layer.fast { /* data-speed="1.2" */ }
+
+    /* Floating ambient shapes */
+    .ambient-shape {
+      position: absolute; border-radius: 50%;
+      background: radial-gradient(circle, rgba(64,224,208,0.1) 0%, transparent 70%);
+      filter: blur(40px);
+    }
+
+    .ambient-shape.s1 { width: 300px; height: 300px; top: 10%; left: 5%; }
+    .ambient-shape.s2 { width: 200px; height: 200px; bottom: 20%; right: 10%; }
+    .ambient-shape.s3 { width: 150px; height: 150px; top: 60%; left: 80%; }
+
+    /* Character on stage */
+    .stage-character {
+      position: relative; z-index: 10; max-width: 700px; padding: 0 2rem;
+      text-align: center;
+      opacity: 0; transform: translateY(60px) scale(0.95);
+      transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .stage-section.in-spotlight .stage-character {
+      opacity: 1; transform: translateY(0) scale(1);
+    }
+
+    /* Zone number - massive backdrop */
+    .stage-backdrop-number {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      font-family: 'Space Grotesk', sans-serif; font-size: clamp(20rem, 50vw, 40rem); font-weight: 900;
+      color: rgba(64,224,208,0.03); line-height: 1; z-index: 1;
+      pointer-events: none;
+    }
+
+    /* Voice label */
+    .stage-voice {
+      font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.4em; color: #40E0D0;
+      margin-bottom: 1.5rem; opacity: 0;
+      transition: opacity 0.6s ease 0.3s;
+    }
+
+    .stage-section.in-spotlight .stage-voice { opacity: 1; }
+
+    /* Main quote - the character speaking */
+    .stage-quote {
+      font-family: 'Space Grotesk', sans-serif; font-size: clamp(2rem, 5vw, 4rem); font-weight: 700;
+      line-height: 1.2; margin-bottom: 2rem; position: relative;
+      opacity: 0; transform: translateY(20px);
+      transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s;
+    }
+
+    .stage-section.in-spotlight .stage-quote { opacity: 1; transform: translateY(0); }
+
+    /* Inner thought - italicized, smaller */
+    .stage-inner-thought {
+      font-size: clamp(1rem, 2vw, 1.3rem); color: #888; line-height: 1.7; font-style: italic;
+      max-width: 600px; margin: 0 auto 2rem;
+      opacity: 0; transform: translateY(20px);
+      transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.4s;
+    }
+
+    .stage-section.in-spotlight .stage-inner-thought { opacity: 1; transform: translateY(0); }
+
+    /* "Is this you?" prompt */
+    .stage-prompt {
+      display: flex; align-items: center; justify-content: center; gap: 1rem;
+      opacity: 0; transform: translateY(15px);
+      transition: all 0.6s ease 0.6s;
+    }
+
+    .stage-section.in-spotlight .stage-prompt { opacity: 1; transform: translateY(0); }
+
+    .stage-prompt .pulse-ring {
+      width: 40px; height: 40px; border: 2px solid rgba(64,224,208,0.5);
+      border-radius: 50%; position: relative;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .stage-prompt .pulse-ring::before {
+      content: ''; position: absolute; inset: -5px;
+      border: 1px solid rgba(64,224,208,0.3); border-radius: 50%;
+      animation: pulse-expand 2s ease infinite;
+    }
+
+    @keyframes pulse-expand {
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(1.5); opacity: 0; }
+    }
+
+    .stage-prompt .pulse-ring span {
+      font-size: 0.7rem; color: #40E0D0; font-weight: 700;
+    }
+
+    .stage-prompt p {
+      font-size: 0.8rem; color: #666; text-transform: uppercase; letter-spacing: 0.15em;
+    }
+
+    /* Curtain edges */
+    .curtain-left, .curtain-right {
+      position: absolute; top: 0; bottom: 0; width: 15%;
+      background: linear-gradient(90deg, rgba(0,0,0,0.9) 0%, transparent 100%);
+      z-index: 5; pointer-events: none;
+    }
+
+    .curtain-left { left: 0; }
+    .curtain-right { right: 0; background: linear-gradient(-90deg, rgba(0,0,0,0.9) 0%, transparent 100%); }
+
+    /* Progress line */
+    .progress-line {
+      position: fixed; left: 3rem; top: 50%; transform: translateY(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+      z-index: 100;
+    }
+
+    .progress-line .line {
+      width: 2px; height: 150px; background: rgba(64,224,208,0.2);
+      position: relative; border-radius: 2px;
+    }
+
+    .progress-line .fill {
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: #40E0D0; border-radius: 2px;
+      transition: height 0.3s ease;
+    }
+
+    .progress-line .current-zone {
+      font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; font-weight: 700;
+      color: #40E0D0;
+    }
+
+    .progress-line .total {
+      font-size: 0.7rem; color: #666; text-transform: uppercase; letter-spacing: 0.1em;
+    }
+
+    /* ===== SURVEY CTA ===== */
+    .survey-cta {
+      min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: radial-gradient(circle at center, rgba(64,224,208,0.08) 0%, #000 70%);
+      text-align: center; padding: 2rem;
+    }
+
+    .survey-content { max-width: 800px; }
+    .survey-headline { font-family: 'Space Grotesk', sans-serif; font-size: clamp(2rem, 6vw, 4rem); font-weight: 700; margin-bottom: 1.5rem; line-height: 1.1; }
+    .survey-headline span { background: linear-gradient(135deg, #40E0D0 0%, #2dd4bf 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .survey-sub { font-size: clamp(1rem, 2vw, 1.25rem); color: #999; line-height: 1.7; margin-bottom: 2.5rem; }
+    .survey-button {
+      display: inline-block; padding: 1.25rem 3rem; background: linear-gradient(135deg, #40E0D0 0%, #2dd4bf 100%);
+      color: #000; text-decoration: none; font-size: 0.9rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.15em; border-radius: 50px; box-shadow: 0 15px 50px rgba(64,224,208,0.4);
+      transition: all 0.4s ease;
+    }
+    .survey-button:hover { transform: translateY(-5px) scale(1.03); box-shadow: 0 25px 70px rgba(64,224,208,0.6); }
+
+    @media (max-width: 768px) {
+      .curtain-left, .curtain-right { width: 5%; }
+      .progress-line { left: 1rem; }
+      .stage-backdrop-number { font-size: clamp(10rem, 40vw, 20rem); }
+    }
+  </style>
+</head>
+<body>
+  <!-- HERO SECTION -->
+  <section class="bridge-opening">
+    <div class="marquee-band marquee-band-top">5 VOICES — YOUR JOURNEY — FIND YOUR ZONE — 5 VOICES — YOUR JOURNEY — FIND YOUR ZONE — 5 VOICES — YOUR JOURNEY — FIND YOUR ZONE</div>
+    <div class="bridge-content">
+      <div class="bridge-eyebrow">The Territory Map</div>
+      <h1 class="bridge-headline">There are <strong>5 voices</strong><br>in the AI journey.</h1>
+      <p class="bridge-sub">The stage is set. The spotlight waits.<br>Each voice will speak their truth.</p>
+    </div>
+    <div class="marquee-band marquee-band-bottom">DISCOVER YOURSELF — WHERE DO YOU FIT? — DISCOVER YOURSELF — WHERE DO YOU FIT? — DISCOVER YOURSELF — WHERE DO YOU FIT?</div>
+    <div class="scroll-hint">
+      <span>Enter the theater</span>
+      <div class="arrow"></div>
+    </div>
+  </section>
+
+  <!-- Progress indicator -->
+  <div class="progress-line">
+    <div class="current-zone">0</div>
+    <div class="line"><div class="fill" style="height: 0%;"></div></div>
+    <div class="total">of 5</div>
+  </div>
+
+  <!-- THEATER STAGE -->
+  <div class="theater-stage">
+
+    <!-- Zone 0 -->
+    <section class="stage-section" data-zone="0">
+      <div class="curtain-left"></div>
+      <div class="curtain-right"></div>
+      <div class="spotlight"></div>
+
+      <div class="parallax-layer slow">
+        <div class="ambient-shape s1" data-speed="0.5"></div>
+      </div>
+      <div class="parallax-layer medium">
+        <div class="ambient-shape s2" data-speed="0.8"></div>
+      </div>
+      <div class="parallax-layer fast">
+        <div class="ambient-shape s3" data-speed="1.2"></div>
+      </div>
+
+      <div class="stage-backdrop-number">0</div>
+
+      <div class="stage-character">
+        <div class="stage-voice">Voice of Confusion</div>
+        <h2 class="stage-quote">"AI isn't for me."</h2>
+        <p class="stage-inner-thought">I'm too old for this. AI is tech for young people. My kids get it instantly — I've tried and it just doesn't click. Everyone talks about it like I should already know. Am I the only one feeling this lost?</p>
+        <div class="stage-prompt">
+          <div class="pulse-ring"><span>?</span></div>
+          <p>Is this your voice?</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Zone 1 -->
+    <section class="stage-section" data-zone="1">
+      <div class="curtain-left"></div>
+      <div class="curtain-right"></div>
+      <div class="spotlight"></div>
+
+      <div class="parallax-layer slow">
+        <div class="ambient-shape s1" data-speed="0.5"></div>
+      </div>
+      <div class="parallax-layer medium">
+        <div class="ambient-shape s2" data-speed="0.8"></div>
+      </div>
+
+      <div class="stage-backdrop-number">1</div>
+
+      <div class="stage-character">
+        <div class="stage-voice">Voice of Curiosity</div>
+        <h2 class="stage-quote">"I could try this."</h2>
+        <p class="stage-inner-thought">Maybe I've been overthinking this whole thing. What if I just tried one small thing and saw what happened? I saw someone do something cool with it. Could save me hours... maybe. What's the worst that could happen?</p>
+        <div class="stage-prompt">
+          <div class="pulse-ring"><span>?</span></div>
+          <p>Is this your voice?</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Zone 2 -->
+    <section class="stage-section" data-zone="2">
+      <div class="curtain-left"></div>
+      <div class="curtain-right"></div>
+      <div class="spotlight"></div>
+
+      <div class="parallax-layer slow">
+        <div class="ambient-shape s2" data-speed="0.5"></div>
+      </div>
+      <div class="parallax-layer fast">
+        <div class="ambient-shape s3" data-speed="1.2"></div>
+      </div>
+
+      <div class="stage-backdrop-number">2</div>
+
+      <div class="stage-character">
+        <div class="stage-voice">Voice of Trial & Error</div>
+        <h2 class="stage-quote">"AI does tasks for me."</h2>
+        <p class="stage-inner-thought">Sometimes it's brilliant, sometimes it's complete garbage. I'm getting better at spotting the difference. It worked! ...wait, no it didn't. Learning what to trust. Finding my rhythm. I can tell when it's wrong now.</p>
+        <div class="stage-prompt">
+          <div class="pulse-ring"><span>?</span></div>
+          <p>Is this your voice?</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Zone 3 -->
+    <section class="stage-section" data-zone="3">
+      <div class="curtain-left"></div>
+      <div class="curtain-right"></div>
+      <div class="spotlight"></div>
+
+      <div class="parallax-layer medium">
+        <div class="ambient-shape s1" data-speed="0.8"></div>
+      </div>
+      <div class="parallax-layer fast">
+        <div class="ambient-shape s2" data-speed="1.2"></div>
+      </div>
+
+      <div class="stage-backdrop-number">3</div>
+
+      <div class="stage-character">
+        <div class="stage-voice">Voice of Collaboration</div>
+        <h2 class="stage-quote">"AI understands my intent."</h2>
+        <p class="stage-inner-thought">It's not just a tool anymore — it's like having a thought partner who finishes my sentences. We're having actual conversations now. It suggests things I hadn't considered. My thinking has expanded. Better together than alone.</p>
+        <div class="stage-prompt">
+          <div class="pulse-ring"><span>?</span></div>
+          <p>Is this your voice?</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Zone 4 -->
+    <section class="stage-section" data-zone="4">
+      <div class="curtain-left"></div>
+      <div class="curtain-right"></div>
+      <div class="spotlight"></div>
+
+      <div class="parallax-layer slow">
+        <div class="ambient-shape s3" data-speed="0.5"></div>
+      </div>
+      <div class="parallax-layer fast">
+        <div class="ambient-shape s1" data-speed="1.2"></div>
+        <div class="ambient-shape s2" data-speed="1.5"></div>
+      </div>
+
+      <div class="stage-backdrop-number">4</div>
+
+      <div class="stage-character">
+        <div class="stage-voice">Voice of Confidence</div>
+        <h2 class="stage-quote">"I control the quality."</h2>
+        <p class="stage-inner-thought">I know exactly what I want. I direct, refine, and own the outcome. AI accelerates my vision. This is my competitive edge. Quality is my decision. I don't just use AI — I orchestrate it.</p>
+        <div class="stage-prompt">
+          <div class="pulse-ring"><span>?</span></div>
+          <p>Is this your voice?</p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- SURVEY CTA -->
+  <section class="survey-cta">
+    <div class="survey-content">
+      <h2 class="survey-headline">Which <span>voice</span> spoke to you?</h2>
+      <p class="survey-sub">The spotlight found you. That moment of recognition?<br>That's your starting point on this journey.</p>
+      <a href="#survey" class="survey-button">Claim My Voice</a>
+    </div>
+  </section>
+
+  <script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    const stages = gsap.utils.toArray('.stage-section');
+    const progressFill = document.querySelector('.progress-line .fill');
+    const currentZoneEl = document.querySelector('.progress-line .current-zone');
+    const progressLine = document.querySelector('.progress-line');
+
+    // Parallax effect for ambient shapes
+    stages.forEach(stage => {
+      const shapes = stage.querySelectorAll('.ambient-shape');
+
+      shapes.forEach(shape => {
+        const speed = parseFloat(shape.dataset.speed) || 1;
+
+        gsap.to(shape, {
+          y: () => (1 - speed) * 200,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: stage,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: true
+          }
+        });
+      });
+    });
+
+    // Spotlight activation
+    stages.forEach((stage, i) => {
+      ScrollTrigger.create({
+        trigger: stage,
+        start: 'top 60%',
+        end: 'bottom 40%',
+        onEnter: () => {
+          stages.forEach(s => s.classList.remove('in-spotlight'));
+          stage.classList.add('in-spotlight');
+          currentZoneEl.textContent = i;
+          gsap.to(progressFill, { height: `${((i + 1) / stages.length) * 100}%`, duration: 0.5 });
+        },
+        onEnterBack: () => {
+          stages.forEach(s => s.classList.remove('in-spotlight'));
+          stage.classList.add('in-spotlight');
+          currentZoneEl.textContent = i;
+          gsap.to(progressFill, { height: `${((i + 1) / stages.length) * 100}%`, duration: 0.5 });
+        }
+      });
+    });
+
+    // Hide progress in hero and CTA
+    ScrollTrigger.create({
+      trigger: '.bridge-opening',
+      start: 'top top',
+      end: 'bottom top',
+      onEnter: () => gsap.to(progressLine, { opacity: 0, x: -20, duration: 0.3 }),
+      onLeave: () => gsap.to(progressLine, { opacity: 1, x: 0, duration: 0.3 }),
+      onEnterBack: () => gsap.to(progressLine, { opacity: 0, x: -20, duration: 0.3 }),
+      onLeaveBack: () => gsap.to(progressLine, { opacity: 1, x: 0, duration: 0.3 })
+    });
+
+    ScrollTrigger.create({
+      trigger: '.survey-cta',
+      start: 'top 80%',
+      onEnter: () => gsap.to(progressLine, { opacity: 0, x: -20, duration: 0.3 }),
+      onLeaveBack: () => gsap.to(progressLine, { opacity: 1, x: 0, duration: 0.3 })
+    });
+  </script>
+</body>
+</html>

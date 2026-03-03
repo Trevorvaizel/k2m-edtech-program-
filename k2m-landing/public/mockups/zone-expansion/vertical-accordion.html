@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hybrid 3: Vertical Accordion - Expandable Zones + Voice Copy</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700;900&family=Inter:wght@300;400;600&display=swap');
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #000;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    /* ===== BRIDGE SECTION ===== */
+    .bridge {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at center, #0A0A0A 0%, #000 100%);
+      position: relative;
+      padding: 2rem;
+    }
+
+    .bridge-content {
+      text-align: center;
+      z-index: 10;
+      max-width: 800px;
+    }
+
+    .bridge-eyebrow {
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3em;
+      color: #40E0D0;
+      margin-bottom: 2rem;
+      opacity: 0;
+      animation: fade-in 1s ease forwards 0.3s;
+    }
+
+    .bridge-headline {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(2.5rem, 7vw, 6rem);
+      font-weight: 300;
+      line-height: 1.1;
+      margin-bottom: 2rem;
+      opacity: 0;
+      animation: fade-in 1s ease forwards 0.5s;
+    }
+
+    .bridge-headline strong {
+      font-weight: 700;
+      background: linear-gradient(135deg, #40E0D0 0%, #2dd4bf 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .bridge-sub {
+      font-size: clamp(1rem, 2.5vw, 1.5rem);
+      color: #999;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+      opacity: 0;
+      animation: fade-in 1s ease forwards 0.7s;
+    }
+
+    @keyframes fade-in {
+      to { opacity: 1; }
+    }
+
+    /* ===== ACCORDION ZONES ===== */
+    .accordion-container {
+      background: #000;
+      position: relative;
+    }
+
+    .zone-accordion {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .zone-item {
+      background: rgba(10, 10, 10, 0.95);
+      border: 1px solid rgba(64,224,208,0.15);
+      border-radius: 20px;
+      overflow: hidden;
+      transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .zone-item.active {
+      border-color: rgba(64,224,208,0.5);
+      box-shadow: 0 20px 60px rgba(64,224,208,0.2);
+      background: rgba(10, 10, 10, 0.98);
+    }
+
+    .zone-header {
+      padding: 2.5rem 3rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      user-select: none;
+      position: relative;
+    }
+
+    .zone-header-left {
+      display: flex;
+      align-items: center;
+      gap: 2rem;
+      flex: 1;
+    }
+
+    .zone-number {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(3rem, 6vw, 5rem);
+      font-weight: 900;
+      color: rgba(64,224,208,0.15);
+      line-height: 1;
+      min-width: 100px;
+    }
+
+    .zone-item.active .zone-number {
+      color: rgba(64,224,208,0.3);
+    }
+
+    .zone-header-text {
+      flex: 1;
+    }
+
+    .zone-voice {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.25em;
+      color: #40E0D0;
+      margin-bottom: 0.5rem;
+    }
+
+    .zone-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(1.5rem, 3.5vw, 2.2rem);
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .zone-toggle {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      border: 2px solid rgba(64,224,208,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.4s ease;
+      flex-shrink: 0;
+    }
+
+    .zone-toggle span {
+      font-size: 1.5rem;
+      color: #40E0D0;
+      transition: transform 0.4s ease;
+    }
+
+    .zone-item.active .zone-toggle {
+      background: rgba(64,224,208,0.1);
+      border-color: #40E0D0;
+    }
+
+    .zone-item.active .zone-toggle span {
+      transform: rotate(45deg);
+    }
+
+    .zone-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .zone-item.active .zone-content {
+      max-height: 800px;
+    }
+
+    .zone-content-inner {
+      padding: 0 3rem 3rem 3rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.6s ease;
+    }
+
+    .zone-item.active .zone-content-inner {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .zone-quote-block {
+      border-left: 3px solid rgba(64,224,208,0.3);
+      padding-left: 2rem;
+    }
+
+    .zone-quote {
+      font-size: clamp(1.1rem, 2vw, 1.4rem);
+      color: #ccc;
+      line-height: 1.7;
+      font-style: italic;
+      margin-bottom: 1.5rem;
+    }
+
+    .zone-quote::before {
+      content: '"';
+      font-size: 2.5rem;
+      color: #40E0D0;
+      line-height: 0;
+    }
+
+    .zone-identity {
+      font-size: clamp(0.9rem, 1.5vw, 1rem);
+      color: #aaa;
+      line-height: 1.7;
+    }
+
+    .zone-identity strong {
+      color: #40E0D0;
+      font-weight: 600;
+    }
+
+    .zone-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+
+    .stat-box {
+      background: rgba(64,224,208,0.05);
+      border: 1px solid rgba(64,224,208,0.15);
+      border-radius: 15px;
+      padding: 2rem;
+      text-align: center;
+      transition: all 0.4s ease;
+    }
+
+    .stat-box:hover {
+      background: rgba(64,224,208,0.08);
+      border-color: rgba(64,224,208,0.3);
+      transform: translateY(-5px);
+    }
+
+    .stat-value {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      font-weight: 700;
+      color: #40E0D0;
+      margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: #666;
+    }
+
+    /* Floating indicator */
+    .floating-indicator {
+      position: fixed;
+      right: 2rem;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .indicator-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(64,224,208,0.2);
+      border: 2px solid rgba(64,224,208,0.3);
+      transition: all 0.4s ease;
+      cursor: pointer;
+    }
+
+    .indicator-dot.active {
+      background: #40E0D0;
+      border-color: #40E0D0;
+      box-shadow: 0 0 20px rgba(64,224,208,0.6);
+    }
+
+    .indicator-dot:hover {
+      transform: scale(1.3);
+    }
+
+    /* ===== SURVEY CTA ===== */
+    .survey-cta {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at center, rgba(64,224,208,0.08) 0%, #000 70%);
+      text-align: center;
+      padding: 2rem;
+      position: relative;
+    }
+
+    .survey-cta::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent 0%, #40E0D0 50%, transparent 100%);
+    }
+
+    .survey-content {
+      max-width: 750px;
+      z-index: 10;
+    }
+
+    .survey-headline {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(2.5rem, 7vw, 5rem);
+      font-weight: 700;
+      margin-bottom: 2rem;
+      line-height: 1.1;
+    }
+
+    .survey-headline span {
+      background: linear-gradient(135deg, #40E0D0 0%, #2dd4bf 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .survey-sub {
+      font-size: clamp(1rem, 2.5vw, 1.5rem);
+      color: #ccc;
+      line-height: 1.6;
+      margin-bottom: 3rem;
+    }
+
+    .survey-button {
+      display: inline-block;
+      padding: 1.5rem 4rem;
+      background: linear-gradient(135deg, #40E0D0 0%, #2dd4bf 100%);
+      color: #000;
+      text-decoration: none;
+      font-size: 1rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      border-radius: 50px;
+      box-shadow: 0 15px 50px rgba(64,224,208,0.5);
+      transition: all 0.4s ease;
+    }
+
+    .survey-button:hover {
+      transform: translateY(-8px) scale(1.05);
+      box-shadow: 0 25px 70px rgba(64,224,208,0.7);
+    }
+
+    /* ===== MOBILE ===== */
+    @media (max-width: 768px) {
+      .zone-header {
+        padding: 1.5rem 1.25rem;
+      }
+
+      .zone-header-left {
+        gap: 1rem;
+      }
+
+      .zone-number {
+        font-size: 2rem;
+        min-width: 50px;
+      }
+
+      .zone-title {
+        font-size: 1.1rem;
+      }
+
+      .zone-toggle {
+        width: 35px;
+        height: 35px;
+      }
+
+      .zone-toggle span {
+        font-size: 1rem;
+      }
+
+      .zone-content-inner {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        padding: 0 1.25rem 1.5rem 1.25rem;
+      }
+
+      .zone-stats {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .stat-box {
+        padding: 1.5rem;
+      }
+
+      .floating-indicator {
+        right: 1rem;
+      }
+
+      .indicator-dot {
+        width: 8px;
+        height: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Bridge Section -->
+  <section class="bridge">
+    <div class="bridge-content">
+      <div class="bridge-eyebrow">The Territory Map</div>
+      <h1 class="bridge-headline">
+        There are <strong>5 voices</strong><br>
+        in the AI journey.
+      </h1>
+      <p class="bridge-sub">
+        Each voice thinks differently. Each faces unique challenges.<br>
+        <br>
+        <strong>Click to expand each zone.</strong><br>
+        Find the one that sounds like you.
+      </p>
+    </div>
+  </section>
+
+  <!-- Accordion Zones -->
+  <div class="accordion-container">
+    <div class="zone-accordion">
+      <!-- Zone 0 -->
+      <div class="zone-item active" data-zone="0">
+        <div class="zone-header">
+          <div class="zone-header-left">
+            <div class="zone-number">0</div>
+            <div class="zone-header-text">
+              <div class="zone-voice">Voice of Confusion</div>
+              <h2 class="zone-title">"AI isn't for me"</h2>
+            </div>
+          </div>
+          <div class="zone-toggle">
+            <span>+</span>
+          </div>
+        </div>
+        <div class="zone-content">
+          <div class="zone-content-inner">
+            <div class="zone-quote-block">
+              <p class="zone-quote">I'm too old for this. AI is tech for young people. I'll never catch up.</p>
+              <div class="zone-identity">
+                <strong>38% of students start here.</strong><br><br>
+                Feeling overwhelmed, unsure, questioning if AI has a place in your life at all.
+              </div>
+            </div>
+            <div class="zone-stats">
+              <div class="stat-box">
+                <div class="stat-value">Lost</div>
+                <div class="stat-label">Feeling</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-value">38%</div>
+                <div class="stat-label">Start Here</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Zone 1 -->
+      <div class="zone-item" data-zone="1">
+        <div class="zone-header">
+          <div class="zone-header-left">
+            <div class="zone-number">1</div>
+            <div class="zone-header-text">
+              <div class="zone-voice">Voice of Curiosity</div>
+              <h2 class="zone-title">"I could try this"</h2>
+            </div>
+          </div>
+          <div class="zone-toggle">
+            <span>+</span>
+          </div>
+        </div>
+        <div class="zone-content">
+          <div class="zone-content-inner">
+            <div class="zone-quote-block">
+              <p class="zone-quote">Maybe I'm overthinking it. Let me try one thing and see what happens.</p>
+              <div class="zone-identity">
+                <strong>The spark of possibility.</strong><br><br>
+                Not convinced yet, but willing to experiment. Open to seeing what AI can do.
+              </div>
+            </div>
+            <div class="zone-stats">
+              <div class="stat-box">
+                <div class="stat-value">First</div>
+                <div class="stat-label">Step</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-value">Open</div>
+                <div class="stat-label">Mind</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Zone 2 -->
+      <div class="zone-item" data-zone="2">
+        <div class="zone-header">
+          <div class="zone-header-left">
+            <div class="zone-number">2</div>
+            <div class="zone-header-text">
+              <div class="zone-voice">Voice of Trial & Error</div>
+              <h2 class="zone-title">"AI does tasks for me"</h2>
+            </div>
+          </div>
+          <div class="zone-toggle">
+            <span>+</span>
+          </div>
+        </div>
+        <div class="zone-content">
+          <div class="zone-content-inner">
+            <div class="zone-quote-block">
+              <p class="zone-quote">Sometimes it works, sometimes not. Finding my rhythm.</p>
+              <div class="zone-identity">
+                <strong>Building the habit.</strong><br><br>
+                Using AI for real work, but inconsistently. Finding moments where it clicks.
+              </div>
+            </div>
+            <div class="zone-stats">
+              <div class="stat-box">
+                <div class="stat-value">Building</div>
+                <div class="stat-label">Habit</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-value">Mixed</div>
+                <div class="stat-label">Results</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Zone 3 -->
+      <div class="zone-item" data-zone="3">
+        <div class="zone-header">
+          <div class="zone-header-left">
+            <div class="zone-number">3</div>
+            <div class="zone-header-text">
+              <div class="zone-voice">Voice of Collaboration</div>
+              <h2 class="zone-title">"AI understands my intent"</h2>
+            </div>
+          </div>
+          <div class="zone-toggle">
+            <span>+</span>
+          </div>
+        </div>
+        <div class="zone-content">
+          <div class="zone-content-inner">
+            <div class="zone-quote-block">
+              <p class="zone-quote">It's a thought partner. We're working together.</p>
+              <div class="zone-identity">
+                <strong>True collaboration begins.</strong><br><br>
+                You and AI are partners. Thinking together, not just you giving commands.
+              </div>
+            </div>
+            <div class="zone-stats">
+              <div class="stat-box">
+                <div class="stat-value">True</div>
+                <div class="stat-label">Partner</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-value">Shared</div>
+                <div class="stat-label">Thinking</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Zone 4 -->
+      <div class="zone-item" data-zone="4">
+        <div class="zone-header">
+          <div class="zone-header-left">
+            <div class="zone-number">4</div>
+            <div class="zone-header-text">
+              <div class="zone-voice">Voice of Confidence</div>
+              <h2 class="zone-title">"I control the quality"</h2>
+            </div>
+          </div>
+          <div class="zone-toggle">
+            <span>+</span>
+          </div>
+        </div>
+        <div class="zone-content">
+          <div class="zone-content-inner">
+            <div class="zone-quote-block">
+              <p class="zone-quote">I know what I want. AI helps me get there, faster.</p>
+              <div class="zone-identity">
+                <strong>You direct. You refine. You own the outcome.</strong><br><br>
+                This is where confidence lives. You are the architect of your AI-powered work.
+              </div>
+            </div>
+            <div class="zone-stats">
+              <div class="stat-box">
+                <div class="stat-value">Full</div>
+                <div class="stat-label">Control</div>
+              </div>
+              <div class="stat-box">
+                <div class="stat-value">Mastery</div>
+                <div class="stat-label">Achieved</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Indicator -->
+  <div class="floating-indicator" id="floating-indicator">
+    <div class="indicator-dot active" data-target="0"></div>
+    <div class="indicator-dot" data-target="1"></div>
+    <div class="indicator-dot" data-target="2"></div>
+    <div class="indicator-dot" data-target="3"></div>
+    <div class="indicator-dot" data-target="4"></div>
+  </div>
+
+  <!-- Survey CTA -->
+  <section class="survey-cta">
+    <div class="survey-content">
+      <h2 class="survey-headline">
+        Which voice <span>resonated</span> with you?
+      </h2>
+      <p class="survey-sub">
+        Take the 2-minute assessment to discover your zone<br>
+        and unlock your personalized AI mastery path.
+      </p>
+      <a href="#survey" class="survey-button">Find My Zone →</a>
+    </div>
+  </section>
+
+  <script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    const zoneItems = document.querySelectorAll('.zone-item');
+    const indicatorDots = document.querySelectorAll('.indicator-dot');
+
+    // Accordion functionality
+    zoneItems.forEach((item, index) => {
+      const header = item.querySelector('.zone-header');
+
+      header.addEventListener('click', () => {
+        const isActive = item.classList.contains('active');
+
+        // Close all items
+        zoneItems.forEach(i => i.classList.remove('active'));
+
+        // Open clicked item if it wasn't active
+        if (!isActive) {
+          item.classList.add('active');
+
+          // Update indicator dots
+          indicatorDots.forEach(dot => dot.classList.remove('active'));
+          indicatorDots[index].classList.add('active');
+
+          // Scroll to item
+          gsap.to(window, {
+            duration: 0.8,
+            scrollTo: { y: item, offsetY: 100 },
+            ease: 'power2.out'
+          });
+        }
+      });
+    });
+
+    // Indicator dot clicks
+    indicatorDots.forEach((dot, index) => {
+      dot.addEventListener('click', () => {
+        zoneItems.forEach(i => i.classList.remove('active'));
+        zoneItems[index].classList.add('active');
+
+        indicatorDots.forEach(d => d.classList.remove('active'));
+        dot.classList.add('active');
+
+        gsap.to(window, {
+          duration: 0.8,
+          scrollTo: { y: zoneItems[index], offsetY: 100 },
+          ease: 'power2.out'
+        });
+      });
+    });
+
+    // Scroll-based activation
+    zoneItems.forEach((item, index) => {
+      ScrollTrigger.create({
+        trigger: item,
+        start: 'top center',
+        end: 'bottom center',
+        onEnter: () => {
+          indicatorDots.forEach(dot => dot.classList.remove('active'));
+          indicatorDots[index].classList.add('active');
+        },
+        onEnterBack: () => {
+          indicatorDots.forEach(dot => dot.classList.remove('active'));
+          indicatorDots[index].classList.add('active');
+        }
+      });
+    });
+
+    // Auto-activate first zone on page load
+    setTimeout(() => {
+      zoneItems[0].classList.add('active');
+    }, 500);
+  </script>
+</body>
+</html>

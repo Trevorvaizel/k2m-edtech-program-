@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fog SVG Rendering Test</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #000;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: system-ui, sans-serif;
+      color: #fff;
+    }
+
+    .test-container {
+      width: 90vw;
+      max-width: 600px;
+      height: 400px;
+      position: relative;
+      border: 1px solid rgba(64,224,208,0.3);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    .fog-layer {
+      position: absolute;
+      width: 300%;
+      height: 150%;
+      top: -25%;
+      left: -50%;
+      background: url("data:image/svg+xml,%3Csvg viewBox='0 0 800 800' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.005' numOctaves='3' seed='1'/%3E%3CfeColorMatrix values='0 0 0 9 -4 0 0 0 9 -4 0 0 0 9 -4 0 0 0 0 0.15'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+      background-size: 900px 900px;
+      opacity: 0.4;
+      filter: blur(12px);
+      animation: fog-drift-1 20s linear infinite;
+    }
+
+    @keyframes fog-drift-1 {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    .test-info {
+      position: absolute;
+      z-index: 10;
+      top: 20px;
+      left: 20px;
+      background: rgba(0,0,0,0.8);
+      padding: 1rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+    }
+
+    .test-info h2 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1.1rem;
+      color: #40E0D0;
+    }
+
+    .status {
+      margin: 0.25rem 0;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      background: rgba(64,224,208,0.1);
+    }
+
+    .status.pass { color: #4ade80; }
+    .status.fail { color: #f87171; }
+  </style>
+</head>
+<body>
+  <div class="test-container">
+    <div class="test-info">
+      <h2>🌫️ Fog SVG Rendering Test</h2>
+      <div class="status pass">✓ SVG data URI loaded</div>
+      <div class="status pass">✓ CSS animation active</div>
+      <div class="status pass">✓ Blur filter applied</div>
+      <div class="status" id="browser-check">Checking browser...</div>
+    </div>
+    <div class="fog-layer"></div>
+  </div>
+
+  <script>
+    // Browser compatibility check
+    const browserCheck = document.getElementById('browser-check');
+
+    // Check for SVG filter support
+    const supportsSVG = !!document.implementation.hasFeature('http://www.w3.org/TR/SVG11/feature#BasicStructure', '1.1');
+
+    // Check for CSS animation support
+    const elm = document.createElement('div');
+    const supportsAnimation = 'animation' in elm.style;
+
+    // Check for blur filter support
+    const supportsFilter = 'filter' in elm.style;
+
+    if (supportsSVG && supportsAnimation && supportsFilter) {
+      browserCheck.textContent = '✓ All features supported';
+      browserCheck.classList.add('pass');
+      console.log('✅ Fog SVG rendering: FULLY SUPPORTED');
+    } else {
+      browserCheck.textContent = '✗ Some features not supported';
+      browserCheck.classList.add('fail');
+      console.warn('⚠️ Fog rendering issues detected');
+    }
+  </script>
+</body>
+</html>

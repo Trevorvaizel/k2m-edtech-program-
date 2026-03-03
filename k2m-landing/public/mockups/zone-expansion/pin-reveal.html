@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mockup 2: Pin & Reveal - Zone Expansion</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      background: #000;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    .intro {
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .intro h1 {
+      font-size: clamp(2rem, 5vw, 4rem);
+      margin-bottom: 1rem;
+      color: #40E0D0;
+    }
+
+    .intro p {
+      font-size: clamp(1rem, 2vw, 1.5rem);
+      color: #ccc;
+    }
+
+    .zones-container {
+      position: relative;
+      height: 500vh; /* 5 zones × 100vh each */
+    }
+
+    .zone {
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .zone-0 { background: rgba(26,26,26,0.95); }
+    .zone-1 { background: rgba(26,26,26,0.9); }
+    .zone-2 { background: rgba(26,26,26,0.85); }
+    .zone-3 { background: rgba(26,26,26,0.8); }
+    .zone-4 { background: rgba(26,26,26,0.95); }
+
+    .zone-content {
+      text-align: center;
+      max-width: 900px;
+      opacity: 0; /* Hidden initially */
+    }
+
+    .zone-number {
+      font-size: clamp(3rem, 10vw, 8rem);
+      font-weight: 900;
+      opacity: 0.2;
+      margin-bottom: 2rem;
+    }
+
+    .zone-title {
+      font-size: clamp(1.5rem, 4vw, 3rem);
+      font-weight: 700;
+      margin-bottom: 1.5rem;
+      line-height: 1.1;
+      filter: blur(10px); /* Start blurred */
+    }
+
+    .zone-description {
+      font-size: clamp(1rem, 2vw, 1.3rem);
+      color: #ccc;
+      line-height: 1.6;
+      opacity: 0;
+    }
+
+    .zone-4 .zone-title {
+      color: #40E0D0;
+    }
+
+    .outro {
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      text-align: center;
+      padding: 2rem;
+    }
+
+    .outro p {
+      font-size: clamp(1.5rem, 3vw, 2.5rem);
+      color: #40E0D0;
+    }
+
+    .scroll-indicator {
+      position: absolute;
+      bottom: 2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateX(-50%) translateY(0); }
+      50% { transform: translateX(-50%) translateY(-10px); }
+    }
+  </style>
+</head>
+<body>
+  <section class="intro">
+    <h1>The Learning Journey</h1>
+    <p>Scroll to reveal each zone of mastery</p>
+    <div class="scroll-indicator">↓ Scroll to explore</div>
+  </section>
+
+  <div class="zones-container">
+    <div class="zone zone-0">
+      <div class="zone-content">
+        <div class="zone-number">Zone 0</div>
+        <h2 class="zone-title">AI isn't for me</h2>
+        <p class="zone-description">Where most students start. Feeling overwhelmed by the possibilities and unsure where to begin.</p>
+      </div>
+    </div>
+
+    <div class="zone zone-1">
+      <div class="zone-content">
+        <div class="zone-number">Zone 1</div>
+        <h2 class="zone-title">I could try this</h2>
+        <p class="zone-description">First sparks of curiosity. You see glimpses of what's possible and feel ready to take the first step.</p>
+      </div>
+    </div>
+
+    <div class="zone zone-2">
+      <div class="zone-content">
+        <div class="zone-number">Zone 2</div>
+        <h2 class="zone-title">AI does tasks for me</h2>
+        <p class="zone-description">Using it for real work. But still learning consistency and finding your rhythm with AI collaboration.</p>
+      </div>
+    </div>
+
+    <div class="zone zone-3">
+      <div class="zone-content">
+        <div class="zone-number">Zone 3</div>
+        <h2 class="zone-title">AI understands my intent</h2>
+        <p class="zone-description">True collaboration begins. You and AI are working together, not just you giving commands.</p>
+      </div>
+    </div>
+
+    <div class="zone zone-4">
+      <div class="zone-content">
+        <div class="zone-number">Zone 4</div>
+        <h2 class="zone-title">I control the quality</h2>
+        <p class="zone-description">You direct. You refine. You own the outcome. This is where confidence lives. You are the architect of your AI-powered work.</p>
+      </div>
+    </div>
+  </div>
+
+  <section class="outro">
+    <p>Ready to begin your journey?</p>
+  </section>
+
+  <script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    // Animate each zone's content reveal
+    const zones = document.querySelectorAll('.zone');
+
+    zones.forEach((zone, i) => {
+      const content = zone.querySelector('.zone-content');
+      const title = zone.querySelector('.zone-title');
+      const description = zone.querySelector('.zone-description');
+
+      // Create timeline for this zone
+      const tl = gsap.timeline({
+        scrollTrigger: {
+          trigger: zone,
+          start: 'top center',
+          end: 'bottom center',
+          scrub: 1, // Smooth scrubbing
+          toggleActions: 'play none none reverse'
+        }
+      });
+
+      // Fade in content
+      tl.to(content, {
+        opacity: 1,
+        duration: 0.5
+      });
+
+      // Blur → Sharp for title
+      tl.to(title, {
+        filter: 'blur(0px)',
+        duration: 1,
+        ease: 'power2.out'
+      }, '-=0.3');
+
+      // Fade in description
+      tl.to(description, {
+        opacity: 1,
+        duration: 0.8,
+        ease: 'power2.out'
+      }, '-=0.5');
+    });
+
+    // Zone 4 special treatment (HUGE text + glow)
+    const zone4Title = document.querySelector('.zone-4 .zone-title');
+    const zone4Content = document.querySelector('.zone-4 .zone-content');
+
+    gsap.to(zone4Title, {
+      scrollTrigger: {
+        trigger: '.zone-4',
+        start: 'top center',
+        end: 'center center',
+        scrub: 1
+      },
+      fontSize: 'clamp(2.5rem, 6vw, 5rem)', // HUGE
+      textShadow: '0 0 40px rgba(64,224,208,0.8)',
+      ease: 'power2.inOut'
+    });
+
+    // Add subtle scale effect to zone 4 content
+    gsap.to(zone4Content, {
+      scrollTrigger: {
+        trigger: '.zone-4',
+        start: 'top center',
+        end: 'center center',
+        scrub: 1
+      },
+      scale: 1.1,
+      ease: 'power2.inOut'
+    });
+  </script>
+</body>
+</html>

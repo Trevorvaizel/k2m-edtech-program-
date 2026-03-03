@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zone Proof-of-Concept</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700;900&family=Inter:wght@300;400;600&display=swap');
+
+    :root {
+      --ocean: #40E0D0;
+      --text-primary: #fff;
+      --text-secondary: #888;
+      --text-muted: #555;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #000;
+      color: var(--text-primary);
+      overflow-x: hidden;
+      line-height: 1.6;
+    }
+
+    /* ===== RESONANCE ZONE ===== */
+    .resonance-zone {
+      min-height: 100vh;
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 0;
+    }
+
+    /* Spotlight gradient */
+    .spotlight-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(ellipse 50% 60% at 50% 50%, rgba(64,224,208,0.06) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 1.2s ease;
+    }
+
+    .resonance-zone.in-focus .spotlight-layer {
+      opacity: 1;
+    }
+
+    /* Vignette/curtain edges */
+    .vignette {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      background:
+        linear-gradient(90deg, rgba(0,0,0,0.8) 0%, transparent 15%, transparent 85%, rgba(0,0,0,0.8) 100%),
+        linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent 20%, transparent 80%, rgba(0,0,0,0.5) 100%);
+    }
+
+    /* ===== ECHO THOUGHTS - FLOATING ===== */
+    .echoes-container {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .echo {
+      position: absolute;
+      padding: 0.875rem 1.25rem;
+      background: rgba(10,10,10,0.85);
+      border: 1px solid rgba(64,224,208,0.12);
+      border-radius: 12px;
+      backdrop-filter: blur(8px);
+      font-size: 0.85rem;
+      color: #777;
+      font-style: italic;
+      line-height: 1.4;
+      max-width: 240px;
+      opacity: 0;
+      transform: translateY(20px) scale(0.95);
+      transition: opacity 0.6s ease, transform 0.6s ease, border-color 0.3s ease;
+      pointer-events: auto;
+      cursor: default;
+    }
+
+    .echo.visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .echo.visible.floating {
+      animation: echo-float 6s ease-in-out infinite;
+    }
+
+    @keyframes echo-float {
+      0%, 100% { transform: translateY(0) rotate(-0.5deg); }
+      50% { transform: translateY(-12px) rotate(0.5deg); }
+    }
+
+    /* Highlighted echo on hover */
+    .echo.highlight {
+      border-color: rgba(64,224,208,0.15);
+      color: #aaa;
+      box-shadow: 0 0 30px rgba(64,224,208,0.1);
+    }
+
+    /* Mobile: echoes become stacked list */
+    @media (max-width: 768px) {
+      .echoes-container {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 0.75rem;
+        padding: 1rem;
+        margin-bottom: 2rem;
+        order: -1;
+      }
+
+      .echo {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        bottom: auto !important;
+        max-width: 100%;
+        transform: none !important;
+      }
+
+      .echo.visible { animation: none; }
+
+      .echo:nth-child(odd) { align-self: flex-start; }
+      .echo:nth-child(even) { align-self: flex-end; }
+    }
+
+    /* ===== CORE VOICE CARD ===== */
+    .voice-stage {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 600px;
+      padding: 3rem 2.5rem;
+      margin: 0 1.5rem;
+      background: rgba(5,5,5,0.9);
+      border: 1px solid rgba(64,224,208,0.15);
+      border-radius: 24px;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(40px) scale(0.97);
+      transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .resonance-zone.in-focus .voice-stage {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      box-shadow: 0 0 80px rgba(64,224,208,0.08), 0 30px 60px rgba(0,0,0,0.5);
+    }
+
+    /* Zone number - watermark */
+    .voice-number {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(10rem, 25vw, 18rem);
+      font-weight: 900;
+      color: rgba(64,224,208,0.04);
+      line-height: 1;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .voice-content { position: relative; z-index: 1; }
+
+    .voice-label {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      background: rgba(64,224,208,0.08);
+      border: 1px solid rgba(64,224,208,0.2);
+      border-radius: 50px;
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.25em;
+      color: var(--ocean);
+      margin-bottom: 1.5rem;
+      opacity: 0;
+      transform: translateY(15px);
+      transition: all 0.6s ease 0.1s;
+    }
+
+    .resonance-zone.in-focus .voice-label { opacity: 1; transform: translateY(0); }
+
+    .voice-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(1.75rem, 4.5vw, 2.75rem);
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 1.5rem;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.7s ease 0.2s;
+    }
+
+    .resonance-zone.in-focus .voice-title { opacity: 1; transform: translateY(0); }
+
+    .voice-monologue {
+      font-size: clamp(1rem, 2.2vw, 1.15rem);
+      color: #999;
+      line-height: 1.8;
+      margin-bottom: 2rem;
+      opacity: 0;
+      transform: translateY(15px);
+      transition: all 0.7s ease 0.35s;
+    }
+
+    .resonance-zone.in-focus .voice-monologue { opacity: 1; transform: translateY(0); }
+
+    .voice-monologue em { color: #ccc; font-style: normal; }
+
+    .voice-monologue .emphasis {
+      display: block;
+      margin-top: 1rem;
+      font-size: 1.1em;
+      color: #bbb;
+    }
+
+    /* Recognition prompt */
+    .recognition {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+      opacity: 0;
+      transform: translateY(15px);
+      transition: all 0.6s ease 0.5s;
+    }
+
+    .resonance-zone.in-focus .recognition { opacity: 1; transform: translateY(0); }
+
+    .recognition .pulse-dot {
+      width: 10px;
+      height: 10px;
+      background: var(--ocean);
+      border-radius: 50%;
+      position: relative;
+    }
+
+    .recognition .pulse-dot::before {
+      content: '';
+      position: absolute;
+      inset: -6px;
+      border: 2px solid rgba(64,224,208,0.4);
+      border-radius: 50%;
+      animation: pulse-ring 2s ease infinite;
+    }
+
+    @keyframes pulse-ring {
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(2); opacity: 0; }
+    }
+
+    .recognition .prompt {
+      font-size: 0.8rem;
+      color: var(--ocean);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+    }
+
+    .recognition .stat {
+      font-size: 0.7rem;
+      color: #555;
+      margin-top: 0.25rem;
+    }
+
+    /* Test info */
+    .test-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(0,0,0,0.9);
+      border-bottom: 1px solid rgba(64,224,208,0.3);
+      padding: 0.75rem 1rem;
+      z-index: 1000;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+    }
+
+    .test-banner .status {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .test-banner .badge {
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      background: rgba(64,224,208,0.1);
+      font-size: 0.75rem;
+    }
+
+    .test-banner .badge.pass { color: #4ade80; }
+    .test-banner .badge.info { color: #40E0D0; }
+  </style>
+</head>
+<body>
+
+  <!-- Test Banner -->
+  <div class="test-banner">
+    <div>
+      <strong>🧪 Zone Proof-of-Concept</strong>
+    </div>
+    <div class="status">
+      <span class="badge pass">✓ GSAP</span>
+      <span class="badge pass">✓ ScrollTrigger</span>
+      <span class="badge info" id="zone-status">Scroll to test</span>
+    </div>
+  </div>
+
+  <!-- ZONE 0: Confusion (Single Zone Test) -->
+  <section class="resonance-zone" data-zone="0">
+    <div class="spotlight-layer"></div>
+    <div class="vignette"></div>
+
+    <div class="echoes-container">
+      <div class="echo" style="top: 12%; left: 8%;" data-delay="0">"I feel so behind everyone else"</div>
+      <div class="echo" style="top: 22%; right: 6%;" data-delay="0.15">"My kids get this instantly. I don't."</div>
+      <div class="echo" style="top: 55%; left: 4%;" data-delay="0.3">"Is it too late for me?"</div>
+      <div class="echo" style="bottom: 25%; right: 8%;" data-delay="0.45">"This is for tech people, not me"</div>
+      <div class="echo" style="bottom: 12%; left: 12%;" data-delay="0.6">"I've tried. It just doesn't click."</div>
+    </div>
+
+    <div class="voice-stage">
+      <div class="voice-number">0</div>
+      <div class="voice-content">
+        <div class="voice-label">Voice of Confusion</div>
+        <h2 class="voice-title">"AI isn't for me."</h2>
+        <p class="voice-monologue">
+          I'm too old for this. AI is tech for young people.
+          <em>Everyone talks about it like I should already know.</em>
+          <span class="emphasis">Am I the only one feeling this lost?</span>
+        </p>
+        <div class="recognition">
+          <div class="pulse-dot"></div>
+          <span class="prompt">Sound familiar?</span>
+          <span class="stat">38% start here</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    const zone = document.querySelector('.resonance-zone');
+    const echoes = document.querySelectorAll('.echo');
+    const zoneStatus = document.getElementById('zone-status');
+
+    // Zone activation
+    ScrollTrigger.create({
+      trigger: zone,
+      start: 'top 55%',
+      end: 'bottom 45%',
+      onEnter: () => activateZone(),
+      onEnterBack: () => activateZone(),
+      onLeave: () => deactivateZone(),
+      onLeaveBack: () => deactivateZone()
+    });
+
+    function activateZone() {
+      zone.classList.add('in-focus');
+
+      // Staggered echo reveal with floating
+      echoes.forEach((echo, i) => {
+        const delay = parseFloat(echo.dataset.delay) || i * 0.1;
+        gsap.to(echo, {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.6,
+          delay: delay,
+          ease: 'power2.out',
+          onComplete: () => {
+            echo.classList.add('visible', 'floating');
+            zoneStatus.textContent = '✓ Zone active';
+            zoneStatus.classList.remove('info');
+            zoneStatus.classList.add('pass');
+          }
+        });
+      });
+    }
+
+    function deactivateZone() {
+      zone.classList.remove('in-focus');
+      echoes.forEach(echo => {
+        echo.classList.remove('visible', 'floating');
+        gsap.set(echo, { opacity: 0, y: 20, scale: 0.95 });
+      });
+      zoneStatus.textContent = 'Scroll to test';
+      zoneStatus.classList.add('info');
+      zoneStatus.classList.remove('pass');
+    }
+
+    // Echo highlight on hover (desktop)
+    document.querySelectorAll('.echo').forEach(echo => {
+      echo.addEventListener('mouseenter', () => echo.classList.add('highlight'));
+      echo.addEventListener('mouseleave', () => echo.classList.remove('highlight'));
+    });
+
+    console.log('✅ Zone proof-of-concept initialized');
+    console.log('📱 Test on mobile: echoes should stack in alternating pattern');
+  </script>
+</body>
+</html>

@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resonance Theater - Echo Chamber + Spotlight</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700;900&family=Inter:wght@300;400;600&display=swap');
+
+    :root {
+      --ocean: #40E0D0;
+      --ocean-dim: rgba(64,224,208,0.15);
+      --ocean-glow: rgba(64,224,208,0.4);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', sans-serif; background: #000; color: #fff; overflow-x: hidden; }
+
+    /* ===== HERO SECTION ===== */
+    .bridge-opening {
+      min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: radial-gradient(circle at center, #0A0A0A 0%, #000 100%); position: relative; overflow: hidden;
+    }
+
+    .marquee-band {
+      position: absolute; width: 200%; height: 100%; display: flex; align-items: center;
+      font-family: 'Space Grotesk', sans-serif; font-size: clamp(8rem, 20vw, 20rem); font-weight: 900;
+      color: rgba(64,224,208,0.04); text-transform: uppercase; white-space: nowrap; user-select: none; pointer-events: none;
+    }
+
+    .marquee-band-top { top: -15%; animation: marquee-scroll 25s linear infinite; }
+    .marquee-band-bottom { bottom: -15%; animation: marquee-scroll-reverse 22s linear infinite; }
+
+    @keyframes marquee-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    @keyframes marquee-scroll-reverse { 0% { transform: translateX(-50%); } 100% { transform: translateX(0); } }
+
+    .bridge-content { text-align: center; z-index: 10; padding: 2rem; max-width: 900px; }
+    .bridge-eyebrow { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.4em; color: var(--ocean); margin-bottom: 2rem; opacity: 0; animation: reveal-up 1s ease forwards 0.5s; }
+    .bridge-headline { font-family: 'Space Grotesk', sans-serif; font-size: clamp(2.5rem, 7vw, 7rem); font-weight: 300; line-height: 1.1; margin-bottom: 2rem; opacity: 0; animation: reveal-up 1s ease forwards 0.7s; }
+    .bridge-headline strong { font-weight: 700; background: linear-gradient(135deg, #40E0D0 0%, #2dd4bf 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .bridge-sub { font-size: clamp(1rem, 2.5vw, 1.5rem); color: #888; line-height: 1.6; margin-bottom: 2rem; opacity: 0; animation: reveal-up 1s ease forwards 0.9s; }
+
+    @keyframes reveal-up { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+
+    .scroll-hint {
+      position: absolute; bottom: 3rem; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+      opacity: 0; animation: reveal-up 1s ease forwards 1.2s;
+    }
+    .scroll-hint span { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.2em; color: #555; }
+    .scroll-hint .arrow { width: 20px; height: 20px; border-right: 2px solid var(--ocean); border-bottom: 2px solid var(--ocean);
+      transform: rotate(45deg); animation: bounce-arrow 1.5s ease infinite; }
+    @keyframes bounce-arrow { 0%, 100% { transform: rotate(45deg) translateY(0); } 50% { transform: rotate(45deg) translateY(8px); } }
+
+    /* ===== RESONANCE ZONE ===== */
+    .resonance-zone {
+      min-height: 100vh; position: relative; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      padding: 4rem 0;
+    }
+
+    /* Spotlight gradient */
+    .spotlight-layer {
+      position: absolute; inset: 0; pointer-events: none;
+      background: radial-gradient(ellipse 50% 60% at 50% 50%, rgba(64,224,208,0.06) 0%, transparent 70%);
+      opacity: 0; transition: opacity 1.2s ease;
+    }
+
+    .resonance-zone.in-focus .spotlight-layer { opacity: 1; }
+
+    /* Vignette/curtain edges */
+    .vignette {
+      position: absolute; inset: 0; pointer-events: none;
+      background:
+        linear-gradient(90deg, rgba(0,0,0,0.8) 0%, transparent 15%, transparent 85%, rgba(0,0,0,0.8) 100%),
+        linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent 20%, transparent 80%, rgba(0,0,0,0.5) 100%);
+    }
+
+    /* ===== ECHO THOUGHTS - FLOATING ===== */
+    .echoes-container {
+      position: absolute; inset: 0; pointer-events: none; z-index: 5;
+    }
+
+    .echo {
+      position: absolute; padding: 0.875rem 1.25rem;
+      background: rgba(10,10,10,0.85); border: 1px solid rgba(64,224,208,0.12);
+      border-radius: 12px; backdrop-filter: blur(8px);
+      font-size: 0.85rem; color: #777; font-style: italic; line-height: 1.4;
+      max-width: 240px;
+      opacity: 0; transform: translateY(20px) scale(0.95);
+      transition: opacity 0.6s ease, transform 0.6s ease, border-color 0.3s ease;
+    }
+
+    .echo.visible {
+      opacity: 1; transform: translateY(0) scale(1);
+    }
+
+    .echo.visible.floating {
+      animation: echo-float 6s ease-in-out infinite;
+    }
+
+    @keyframes echo-float {
+      0%, 100% { transform: translateY(0) rotate(-0.5deg); }
+      50% { transform: translateY(-12px) rotate(0.5deg); }
+    }
+
+    /* Highlighted echo on hover/focus */
+    .echo.highlight {
+      border-color: var(--ocean-dim);
+      color: #aaa;
+      box-shadow: 0 0 30px rgba(64,224,208,0.1);
+    }
+
+    /* Mobile: echoes become stacked list */
+    @media (max-width: 768px) {
+      .echoes-container {
+        position: relative; display: flex; flex-direction: column; gap: 0.75rem;
+        padding: 1rem; margin-bottom: 2rem; order: -1;
+      }
+
+      .echo {
+        position: relative !important; top: auto !important; left: auto !important;
+        right: auto !important; bottom: auto !important;
+        max-width: 100%; transform: none !important;
+      }
+
+      .echo.visible { animation: none; }
+
+      .echo:nth-child(odd) { align-self: flex-start; }
+      .echo:nth-child(even) { align-self: flex-end; }
+    }
+
+    /* ===== CORE VOICE CARD ===== */
+    .voice-stage {
+      position: relative; z-index: 10; width: 100%; max-width: 600px;
+      padding: 3rem 2.5rem; margin: 0 1.5rem;
+      background: rgba(5,5,5,0.9); border: 1px solid rgba(64,224,208,0.15);
+      border-radius: 24px;
+      text-align: center;
+      opacity: 0; transform: translateY(40px) scale(0.97);
+      transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .resonance-zone.in-focus .voice-stage {
+      opacity: 1; transform: translateY(0) scale(1);
+      box-shadow: 0 0 80px rgba(64,224,208,0.08), 0 30px 60px rgba(0,0,0,0.5);
+    }
+
+    /* Zone number - watermark */
+    .voice-number {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      font-family: 'Space Grotesk', sans-serif; font-size: clamp(10rem, 25vw, 18rem); font-weight: 900;
+      color: rgba(64,224,208,0.04); line-height: 1; pointer-events: none; z-index: 0;
+    }
+
+    .voice-content { position: relative; z-index: 1; }
+
+    .voice-label {
+      display: inline-block; padding: 0.5rem 1rem;
+      background: rgba(64,224,208,0.08); border: 1px solid rgba(64,224,208,0.2);
+      border-radius: 50px;
+      font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.25em; color: var(--ocean);
+      margin-bottom: 1.5rem;
+      opacity: 0; transform: translateY(15px);
+      transition: all 0.6s ease 0.1s;
+    }
+
+    .resonance-zone.in-focus .voice-label { opacity: 1; transform: translateY(0); }
+
+    .voice-title {
+      font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.75rem, 4.5vw, 2.75rem); font-weight: 700;
+      line-height: 1.2; margin-bottom: 1.5rem;
+      opacity: 0; transform: translateY(20px);
+      transition: all 0.7s ease 0.2s;
+    }
+
+    .resonance-zone.in-focus .voice-title { opacity: 1; transform: translateY(0); }
+
+    .voice-monologue {
+      font-size: clamp(1rem, 2.2vw, 1.15rem); color: #999; line-height: 1.8;
+      margin-bottom: 2rem;
+      opacity: 0; transform: translateY(15px);
+      transition: all 0.7s ease 0.35s;
+    }
+
+    .resonance-zone.in-focus .voice-monologue { opacity: 1; transform: translateY(0); }
+
+    .voice-monologue em { color: #ccc; font-style: normal; }
+
+    /* Emotional emphasis */
+    .voice-monologue .emphasis {
+      display: block; margin-top: 1rem;
+      font-size: 1.1em; color: #bbb;
+    }
+
+    /* Recognition prompt */
+    .recognition {
+      display: flex; flex-direction: column; align-items: center; gap: 0.75rem;
+      opacity: 0; transform: translateY(15px);
+      transition: all 0.6s ease 0.5s;
+    }
+
+    .resonance-zone.in-focus .recognition { opacity: 1; transform: translateY(0); }
+
+    .recognition .pulse-dot {
+      width: 10px; height: 10px; background: var(--ocean); border-radius: 50%;
+      position: relative;
+    }
+
+    .recognition .pulse-dot::before {
+      content: ''; position: absolute; inset: -6px;
+      border: 2px solid rgba(64,224,208,0.4); border-radius: 50%;
+      animation: pulse-ring 2s ease infinite;
+    }
+
+    @keyframes pulse-ring {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(2); opacity: 0; }
+    }
+
+    .recognition .prompt {
+      font-size: 0.8rem; color: var(--ocean); text-transform: uppercase; letter-spacing: 0.15em;
+    }
+
+    .recognition .stat {
+      font-size: 0.7rem; color: #555; margin-top: 0.25rem;
+    }
+
+    /* ===== PROGRESS INDICATOR ===== */
+    .progress-nav {
+      position: fixed; right: 2rem; top: 50%; transform: translateY(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 1.25rem;
+      z-index: 100; opacity: 0; transition: opacity 0.4s ease;
+    }
+
+    .progress-nav.visible { opacity: 1; }
+
+    .progress-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: rgba(64,224,208,0.15); border: 1px solid rgba(64,224,208,0.3);
+      cursor: pointer; transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .progress-dot::after {
+      content: attr(data-label); position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
+      font-size: 0.65rem; color: #555; white-space: nowrap;
+      opacity: 0; transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+
+    .progress-dot:hover::after { opacity: 1; }
+    .progress-dot:hover { background: rgba(64,224,208,0.3); }
+
+    .progress-dot.active {
+      background: var(--ocean); transform: scale(1.4);
+      box-shadow: 0 0 15px rgba(64,224,208,0.5);
+    }
+
+    @media (max-width: 768px) {
+      .progress-nav { right: 1rem; gap: 1rem; }
+      .progress-dot { width: 8px; height: 8px; }
+      .progress-dot::after { display: none; }
+    }
+
+    /* ===== SURVEY CTA ===== */
+    .survey-cta {
+      min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(64,224,208,0.08) 0%, #000 70%);
+      text-align: center; padding: 2rem; position: relative;
+    }
+
+    .survey-content { max-width: 700px; }
+
+    .survey-eyebrow {
+      font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.3em; color: var(--ocean);
+      margin-bottom: 1.5rem;
+    }
+
+    .survey-headline {
+      font-family: 'Space Grotesk', sans-serif; font-size: clamp(2rem, 5.5vw, 3.5rem); font-weight: 700;
+      margin-bottom: 1.5rem; line-height: 1.15;
+    }
+
+    .survey-headline span {
+      background: linear-gradient(135deg, #40E0D0 0%, #2dd4bf 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .survey-sub {
+      font-size: clamp(1rem, 2vw, 1.15rem); color: #777; line-height: 1.7; margin-bottom: 2.5rem;
+    }
+
+    .survey-button {
+      display: inline-block; padding: 1.25rem 3rem;
+      background: linear-gradient(135deg, #40E0D0 0%, #2dd4bf 100%);
+      color: #000; text-decoration: none; font-size: 0.85rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.15em; border-radius: 50px;
+      box-shadow: 0 15px 50px rgba(64,224,208,0.35);
+      transition: all 0.4s ease;
+    }
+
+    .survey-button:hover {
+      transform: translateY(-4px) scale(1.02);
+      box-shadow: 0 25px 60px rgba(64,224,208,0.5);
+    }
+
+    /* ===== MOBILE LAYOUT ===== */
+    @media (max-width: 768px) {
+      .resonance-zone {
+        flex-direction: column; padding: 3rem 1rem;
+        min-height: auto;
+      }
+
+      .voice-stage {
+        padding: 2rem 1.5rem; margin: 0 1rem;
+        max-width: 100%;
+      }
+
+      .voice-number { font-size: clamp(8rem, 40vw, 12rem); }
+
+      .vignette {
+        background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, transparent 15%, transparent 85%, rgba(0,0,0,0.6) 100%);
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- HERO SECTION -->
+  <section class="bridge-opening">
+    <div class="marquee-band marquee-band-top">5 VOICES — YOUR JOURNEY — FIND YOUR ZONE — 5 VOICES — YOUR JOURNEY — FIND YOUR ZONE — 5 VOICES — YOUR JOURNEY — FIND YOUR ZONE</div>
+    <div class="bridge-content">
+      <div class="bridge-eyebrow">The Territory Map</div>
+      <h1 class="bridge-headline">There are <strong>5 voices</strong><br>in the AI journey.</h1>
+      <p class="bridge-sub">Listen carefully. One of them has been living in your head.</p>
+    </div>
+    <div class="marquee-band marquee-band-bottom">DISCOVER YOURSELF — WHERE DO YOU FIT? — DISCOVER YOURSELF — WHERE DO YOU FIT? — DISCOVER YOURSELF — WHERE DO YOU FIT?</div>
+    <div class="scroll-hint">
+      <span>Scroll to listen</span>
+      <div class="arrow"></div>
+    </div>
+  </section>
+
+  <!-- Progress Navigation -->
+  <nav class="progress-nav">
+    <div class="progress-dot" data-zone="0" data-label="Confusion"></div>
+    <div class="progress-dot" data-zone="1" data-label="Curiosity"></div>
+    <div class="progress-dot" data-zone="2" data-label="Trial & Error"></div>
+    <div class="progress-dot" data-zone="3" data-label="Collaboration"></div>
+    <div class="progress-dot" data-zone="4" data-label="Confidence"></div>
+  </nav>
+
+  <!-- ZONE 0: Confusion -->
+  <section class="resonance-zone" data-zone="0">
+    <div class="spotlight-layer"></div>
+    <div class="vignette"></div>
+
+    <div class="echoes-container">
+      <div class="echo" style="top: 12%; left: 8%;" data-delay="0">I feel so behind everyone else</div>
+      <div class="echo" style="top: 22%; right: 6%;" data-delay="0.15">My kids get this instantly. I don't.</div>
+      <div class="echo" style="top: 55%; left: 4%;" data-delay="0.3">Is it too late for me?</div>
+      <div class="echo" style="bottom: 25%; right: 8%;" data-delay="0.45">This is for tech people, not me</div>
+      <div class="echo" style="bottom: 12%; left: 12%;" data-delay="0.6">I've tried. It just doesn't click.</div>
+    </div>
+
+    <div class="voice-stage">
+      <div class="voice-number">0</div>
+      <div class="voice-content">
+        <div class="voice-label">Voice of Confusion</div>
+        <h2 class="voice-title">"AI isn't for me."</h2>
+        <p class="voice-monologue">
+          I'm too old for this. AI is tech for young people.
+          <em>Everyone talks about it like I should already know.</em>
+          <span class="emphasis">Am I the only one feeling this lost?</span>
+        </p>
+        <div class="recognition">
+          <div class="pulse-dot"></div>
+          <span class="prompt">Sound familiar?</span>
+          <span class="stat">38% start here</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ZONE 1: Curiosity -->
+  <section class="resonance-zone" data-zone="1">
+    <div class="spotlight-layer"></div>
+    <div class="vignette"></div>
+
+    <div class="echoes-container">
+      <div class="echo" style="top: 10%; left: 6%;" data-delay="0">What if I just tried one thing?</div>
+      <div class="echo" style="top: 28%; right: 8%;" data-delay="0.15">Maybe it's not as hard as I thought</div>
+      <div class="echo" style="top: 52%; left: 10%;" data-delay="0.3">I saw someone do something cool</div>
+      <div class="echo" style="bottom: 28%; right: 5%;" data-delay="0.45">Could save me hours... maybe</div>
+      <div class="echo" style="bottom: 10%; left: 5%;" data-delay="0.6">What's the worst that could happen?</div>
+    </div>
+
+    <div class="voice-stage">
+      <div class="voice-number">1</div>
+      <div class="voice-content">
+        <div class="voice-label">Voice of Curiosity</div>
+        <h2 class="voice-title">"I could try this."</h2>
+        <p class="voice-monologue">
+          Maybe I've been overthinking this whole thing.
+          <em>What if I just tried one small thing and saw what happened?</em>
+          <span class="emphasis">What's the worst that could happen?</span>
+        </p>
+        <div class="recognition">
+          <div class="pulse-dot"></div>
+          <span class="prompt">Sound familiar?</span>
+          <span class="stat">First spark of possibility</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ZONE 2: Trial & Error -->
+  <section class="resonance-zone" data-zone="2">
+    <div class="spotlight-layer"></div>
+    <div class="vignette"></div>
+
+    <div class="echoes-container">
+      <div class="echo" style="top: 15%; left: 5%;" data-delay="0">It worked! ...wait, no it didn't</div>
+      <div class="echo" style="top: 25%; right: 10%;" data-delay="0.15">Why did it give me that answer?</div>
+      <div class="echo" style="top: 58%; left: 8%;" data-delay="0.3">Sometimes brilliant, sometimes garbage</div>
+      <div class="echo" style="bottom: 22%; right: 6%;" data-delay="0.45">I can tell when it's wrong now</div>
+      <div class="echo" style="bottom: 8%; left: 15%;" data-delay="0.6">Finding my rhythm</div>
+    </div>
+
+    <div class="voice-stage">
+      <div class="voice-number">2</div>
+      <div class="voice-content">
+        <div class="voice-label">Voice of Trial & Error</div>
+        <h2 class="voice-title">"AI does tasks for me."</h2>
+        <p class="voice-monologue">
+          Sometimes it's brilliant. Sometimes it's complete garbage.
+          <em>I'm getting better at spotting the difference.</em>
+          <span class="emphasis">Learning what to trust.</span>
+        </p>
+        <div class="recognition">
+          <div class="pulse-dot"></div>
+          <span class="prompt">Sound familiar?</span>
+          <span class="stat">Building pattern recognition</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ZONE 3: Collaboration -->
+  <section class="resonance-zone" data-zone="3">
+    <div class="spotlight-layer"></div>
+    <div class="vignette"></div>
+
+    <div class="echoes-container">
+      <div class="echo" style="top: 12%; left: 10%;" data-delay="0">It's like it reads my mind</div>
+      <div class="echo" style="top: 30%; right: 6%;" data-delay="0.15">We're having actual conversations now</div>
+      <div class="echo" style="top: 55%; left: 5%;" data-delay="0.3">It suggests things I hadn't considered</div>
+      <div class="echo" style="bottom: 25%; right: 10%;" data-delay="0.45">My thinking has expanded</div>
+      <div class="echo" style="bottom: 10%; left: 8%;" data-delay="0.6">Better together than alone</div>
+    </div>
+
+    <div class="voice-stage">
+      <div class="voice-number">3</div>
+      <div class="voice-content">
+        <div class="voice-label">Voice of Collaboration</div>
+        <h2 class="voice-title">"AI understands my intent."</h2>
+        <p class="voice-monologue">
+          It's not just a tool anymore.
+          <em>It's like having a thought partner who finishes my sentences.</em>
+          <span class="emphasis">We think better together.</span>
+        </p>
+        <div class="recognition">
+          <div class="pulse-dot"></div>
+          <span class="prompt">Sound familiar?</span>
+          <span class="stat">True collaboration begins</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ZONE 4: Confidence -->
+  <section class="resonance-zone" data-zone="4">
+    <div class="spotlight-layer"></div>
+    <div class="vignette"></div>
+
+    <div class="echoes-container">
+      <div class="echo" style="top: 10%; left: 8%;" data-delay="0">I know exactly what to ask for</div>
+      <div class="echo" style="top: 28%; right: 8%;" data-delay="0.15">I direct, it executes</div>
+      <div class="echo" style="top: 52%; left: 5%;" data-delay="0.3">Quality is my decision</div>
+      <div class="echo" style="bottom: 28%; right: 6%;" data-delay="0.45">This is my competitive edge</div>
+      <div class="echo" style="bottom: 8%; left: 12%;" data-delay="0.6">I own the outcome</div>
+    </div>
+
+    <div class="voice-stage">
+      <div class="voice-number">4</div>
+      <div class="voice-content">
+        <div class="voice-label">Voice of Confidence</div>
+        <h2 class="voice-title">"I control the quality."</h2>
+        <p class="voice-monologue">
+          I know exactly what I want.
+          <em>I direct, refine, and own the outcome.</em>
+          <span class="emphasis">AI accelerates my vision.</span>
+        </p>
+        <div class="recognition">
+          <div class="pulse-dot"></div>
+          <span class="prompt">Sound familiar?</span>
+          <span class="stat">Mastery achieved</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SURVEY CTA -->
+  <section class="survey-cta">
+    <div class="survey-content">
+      <div class="survey-eyebrow">The mirror doesn't lie</div>
+      <h2 class="survey-headline">Which <span>voice</span> echoed yours?</h2>
+      <p class="survey-sub">That thought you recognized? Those words you've said to yourself?<br>That's your starting point. Let's make it official.</p>
+      <a href="#survey" class="survey-button">Find My Zone</a>
+    </div>
+  </section>
+
+  <script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    const zones = gsap.utils.toArray('.resonance-zone');
+    const progressDots = gsap.utils.toArray('.progress-dot');
+    const progressNav = document.querySelector('.progress-nav');
+
+    // Zone activation
+    zones.forEach((zone, index) => {
+      const echoes = zone.querySelectorAll('.echo');
+
+      ScrollTrigger.create({
+        trigger: zone,
+        start: 'top 55%',
+        end: 'bottom 45%',
+        onEnter: () => activateZone(zone, index, echoes),
+        onEnterBack: () => activateZone(zone, index, echoes),
+        onLeave: () => deactivateZone(zone, echoes),
+        onLeaveBack: () => deactivateZone(zone, echoes)
+      });
+    });
+
+    function activateZone(zone, index, echoes) {
+      // Deactivate all zones first
+      zones.forEach(z => z.classList.remove('in-focus'));
+      zone.classList.add('in-focus');
+
+      // Update progress dots
+      progressDots.forEach((dot, i) => {
+        dot.classList.toggle('active', i === index);
+      });
+
+      // Staggered echo reveal with floating
+      echoes.forEach((echo, i) => {
+        const delay = parseFloat(echo.dataset.delay) || i * 0.1;
+        gsap.to(echo, {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.6,
+          delay: delay,
+          ease: 'power2.out',
+          onComplete: () => echo.classList.add('visible', 'floating')
+        });
+      });
+    }
+
+    function deactivateZone(zone, echoes) {
+      zone.classList.remove('in-focus');
+      echoes.forEach(echo => {
+        echo.classList.remove('visible', 'floating');
+        gsap.set(echo, { opacity: 0, y: 20, scale: 0.95 });
+      });
+    }
+
+    // Progress nav visibility
+    ScrollTrigger.create({
+      trigger: '.bridge-opening',
+      start: 'top top',
+      end: 'bottom top',
+      onLeave: () => progressNav.classList.add('visible'),
+      onEnterBack: () => progressNav.classList.remove('visible')
+    });
+
+    ScrollTrigger.create({
+      trigger: '.survey-cta',
+      start: 'top 80%',
+      onEnter: () => progressNav.classList.remove('visible'),
+      onLeaveBack: () => progressNav.classList.add('visible')
+    });
+
+    // Progress dot click navigation
+    progressDots.forEach((dot, i) => {
+      dot.addEventListener('click', () => {
+        zones[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    });
+
+    // Echo highlight on hover (desktop)
+    document.querySelectorAll('.echo').forEach(echo => {
+      echo.addEventListener('mouseenter', () => echo.classList.add('highlight'));
+      echo.addEventListener('mouseleave', () => echo.classList.remove('highlight'));
+    });
+  </script>
+</body>
+</html>

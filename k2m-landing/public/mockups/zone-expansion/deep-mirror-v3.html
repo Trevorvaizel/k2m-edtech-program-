@@ -1,0 +1,1427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deep Mirror v3 - Thinking WITH AI</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700;900&family=Inter:wght@300;400;600&display=swap');
+
+    :root {
+      --ocean: #40E0D0;
+      --ocean-dim: rgba(64,224,208,0.15);
+      --ocean-soft: rgba(64,224,208,0.12);
+      --ocean-glow: rgba(64,224,208,0.4);
+      --text-primary: #fff;
+      --text-secondary: #888;
+      --text-muted: #555;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', sans-serif; background: #000; color: var(--text-primary); overflow-x: hidden; line-height: 1.6; }
+
+    /* ===== FOG LAYERS (scoped to CTA) ===== */
+    .fog-container {
+      position: absolute;
+      inset: -40px;
+      pointer-events: none;
+      overflow: hidden;
+      z-index: 1;
+      /* Soft radial mask to feather all edges - no hard boundaries */
+      -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, black 30%, transparent 80%);
+      mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, black 30%, transparent 80%);
+    }
+
+    .fog-layer {
+      position: absolute;
+      width: 300%;
+      height: 150%;
+      top: -25%;
+      left: -50%;
+      background: url("data:image/svg+xml,%3Csvg viewBox='0 0 800 800' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.005' numOctaves='3' seed='1'/%3E%3CfeColorMatrix values='0 0 0 9 -4 0 0 0 9 -4 0 0 0 9 -4 0 0 0 0 0.15'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+      background-size: 900px 900px;
+      opacity: 0.4;
+      filter: blur(12px);
+    }
+
+    .fog-layer-1 {
+      top: -25%;
+      animation: fog-drift-1 80s linear infinite;
+    }
+
+    .fog-layer-2 {
+      top: -10%;
+      animation: fog-drift-2 100s linear infinite;
+      opacity: 0.3;
+    }
+
+    .fog-layer-3 {
+      top: -15%;
+      animation: fog-drift-3 65s linear infinite;
+      opacity: 0.35;
+    }
+
+    @keyframes fog-drift-1 {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
+    @keyframes fog-drift-2 {
+      0% { transform: translateX(-50%); }
+      100% { transform: translateX(0); }
+    }
+
+    @keyframes fog-drift-3 {
+      0% { transform: translateX(-25%); }
+      100% { transform: translateX(-75%); }
+    }
+
+    .mist-tint {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse 80% 50% at 50% 50%, rgba(64,224,208,0.03) 0%, transparent 70%);
+      mix-blend-mode: screen;
+    }
+
+    /* ===== HERO ===== */
+    .hero {
+      min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      position: relative; overflow: hidden; padding: 2rem;
+    }
+
+    .hero-bg {
+      position: absolute; inset: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(64,224,208,0.03) 0%, transparent 50%);
+    }
+
+    .hero-content { text-align: center; z-index: 10; max-width: 800px; }
+
+    .hero-eyebrow {
+      font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.4em; color: var(--ocean);
+      margin-bottom: 1.5rem; opacity: 0; animation: fade-up 0.8s ease forwards 0.3s;
+    }
+
+    .hero-title {
+      font-family: 'Space Grotesk', sans-serif; font-size: clamp(2.5rem, 8vw, 5.5rem); font-weight: 300;
+      line-height: 1.1; margin-bottom: 1.5rem; opacity: 0; animation: fade-up 0.8s ease forwards 0.5s;
+    }
+
+    .hero-title strong {
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--ocean) 0%, #2dd4bf 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+
+    .hero-sub {
+      font-size: clamp(1rem, 2.5vw, 1.25rem); color: var(--text-secondary); max-width: 560px; margin: 0 auto 2rem;
+      opacity: 0; animation: fade-up 0.8s ease forwards 0.7s; line-height: 1.7;
+    }
+
+    .hero-prompt {
+      font-size: 0.85rem; color: var(--text-muted); font-style: italic;
+      opacity: 0; animation: fade-up 0.8s ease forwards 0.9s;
+    }
+
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes emerge-from-fog {
+      from { opacity: 0; filter: blur(10px); transform: translateY(20px); }
+      to { opacity: 1; filter: blur(0); transform: translateY(0); }
+    }
+
+    .scroll-cue {
+      position: absolute; bottom: 2.5rem; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+      opacity: 0; animation: fade-up 0.8s ease forwards 1.1s;
+    }
+
+    .scroll-cue span { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.2em; color: var(--text-muted); }
+    .scroll-cue .line { width: 1px; height: 40px; background: linear-gradient(180deg, var(--ocean), transparent); animation: pulse-line 2s ease infinite; }
+
+    @keyframes pulse-line { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+    /* ===== RESONANCE ZONE (from resonance-theater) ===== */
+    .resonance-zone {
+      min-height: 100vh; position: relative; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      padding: 4rem 0;
+    }
+
+    /* Spotlight gradient */
+    .spotlight-layer {
+      position: absolute; inset: 0; pointer-events: none;
+      background: radial-gradient(ellipse 50% 60% at 50% 50%, rgba(64,224,208,0.06) 0%, transparent 70%);
+      opacity: 0; transition: opacity 1.2s ease;
+    }
+
+    .resonance-zone.in-focus .spotlight-layer { opacity: 1; }
+
+    /* Vignette/curtain edges */
+    .vignette {
+      position: absolute; inset: 0; pointer-events: none;
+      background:
+        linear-gradient(90deg, rgba(0,0,0,0.8) 0%, transparent 15%, transparent 85%, rgba(0,0,0,0.8) 100%),
+        linear-gradient(180deg, rgba(0,0,0,0.5) 0%, transparent 20%, transparent 80%, rgba(0,0,0,0.5) 100%);
+    }
+
+    /* ===== ECHO THOUGHTS - FLOATING ===== */
+    .echoes-container {
+      position: absolute; inset: 0; pointer-events: none; z-index: 5;
+    }
+
+    .echo {
+      position: absolute; padding: 0.875rem 1.25rem;
+      background: rgba(10,10,10,0.85); border: 1px solid rgba(64,224,208,0.12);
+      border-radius: 12px; backdrop-filter: blur(8px);
+      font-size: 0.85rem; color: #777; font-style: italic; line-height: 1.4;
+      max-width: 240px;
+      opacity: 0; transform: translateY(20px) scale(0.95);
+      transition: opacity 0.6s ease, transform 0.6s ease, border-color 0.3s ease;
+    }
+
+    .echo.visible {
+      opacity: 1; transform: translateY(0) scale(1);
+    }
+
+    .echo.visible.floating {
+      animation: echo-float 6s ease-in-out infinite;
+    }
+
+    @keyframes echo-float {
+      0%, 100% { transform: translateY(0) rotate(-0.5deg); }
+      50% { transform: translateY(-12px) rotate(0.5deg); }
+    }
+
+    /* Highlighted echo on hover */
+    .echo.highlight {
+      border-color: var(--ocean-dim);
+      color: #aaa;
+      box-shadow: 0 0 30px rgba(64,224,208,0.1);
+    }
+
+    /* Mobile: echoes become stacked list */
+    @media (max-width: 768px) {
+      .echoes-container {
+        position: relative; display: flex; flex-direction: column; gap: 0.75rem;
+        padding: 1rem; margin-bottom: 2rem; order: -1;
+      }
+
+      .echo {
+        position: relative !important; top: auto !important; left: auto !important;
+        right: auto !important; bottom: auto !important;
+        max-width: 100%; transform: none !important;
+      }
+
+      .echo.visible { animation: none; }
+
+      .echo:nth-child(odd) { align-self: flex-start; }
+      .echo:nth-child(even) { align-self: flex-end; }
+    }
+
+    /* ===== CORE VOICE CARD ===== */
+    .voice-stage {
+      position: relative; z-index: 10; width: 100%; max-width: 600px;
+      padding: 3rem 2.5rem; margin: 0 1.5rem;
+      background: rgba(5,5,5,0.9); border: 1px solid rgba(64,224,208,0.15);
+      border-radius: 24px;
+      text-align: center;
+      opacity: 0; transform: translateY(40px) scale(0.97);
+      transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .resonance-zone.in-focus .voice-stage {
+      opacity: 1; transform: translateY(0) scale(1);
+      box-shadow: 0 0 80px rgba(64,224,208,0.08), 0 30px 60px rgba(0,0,0,0.5);
+    }
+
+    /* Zone number - watermark */
+    .voice-number {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      font-family: 'Space Grotesk', sans-serif; font-size: clamp(10rem, 25vw, 18rem); font-weight: 900;
+      color: rgba(64,224,208,0.04); line-height: 1; pointer-events: none; z-index: 0;
+    }
+
+    .voice-content { position: relative; z-index: 1; }
+
+    .voice-label {
+      display: inline-block; padding: 0.5rem 1rem;
+      background: rgba(64,224,208,0.08); border: 1px solid rgba(64,224,208,0.2);
+      border-radius: 50px;
+      font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.25em; color: var(--ocean);
+      margin-bottom: 1.5rem;
+      opacity: 0; transform: translateY(15px);
+      transition: all 0.6s ease 0.1s;
+    }
+
+    .resonance-zone.in-focus .voice-label { opacity: 1; transform: translateY(0); }
+
+    .voice-title {
+      font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.75rem, 4.5vw, 2.75rem); font-weight: 700;
+      line-height: 1.2; margin-bottom: 1.5rem;
+      opacity: 0; transform: translateY(20px);
+      transition: all 0.7s ease 0.2s;
+    }
+
+    .resonance-zone.in-focus .voice-title { opacity: 1; transform: translateY(0); }
+
+    .voice-monologue {
+      font-size: clamp(1rem, 2.2vw, 1.15rem); color: #999; line-height: 1.8;
+      margin-bottom: 2rem;
+      opacity: 0; transform: translateY(15px);
+      transition: all 0.7s ease 0.35s;
+    }
+
+    .resonance-zone.in-focus .voice-monologue { opacity: 1; transform: translateY(0); }
+
+    .voice-monologue em { color: #ccc; font-style: normal; }
+
+    .voice-monologue .emphasis {
+      display: block; margin-top: 1rem;
+      font-size: 1.1em; color: #bbb;
+    }
+
+    /* Recognition prompt */
+    .recognition {
+      display: flex; flex-direction: column; align-items: center; gap: 0.75rem;
+      opacity: 0; transform: translateY(15px);
+      transition: all 0.6s ease 0.5s;
+    }
+
+    .resonance-zone.in-focus .recognition { opacity: 1; transform: translateY(0); }
+
+    .recognition .pulse-dot {
+      width: 10px; height: 10px; background: var(--ocean); border-radius: 50%;
+      position: relative;
+    }
+
+    .recognition .pulse-dot::before {
+      content: ''; position: absolute; inset: -6px;
+      border: 2px solid rgba(64,224,208,0.4); border-radius: 50%;
+      animation: pulse-ring 2s ease infinite;
+    }
+
+    @keyframes pulse-ring {
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(2); opacity: 0; }
+    }
+
+    .recognition .prompt {
+      font-size: 0.8rem; color: var(--ocean); text-transform: uppercase; letter-spacing: 0.15em;
+    }
+
+    .recognition .stat {
+      font-size: 0.7rem; color: #555; margin-top: 0.25rem;
+    }
+
+    /* ===== PROGRESS NAVIGATION (right-side dots) ===== */
+    .progress-nav {
+      position: fixed; right: 2rem; top: 50%; transform: translateY(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 1.25rem;
+      z-index: 100; opacity: 0; transition: opacity 0.4s ease;
+    }
+
+    .progress-nav.visible { opacity: 1; }
+
+    .progress-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: rgba(64,224,208,0.15); border: 1px solid rgba(64,224,208,0.3);
+      cursor: pointer; transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .progress-dot::after {
+      content: attr(data-label); position: absolute; right: 20px; top: 50%; transform: translateY(-50%);
+      font-size: 0.65rem; color: #555; white-space: nowrap;
+      opacity: 0; transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+
+    .progress-dot:hover::after { opacity: 1; }
+    .progress-dot:hover { background: rgba(64,224,208,0.3); }
+
+    .progress-dot.active {
+      background: var(--ocean); transform: scale(1.4);
+      box-shadow: 0 0 15px rgba(64,224,208,0.5);
+    }
+
+    @media (max-width: 768px) {
+      .progress-nav { right: 1rem; gap: 1rem; }
+      .progress-dot { width: 8px; height: 8px; }
+      .progress-dot::after { display: none; }
+    }
+
+    /* ===== VISUAL SEPARATORS ===== */
+    .section-divider {
+      position: relative;
+      height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .section-divider::before {
+      content: '';
+      position: absolute;
+      width: 200px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(64,224,208,0.3), transparent);
+    }
+
+    .section-divider .divider-glyph {
+      width: 8px;
+      height: 8px;
+      background: rgba(64,224,208,0.2);
+      border: 1px solid rgba(64,224,208,0.3);
+      transform: rotate(45deg);
+      position: relative;
+      z-index: 1;
+    }
+
+    .divider-breathe {
+      height: 80px;
+      position: relative;
+    }
+
+    .divider-breathe::before {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 0;
+      transform: translateX(-50%);
+      width: 1px;
+      height: 100%;
+      background: linear-gradient(180deg, transparent, rgba(64,224,208,0.15), transparent);
+    }
+
+    /* ===== BRIDGE SECTION ===== */
+    .bridge {
+      position: relative;
+      padding: 6rem 1.5rem 4rem;
+      overflow: hidden;
+    }
+
+    .bridge::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1px;
+      height: 80px;
+      background: linear-gradient(180deg, transparent, rgba(64,224,208,0.3), transparent);
+    }
+
+    .bridge-content {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    .bridge-beat {
+      position: relative;
+      text-align: center;
+      padding: 4rem 2rem;
+      margin-bottom: 2rem;
+      opacity: 0;
+      transform: translateY(40px);
+    }
+
+    .bridge-beat.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .beat-glow {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(64,224,208,0.06) 0%, transparent 70%);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.8s ease;
+    }
+
+    .bridge-beat.visible .beat-glow { opacity: 1; }
+
+    .beat-whisper {
+      font-size: 0.85rem;
+      color: var(--ocean);
+      font-style: italic;
+      margin-bottom: 1rem;
+      letter-spacing: 0.02em;
+    }
+
+    .beat-statement {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(1.5rem, 4vw, 2.25rem);
+      font-weight: 700;
+      line-height: 1.25;
+      margin-bottom: 1.25rem;
+      color: #fff;
+    }
+
+    .beat-body {
+      font-size: clamp(0.95rem, 2vw, 1.1rem);
+      color: var(--text-secondary);
+      line-height: 1.8;
+    }
+
+    .beat-body strong {
+      color: var(--ocean);
+      font-weight: 600;
+    }
+
+    .beat-body em {
+      color: #bbb;
+      font-style: normal;
+    }
+
+    .beat-micro {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+    }
+
+    /* Promise Beat - Transformation Visual */
+    .transformation-visual {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .zone-from {
+      padding: 0.5rem 1rem;
+      background: rgba(100, 100, 100, 0.2);
+      border: 1px solid rgba(100,100,100,0.3);
+      border-radius: 8px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #888;
+    }
+
+    .zone-to {
+      padding: 0.5rem 1rem;
+      background: rgba(64,224,208,0.1);
+      border: 1px solid rgba(64,224,208,0.3);
+      border-radius: 8px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--ocean);
+      box-shadow: 0 0 20px rgba(64,224,208,0.15);
+    }
+
+    .arrow {
+      font-size: 1.5rem;
+      color: var(--ocean);
+      opacity: 0;
+      transform: translateX(-10px);
+      transition: all 0.6s ease 0.3s;
+    }
+
+    .bridge-beat.visible .arrow {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    /* Belonging Beat - Cluster Visual */
+    .cluster-visual {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .cluster-dots {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      padding: 1rem;
+    }
+
+    .cluster-dots .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(64,224,208,0.2);
+      border: 1px solid rgba(64,224,208,0.3);
+      opacity: 0;
+      transform: scale(0);
+      transition: all 0.4s ease;
+    }
+
+    .cluster-dots .dot.center {
+      background: var(--ocean);
+      box-shadow: 0 0 12px rgba(64,224,208,0.5);
+    }
+
+    .bridge-beat.visible .cluster-dots .dot {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .bridge-beat.visible .cluster-dots .dot:nth-child(1) { transition-delay: 0.1s; }
+    .bridge-beat.visible .cluster-dots .dot:nth-child(2) { transition-delay: 0.15s; }
+    .bridge-beat.visible .cluster-dots .dot:nth-child(3) { transition-delay: 0.2s; }
+    .bridge-beat.visible .cluster-dots .dot:nth-child(4) { transition-delay: 0.25s; }
+    .bridge-beat.visible .cluster-dots .dot:nth-child(5) { transition-delay: 0.3s; }
+    .bridge-beat.visible .cluster-dots .dot:nth-child(6) { transition-delay: 0.35s; }
+    .bridge-beat.visible .cluster-dots .dot:nth-child(7) { transition-delay: 0.4s; }
+    .bridge-beat.visible .cluster-dots .dot:nth-child(8) { transition-delay: 0.45s; }
+    .bridge-beat.visible .cluster-dots .dot:nth-child(9) { transition-delay: 0.5s; }
+
+    /* Invitation Beat */
+    .invitation { padding: 5rem 2rem; }
+
+    .beat-glow-final {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(64,224,208,0.08) 0%, transparent 60%);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 1s ease;
+    }
+
+    .bridge-beat.visible .beat-glow-final { opacity: 1; }
+
+    .beat-confession {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      font-style: italic;
+      margin-bottom: 1rem;
+    }
+
+    .beat-statement-final {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(1.75rem, 5vw, 2.75rem);
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(135deg, #fff 0%, var(--ocean) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .beat-cta-prompt {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .beat-cta-prompt .pulse-dot-small {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--ocean);
+      animation: pulse-soft 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-soft {
+      0%, 100% { opacity: 0.5; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.2); }
+    }
+
+    /* ===== CTA ===== */
+    .cta {
+      min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 3rem 1.5rem; text-align: center; position: relative; overflow: hidden;
+    }
+
+    .cta::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse 50% 40% at 50% 50%, rgba(64,224,208,0.06) 0%, transparent 70%);
+    }
+
+    /* Fog emergence: initial blurred/hidden state for CTA elements */
+    .fog-emerge {
+      opacity: 0;
+      filter: blur(10px);
+      transform: translateY(20px);
+    }
+
+    .cta-content { max-width: 600px; position: relative; z-index: 1; }
+
+    .cta-title {
+      font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.75rem, 5vw, 3rem); font-weight: 700;
+      line-height: 1.2; margin-bottom: 1.25rem;
+    }
+
+    .cta-title span {
+      background: linear-gradient(135deg, var(--ocean), #2dd4bf);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .cta-sub {
+      font-size: clamp(0.95rem, 2vw, 1.1rem); color: var(--text-secondary); line-height: 1.7;
+      margin-bottom: 2rem;
+    }
+
+    .cta-button {
+      display: inline-block; padding: 1.1rem 2.5rem;
+      background: linear-gradient(135deg, var(--ocean), #2dd4bf);
+      color: #000; font-size: 0.8rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.12em; text-decoration: none; border-radius: 50px;
+      box-shadow: 0 12px 40px rgba(64,224,208,0.3);
+      transition: all 0.3s ease;
+    }
+
+    .cta-button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 18px 50px rgba(64,224,208,0.45);
+    }
+
+    .cta-assurance {
+      margin-top: 1.5rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+    }
+
+    /* ===== CONTACT SECTION ===== */
+    .contact {
+      padding: 5rem 1.5rem;
+      position: relative;
+      border-top: 1px solid rgba(64,224,208,0.08);
+    }
+
+    .contact-content {
+      max-width: 600px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .contact-eyebrow {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3em;
+      color: var(--ocean);
+      margin-bottom: 1rem;
+      opacity: 0.7;
+    }
+
+    .contact-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(1.25rem, 3vw, 1.75rem);
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: #fff;
+    }
+
+    .contact-sub {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+      line-height: 1.7;
+    }
+
+    .contact-methods {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .contact-method {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.75rem 1.25rem;
+      background: rgba(64,224,208,0.04);
+      border: 1px solid rgba(64,224,208,0.1);
+      border-radius: 50px;
+      text-decoration: none;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      transition: all 0.3s ease;
+    }
+
+    .contact-method:hover {
+      background: rgba(64,224,208,0.08);
+      border-color: rgba(64,224,208,0.25);
+      color: #fff;
+      transform: translateY(-2px);
+    }
+
+    .contact-method .icon {
+      font-size: 1rem;
+      color: var(--ocean);
+    }
+
+    .social-links {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .social-link {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: var(--text-muted);
+      font-size: 1rem;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+
+    .social-link:hover {
+      background: rgba(64,224,208,0.1);
+      border-color: rgba(64,224,208,0.3);
+      color: var(--ocean);
+      transform: translateY(-2px);
+    }
+
+    /* ===== FOOTER ===== */
+    .footer {
+      padding: 2rem 1.5rem;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      text-align: center;
+    }
+
+    .footer-content {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .footer-brand {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--ocean);
+      margin-bottom: 0.5rem;
+    }
+
+    .footer-tagline {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+
+    .footer-legal {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      font-size: 0.7rem;
+    }
+
+    .footer-legal a {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .footer-legal a:hover { color: var(--ocean); }
+
+    .footer-copyright {
+      margin-top: 1.5rem;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    /* ===== MOBILE ADJUSTMENTS ===== */
+    @media (max-width: 768px) {
+      .fog-layer { opacity: 0.2; filter: blur(16px); }
+
+      .resonance-zone {
+        flex-direction: column; padding: 3rem 1rem;
+        min-height: auto;
+      }
+
+      .voice-stage {
+        padding: 2rem 1.5rem; margin: 0 1rem;
+        max-width: 100%;
+      }
+
+      .voice-number { font-size: clamp(8rem, 40vw, 12rem); }
+
+      .vignette {
+        background: linear-gradient(180deg, rgba(0,0,0,0.6) 0%, transparent 15%, transparent 85%, rgba(0,0,0,0.6) 100%);
+      }
+
+      .bridge { padding: 4rem 1rem 2rem; }
+      .bridge-beat { padding: 3rem 1rem; }
+      .transformation-visual { gap: 1rem; }
+      .zone-from, .zone-to { font-size: 0.8rem; padding: 0.4rem 0.8rem; }
+      .arrow { font-size: 1.25rem; }
+      .beat-glow, .beat-glow-final { width: 200px; height: 200px; }
+
+      .section-divider { height: 80px; }
+      .divider-breathe { height: 50px; }
+
+      .contact { padding: 3rem 1rem; }
+      .contact-methods { gap: 1rem; }
+      .contact-method { padding: 0.6rem 1rem; font-size: 0.8rem; }
+
+      .footer-legal { gap: 1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-content">
+      <div class="hero-eyebrow">The walls fell.</div>
+      <h1 class="hero-title">Intelligence used to be locked behind universities and expensive experts.<br><strong>Not anymore.</strong></h1>
+      <p class="hero-sub">AI changed that. But access alone isn't enough. The question now is whether you know how to <em>think</em> with what's on the other side.</p>
+      <p class="hero-prompt">Find where you are.</p>
+    </div>
+    <div class="scroll-cue">
+      <span>Find yourself</span>
+      <div class="line"></div>
+    </div>
+  </section>
+
+  <!-- Progress Navigation -->
+  <nav class="progress-nav">
+    <div class="progress-dot" data-zone="0" data-label="Confusion"></div>
+    <div class="progress-dot" data-zone="1" data-label="Curiosity"></div>
+    <div class="progress-dot" data-zone="2" data-label="Trial & Error"></div>
+    <div class="progress-dot" data-zone="3" data-label="Collaboration"></div>
+    <div class="progress-dot" data-zone="4" data-label="Confidence"></div>
+  </nav>
+
+  <!-- ZONE 0: Confusion -->
+  <section class="resonance-zone" data-zone="0">
+    <div class="spotlight-layer"></div>
+    <div class="vignette"></div>
+
+    <div class="echoes-container">
+      <div class="echo" style="top: 12%; left: 8%;" data-delay="0">"I feel so behind everyone else"</div>
+      <div class="echo" style="top: 22%; right: 6%;" data-delay="0.15">"My kids get this instantly. I don't."</div>
+      <div class="echo" style="top: 55%; left: 4%;" data-delay="0.3">"Is it too late for me?"</div>
+      <div class="echo" style="bottom: 25%; right: 8%;" data-delay="0.45">"This is for tech people, not me"</div>
+      <div class="echo" style="bottom: 12%; left: 12%;" data-delay="0.6">"I've tried. It just doesn't click."</div>
+    </div>
+
+    <div class="voice-stage">
+      <div class="voice-number">0</div>
+      <div class="voice-content">
+        <div class="voice-label">Voice of Confusion</div>
+        <h2 class="voice-title">"AI isn't for me."</h2>
+        <p class="voice-monologue">
+          I'm too old for this. AI is tech for young people.
+          <em>Everyone talks about it like I should already know.</em>
+          <span class="emphasis">Am I the only one feeling this lost?</span>
+        </p>
+        <div class="recognition">
+          <div class="pulse-dot"></div>
+          <span class="prompt">Sound familiar?</span>
+          <span class="stat">38% start here</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ZONE 1: Curiosity -->
+  <section class="resonance-zone" data-zone="1">
+    <div class="spotlight-layer"></div>
+    <div class="vignette"></div>
+
+    <div class="echoes-container">
+      <div class="echo" style="top: 10%; left: 6%;" data-delay="0">"What if I just tried one thing?"</div>
+      <div class="echo" style="top: 28%; right: 8%;" data-delay="0.15">"Maybe it's not as hard as I thought"</div>
+      <div class="echo" style="top: 52%; left: 10%;" data-delay="0.3">"I saw someone do something cool"</div>
+      <div class="echo" style="bottom: 28%; right: 5%;" data-delay="0.45">"Could save me hours... maybe"</div>
+      <div class="echo" style="bottom: 10%; left: 5%;" data-delay="0.6">"What's the worst that could happen?"</div>
+    </div>
+
+    <div class="voice-stage">
+      <div class="voice-number">1</div>
+      <div class="voice-content">
+        <div class="voice-label">Voice of Curiosity</div>
+        <h2 class="voice-title">"I could try this."</h2>
+        <p class="voice-monologue">
+          Maybe I've been overthinking this whole thing.
+          <em>What if I just tried one small thing and saw what happened?</em>
+          <span class="emphasis">What's the worst that could happen?</span>
+        </p>
+        <div class="recognition">
+          <div class="pulse-dot"></div>
+          <span class="prompt">Sound familiar?</span>
+          <span class="stat">First spark of possibility</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ZONE 2: Trial & Error -->
+  <section class="resonance-zone" data-zone="2">
+    <div class="spotlight-layer"></div>
+    <div class="vignette"></div>
+
+    <div class="echoes-container">
+      <div class="echo" style="top: 15%; left: 5%;" data-delay="0">"It worked! ...wait, no it didn't"</div>
+      <div class="echo" style="top: 25%; right: 10%;" data-delay="0.15">"Why did it give me that answer?"</div>
+      <div class="echo" style="top: 58%; left: 8%;" data-delay="0.3">"Sometimes brilliant, sometimes garbage"</div>
+      <div class="echo" style="bottom: 22%; right: 6%;" data-delay="0.45">"I can tell when it's wrong now"</div>
+      <div class="echo" style="bottom: 8%; left: 15%;" data-delay="0.6">"Finding my rhythm"</div>
+    </div>
+
+    <div class="voice-stage">
+      <div class="voice-number">2</div>
+      <div class="voice-content">
+        <div class="voice-label">Voice of Trial & Error</div>
+        <h2 class="voice-title">"AI does tasks for me."</h2>
+        <p class="voice-monologue">
+          Sometimes it's brilliant. Sometimes it's complete garbage.
+          <em>I'm getting better at spotting the difference.</em>
+          <span class="emphasis">Learning what to trust.</span>
+        </p>
+        <div class="recognition">
+          <div class="pulse-dot"></div>
+          <span class="prompt">Sound familiar?</span>
+          <span class="stat">Building pattern recognition</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ZONE 3: Collaboration -->
+  <section class="resonance-zone" data-zone="3">
+    <div class="spotlight-layer"></div>
+    <div class="vignette"></div>
+
+    <div class="echoes-container">
+      <div class="echo" style="top: 12%; left: 10%;" data-delay="0">"It's like it reads my mind"</div>
+      <div class="echo" style="top: 30%; right: 6%;" data-delay="0.15">"We're having actual conversations now"</div>
+      <div class="echo" style="top: 55%; left: 5%;" data-delay="0.3">"It suggests things I hadn't considered"</div>
+      <div class="echo" style="bottom: 25%; right: 10%;" data-delay="0.45">"My thinking has expanded"</div>
+      <div class="echo" style="bottom: 10%; left: 8%;" data-delay="0.6">"Better together than alone"</div>
+    </div>
+
+    <div class="voice-stage">
+      <div class="voice-number">3</div>
+      <div class="voice-content">
+        <div class="voice-label">Voice of Collaboration</div>
+        <h2 class="voice-title">"AI understands my intent."</h2>
+        <p class="voice-monologue">
+          It's not just a tool anymore.
+          <em>It's like having a thought partner who finishes my sentences.</em>
+          <span class="emphasis">We think better together.</span>
+        </p>
+        <div class="recognition">
+          <div class="pulse-dot"></div>
+          <span class="prompt">Sound familiar?</span>
+          <span class="stat">True collaboration begins</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ZONE 4: Confidence -->
+  <section class="resonance-zone" data-zone="4">
+    <div class="spotlight-layer"></div>
+    <div class="vignette"></div>
+
+    <div class="echoes-container">
+      <div class="echo" style="top: 10%; left: 8%;" data-delay="0">"I know exactly what to ask for"</div>
+      <div class="echo" style="top: 28%; right: 8%;" data-delay="0.15">"I direct, it executes"</div>
+      <div class="echo" style="top: 52%; left: 5%;" data-delay="0.3">"Quality is my decision"</div>
+      <div class="echo" style="bottom: 28%; right: 6%;" data-delay="0.45">"This is my competitive edge"</div>
+      <div class="echo" style="bottom: 8%; left: 12%;" data-delay="0.6">"I own the outcome"</div>
+    </div>
+
+    <div class="voice-stage">
+      <div class="voice-number">4</div>
+      <div class="voice-content">
+        <div class="voice-label">Voice of Confidence</div>
+        <h2 class="voice-title">"I control the quality."</h2>
+        <p class="voice-monologue">
+          I know exactly what I want.
+          <em>I direct, refine, and own the outcome.</em>
+          <span class="emphasis">AI accelerates my vision.</span>
+        </p>
+        <div class="recognition">
+          <div class="pulse-dot"></div>
+          <span class="prompt">Sound familiar?</span>
+          <span class="stat">Mastery achieved</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DIVIDER: Transition from zones to bridge -->
+  <div class="section-divider">
+    <div class="divider-glyph"></div>
+  </div>
+
+  <!-- BRIDGE: Post-Recognition Emotional Arc -->
+  <section class="bridge">
+    <div class="bridge-content">
+
+      <!-- BEAT 1: VALIDATION -->
+      <div class="bridge-beat validation" data-beat="1">
+        <div class="beat-glow"></div>
+        <p class="beat-whisper">You paused on one of those.</p>
+        <h3 class="beat-statement">The one that felt uncomfortably familiar.</h3>
+        <p class="beat-body">
+          That's not a problem.<br>
+          <strong>That's your starting line.</strong>
+        </p>
+      </div>
+
+      <!-- BEAT 2: THE PROMISE -->
+      <div class="bridge-beat promise" data-beat="2">
+        <div class="beat-glow"></div>
+        <div class="transformation-visual">
+          <span class="zone-from">Copying</span>
+          <span class="arrow">&rarr;</span>
+          <span class="zone-to">Thinking</span>
+        </div>
+        <h3 class="beat-statement">6 weeks.</h3>
+        <p class="beat-body">
+          Not tutorials. Not tool tips. <em>Transformation.</em><br>
+          From wherever you are to wielding intelligence and expertise on your own terms.
+        </p>
+        <p class="beat-micro">One habit at a time. One shift at a time.</p>
+      </div>
+
+      <!-- BEAT 3: BELONGING -->
+      <div class="bridge-beat belonging" data-beat="3">
+        <div class="beat-glow"></div>
+        <div class="cluster-visual">
+          <div class="cluster-dots">
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+            <span class="dot"></span><span class="dot center"></span><span class="dot"></span>
+            <span class="dot"></span><span class="dot"></span><span class="dot"></span>
+          </div>
+        </div>
+        <h3 class="beat-statement">You don't learn to think differently alone.</h3>
+        <p class="beat-body">
+          200 students. 8 clusters. Each finding their way&mdash;together.<br>
+          <em>People who paused on the same zone you did.</em>
+        </p>
+      </div>
+
+      <!-- BEAT 4: INVITATION -->
+      <div class="bridge-beat invitation" data-beat="4">
+        <div class="beat-glow-final"></div>
+        <p class="beat-confession">If you saw yourself in one of those zones...</p>
+        <h3 class="beat-statement-final">This program was built for exactly where you are.</h3>
+        <div class="beat-cta-prompt">
+          <span class="pulse-dot-small"></span>
+          <span>Not where you think you should be. Where you actually are.</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- DIVIDER -->
+  <div class="section-divider">
+    <div class="divider-glyph"></div>
+  </div>
+
+  <!-- CTA -->
+  <section class="cta">
+    <!-- Fog Emergence Layers -->
+    <div class="fog-container">
+      <div class="fog-layer fog-layer-1"></div>
+      <div class="fog-layer fog-layer-2"></div>
+      <div class="fog-layer fog-layer-3"></div>
+      <div class="mist-tint"></div>
+    </div>
+
+    <div class="cta-content">
+      <h2 class="cta-title fog-emerge">Ready to <span>think differently</span>?</h2>
+      <p class="cta-sub fog-emerge">Take the 2-minute assessment.<br>Find your zone. Start the shift.</p>
+      <a href="#survey" class="cta-button fog-emerge">Find My Zone</a>
+      <p class="cta-assurance fog-emerge">No pressure. No spam. Just clarity.</p>
+    </div>
+  </section>
+
+  <!-- DIVIDER -->
+  <div class="divider-breathe"></div>
+
+  <!-- CONTACT -->
+  <section class="contact">
+    <div class="contact-content">
+      <p class="contact-eyebrow">Questions?</p>
+      <h3 class="contact-title">We're here to help you decide.</h3>
+      <p class="contact-sub">
+        Not sure if this is right for you? Curious about the cohort format?<br>
+        Reach out&mdash;no sales pitch, just honest answers.
+      </p>
+
+      <div class="contact-methods">
+        <a href="mailto:hello@k2m.com" class="contact-method">
+          <span class="icon">&#9993;</span>
+          <span>hello@k2m.com</span>
+        </a>
+        <a href="https://wa.me/1234567890" class="contact-method">
+          <span class="icon">&#128172;</span>
+          <span>WhatsApp</span>
+        </a>
+        <a href="#book-call" class="contact-method">
+          <span class="icon">&#128222;</span>
+          <span>Book a Call</span>
+        </a>
+      </div>
+
+      <div class="social-links">
+        <a href="#" class="social-link" title="LinkedIn">in</a>
+        <a href="#" class="social-link" title="Twitter/X">&#120143;</a>
+        <a href="#" class="social-link" title="Instagram">&#9678;</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-brand">K2M</div>
+      <p class="footer-tagline">Intelligence is no longer locked away. Learn to wield it.</p>
+
+      <div class="footer-legal">
+        <a href="#privacy">Privacy Policy</a>
+        <a href="#terms">Terms of Service</a>
+        <a href="#faq">FAQ</a>
+      </div>
+
+      <p class="footer-copyright">&copy; 2026 K2M. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    const zones = gsap.utils.toArray('.resonance-zone');
+    const progressDots = gsap.utils.toArray('.progress-dot');
+    const progressNav = document.querySelector('.progress-nav');
+
+    // Zone activation
+    zones.forEach((zone, index) => {
+      const echoes = zone.querySelectorAll('.echo');
+
+      ScrollTrigger.create({
+        trigger: zone,
+        start: 'top 55%',
+        end: 'bottom 45%',
+        onEnter: () => activateZone(zone, index, echoes),
+        onEnterBack: () => activateZone(zone, index, echoes),
+        onLeave: () => deactivateZone(zone, echoes),
+        onLeaveBack: () => deactivateZone(zone, echoes)
+      });
+    });
+
+    function activateZone(zone, index, echoes) {
+      // Deactivate all zones first
+      zones.forEach(z => z.classList.remove('in-focus'));
+      zone.classList.add('in-focus');
+
+      // Update progress dots
+      progressDots.forEach((dot, i) => {
+        dot.classList.toggle('active', i === index);
+      });
+
+      // Staggered echo reveal with floating
+      echoes.forEach((echo, i) => {
+        const delay = parseFloat(echo.dataset.delay) || i * 0.1;
+        gsap.to(echo, {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          duration: 0.6,
+          delay: delay,
+          ease: 'power2.out',
+          onComplete: () => echo.classList.add('visible', 'floating')
+        });
+      });
+    }
+
+    function deactivateZone(zone, echoes) {
+      zone.classList.remove('in-focus');
+      echoes.forEach(echo => {
+        echo.classList.remove('visible', 'floating');
+        gsap.set(echo, { opacity: 0, y: 20, scale: 0.95 });
+      });
+    }
+
+    // Progress nav visibility
+    ScrollTrigger.create({
+      trigger: '.hero',
+      start: 'top top',
+      end: 'bottom top',
+      onLeave: () => progressNav.classList.add('visible'),
+      onEnterBack: () => progressNav.classList.remove('visible')
+    });
+
+    ScrollTrigger.create({
+      trigger: '.bridge',
+      start: 'top 80%',
+      onEnter: () => progressNav.classList.remove('visible'),
+      onLeaveBack: () => progressNav.classList.add('visible')
+    });
+
+    // Progress dot click navigation
+    progressDots.forEach((dot, i) => {
+      dot.addEventListener('click', () => {
+        zones[i].scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    });
+
+    // Echo highlight on hover (desktop)
+    document.querySelectorAll('.echo').forEach(echo => {
+      echo.addEventListener('mouseenter', () => echo.classList.add('highlight'));
+      echo.addEventListener('mouseleave', () => echo.classList.remove('highlight'));
+    });
+
+    // ===== CTA FOG EMERGENCE =====
+    const fogContainer = document.querySelector('.fog-container');
+    const fogEmergeEls = gsap.utils.toArray('.fog-emerge');
+
+    if (fogContainer && fogEmergeEls.length) {
+      // Staggered text emergence from fog (blur → clear)
+      ScrollTrigger.create({
+        trigger: '.cta',
+        start: 'top 65%',
+        once: true,
+        onEnter: () => {
+          const tl = gsap.timeline();
+
+          // Each element emerges with stagger
+          fogEmergeEls.forEach((el, i) => {
+            tl.to(el, {
+              opacity: 1,
+              filter: 'blur(0px)',
+              y: 0,
+              duration: 2,
+              ease: 'power3.out'
+            }, i * 0.4);
+          });
+
+          // Fog lingers, then slowly dissipates after text is mostly revealed
+          tl.to(fogContainer, {
+            opacity: 0,
+            duration: 6,
+            ease: 'power1.inOut'
+          }, 1.2);
+        }
+      });
+    }
+
+    // ===== BRIDGE SECTION ANIMATIONS =====
+    const bridgeBeats = gsap.utils.toArray('.bridge-beat');
+
+    bridgeBeats.forEach((beat, index) => {
+      gsap.to(beat, {
+        opacity: 1,
+        y: 0,
+        duration: 0.9,
+        ease: 'power2.out',
+        scrollTrigger: {
+          trigger: beat,
+          start: 'top 75%',
+          onEnter: () => beat.classList.add('visible'),
+          onLeaveBack: () => beat.classList.remove('visible')
+        }
+      });
+
+      // Transformation visual animation
+      if (beat.classList.contains('promise')) {
+        const arrow = beat.querySelector('.arrow');
+        const zoneFrom = beat.querySelector('.zone-from');
+        const zoneTo = beat.querySelector('.zone-to');
+
+        ScrollTrigger.create({
+          trigger: beat,
+          start: 'top 65%',
+          onEnter: () => {
+            gsap.from(zoneFrom, {
+              scale: 0.8,
+              opacity: 0,
+              duration: 0.5,
+              ease: 'back.out(1.5)'
+            });
+
+            gsap.from(zoneTo, {
+              scale: 0.8,
+              opacity: 0,
+              duration: 0.5,
+              delay: 0.4,
+              ease: 'back.out(1.5)'
+            });
+          }
+        });
+      }
+
+      // Cluster dots animation
+      if (beat.classList.contains('belonging')) {
+        ScrollTrigger.create({
+          trigger: beat,
+          start: 'top 65%',
+          onEnter: () => {
+            const centerDot = beat.querySelector('.dot.center');
+            if (centerDot) {
+              gsap.to(centerDot, {
+                scale: 1.3,
+                duration: 0.8,
+                ease: 'sine.inOut',
+                yoyo: true,
+                repeat: -1,
+                delay: 0.6
+              });
+            }
+          },
+          onLeaveBack: () => {
+            const centerDot = beat.querySelector('.dot.center');
+            if (centerDot) {
+              gsap.killTweensOf(centerDot);
+              gsap.set(centerDot, { scale: 1 });
+            }
+          }
+        });
+      }
+
+      // Final invitation beat
+      if (beat.classList.contains('invitation')) {
+        const statement = beat.querySelector('.beat-statement-final');
+
+        ScrollTrigger.create({
+          trigger: beat,
+          start: 'top 60%',
+          onEnter: () => {
+            gsap.from(statement, {
+              scale: 0.95,
+              opacity: 0,
+              duration: 1,
+              ease: 'power3.out'
+            });
+          }
+        });
+      }
+    });
+  </script>
+</body>
+</html>

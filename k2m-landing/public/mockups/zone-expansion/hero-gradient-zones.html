@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hero + Gradient Zones with Animated Text</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700;900&family=Inter:wght@300;400;600&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #000; color: #fff; overflow-x: hidden; }
+
+    /* ===== HERO SECTION ===== */
+    .bridge-opening {
+      min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: radial-gradient(circle at center, #0A0A0A 0%, #000 100%); position: relative; overflow: hidden;
+    }
+
+    .marquee-band {
+      position: absolute; width: 200%; height: 100%; display: flex; align-items: center;
+      font-family: 'Space Grotesk', sans-serif; font-size: clamp(8rem, 20vw, 20rem); font-weight: 900;
+      color: rgba(64,224,208,0.04); text-transform: uppercase; white-space: nowrap; user-select: none; pointer-events: none;
+    }
+
+    .marquee-band-top { top: -15%; animation: marquee-scroll 25s linear infinite; }
+    .marquee-band-bottom { bottom: -15%; animation: marquee-scroll-reverse 22s linear infinite; }
+
+    @keyframes marquee-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    @keyframes marquee-scroll-reverse { 0% { transform: translateX(-50%); } 100% { transform: translateX(0); } }
+
+    .bridge-content { text-align: center; z-index: 10; padding: 2rem; max-width: 900px; }
+    .bridge-eyebrow { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.4em; color: #40E0D0; margin-bottom: 2rem; opacity: 0; animation: reveal-up 1s ease forwards 0.5s; }
+    .bridge-headline { font-family: 'Space Grotesk', sans-serif; font-size: clamp(2.5rem, 7vw, 7rem); font-weight: 300; line-height: 1.1; margin-bottom: 2rem; opacity: 0; animation: reveal-up 1s ease forwards 0.7s; }
+    .bridge-headline strong { font-weight: 700; background: linear-gradient(135deg, #40E0D0 0%, #2dd4bf 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .bridge-sub { font-size: clamp(1rem, 2.5vw, 1.5rem); color: #999; line-height: 1.6; margin-bottom: 2rem; opacity: 0; animation: reveal-up 1s ease forwards 0.9s; }
+
+    @keyframes reveal-up { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ===== ZONE SECTIONS WITH GRADIENT BACKGROUNDS ===== */
+    .zone-section {
+      min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      position: relative; transition: background 1.5s ease;
+    }
+
+    /* Zone-specific gradient backgrounds */
+    .zone-0 { background: radial-gradient(circle at center, rgba(239, 68, 68, 0.15) 0%, #000 70%); }
+    .zone-1 { background: radial-gradient(circle at center, rgba(249, 115, 22, 0.15) 0%, #000 70%); }
+    .zone-2 { background: radial-gradient(circle at center, rgba(234, 179, 8, 0.15) 0%, #000 70%); }
+    .zone-3 { background: radial-gradient(circle at center, rgba(34, 197, 94, 0.15) 0%, #000 70%); }
+    .zone-4 { background: radial-gradient(circle at center, rgba(64,224,208, 0.15) 0%, #000 70%); }
+
+    .zone-content {
+      max-width: 900px; padding: 4rem 3rem; text-align: center;
+      position: relative; z-index: 10;
+    }
+
+    .zone-number {
+      font-family: 'Space Grotesk', sans-serif; font-size: clamp(6rem, 15vw, 12rem); font-weight: 900;
+      line-height: 1; margin-bottom: 2rem; opacity: 0.2;
+    }
+
+    .zone-voice { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.3em; margin-bottom: 2rem; }
+
+    .zone-title {
+      font-family: 'Space Grotesk', sans-serif; font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 700;
+      margin-bottom: 2rem; line-height: 1.1;
+    }
+
+    .zone-quote {
+      font-size: clamp(1.2rem, 3vw, 2rem); line-height: 1.6; font-style: italic; margin-bottom: 2rem;
+    }
+
+    .zone-quote::before { content: '"'; }
+
+    /* Character spans for animation */
+    .char {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(50px);
+    }
+
+    /* Morphing shape */
+    .zone-morph {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      z-index: 1; pointer-events: none; opacity: 0.3;
+    }
+
+    .zone-morph svg { width: 80vh; height: 80vh; overflow: visible; }
+    .zone-morph path { fill: none; stroke-width: 2; transition: stroke 1.5s ease; }
+
+    /* Zone-specific colors */
+    .zone-0 .zone-morph path { stroke: #ef4444; }
+    .zone-0 .zone-voice { color: #ef4444; }
+    .zone-0 .zone-number { color: #ef4444; }
+
+    .zone-1 .zone-morph path { stroke: #f97316; }
+    .zone-1 .zone-voice { color: #f97316; }
+    .zone-1 .zone-number { color: #f97316; }
+
+    .zone-2 .zone-morph path { stroke: #eab308; }
+    .zone-2 .zone-voice { color: #eab308; }
+    .zone-2 .zone-number { color: #eab308; }
+
+    .zone-3 .zone-morph path { stroke: #22c55e; }
+    .zone-3 .zone-voice { color: #22c55e; }
+    .zone-3 .zone-number { color: #22c55e; }
+
+    .zone-4 .zone-morph path { stroke: #40e0d0; }
+    .zone-4 .zone-voice { color: #40e0d0; }
+    .zone-4 .zone-number { color: #40e0d0; }
+
+    /* ===== SURVEY CTA ===== */
+    .survey-cta {
+      min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: radial-gradient(circle at center, rgba(64,224,208,0.1) 0%, #000 70%);
+      text-align: center; padding: 2rem;
+    }
+
+    .survey-content { max-width: 800px; }
+    .survey-headline { font-family: 'Space Grotesk', sans-serif; font-size: clamp(2.5rem, 7vw, 5rem); font-weight: 700; margin-bottom: 2rem; line-height: 1.1; }
+    .survey-headline span { background: linear-gradient(135deg, #40E0D0 0%, #2dd4bf 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .survey-sub { font-size: clamp(1rem, 2.5vw, 1.5rem); color: #ccc; line-height: 1.6; margin-bottom: 3rem; }
+    .survey-button {
+      display: inline-block; padding: 1.5rem 4rem; background: linear-gradient(135deg, #40E0D0 0%, #2dd4bf 100%);
+      color: #000; text-decoration: none; font-size: 1rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.15em; border-radius: 50px; box-shadow: 0 15px 50px rgba(64,224,208,0.5);
+      transition: all 0.4s ease;
+    }
+
+    .survey-button:hover { transform: translateY(-8px) scale(1.05); box-shadow: 0 25px 70px rgba(64,224,208,0.7); }
+
+    @media (max-width: 768px) {
+      .zone-content { padding: 3rem 2rem; }
+      .zone-morph svg { width: 60vh; height: 60vh; }
+    }
+  </style>
+</head>
+<body>
+  <!-- HERO SECTION -->
+  <section class="bridge-opening">
+    <div class="marquee-band marquee-band-top">5 VOICES — YOUR JOURNEY — FIND YOUR ZONE — 5 VOICES — YOUR JOURNEY — FIND YOUR ZONE — 5 VOICES — YOUR JOURNEY — FIND YOUR ZONE</div>
+    <div class="bridge-content">
+      <div class="bridge-eyebrow">The Territory Map</div>
+      <h1 class="bridge-headline">There are <strong>5 voices</strong><br>in the AI journey.</h1>
+      <p class="bridge-sub">Each voice thinks differently. Each faces unique challenges.<br><br><strong>Watch the colors transform.</strong><br>Find the one that sounds like you.</p>
+    </div>
+    <div class="marquee-band marquee-band-bottom">DISCOVER YOURSELF — WHERE DO YOU FIT? — DISCOVER YOURSELF — WHERE DO YOU FIT? — DISCOVER YOURSELF — WHERE DO YOU FIT?</div>
+  </section>
+
+  <!-- ZONE 0: Confusion (RED) -->
+  <section class="zone-section zone-0">
+    <div class="zone-morph">
+      <svg viewBox="0 0 600 600">
+        <path d="M 150 300 L 150 200 L 200 150 L 250 150 L 300 200 L 350 150 L 400 150 L 450 200 L 450 300 L 400 350 L 450 400 L 450 450 L 400 500 L 350 500 L 300 450 L 250 500 L 200 500 L 150 450 L 150 400 L 200 350 Z" />
+      </svg>
+    </div>
+    <div class="zone-content">
+      <div class="zone-number">0</div>
+      <div class="zone-voice">Voice of Confusion</div>
+      <h2 class="zone-title">"AI isn't for me"</h2>
+      <p class="zone-quote">I'm too old for this. AI is tech for young people. I'll never catch up.</p>
+    </div>
+  </section>
+
+  <!-- ZONE 1: Curiosity (ORANGE) -->
+  <section class="zone-section zone-1">
+    <div class="zone-morph">
+      <svg viewBox="0 0 600 600">
+        <circle cx="300" cy="300" r="200" />
+      </svg>
+    </div>
+    <div class="zone-content">
+      <div class="zone-number">1</div>
+      <div class="zone-voice">Voice of Curiosity</div>
+      <h2 class="zone-title">"I could try this"</h2>
+      <p class="zone-quote">Maybe I'm overthinking it. Let me try one thing and see what happens.</p>
+    </div>
+  </section>
+
+  <!-- ZONE 2: Trial & Error (YELLOW) -->
+  <section class="zone-section zone-2">
+    <div class="zone-morph">
+      <svg viewBox="0 0 600 600">
+        <polygon points="300,80 520,520 80,520" />
+      </svg>
+    </div>
+    <div class="zone-content">
+      <div class="zone-number">2</div>
+      <div class="zone-voice">Voice of Trial & Error</div>
+      <h2 class="zone-title">"AI does tasks for me"</h2>
+      <p class="zone-quote">Sometimes it works, sometimes not. Finding my rhythm.</p>
+    </div>
+  </section>
+
+  <!-- ZONE 3: Collaboration (GREEN) -->
+  <section class="zone-section zone-3">
+    <div class="zone-morph">
+      <svg viewBox="0 0 600 600">
+        <rect x="100" y="100" width="400" height="400" />
+      </svg>
+    </div>
+    <div class="zone-content">
+      <div class="zone-number">3</div>
+      <div class="zone-voice">Voice of Collaboration</div>
+      <h2 class="zone-title">"AI understands my intent"</h2>
+      <p class="zone-quote">It's a thought partner. We're working together.</p>
+    </div>
+  </section>
+
+  <!-- ZONE 4: Confidence (TEAL) -->
+  <section class="zone-section zone-4">
+    <div class="zone-morph">
+      <svg viewBox="0 0 600 600">
+        <polygon points="300,80 370,250 550,270 420,380 450,550 300,450 150,550 180,380 50,270 230,250" />
+      </svg>
+    </div>
+    <div class="zone-content">
+      <div class="zone-number">4</div>
+      <div class="zone-voice">Voice of Confidence</div>
+      <h2 class="zone-title">"I control the quality"</h2>
+      <p class="zone-quote">I know what I want. AI helps me get there, faster.</p>
+    </div>
+  </section>
+
+  <!-- SURVEY CTA -->
+  <section class="survey-cta">
+    <div class="survey-content">
+      <h2 class="survey-headline">Which <span>color</span> resonated with you?</h2>
+      <p class="survey-sub">Take the 2-minute assessment to discover your zone<br>and unlock your personalized AI mastery path.</p>
+      <a href="#survey" class="survey-button">Find My Zone →</a>
+    </div>
+  </section>
+
+  <script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    // Animate text character by character
+    const zones = document.querySelectorAll('.zone-section');
+
+    zones.forEach(zone => {
+      const title = zone.querySelector('.zone-title');
+      const quote = zone.querySelector('.zone-quote');
+
+      // Split title into characters
+      const titleText = title.textContent;
+      title.innerHTML = '';
+      titleText.split('').forEach(char => {
+        const span = document.createElement('span');
+        span.className = 'char';
+        span.textContent = char === ' ' ? '\u00A0' : char;
+        title.appendChild(span);
+      });
+
+      // Split quote into words
+      const quoteText = quote.textContent;
+      quote.innerHTML = '';
+      quoteText.split(' ').forEach((word, i) => {
+        const span = document.createElement('span');
+        span.className = 'char';
+        span.textContent = word;
+        quote.appendChild(span);
+        if (i < quoteText.split(' ').length - 1) {
+          quote.appendChild(document.createTextNode(' '));
+        }
+      });
+
+      // Animate characters in
+      gsap.to(zone.querySelectorAll('.char'), {
+        opacity: 1,
+        y: 0,
+        duration: 0.8,
+        stagger: 0.05,
+        ease: 'power3.out',
+        scrollTrigger: {
+          trigger: zone,
+          start: 'top 60%',
+          toggleActions: 'play none none reverse'
+        }
+      });
+    });
+  </script>
+</body>
+</html>

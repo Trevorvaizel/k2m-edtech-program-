@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hero Only - Marquee Hero Section</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700;900&family=Inter:wght@300;400;600&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', sans-serif; background: #000; color: #fff; overflow-x: hidden; }
+
+    /* ===== HERO SECTION ===== */
+    .bridge-opening {
+      min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: radial-gradient(circle at center, #0A0A0A 0%, #000 100%); position: relative; overflow: hidden;
+    }
+
+    /* Marquee Bands */
+    .marquee-band {
+      position: absolute; width: 200%; height: 100%; display: flex; align-items: center;
+      font-family: 'Space Grotesk', sans-serif; font-size: clamp(8rem, 20vw, 20rem); font-weight: 900;
+      color: rgba(64,224,208,0.04); text-transform: uppercase; white-space: nowrap; user-select: none; pointer-events: none;
+    }
+
+    .marquee-band-top { top: -15%; animation: marquee-scroll 25s linear infinite; }
+    .marquee-band-bottom { bottom: -15%; animation: marquee-scroll-reverse 22s linear infinite; }
+
+    @keyframes marquee-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    @keyframes marquee-scroll-reverse { 0% { transform: translateX(-50%); } 100% { transform: translateX(0); } }
+
+    /* Hero Content */
+    .bridge-content { text-align: center; z-index: 10; padding: 2rem; max-width: 900px; }
+    .bridge-eyebrow { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.4em; color: #40E0D0; margin-bottom: 2rem; opacity: 0; animation: reveal-up 1s ease forwards 0.5s; }
+    .bridge-headline { font-family: 'Space Grotesk', sans-serif; font-size: clamp(2.5rem, 7vw, 7rem); font-weight: 300; line-height: 1.1; margin-bottom: 2rem; opacity: 0; animation: reveal-up 1s ease forwards 0.7s; }
+    .bridge-headline strong { font-weight: 700; background: linear-gradient(135deg, #40E0D0 0%, #2dd4bf 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .bridge-sub { font-size: clamp(1rem, 2.5vw, 1.5rem); color: #999; line-height: 1.6; margin-bottom: 2rem; opacity: 0; animation: reveal-up 1s ease forwards 0.9s; }
+
+    @keyframes reveal-up { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+  <!-- HERO SECTION ONLY -->
+  <section class="bridge-opening">
+    <div class="marquee-band marquee-band-top">5 VOICES — YOUR JOURNEY — FIND YOUR ZONE — 5 VOICES — YOUR JOURNEY — FIND YOUR ZONE — 5 VOICES — YOUR JOURNEY — FIND YOUR ZONE</div>
+    <div class="bridge-content">
+      <div class="bridge-eyebrow">The Territory Map</div>
+      <h1 class="bridge-headline">There are <strong>5 voices</strong><br>in the AI journey.</h1>
+      <p class="bridge-sub">Each voice thinks differently. Each faces unique challenges.<br><br><strong>Watch them transform.</strong><br>Then find the one that sounds like you.</p>
+    </div>
+    <div class="marquee-band marquee-band-bottom">DISCOVER YOURSELF — WHERE DO YOU FIT? — DISCOVER YOURSELF — WHERE DO YOU FIT? — DISCOVER YOURSELF — WHERE DO YOU FIT?</div>
+  </section>
+</body>
+</html>

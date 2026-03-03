@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Parallax Identity Layers - Depth Immersion</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700;900&family=Inter:wght@300;400;600&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', sans-serif; background: #000; color: #fff; overflow-x: hidden; }
+
+    /* ===== HERO SECTION ===== */
+    .bridge-opening {
+      min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: radial-gradient(circle at center, #0A0A0A 0%, #000 100%); position: relative; overflow: hidden;
+    }
+
+    .marquee-band {
+      position: absolute; width: 200%; height: 100%; display: flex; align-items: center;
+      font-family: 'Space Grotesk', sans-serif; font-size: clamp(8rem, 20vw, 20rem); font-weight: 900;
+      color: rgba(64,224,208,0.04); text-transform: uppercase; white-space: nowrap; user-select: none; pointer-events: none;
+    }
+
+    .marquee-band-top { top: -15%; animation: marquee-scroll 25s linear infinite; }
+    .marquee-band-bottom { bottom: -15%; animation: marquee-scroll-reverse 22s linear infinite; }
+
+    @keyframes marquee-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    @keyframes marquee-scroll-reverse { 0% { transform: translateX(-50%); } 100% { transform: translateX(0); } }
+
+    .bridge-content { text-align: center; z-index: 10; padding: 2rem; max-width: 900px; }
+    .bridge-eyebrow { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.4em; color: #40E0D0; margin-bottom: 2rem; opacity: 0; animation: reveal-up 1s ease forwards 0.5s; }
+    .bridge-headline { font-family: 'Space Grotesk', sans-serif; font-size: clamp(2.5rem, 7vw, 7rem); font-weight: 300; line-height: 1.1; margin-bottom: 2rem; opacity: 0; animation: reveal-up 1s ease forwards 0.7s; }
+    .bridge-headline strong { font-weight: 700; background: linear-gradient(135deg, #40E0D0 0%, #2dd4bf 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .bridge-sub { font-size: clamp(1rem, 2.5vw, 1.5rem); color: #999; line-height: 1.6; margin-bottom: 2rem; opacity: 0; animation: reveal-up 1s ease forwards 0.9s; }
+
+    @keyframes reveal-up { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+
+    .scroll-hint {
+      position: absolute; bottom: 3rem; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+      opacity: 0; animation: reveal-up 1s ease forwards 1.2s;
+    }
+    .scroll-hint span { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.2em; color: #666; }
+    .scroll-hint .arrow { width: 20px; height: 20px; border-right: 2px solid #40E0D0; border-bottom: 2px solid #40E0D0;
+      transform: rotate(45deg); animation: bounce-arrow 1.5s ease infinite; }
+    @keyframes bounce-arrow { 0%, 100% { transform: rotate(45deg) translateY(0); } 50% { transform: rotate(45deg) translateY(8px); } }
+
+    /* ===== PARALLAX IDENTITY ZONES ===== */
+    .identity-zone {
+      min-height: 120vh; position: relative; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* Deep background layer - slowest */
+    .layer-deep {
+      position: absolute; inset: 0; z-index: 1;
+    }
+
+    .layer-deep .number {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      font-family: 'Space Grotesk', sans-serif; font-size: clamp(30rem, 60vw, 50rem); font-weight: 900;
+      color: rgba(64,224,208,0.02); line-height: 1;
+      will-change: transform;
+    }
+
+    /* Mid background layer - gradient orbs */
+    .layer-mid {
+      position: absolute; inset: 0; z-index: 2;
+    }
+
+    .gradient-orb {
+      position: absolute; border-radius: 50%;
+      background: radial-gradient(circle, var(--orb-color, rgba(64,224,208,0.1)) 0%, transparent 70%);
+      filter: blur(60px);
+      will-change: transform;
+    }
+
+    .gradient-orb.orb1 { --orb-color: rgba(64,224,208,0.08); width: 400px; height: 400px; top: 10%; left: 20%; }
+    .gradient-orb.orb2 { --orb-color: rgba(64,224,208,0.06); width: 300px; height: 300px; bottom: 20%; right: 15%; }
+    .gradient-orb.orb3 { --orb-color: rgba(64,224,208,0.04); width: 250px; height: 250px; top: 60%; left: 70%; }
+
+    /* Floating text fragments layer */
+    .layer-fragments {
+      position: absolute; inset: 0; z-index: 3;
+      pointer-events: none;
+    }
+
+    .text-fragment {
+      position: absolute; font-size: clamp(0.7rem, 1.2vw, 1rem);
+      color: rgba(255,255,255,0.15); font-style: italic;
+      white-space: nowrap;
+      will-change: transform, opacity;
+    }
+
+    /* Core content layer - foreground */
+    .layer-core {
+      position: relative; z-index: 10;
+      max-width: 800px; padding: 0 2rem; text-align: center;
+    }
+
+    .zone-voice-label {
+      font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.4em; color: #40E0D0;
+      margin-bottom: 1rem;
+      opacity: 0; transform: translateY(20px);
+    }
+
+    .zone-number-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 60px; height: 60px; border: 2px solid rgba(64,224,208,0.3);
+      border-radius: 50%; margin-bottom: 1.5rem;
+      font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; font-weight: 700;
+      color: #40E0D0;
+      opacity: 0; transform: scale(0.8);
+    }
+
+    .zone-main-title {
+      font-family: 'Space Grotesk', sans-serif; font-size: clamp(2.5rem, 6vw, 5rem); font-weight: 700;
+      line-height: 1.1; margin-bottom: 2rem;
+      opacity: 0; transform: translateY(30px);
+    }
+
+    .zone-extended-quote {
+      font-size: clamp(1rem, 2vw, 1.25rem); color: #999; line-height: 1.8;
+      max-width: 650px; margin: 0 auto 2.5rem;
+      opacity: 0; transform: translateY(20px);
+    }
+
+    .zone-extended-quote em { color: #ccc; font-style: normal; }
+
+    /* "You are here" indicator */
+    .you-are-here {
+      display: flex; align-items: center; justify-content: center; gap: 0.75rem;
+      opacity: 0; transform: translateY(15px);
+    }
+
+    .you-are-here .beacon {
+      width: 12px; height: 12px; background: #40E0D0; border-radius: 50%;
+      position: relative;
+    }
+
+    .you-are-here .beacon::before {
+      content: ''; position: absolute; inset: -8px;
+      border: 2px solid rgba(64,224,208,0.4); border-radius: 50%;
+      animation: beacon-pulse 2s ease infinite;
+    }
+
+    @keyframes beacon-pulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.3); opacity: 0; }
+    }
+
+    .you-are-here span { font-size: 0.75rem; color: #40E0D0; text-transform: uppercase; letter-spacing: 0.15em; }
+
+    /* Zone-specific accents */
+    .identity-zone[data-zone="0"] { --accent-intensity: 0.03; }
+    .identity-zone[data-zone="1"] { --accent-intensity: 0.05; }
+    .identity-zone[data-zone="2"] { --accent-intensity: 0.07; }
+    .identity-zone[data-zone="3"] { --accent-intensity: 0.09; }
+    .identity-zone[data-zone="4"] { --accent-intensity: 0.12; }
+
+    .identity-zone::after {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(64,224,208,var(--accent-intensity)) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    /* Depth lines - subtle grid */
+    .depth-lines {
+      position: absolute; inset: 0; z-index: 0;
+      background-image:
+        linear-gradient(rgba(64,224,208,0.02) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(64,224,208,0.02) 1px, transparent 1px);
+      background-size: 100px 100px;
+      transform-style: preserve-3d;
+      perspective: 1000px;
+    }
+
+    /* ===== SURVEY CTA ===== */
+    .survey-cta {
+      min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: radial-gradient(circle at center, rgba(64,224,208,0.1) 0%, #000 60%);
+      text-align: center; padding: 2rem; position: relative;
+    }
+
+    .survey-cta::before {
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(circle at 30% 70%, rgba(64,224,208,0.05) 0%, transparent 40%),
+                  radial-gradient(circle at 70% 30%, rgba(64,224,208,0.05) 0%, transparent 40%);
+    }
+
+    .survey-content { max-width: 800px; position: relative; z-index: 1; }
+    .survey-headline { font-family: 'Space Grotesk', sans-serif; font-size: clamp(2rem, 6vw, 4rem); font-weight: 700; margin-bottom: 1.5rem; line-height: 1.1; }
+    .survey-headline span { background: linear-gradient(135deg, #40E0D0 0%, #2dd4bf 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .survey-sub { font-size: clamp(1rem, 2vw, 1.25rem); color: #999; line-height: 1.7; margin-bottom: 2.5rem; }
+    .survey-button {
+      display: inline-block; padding: 1.25rem 3rem; background: linear-gradient(135deg, #40E0D0 0%, #2dd4bf 100%);
+      color: #000; text-decoration: none; font-size: 0.9rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.15em; border-radius: 50px; box-shadow: 0 15px 50px rgba(64,224,208,0.4);
+      transition: all 0.4s ease;
+    }
+    .survey-button:hover { transform: translateY(-5px) scale(1.03); box-shadow: 0 25px 70px rgba(64,224,208,0.6); }
+
+    @media (max-width: 768px) {
+      .layer-deep .number { font-size: clamp(15rem, 50vw, 25rem); }
+      .gradient-orb { filter: blur(40px); }
+      .gradient-orb.orb1 { width: 200px; height: 200px; }
+      .gradient-orb.orb2 { width: 150px; height: 150px; }
+      .gradient-orb.orb3 { width: 120px; height: 120px; }
+      .text-fragment { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <!-- HERO SECTION -->
+  <section class="bridge-opening">
+    <div class="marquee-band marquee-band-top">5 VOICES — YOUR JOURNEY — FIND YOUR ZONE — 5 VOICES — YOUR JOURNEY — FIND YOUR ZONE — 5 VOICES — YOUR JOURNEY — FIND YOUR ZONE</div>
+    <div class="bridge-content">
+      <div class="bridge-eyebrow">The Territory Map</div>
+      <h1 class="bridge-headline">There are <strong>5 voices</strong><br>in the AI journey.</h1>
+      <p class="bridge-sub">Scroll deeper. Let each layer reveal itself.<br>Somewhere in these depths, you'll find your reflection.</p>
+    </div>
+    <div class="marquee-band marquee-band-bottom">DISCOVER YOURSELF — WHERE DO YOU FIT? — DISCOVER YOURSELF — WHERE DO YOU FIT? — DISCOVER YOURSELF — WHERE DO YOU FIT?</div>
+    <div class="scroll-hint">
+      <span>Descend into identity</span>
+      <div class="arrow"></div>
+    </div>
+  </section>
+
+  <!-- ZONE 0 -->
+  <section class="identity-zone" data-zone="0">
+    <div class="depth-lines"></div>
+
+    <div class="layer-deep">
+      <div class="number" data-speed="0.3">0</div>
+    </div>
+
+    <div class="layer-mid">
+      <div class="gradient-orb orb1" data-speed="0.5"></div>
+      <div class="gradient-orb orb2" data-speed="0.6"></div>
+    </div>
+
+    <div class="layer-fragments">
+      <div class="text-fragment" style="top: 15%; left: 8%;" data-speed="0.7">too old for this...</div>
+      <div class="text-fragment" style="top: 25%; right: 12%;" data-speed="0.8">everyone else gets it</div>
+      <div class="text-fragment" style="bottom: 30%; left: 15%;" data-speed="0.75">why can't I?</div>
+      <div class="text-fragment" style="bottom: 20%; right: 8%;" data-speed="0.65">feeling lost</div>
+    </div>
+
+    <div class="layer-core">
+      <div class="zone-voice-label">Voice of Confusion</div>
+      <div class="zone-number-badge">0</div>
+      <h2 class="zone-main-title">"AI isn't for me."</h2>
+      <p class="zone-extended-quote">I'm too old for this. AI is tech for young people. <em>My kids get it instantly — I've tried and it just doesn't click.</em> Everyone talks about it like I should already know. Am I the only one feeling this lost?</p>
+      <div class="you-are-here">
+        <div class="beacon"></div>
+        <span>38% start here</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ZONE 1 -->
+  <section class="identity-zone" data-zone="1">
+    <div class="depth-lines"></div>
+
+    <div class="layer-deep">
+      <div class="number" data-speed="0.3">1</div>
+    </div>
+
+    <div class="layer-mid">
+      <div class="gradient-orb orb1" data-speed="0.5"></div>
+      <div class="gradient-orb orb3" data-speed="0.55"></div>
+    </div>
+
+    <div class="layer-fragments">
+      <div class="text-fragment" style="top: 12%; left: 10%;" data-speed="0.7">what if I just tried...</div>
+      <div class="text-fragment" style="top: 35%; right: 8%;" data-speed="0.8">one small thing</div>
+      <div class="text-fragment" style="bottom: 25%; left: 12%;" data-speed="0.75">what's the worst?</div>
+      <div class="text-fragment" style="bottom: 35%; right: 15%;" data-speed="0.65">spark of possibility</div>
+    </div>
+
+    <div class="layer-core">
+      <div class="zone-voice-label">Voice of Curiosity</div>
+      <div class="zone-number-badge">1</div>
+      <h2 class="zone-main-title">"I could try this."</h2>
+      <p class="zone-extended-quote">Maybe I've been overthinking this whole thing. <em>What if I just tried one small thing and saw what happened?</em> I saw someone do something cool with it. Could save me hours... What's the worst that could happen?</p>
+      <div class="you-are-here">
+        <div class="beacon"></div>
+        <span>First spark ignites</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ZONE 2 -->
+  <section class="identity-zone" data-zone="2">
+    <div class="depth-lines"></div>
+
+    <div class="layer-deep">
+      <div class="number" data-speed="0.3">2</div>
+    </div>
+
+    <div class="layer-mid">
+      <div class="gradient-orb orb2" data-speed="0.5"></div>
+      <div class="gradient-orb orb3" data-speed="0.6"></div>
+    </div>
+
+    <div class="layer-fragments">
+      <div class="text-fragment" style="top: 18%; left: 6%;" data-speed="0.7">it worked! ...wait</div>
+      <div class="text-fragment" style="top: 30%; right: 10%;" data-speed="0.8">sometimes brilliant</div>
+      <div class="text-fragment" style="bottom: 28%; left: 18%;" data-speed="0.75">sometimes garbage</div>
+      <div class="text-fragment" style="bottom: 18%; right: 12%;" data-speed="0.65">finding my rhythm</div>
+    </div>
+
+    <div class="layer-core">
+      <div class="zone-voice-label">Voice of Trial & Error</div>
+      <div class="zone-number-badge">2</div>
+      <h2 class="zone-main-title">"AI does tasks for me."</h2>
+      <p class="zone-extended-quote">Sometimes it's brilliant, sometimes it's complete garbage. <em>I'm getting better at spotting the difference.</em> Learning what to trust. Finding my rhythm. I can tell when it's wrong now — and that's progress.</p>
+      <div class="you-are-here">
+        <div class="beacon"></div>
+        <span>Pattern recognition builds</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ZONE 3 -->
+  <section class="identity-zone" data-zone="3">
+    <div class="depth-lines"></div>
+
+    <div class="layer-deep">
+      <div class="number" data-speed="0.3">3</div>
+    </div>
+
+    <div class="layer-mid">
+      <div class="gradient-orb orb1" data-speed="0.5"></div>
+      <div class="gradient-orb orb2" data-speed="0.55"></div>
+      <div class="gradient-orb orb3" data-speed="0.6"></div>
+    </div>
+
+    <div class="layer-fragments">
+      <div class="text-fragment" style="top: 15%; left: 12%;" data-speed="0.7">thought partner</div>
+      <div class="text-fragment" style="top: 28%; right: 8%;" data-speed="0.8">finishes my sentences</div>
+      <div class="text-fragment" style="bottom: 32%; left: 8%;" data-speed="0.75">actual conversations</div>
+      <div class="text-fragment" style="bottom: 22%; right: 15%;" data-speed="0.65">better together</div>
+    </div>
+
+    <div class="layer-core">
+      <div class="zone-voice-label">Voice of Collaboration</div>
+      <div class="zone-number-badge">3</div>
+      <h2 class="zone-main-title">"AI understands my intent."</h2>
+      <p class="zone-extended-quote">It's not just a tool anymore — <em>it's like having a thought partner who finishes my sentences.</em> We're having actual conversations now. It suggests things I hadn't considered. My thinking has expanded.</p>
+      <div class="you-are-here">
+        <div class="beacon"></div>
+        <span>True collaboration begins</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ZONE 4 -->
+  <section class="identity-zone" data-zone="4">
+    <div class="depth-lines"></div>
+
+    <div class="layer-deep">
+      <div class="number" data-speed="0.3">4</div>
+    </div>
+
+    <div class="layer-mid">
+      <div class="gradient-orb orb1" data-speed="0.5"></div>
+      <div class="gradient-orb orb2" data-speed="0.55"></div>
+      <div class="gradient-orb orb3" data-speed="0.6"></div>
+    </div>
+
+    <div class="layer-fragments">
+      <div class="text-fragment" style="top: 12%; left: 10%;" data-speed="0.7">I direct, I refine</div>
+      <div class="text-fragment" style="top: 32%; right: 12%;" data-speed="0.8">own the outcome</div>
+      <div class="text-fragment" style="bottom: 30%; left: 15%;" data-speed="0.75">competitive edge</div>
+      <div class="text-fragment" style="bottom: 15%; right: 8%;" data-speed="0.65">vision accelerated</div>
+    </div>
+
+    <div class="layer-core">
+      <div class="zone-voice-label">Voice of Confidence</div>
+      <div class="zone-number-badge">4</div>
+      <h2 class="zone-main-title">"I control the quality."</h2>
+      <p class="zone-extended-quote">I know exactly what I want. <em>I direct, refine, and own the outcome.</em> AI accelerates my vision. This is my competitive edge. Quality is my decision. I don't just use AI — I orchestrate it.</p>
+      <div class="you-are-here">
+        <div class="beacon"></div>
+        <span>Mastery achieved</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- SURVEY CTA -->
+  <section class="survey-cta">
+    <div class="survey-content">
+      <h2 class="survey-headline">Which <span>depth</span> called to you?</h2>
+      <p class="survey-sub">You've descended through the layers. One zone felt like home.<br>Let's confirm where you are and chart your path forward.</p>
+      <a href="#survey" class="survey-button">Confirm My Zone</a>
+    </div>
+  </section>
+
+  <script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    const zones = gsap.utils.toArray('.identity-zone');
+
+    zones.forEach(zone => {
+      const core = zone.querySelector('.layer-core');
+      const coreElements = core.querySelectorAll('.zone-voice-label, .zone-number-badge, .zone-main-title, .zone-extended-quote, .you-are-here');
+
+      // Parallax for deep number
+      const deepNumber = zone.querySelector('.layer-deep .number');
+      if (deepNumber) {
+        const speed = parseFloat(deepNumber.dataset.speed) || 0.3;
+        gsap.to(deepNumber, {
+          y: () => -window.innerHeight * speed,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: zone,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: true
+          }
+        });
+      }
+
+      // Parallax for gradient orbs
+      zone.querySelectorAll('.gradient-orb').forEach(orb => {
+        const speed = parseFloat(orb.dataset.speed) || 0.5;
+        gsap.to(orb, {
+          y: () => -window.innerHeight * speed * 0.5,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: zone,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: true
+          }
+        });
+      });
+
+      // Parallax for text fragments
+      zone.querySelectorAll('.text-fragment').forEach(frag => {
+        const speed = parseFloat(frag.dataset.speed) || 0.7;
+        gsap.to(frag, {
+          y: () => -window.innerHeight * speed * 0.3,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: zone,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: true
+          }
+        });
+      });
+
+      // Core content reveal
+      ScrollTrigger.create({
+        trigger: zone,
+        start: 'top 60%',
+        end: 'bottom 40%',
+        onEnter: () => {
+          gsap.to(coreElements, {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            duration: 0.8,
+            stagger: 0.1,
+            ease: 'power3.out'
+          });
+
+          // Fade in text fragments
+          gsap.to(zone.querySelectorAll('.text-fragment'), {
+            opacity: 0.2,
+            duration: 1,
+            stagger: 0.05
+          });
+        },
+        onLeave: () => {
+          gsap.to(coreElements, {
+            opacity: 0.3,
+            duration: 0.4,
+            ease: 'power2.in'
+          });
+
+          gsap.to(zone.querySelectorAll('.text-fragment'), {
+            opacity: 0,
+            duration: 0.4
+          });
+        },
+        onEnterBack: () => {
+          gsap.to(coreElements, {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            duration: 0.8,
+            stagger: 0.1,
+            ease: 'power3.out'
+          });
+
+          gsap.to(zone.querySelectorAll('.text-fragment'), {
+            opacity: 0.2,
+            duration: 1,
+            stagger: 0.05
+          });
+        },
+        onLeaveBack: () => {
+          gsap.to(coreElements, {
+            opacity: 0.3,
+            duration: 0.4,
+            ease: 'power2.in'
+          });
+
+          gsap.to(zone.querySelectorAll('.text-fragment'), {
+            opacity: 0,
+            duration: 0.4
+          });
+        }
+      });
+    });
+  </script>
+</body>
+</html>

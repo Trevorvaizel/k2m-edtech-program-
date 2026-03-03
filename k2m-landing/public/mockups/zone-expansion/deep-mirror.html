@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Deep Mirror - Emotional Recognition Journey</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700;900&family=Inter:wght@300;400;600&display=swap');
+
+    :root {
+      --ocean: #40E0D0;
+      --ocean-soft: rgba(64,224,208,0.12);
+      --text-primary: #fff;
+      --text-secondary: #888;
+      --text-muted: #555;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', sans-serif; background: #000; color: var(--text-primary); overflow-x: hidden; line-height: 1.6; }
+
+    /* ===== HERO ===== */
+    .hero {
+      min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      position: relative; overflow: hidden; padding: 2rem;
+    }
+
+    .hero-bg {
+      position: absolute; inset: 0;
+      background: radial-gradient(circle at 50% 50%, rgba(64,224,208,0.03) 0%, transparent 50%);
+    }
+
+    .hero-content { text-align: center; z-index: 10; max-width: 800px; }
+
+    .hero-eyebrow {
+      font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.4em; color: var(--ocean);
+      margin-bottom: 1.5rem; opacity: 0; animation: fade-up 0.8s ease forwards 0.3s;
+    }
+
+    .hero-title {
+      font-family: 'Space Grotesk', sans-serif; font-size: clamp(2.5rem, 8vw, 5.5rem); font-weight: 300;
+      line-height: 1.1; margin-bottom: 1.5rem; opacity: 0; animation: fade-up 0.8s ease forwards 0.5s;
+    }
+
+    .hero-title strong {
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--ocean) 0%, #2dd4bf 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+
+    .hero-sub {
+      font-size: clamp(1rem, 2.5vw, 1.25rem); color: var(--text-secondary); max-width: 500px; margin: 0 auto 2rem;
+      opacity: 0; animation: fade-up 0.8s ease forwards 0.7s;
+    }
+
+    .hero-prompt {
+      font-size: 0.85rem; color: var(--text-muted); font-style: italic;
+      opacity: 0; animation: fade-up 0.8s ease forwards 0.9s;
+    }
+
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .scroll-cue {
+      position: absolute; bottom: 2.5rem; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+      opacity: 0; animation: fade-up 0.8s ease forwards 1.1s;
+    }
+
+    .scroll-cue span { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.2em; color: var(--text-muted); }
+    .scroll-cue .line { width: 1px; height: 40px; background: linear-gradient(180deg, var(--ocean), transparent); animation: pulse-line 2s ease infinite; }
+
+    @keyframes pulse-line { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+
+    /* ===== MIRROR ZONE ===== */
+    .mirror-zone {
+      min-height: 100vh; position: relative; overflow: hidden;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 4rem 1.5rem;
+    }
+
+    /* Ambient glow */
+    .zone-glow {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 120%; height: 120%;
+      background: radial-gradient(ellipse 40% 45% at 50% 50%, rgba(64,224,208,0.05) 0%, transparent 70%);
+      opacity: 0; transition: opacity 1s ease;
+      pointer-events: none;
+    }
+
+    .mirror-zone.active .zone-glow { opacity: 1; }
+
+    /* ===== WHISPERS (Echo thoughts) ===== */
+    .whispers {
+      width: 100%; max-width: 1000px; position: relative;
+      min-height: 80px; margin-bottom: 2rem;
+    }
+
+    /* Desktop: positioned absolutely */
+    @media (min-width: 769px) {
+      .whispers { height: 120px; }
+    }
+
+    .whisper {
+      font-size: 0.8rem; color: rgba(255,255,255,0.4); font-style: italic;
+      padding: 0.6rem 1rem; background: rgba(64,224,208,0.03);
+      border: 1px solid rgba(64,224,208,0.08); border-radius: 8px;
+      opacity: 0; transform: translateY(15px);
+      transition: all 0.5s ease, color 0.3s ease, border-color 0.3s ease;
+    }
+
+    .whisper.revealed { opacity: 1; transform: translateY(0); }
+    .whisper.floating { animation: whisper-float 5s ease-in-out infinite; }
+
+    @keyframes whisper-float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .whisper:hover {
+      color: rgba(255,255,255,0.7);
+      border-color: rgba(64,224,208,0.2);
+    }
+
+    /* Desktop whisper positions */
+    @media (min-width: 769px) {
+      .whisper { position: absolute; max-width: 220px; }
+      .whisper:nth-child(1) { top: 0; left: 5%; animation-delay: 0s; }
+      .whisper:nth-child(2) { top: 20%; right: 3%; animation-delay: 0.5s; }
+      .whisper:nth-child(3) { bottom: 10%; left: 15%; animation-delay: 1s; }
+      .whisper:nth-child(4) { bottom: 0; right: 10%; animation-delay: 1.5s; }
+    }
+
+    /* Mobile whispers: horizontal scroll */
+    @media (max-width: 768px) {
+      .whispers {
+        display: flex; gap: 0.75rem; overflow-x: auto; padding: 0.5rem;
+        scroll-snap-type: x mandatory; -webkit-overflow-scrolling: touch;
+        scrollbar-width: none; min-height: auto;
+      }
+      .whispers::-webkit-scrollbar { display: none; }
+      .whisper {
+        flex: 0 0 auto; max-width: 200px; scroll-snap-align: start;
+        position: static !important;
+      }
+      .whisper.floating { animation: none; }
+    }
+
+    /* ===== VOICE CARD ===== */
+    .voice-card {
+      width: 100%; max-width: 580px;
+      padding: 2.5rem 2rem;
+      background: linear-gradient(180deg, rgba(10,10,10,0.95) 0%, rgba(5,5,5,0.98) 100%);
+      border: 1px solid rgba(64,224,208,0.1);
+      border-radius: 20px;
+      text-align: center; position: relative;
+      opacity: 0; transform: translateY(30px) scale(0.98);
+      transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .mirror-zone.active .voice-card {
+      opacity: 1; transform: translateY(0) scale(1);
+      box-shadow: 0 0 60px rgba(64,224,208,0.06), 0 20px 50px rgba(0,0,0,0.4);
+    }
+
+    .voice-badge {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.4rem 0.9rem; margin-bottom: 1.25rem;
+      background: rgba(64,224,208,0.06); border: 1px solid rgba(64,224,208,0.15);
+      border-radius: 50px;
+    }
+
+    .voice-badge .num {
+      font-family: 'Space Grotesk', sans-serif; font-size: 0.8rem; font-weight: 700; color: var(--ocean);
+    }
+
+    .voice-badge .label {
+      font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.2em; color: var(--ocean);
+    }
+
+    .voice-statement {
+      font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.5rem, 4vw, 2.25rem); font-weight: 700;
+      line-height: 1.25; margin-bottom: 1.25rem;
+    }
+
+    .voice-inner {
+      font-size: clamp(0.95rem, 2vw, 1.05rem); color: var(--text-secondary); line-height: 1.75;
+      margin-bottom: 1.5rem;
+    }
+
+    .voice-inner em { color: #bbb; font-style: normal; }
+
+    .voice-inner .raw {
+      display: block; margin-top: 0.75rem;
+      font-size: 1.05em; color: #ccc;
+    }
+
+    /* Recognition pulse */
+    .recognition-prompt {
+      display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+    }
+
+    .recognition-prompt .ring {
+      width: 36px; height: 36px; border-radius: 50%;
+      border: 2px solid rgba(64,224,208,0.3);
+      display: flex; align-items: center; justify-content: center;
+      position: relative;
+    }
+
+    .recognition-prompt .ring::before {
+      content: ''; position: absolute; inset: -4px;
+      border: 1px solid rgba(64,224,208,0.2); border-radius: 50%;
+      animation: ring-expand 2.5s ease infinite;
+    }
+
+    @keyframes ring-expand {
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+
+    .recognition-prompt .ring span {
+      font-size: 0.9rem; color: var(--ocean); font-weight: 600;
+    }
+
+    .recognition-prompt .text {
+      font-size: 0.75rem; color: var(--ocean); text-transform: uppercase; letter-spacing: 0.15em;
+    }
+
+    .recognition-prompt .meta {
+      font-size: 0.65rem; color: var(--text-muted);
+    }
+
+    /* ===== PROGRESS BAR ===== */
+    .progress-bar {
+      position: fixed; left: 0; top: 0; width: 4px; height: 100%;
+      background: rgba(64,224,208,0.1); z-index: 100;
+      opacity: 0; transition: opacity 0.4s ease;
+    }
+
+    .progress-bar.visible { opacity: 1; }
+
+    .progress-bar .fill {
+      width: 100%; background: var(--ocean);
+      transition: height 0.3s ease;
+    }
+
+    /* ===== CTA ===== */
+    .cta {
+      min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 3rem 1.5rem; text-align: center;
+      background: radial-gradient(ellipse 50% 40% at 50% 50%, rgba(64,224,208,0.06) 0%, transparent 70%);
+    }
+
+    .cta-content { max-width: 600px; }
+
+    .cta-title {
+      font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.75rem, 5vw, 3rem); font-weight: 700;
+      line-height: 1.2; margin-bottom: 1.25rem;
+    }
+
+    .cta-title span {
+      background: linear-gradient(135deg, var(--ocean), #2dd4bf);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+
+    .cta-sub {
+      font-size: clamp(0.95rem, 2vw, 1.1rem); color: var(--text-secondary); line-height: 1.7;
+      margin-bottom: 2rem;
+    }
+
+    .cta-button {
+      display: inline-block; padding: 1.1rem 2.5rem;
+      background: linear-gradient(135deg, var(--ocean), #2dd4bf);
+      color: #000; font-size: 0.8rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.12em; text-decoration: none; border-radius: 50px;
+      box-shadow: 0 12px 40px rgba(64,224,208,0.3);
+      transition: all 0.3s ease;
+    }
+
+    .cta-button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 18px 50px rgba(64,224,208,0.45);
+    }
+  </style>
+</head>
+<body>
+  <!-- Progress Bar -->
+  <div class="progress-bar">
+    <div class="fill" style="height: 0%;"></div>
+  </div>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-content">
+      <div class="hero-eyebrow">The Territory Map</div>
+      <h1 class="hero-title">There are <strong>5 voices</strong><br>in the AI journey.</h1>
+      <p class="hero-sub">One of them has been living in your head. You've heard it before. You've probably said it out loud.</p>
+      <p class="hero-prompt">Scroll to find it.</p>
+    </div>
+    <div class="scroll-cue">
+      <span>Begin</span>
+      <div class="line"></div>
+    </div>
+  </section>
+
+  <!-- ZONE 0 -->
+  <section class="mirror-zone" data-zone="0">
+    <div class="zone-glow"></div>
+
+    <div class="whispers">
+      <div class="whisper">"I feel so behind everyone else"</div>
+      <div class="whisper">"My kids get this instantly. I don't."</div>
+      <div class="whisper">"Is it too late for me to learn?"</div>
+      <div class="whisper">"This is for tech people, not me"</div>
+    </div>
+
+    <div class="voice-card">
+      <div class="voice-badge">
+        <span class="num">0</span>
+        <span class="label">Voice of Confusion</span>
+      </div>
+      <h2 class="voice-statement">"AI isn't for me."</h2>
+      <p class="voice-inner">
+        I'm too old for this. AI is tech for young people.
+        <em>Everyone talks about it like I should already know.</em>
+        <span class="raw">Am I the only one feeling this lost?</span>
+      </p>
+      <div class="recognition-prompt">
+        <div class="ring"><span>?</span></div>
+        <span class="text">Sound familiar?</span>
+        <span class="meta">38% of people start here</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ZONE 1 -->
+  <section class="mirror-zone" data-zone="1">
+    <div class="zone-glow"></div>
+
+    <div class="whispers">
+      <div class="whisper">"What if I just tried one thing?"</div>
+      <div class="whisper">"Maybe it's not as hard as I thought"</div>
+      <div class="whisper">"I saw someone do something cool"</div>
+      <div class="whisper">"What's the worst that could happen?"</div>
+    </div>
+
+    <div class="voice-card">
+      <div class="voice-badge">
+        <span class="num">1</span>
+        <span class="label">Voice of Curiosity</span>
+      </div>
+      <h2 class="voice-statement">"I could try this."</h2>
+      <p class="voice-inner">
+        Maybe I've been overthinking this whole thing.
+        <em>What if I just tried one small thing?</em>
+        <span class="raw">What's the worst that could happen?</span>
+      </p>
+      <div class="recognition-prompt">
+        <div class="ring"><span>?</span></div>
+        <span class="text">Sound familiar?</span>
+        <span class="meta">The first spark ignites</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ZONE 2 -->
+  <section class="mirror-zone" data-zone="2">
+    <div class="zone-glow"></div>
+
+    <div class="whispers">
+      <div class="whisper">"It worked! ...wait, no it didn't"</div>
+      <div class="whisper">"Sometimes brilliant, sometimes garbage"</div>
+      <div class="whisper">"I can tell when it's wrong now"</div>
+      <div class="whisper">"Finding my rhythm"</div>
+    </div>
+
+    <div class="voice-card">
+      <div class="voice-badge">
+        <span class="num">2</span>
+        <span class="label">Voice of Trial & Error</span>
+      </div>
+      <h2 class="voice-statement">"AI does tasks for me."</h2>
+      <p class="voice-inner">
+        Sometimes it's brilliant. Sometimes it's complete garbage.
+        <em>I'm getting better at spotting the difference.</em>
+        <span class="raw">Learning what to trust.</span>
+      </p>
+      <div class="recognition-prompt">
+        <div class="ring"><span>?</span></div>
+        <span class="text">Sound familiar?</span>
+        <span class="meta">Pattern recognition builds</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ZONE 3 -->
+  <section class="mirror-zone" data-zone="3">
+    <div class="zone-glow"></div>
+
+    <div class="whispers">
+      <div class="whisper">"It's like it reads my mind"</div>
+      <div class="whisper">"We're having actual conversations"</div>
+      <div class="whisper">"It suggests things I hadn't considered"</div>
+      <div class="whisper">"Better together than alone"</div>
+    </div>
+
+    <div class="voice-card">
+      <div class="voice-badge">
+        <span class="num">3</span>
+        <span class="label">Voice of Collaboration</span>
+      </div>
+      <h2 class="voice-statement">"AI understands my intent."</h2>
+      <p class="voice-inner">
+        It's not just a tool anymore.
+        <em>It's like having a thought partner who finishes my sentences.</em>
+        <span class="raw">We think better together.</span>
+      </p>
+      <div class="recognition-prompt">
+        <div class="ring"><span>?</span></div>
+        <span class="text">Sound familiar?</span>
+        <span class="meta">True collaboration begins</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ZONE 4 -->
+  <section class="mirror-zone" data-zone="4">
+    <div class="zone-glow"></div>
+
+    <div class="whispers">
+      <div class="whisper">"I know exactly what to ask for"</div>
+      <div class="whisper">"I direct, it executes"</div>
+      <div class="whisper">"Quality is my decision"</div>
+      <div class="whisper">"I own the outcome"</div>
+    </div>
+
+    <div class="voice-card">
+      <div class="voice-badge">
+        <span class="num">4</span>
+        <span class="label">Voice of Confidence</span>
+      </div>
+      <h2 class="voice-statement">"I control the quality."</h2>
+      <p class="voice-inner">
+        I know exactly what I want.
+        <em>I direct, refine, and own the outcome.</em>
+        <span class="raw">AI accelerates my vision.</span>
+      </p>
+      <div class="recognition-prompt">
+        <div class="ring"><span>?</span></div>
+        <span class="text">Sound familiar?</span>
+        <span class="meta">Mastery achieved</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta">
+    <div class="cta-content">
+      <h2 class="cta-title">Which <span>voice</span> was yours?</h2>
+      <p class="cta-sub">That thought you recognized. Those words you've said.<br>That's your starting point. Let's confirm it.</p>
+      <a href="#survey" class="cta-button">Find My Zone</a>
+    </div>
+  </section>
+
+  <script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    const zones = gsap.utils.toArray('.mirror-zone');
+    const progressBar = document.querySelector('.progress-bar');
+    const progressFill = progressBar.querySelector('.fill');
+    const totalZones = zones.length;
+
+    // Progress bar visibility
+    ScrollTrigger.create({
+      trigger: '.hero',
+      start: 'bottom top',
+      onLeave: () => progressBar.classList.add('visible'),
+      onEnterBack: () => progressBar.classList.remove('visible')
+    });
+
+    ScrollTrigger.create({
+      trigger: '.cta',
+      start: 'top 80%',
+      onEnter: () => progressBar.classList.remove('visible'),
+      onLeaveBack: () => progressBar.classList.add('visible')
+    });
+
+    // Zone animations
+    zones.forEach((zone, index) => {
+      const whispers = zone.querySelectorAll('.whisper');
+      const card = zone.querySelector('.voice-card');
+
+      ScrollTrigger.create({
+        trigger: zone,
+        start: 'top 60%',
+        end: 'bottom 40%',
+        onEnter: () => activateZone(zone, whispers, index),
+        onEnterBack: () => activateZone(zone, whispers, index),
+        onLeave: () => deactivateZone(zone, whispers),
+        onLeaveBack: () => deactivateZone(zone, whispers)
+      });
+    });
+
+    function activateZone(zone, whispers, index) {
+      zones.forEach(z => z.classList.remove('active'));
+      zone.classList.add('active');
+
+      // Update progress
+      const progress = ((index + 1) / totalZones) * 100;
+      gsap.to(progressFill, { height: `${progress}%`, duration: 0.4 });
+
+      // Stagger whisper reveal
+      whispers.forEach((w, i) => {
+        gsap.to(w, {
+          opacity: 1,
+          y: 0,
+          duration: 0.5,
+          delay: i * 0.12,
+          ease: 'power2.out',
+          onComplete: () => w.classList.add('revealed', 'floating')
+        });
+      });
+    }
+
+    function deactivateZone(zone, whispers) {
+      zone.classList.remove('active');
+      whispers.forEach(w => {
+        w.classList.remove('revealed', 'floating');
+        gsap.set(w, { opacity: 0, y: 15 });
+      });
+    }
+  </script>
+</body>
+</html>

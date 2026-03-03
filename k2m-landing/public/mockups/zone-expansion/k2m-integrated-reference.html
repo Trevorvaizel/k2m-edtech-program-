@@ -1,0 +1,1531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>K2M Integrated Reference - Complete Journey</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&family=Inter:wght@300;400;500&display=swap');
+
+    :root {
+      --star: #40E0D0;
+      --nebula: rgba(64,224,208,0.03);
+      --bg-deep: #030812;
+      --text-primary: #fff;
+      --text-secondary: rgba(255,255,255,0.7);
+      --text-muted: rgba(255,255,255,0.4);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-deep);
+      color: var(--text-primary);
+      overflow-x: hidden;
+    }
+
+    /* ===== PROGRESS BAR ===== */
+    .progress-bar {
+      position: fixed;
+      left: 1.5rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 120px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 2px;
+      z-index: 100;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .progress-bar.visible { opacity: 1; }
+
+    .progress-bar .fill {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      background: linear-gradient(180deg, var(--star) 0%, rgba(64,224,208,0.3) 100%);
+      border-radius: 2px;
+      transition: height 0.4s ease;
+    }
+
+    .progress-bar .marker {
+      position: absolute;
+      left: 10px;
+      bottom: 0;
+      font-size: 0.6rem;
+      color: var(--star);
+      font-weight: 600;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .progress-bar.visible .marker { opacity: 1; }
+
+    /* ===== STAR FIELD BACKGROUND ===== */
+    .starfield {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .star {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: #fff;
+      border-radius: 50%;
+      animation: twinkle var(--duration, 3s) ease-in-out infinite;
+      animation-delay: var(--delay, 0s);
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: var(--min-opacity, 0.3); }
+      50% { opacity: var(--max-opacity, 1); }
+    }
+
+    /* ===== HERO SECTION ===== */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem;
+      position: relative;
+    }
+
+    .hero-logo {
+      width: 80px;
+      height: 80px;
+      margin-bottom: 2rem;
+      opacity: 0.9;
+    }
+
+    .hero-logo svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    .hero-eyebrow {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3em;
+      color: var(--star);
+      margin-bottom: 1.5rem;
+      opacity: 0.8;
+    }
+
+    .hero-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(2.5rem, 8vw, 4.5rem);
+      font-weight: 300;
+      line-height: 1.1;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-title strong {
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--star) 0%, #7dd3fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-sub {
+      font-size: clamp(1rem, 2.5vw, 1.15rem);
+      color: var(--text-secondary);
+      max-width: 500px;
+      margin-bottom: 0.75rem;
+      line-height: 1.7;
+    }
+
+    .hero-prompt {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .scroll-cue {
+      position: absolute;
+      bottom: 3rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.75rem;
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+    }
+
+    .scroll-cue .line {
+      width: 1px;
+      height: 50px;
+      background: linear-gradient(180deg, var(--star), transparent);
+      animation: scroll-pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes scroll-pulse {
+      0%, 100% { opacity: 0.3; transform: scaleY(1); }
+      50% { opacity: 1; transform: scaleY(1.15); }
+    }
+
+    /* ===== CONSTELLATION ZONE ===== */
+    .constellation-zone {
+      min-height: 100vh;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 2rem;
+      overflow: hidden;
+    }
+
+    .constellation-canvas {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .constellation-line {
+      stroke: var(--star);
+      stroke-width: 1;
+      stroke-dasharray: 200;
+      stroke-dashoffset: 200;
+      opacity: 0.3;
+      transition: stroke-dashoffset 1.5s ease, opacity 0.5s ease;
+    }
+
+    .constellation-zone.active .constellation-line {
+      stroke-dashoffset: 0;
+      opacity: 0.5;
+    }
+
+    /* Star pool for thought stars */
+    .star-pool-mobile {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .star-pool-mobile .thought-star {
+      pointer-events: auto;
+    }
+
+    .thought-star {
+      position: absolute;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      opacity: 0;
+      transform: scale(0);
+      transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .thought-star.visible {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .star-point {
+      width: 12px;
+      height: 12px;
+      background: var(--star);
+      border-radius: 50%;
+      box-shadow: 0 0 20px var(--star), 0 0 40px rgba(64,224,208,0.3);
+      position: relative;
+    }
+
+    .star-point::before {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border: 1px solid rgba(64,224,208,0.3);
+      border-radius: 50%;
+      animation: star-pulse 2s ease-out infinite;
+    }
+
+    @keyframes star-pulse {
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(2); opacity: 0; }
+    }
+
+    .star-label {
+      padding: 0.5rem 0.75rem;
+      background: rgba(3,8,18,0.8);
+      border: 1px solid rgba(64,224,208,0.15);
+      border-radius: 8px;
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      font-style: italic;
+      white-space: nowrap;
+      max-width: 150px;
+      text-align: center;
+      backdrop-filter: blur(8px);
+    }
+
+    /* Voice Nebula Card */
+    .voice-nebula {
+      position: relative;
+      z-index: 20;
+      width: 100%;
+      max-width: 520px;
+      padding: 3rem 2.5rem;
+      background: radial-gradient(ellipse at center, rgba(64,224,208,0.05) 0%, rgba(3,8,18,0.95) 70%);
+      border: 1px solid rgba(64,224,208,0.1);
+      border-radius: 20px;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.8s ease;
+    }
+
+    .constellation-zone.active .voice-nebula {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .voice-nebula::before {
+      content: '';
+      position: absolute;
+      inset: -40px;
+      background: radial-gradient(ellipse 50% 40% at 50% 50%, rgba(64,224,208,0.08) 0%, transparent 70%);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 1s ease;
+    }
+
+    .constellation-zone.active .voice-nebula::before {
+      opacity: 1;
+    }
+
+    .zone-constellation-name {
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.4em;
+      color: var(--star);
+      margin-bottom: 0.5rem;
+      opacity: 0.7;
+    }
+
+    .zone-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 1rem;
+      background: rgba(64,224,208,0.08);
+      border-radius: 50px;
+      margin-bottom: 1.5rem;
+    }
+
+    .zone-badge .num {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      color: var(--star);
+    }
+
+    .zone-badge .label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--star);
+    }
+
+    .voice-quote {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(1.5rem, 4vw, 2.25rem);
+      font-weight: 600;
+      line-height: 1.3;
+      margin-bottom: 1rem;
+    }
+
+    .voice-inner {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      line-height: 1.8;
+    }
+
+    .voice-inner em {
+      color: rgba(255,255,255,0.85);
+      font-style: normal;
+    }
+
+    .recognition-star {
+      margin-top: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .recognition-star .icon {
+      font-size: 1.5rem;
+      color: var(--star);
+      animation: glow-pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes glow-pulse {
+      0%, 100% { text-shadow: 0 0 10px var(--star); }
+      50% { text-shadow: 0 0 25px var(--star), 0 0 40px rgba(64,224,208,0.5); }
+    }
+
+    .recognition-star .text {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--star);
+    }
+
+    /* ===== VISUAL SEPARATORS ===== */
+    .section-divider {
+      position: relative;
+      height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .section-divider::before {
+      content: '';
+      position: absolute;
+      width: 200px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(64,224,208,0.3), transparent);
+    }
+
+    .section-divider .divider-glyph {
+      width: 8px;
+      height: 8px;
+      background: rgba(64,224,208,0.2);
+      border: 1px solid rgba(64,224,208,0.3);
+      transform: rotate(45deg);
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ===== BRIDGE SECTION ===== */
+    .bridge {
+      position: relative;
+      padding: 6rem 1.5rem 4rem;
+      overflow: hidden;
+    }
+
+    .bridge-content {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    /* Hook */
+    .bridge-hook {
+      text-align: center;
+      margin-bottom: 4rem;
+      opacity: 0;
+      transform: translateY(40px);
+    }
+
+    .bridge-hook.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .hook-line {
+      font-size: clamp(1.1rem, 3vw, 1.35rem);
+      color: var(--text-secondary);
+      margin-bottom: 0.75rem;
+      line-height: 1.6;
+    }
+
+    .hook-line.highlight {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(1.5rem, 4vw, 2.25rem);
+      font-weight: 700;
+      color: var(--text-primary);
+      background: linear-gradient(135deg, #fff 0%, var(--star) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-top: 1rem;
+    }
+
+    /* Five Whys Demo */
+    .five-whys {
+      margin-bottom: 4rem;
+      opacity: 0;
+      transform: translateY(40px);
+    }
+
+    .five-whys.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .problem-statement {
+      text-align: center;
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+      padding: 1rem 1.5rem;
+      background: rgba(100,100,100,0.1);
+      border: 1px solid rgba(100,100,100,0.2);
+      border-radius: 12px;
+    }
+
+    .problem-statement strong {
+      color: rgba(255,100,100,0.8);
+    }
+
+    .why-chain {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+    }
+
+    .why-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 1rem 1.25rem;
+      background: rgba(64,224,208,0.03);
+      border: 1px solid rgba(64,224,208,0.08);
+      border-radius: 10px;
+      opacity: 0;
+      transform: translateX(-20px);
+      transition: all 0.5s ease;
+    }
+
+    .why-item.revealed {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .why-label {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 600;
+      color: var(--star);
+      font-size: 0.85rem;
+      flex-shrink: 0;
+      width: 40px;
+    }
+
+    .why-answer {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      font-style: italic;
+    }
+
+    .why-item:last-child {
+      background: rgba(64,224,208,0.08);
+      border-color: rgba(64,224,208,0.2);
+    }
+
+    .why-item:last-child .why-answer {
+      color: var(--star);
+      font-weight: 500;
+    }
+
+    .aha-moment {
+      text-align: center;
+      padding: 2rem;
+      opacity: 0;
+      transform: scale(0.95);
+      transition: all 0.8s ease;
+    }
+
+    .aha-moment.visible {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .aha-moment p {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.5rem;
+      color: var(--star);
+      margin-bottom: 0.5rem;
+    }
+
+    .aha-moment p:last-child {
+      font-size: 1rem;
+      color: var(--text-secondary);
+    }
+
+    /* Promise */
+    .bridge-promise {
+      text-align: center;
+      margin-bottom: 4rem;
+      padding: 3rem 2rem;
+      background: radial-gradient(ellipse at center, rgba(64,224,208,0.06) 0%, transparent 70%);
+      border-radius: 20px;
+      opacity: 0;
+      transform: translateY(40px);
+    }
+
+    .bridge-promise.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .promise-line {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(1.25rem, 3.5vw, 1.75rem);
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--text-secondary);
+    }
+
+    .promise-line.emphasis {
+      font-size: clamp(1.5rem, 4vw, 2.25rem);
+      font-weight: 700;
+      color: var(--text-primary);
+      background: linear-gradient(135deg, var(--star) 0%, #7dd3fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* Journey Preview */
+    .journey-preview {
+      text-align: center;
+      margin-bottom: 2rem;
+      opacity: 0;
+      transform: translateY(40px);
+    }
+
+    .journey-preview.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .journey-visual {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .journey-zone {
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .journey-zone.from {
+      background: rgba(100, 100, 100, 0.2);
+      border: 1px solid rgba(100,100,100,0.3);
+      color: #888;
+    }
+
+    .journey-zone.to {
+      background: rgba(64,224,208,0.1);
+      border: 1px solid rgba(64,224,208,0.3);
+      color: var(--star);
+      box-shadow: 0 0 20px rgba(64,224,208,0.15);
+    }
+
+    .journey-arrow {
+      font-size: 1.5rem;
+      color: var(--star);
+    }
+
+    .journey-duration {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(2rem, 5vw, 3rem);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .journey-tagline {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+    }
+
+    /* ===== CTA SECTION ===== */
+    .cta {
+      padding: 5rem 1.5rem;
+      text-align: center;
+      position: relative;
+    }
+
+    .cta::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, rgba(64,224,208,0.08) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    .cta-content {
+      position: relative;
+      z-index: 10;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .cta-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(1.75rem, 5vw, 2.5rem);
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+
+    .cta-title span {
+      background: linear-gradient(135deg, var(--star) 0%, #7dd3fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .cta-sub {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+      line-height: 1.7;
+    }
+
+    .cta-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 1rem 2.5rem;
+      background: linear-gradient(135deg, var(--star) 0%, #2dd4bf 100%);
+      color: var(--bg-deep);
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      text-decoration: none;
+      border-radius: 50px;
+      box-shadow: 0 10px 40px rgba(64,224,208,0.3);
+      transition: all 0.3s ease;
+    }
+
+    .cta-button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 18px 50px rgba(64,224,208,0.45);
+    }
+
+    .cta-assurance {
+      margin-top: 1.5rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+    }
+
+    /* ===== CONTACT SECTION ===== */
+    .contact {
+      padding: 5rem 1.5rem;
+      position: relative;
+      border-top: 1px solid rgba(64,224,208,0.08);
+    }
+
+    .contact-content {
+      max-width: 600px;
+      margin: 0 auto;
+      text-align: center;
+    }
+
+    .contact-eyebrow {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3em;
+      color: var(--star);
+      margin-bottom: 1rem;
+      opacity: 0.7;
+    }
+
+    .contact-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(1.25rem, 3vw, 1.75rem);
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: var(--text-primary);
+    }
+
+    .contact-sub {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+      line-height: 1.7;
+    }
+
+    .contact-methods {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .contact-method {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.75rem 1.25rem;
+      background: rgba(64,224,208,0.04);
+      border: 1px solid rgba(64,224,208,0.1);
+      border-radius: 50px;
+      text-decoration: none;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      transition: all 0.3s ease;
+    }
+
+    .contact-method:hover {
+      background: rgba(64,224,208,0.08);
+      border-color: rgba(64,224,208,0.25);
+      color: var(--text-primary);
+      transform: translateY(-2px);
+    }
+
+    .contact-method .icon {
+      font-size: 1rem;
+      color: var(--star);
+    }
+
+    .social-links {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+    }
+
+    .social-link {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: var(--text-muted);
+      font-size: 1rem;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+
+    .social-link:hover {
+      background: rgba(64,224,208,0.1);
+      border-color: rgba(64,224,208,0.3);
+      color: var(--star);
+      transform: translateY(-2px);
+    }
+
+    /* ===== FOOTER ===== */
+    .footer {
+      padding: 2rem 1.5rem;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      text-align: center;
+    }
+
+    .footer-content {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .footer-brand {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--star);
+      margin-bottom: 0.5rem;
+    }
+
+    .footer-tagline {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 1rem;
+    }
+
+    .footer-legal {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      font-size: 0.7rem;
+    }
+
+    .footer-legal a {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+
+    .footer-legal a:hover {
+      color: var(--star);
+    }
+
+    .footer-copyright {
+      margin-top: 1.5rem;
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+
+    /* ===== MOBILE ===== */
+    @media (max-width: 768px) {
+      .progress-bar { display: none; }
+
+      .constellation-zone {
+        flex-direction: column;
+        padding: 3rem 1rem;
+        min-height: auto;
+      }
+
+      .constellation-canvas { display: none; }
+
+      /* Mobile: Stars as horizontal scroll */
+      .star-pool-mobile {
+        position: relative;
+        display: flex;
+        gap: 0.75rem;
+        padding: 1rem 0.5rem;
+        margin-bottom: 1.5rem;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        width: 100%;
+        mask-image: linear-gradient(90deg, transparent, black 5%, black 95%, transparent);
+        -webkit-mask-image: linear-gradient(90deg, transparent, black 5%, black 95%, transparent);
+      }
+
+      .star-pool-mobile::-webkit-scrollbar { display: none; }
+
+      .thought-star {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        flex: 0 0 auto;
+        scroll-snap-align: center;
+        opacity: 1;
+        transform: none;
+        flex-direction: row;
+        gap: 0.5rem;
+        padding: 0.6rem 1rem;
+        background: rgba(3,8,18,0.85);
+        border: 1px solid rgba(64,224,208,0.15);
+        border-radius: 50px;
+        backdrop-filter: blur(8px);
+      }
+
+      .thought-star .star-point {
+        width: 8px;
+        height: 8px;
+        flex-shrink: 0;
+      }
+
+      .thought-star .star-point::before { display: none; }
+
+      .thought-star .star-label {
+        padding: 0;
+        background: none;
+        border: none;
+        font-size: 0.75rem;
+        white-space: nowrap;
+      }
+
+      .constellation-zone.active .thought-star {
+        opacity: 1;
+        transform: none;
+      }
+
+      .voice-nebula { padding: 2rem 1.5rem; }
+
+      .bridge { padding: 4rem 1rem 2rem; }
+
+      .why-item { padding: 0.75rem 1rem; }
+      .why-label { width: 35px; font-size: 0.8rem; }
+      .why-answer { font-size: 0.85rem; }
+
+      .journey-visual { gap: 1rem; }
+      .journey-zone { font-size: 0.8rem; padding: 0.4rem 0.8rem; }
+
+      .contact { padding: 3rem 1rem; }
+      .contact-methods { gap: 1rem; }
+      .contact-method { padding: 0.6rem 1rem; font-size: 0.8rem; }
+
+      .footer-legal { gap: 1rem; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Progress Bar -->
+  <div class="progress-bar">
+    <div class="fill" style="height: 0%;"></div>
+    <span class="marker">0</span>
+  </div>
+
+  <!-- Star Field -->
+  <div class="starfield" id="starfield"></div>
+
+  <!-- ========== HERO ========== -->
+  <section class="hero" id="hero">
+    <div class="hero-logo">
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <line x1="50" y1="50" x2="28" y2="32" stroke="#3b82f6" stroke-width="3" stroke-linecap="round"/>
+        <line x1="50" y1="50" x2="22" y2="48" stroke="#2563eb" stroke-width="3" stroke-linecap="round"/>
+        <line x1="50" y1="50" x2="28" y2="68" stroke="#60a5fa" stroke-width="3" stroke-linecap="round"/>
+        <line x1="50" y1="50" x2="38" y2="78" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
+        <line x1="50" y1="50" x2="72" y2="32" stroke="#10b981" stroke-width="3" stroke-linecap="round"/>
+        <line x1="50" y1="50" x2="78" y2="48" stroke="#059669" stroke-width="3" stroke-linecap="round"/>
+        <line x1="50" y1="50" x2="72" y2="68" stroke="#34d399" stroke-width="3" stroke-linecap="round"/>
+        <line x1="50" y1="50" x2="62" y2="78" stroke="#10b981" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="28" cy="32" r="5" fill="#3b82f6"/>
+        <circle cx="22" cy="48" r="4" fill="#2563eb"/>
+        <circle cx="28" cy="68" r="5" fill="#60a5fa"/>
+        <circle cx="38" cy="78" r="3" fill="#93c5fd"/>
+        <circle cx="72" cy="32" r="5" fill="#10b981"/>
+        <circle cx="78" cy="48" r="4" fill="#059669"/>
+        <circle cx="72" cy="68" r="5" fill="#34d399"/>
+        <circle cx="62" cy="78" r="3" fill="#6ee7b7"/>
+        <line x1="50" y1="50" x2="50" y2="22" stroke="#06b6d4" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="50" cy="18" r="4" fill="#22d3ee"/>
+        <circle cx="50" cy="50" r="10" fill="#06b6d4"/>
+        <circle cx="50" cy="50" r="5" fill="#0891b2"/>
+      </svg>
+    </div>
+
+    <div class="hero-eyebrow">The Territory Map</div>
+    <h1 class="hero-title">There are <strong>5 voices</strong><br>in the AI journey.</h1>
+    <p class="hero-sub">One of them has been living in your head. You've heard it before. You've probably said it out loud.</p>
+    <p class="hero-prompt">Scroll to find it.</p>
+
+    <div class="scroll-cue">
+      <span>Begin</span>
+      <div class="line"></div>
+    </div>
+  </section>
+
+  <!-- ========== ZONE 0: Confusion ========== -->
+  <section class="constellation-zone" data-zone="0" data-name="Orionis Confusio">
+    <svg class="constellation-canvas" id="canvas0"></svg>
+
+    <div class="star-pool-mobile">
+      <div class="thought-star" data-x="15" data-y="20">
+        <div class="star-point"></div>
+        <span class="star-label">"I feel so behind"</span>
+      </div>
+      <div class="thought-star" data-x="75" data-y="15">
+        <div class="star-point"></div>
+        <span class="star-label">"My kids get it instantly"</span>
+      </div>
+      <div class="thought-star" data-x="10" data-y="70">
+        <div class="star-point"></div>
+        <span class="star-label">"Is it too late?"</span>
+      </div>
+      <div class="thought-star" data-x="80" data-y="75">
+        <div class="star-point"></div>
+        <span class="star-label">"This isn't for me"</span>
+      </div>
+    </div>
+
+    <div class="voice-nebula">
+      <p class="zone-constellation-name">Orionis Confusio</p>
+      <div class="zone-badge">
+        <span class="num">0</span>
+        <span class="label">Voice of Confusion</span>
+      </div>
+      <h2 class="voice-quote">"AI isn't for me."</h2>
+      <p class="voice-inner">
+        I'm too old for this. <em>Everyone talks about it like I should already know.</em> Am I the only one feeling this lost?
+      </p>
+      <div class="recognition-star">
+        <span class="icon">&#9733;</span>
+        <span class="text">Your constellation?</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== ZONE 1: Curiosity ========== -->
+  <section class="constellation-zone" data-zone="1" data-name="Stella Curiosa">
+    <svg class="constellation-canvas" id="canvas1"></svg>
+
+    <div class="star-pool-mobile">
+      <div class="thought-star" data-x="20" data-y="25">
+        <div class="star-point"></div>
+        <span class="star-label">"What if I tried?"</span>
+      </div>
+      <div class="thought-star" data-x="70" data-y="20">
+        <div class="star-point"></div>
+        <span class="star-label">"Maybe it's not hard"</span>
+      </div>
+      <div class="thought-star" data-x="25" data-y="75">
+        <div class="star-point"></div>
+        <span class="star-label">"I saw something cool"</span>
+      </div>
+      <div class="thought-star" data-x="75" data-y="70">
+        <div class="star-point"></div>
+        <span class="star-label">"What's the worst?"</span>
+      </div>
+    </div>
+
+    <div class="voice-nebula">
+      <p class="zone-constellation-name">Stella Curiosa</p>
+      <div class="zone-badge">
+        <span class="num">1</span>
+        <span class="label">Voice of Curiosity</span>
+      </div>
+      <h2 class="voice-quote">"I could try this."</h2>
+      <p class="voice-inner">
+        Maybe I've been overthinking. <em>What if I just tried one small thing?</em> What's the worst that could happen?
+      </p>
+      <div class="recognition-star">
+        <span class="icon">&#9733;</span>
+        <span class="text">Your constellation?</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== ZONE 2: Trial & Error ========== -->
+  <section class="constellation-zone" data-zone="2" data-name="Iteratio Major">
+    <svg class="constellation-canvas" id="canvas2"></svg>
+
+    <div class="star-pool-mobile">
+      <div class="thought-star" data-x="12" data-y="30">
+        <div class="star-point"></div>
+        <span class="star-label">"It worked! ...wait"</span>
+      </div>
+      <div class="thought-star" data-x="78" data-y="25">
+        <div class="star-point"></div>
+        <span class="star-label">"Sometimes brilliant"</span>
+      </div>
+      <div class="thought-star" data-x="18" data-y="68">
+        <div class="star-point"></div>
+        <span class="star-label">"I can spot errors now"</span>
+      </div>
+      <div class="thought-star" data-x="82" data-y="72">
+        <div class="star-point"></div>
+        <span class="star-label">"Finding my rhythm"</span>
+      </div>
+    </div>
+
+    <div class="voice-nebula">
+      <p class="zone-constellation-name">Iteratio Major</p>
+      <div class="zone-badge">
+        <span class="num">2</span>
+        <span class="label">Voice of Trial & Error</span>
+      </div>
+      <h2 class="voice-quote">"AI does tasks for me."</h2>
+      <p class="voice-inner">
+        Sometimes brilliant. Sometimes garbage. <em>I'm getting better at spotting the difference.</em> Learning what to trust.
+      </p>
+      <div class="recognition-star">
+        <span class="icon">&#9733;</span>
+        <span class="text">Your constellation?</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== ZONE 3: Collaboration ========== -->
+  <section class="constellation-zone" data-zone="3" data-name="Synergia Nexus">
+    <svg class="constellation-canvas" id="canvas3"></svg>
+
+    <div class="star-pool-mobile">
+      <div class="thought-star" data-x="15" data-y="22">
+        <div class="star-point"></div>
+        <span class="star-label">"It reads my mind"</span>
+      </div>
+      <div class="thought-star" data-x="72" data-y="18">
+        <div class="star-point"></div>
+        <span class="star-label">"Real conversations"</span>
+      </div>
+      <div class="thought-star" data-x="22" data-y="72">
+        <div class="star-point"></div>
+        <span class="star-label">"New suggestions"</span>
+      </div>
+      <div class="thought-star" data-x="78" data-y="78">
+        <div class="star-point"></div>
+        <span class="star-label">"Better together"</span>
+      </div>
+    </div>
+
+    <div class="voice-nebula">
+      <p class="zone-constellation-name">Synergia Nexus</p>
+      <div class="zone-badge">
+        <span class="num">3</span>
+        <span class="label">Voice of Collaboration</span>
+      </div>
+      <h2 class="voice-quote">"AI understands my intent."</h2>
+      <p class="voice-inner">
+        It's not just a tool anymore. <em>It's like having a thought partner.</em> We think better together.
+      </p>
+      <div class="recognition-star">
+        <span class="icon">&#9733;</span>
+        <span class="text">Your constellation?</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== ZONE 4: Confidence ========== -->
+  <section class="constellation-zone" data-zone="4" data-name="Imperium Clarum">
+    <svg class="constellation-canvas" id="canvas4"></svg>
+
+    <div class="star-pool-mobile">
+      <div class="thought-star" data-x="18" data-y="20">
+        <div class="star-point"></div>
+        <span class="star-label">"I know what to ask"</span>
+      </div>
+      <div class="thought-star" data-x="75" data-y="22">
+        <div class="star-point"></div>
+        <span class="star-label">"I direct, it executes"</span>
+      </div>
+      <div class="thought-star" data-x="15" data-y="75">
+        <div class="star-point"></div>
+        <span class="star-label">"Quality is my call"</span>
+      </div>
+      <div class="thought-star" data-x="80" data-y="70">
+        <div class="star-point"></div>
+        <span class="star-label">"I own the outcome"</span>
+      </div>
+    </div>
+
+    <div class="voice-nebula">
+      <p class="zone-constellation-name">Imperium Clarum</p>
+      <div class="zone-badge">
+        <span class="num">4</span>
+        <span class="label">Voice of Confidence</span>
+      </div>
+      <h2 class="voice-quote">"I control the quality."</h2>
+      <p class="voice-inner">
+        I know exactly what I want. <em>I direct, refine, and own the outcome.</em> AI accelerates my vision.
+      </p>
+      <div class="recognition-star">
+        <span class="icon">&#9733;</span>
+        <span class="text">Your constellation?</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== DIVIDER ========== -->
+  <div class="section-divider">
+    <div class="divider-glyph"></div>
+  </div>
+
+  <!-- ========== BRIDGE SECTION ========== -->
+  <section class="bridge">
+    <div class="bridge-content">
+
+      <!-- HOOK -->
+      <div class="bridge-hook" data-reveal="hook">
+        <p class="hook-line">You just saw your voice.</p>
+        <p class="hook-line">Here's the thing:</p>
+        <p class="hook-line highlight">The leap isn't tools. It's thinking.</p>
+      </div>
+
+      <!-- FIVE WHYS DEMO -->
+      <div class="five-whys" data-reveal="whys">
+        <div class="problem-statement">
+          Problem: <strong>"AI gives me garbage."</strong>
+        </div>
+
+        <div class="why-chain">
+          <div class="why-item" data-why="1">
+            <span class="why-label">Why?</span>
+            <span class="why-answer">"I don't know what to ask."</span>
+          </div>
+          <div class="why-item" data-why="2">
+            <span class="why-label">Why?</span>
+            <span class="why-answer">"I'm not clear on my goal."</span>
+          </div>
+          <div class="why-item" data-why="3">
+            <span class="why-label">Why?</span>
+            <span class="why-answer">"I haven't structured my thinking."</span>
+          </div>
+          <div class="why-item" data-why="4">
+            <span class="why-label">Why?</span>
+            <span class="why-answer">"I jump straight to tools."</span>
+          </div>
+          <div class="why-item" data-why="5">
+            <span class="why-label">Why?</span>
+            <span class="why-answer">"Nobody taught me a framework."</span>
+          </div>
+        </div>
+
+        <div class="aha-moment" data-reveal="aha">
+          <p>Aha.</p>
+          <p>There it is.</p>
+        </div>
+      </div>
+
+      <!-- PROMISE -->
+      <div class="bridge-promise" data-reveal="promise">
+        <p class="promise-line">We don't teach prompts.</p>
+        <p class="promise-line emphasis">We install thinking habits.</p>
+      </div>
+
+      <!-- JOURNEY PREVIEW -->
+      <div class="journey-preview" data-reveal="journey">
+        <div class="journey-visual">
+          <span class="journey-zone from">Zone 0</span>
+          <span class="journey-arrow">&#8594;</span>
+          <span class="journey-zone to">Zone 4</span>
+        </div>
+        <p class="journey-duration">6 weeks.</p>
+        <p class="journey-tagline">One habit at a time.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ========== CTA ========== -->
+  <section class="cta">
+    <div class="cta-content">
+      <h2 class="cta-title">Ready to <span>move</span>?</h2>
+      <p class="cta-sub">Take the 2-minute assessment.<br>Find your zone. Start your journey.</p>
+      <a href="#assessment" class="cta-button">Find My Zone</a>
+      <p class="cta-assurance">No pressure. No spam. Just clarity.</p>
+    </div>
+  </section>
+
+  <!-- ========== CONTACT ========== -->
+  <section class="contact">
+    <div class="contact-content">
+      <p class="contact-eyebrow">Questions?</p>
+      <h3 class="contact-title">We're here to help you decide.</h3>
+      <p class="contact-sub">
+        Not sure if this is right for you? Curious about the cohort format?<br>
+        Reach out - no sales pitch, just honest answers.
+      </p>
+
+      <div class="contact-methods">
+        <a href="mailto:hello@k2m.com" class="contact-method">
+          <span class="icon">&#9993;</span>
+          <span>hello@k2m.com</span>
+        </a>
+        <a href="https://wa.me/1234567890" class="contact-method">
+          <span class="icon">&#128172;</span>
+          <span>WhatsApp</span>
+        </a>
+        <a href="#book-call" class="contact-method">
+          <span class="icon">&#128222;</span>
+          <span>Book a Call</span>
+        </a>
+      </div>
+
+      <div class="social-links">
+        <a href="#" class="social-link" title="LinkedIn">in</a>
+        <a href="#" class="social-link" title="Twitter/X">X</a>
+        <a href="#" class="social-link" title="Instagram">&#9737;</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== FOOTER ========== -->
+  <footer class="footer">
+    <div class="footer-content">
+      <div class="footer-brand">K2M</div>
+      <p class="footer-tagline">From confusion to confidence. In 6 weeks.</p>
+
+      <div class="footer-legal">
+        <a href="#privacy">Privacy Policy</a>
+        <a href="#terms">Terms of Service</a>
+        <a href="#faq">FAQ</a>
+      </div>
+
+      <p class="footer-copyright">&copy; 2026 K2M. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    // ===== STAR FIELD =====
+    const starfield = document.getElementById('starfield');
+    for (let i = 0; i < 150; i++) {
+      const star = document.createElement('div');
+      star.className = 'star';
+      star.style.left = `${Math.random() * 100}%`;
+      star.style.top = `${Math.random() * 100}%`;
+      star.style.width = `${1 + Math.random() * 2}px`;
+      star.style.height = star.style.width;
+      star.style.setProperty('--duration', `${2 + Math.random() * 4}s`);
+      star.style.setProperty('--delay', `${Math.random() * 3}s`);
+      star.style.setProperty('--min-opacity', `${0.1 + Math.random() * 0.3}`);
+      star.style.setProperty('--max-opacity', `${0.6 + Math.random() * 0.4}`);
+      starfield.appendChild(star);
+    }
+
+    // ===== CONSTELLATION ZONES =====
+    const zones = document.querySelectorAll('.constellation-zone[data-zone]');
+    const progressBar = document.querySelector('.progress-bar');
+    const progressFill = progressBar.querySelector('.fill');
+    const progressMarker = progressBar.querySelector('.marker');
+    const totalZones = zones.length;
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+
+    // Progress bar visibility
+    ScrollTrigger.create({
+      trigger: '#hero',
+      start: 'bottom top',
+      onLeave: () => progressBar.classList.add('visible'),
+      onEnterBack: () => progressBar.classList.remove('visible')
+    });
+
+    ScrollTrigger.create({
+      trigger: '.bridge',
+      start: 'top 80%',
+      onEnter: () => progressBar.classList.remove('visible'),
+      onLeaveBack: () => progressBar.classList.add('visible')
+    });
+
+    // Position stars and draw constellation lines
+    zones.forEach(zone => {
+      const starPool = zone.querySelector('.star-pool-mobile');
+      const stars = starPool ? starPool.querySelectorAll('.thought-star') : zone.querySelectorAll('.thought-star');
+      const canvas = zone.querySelector('.constellation-canvas');
+
+      if (!canvas || stars.length === 0) return;
+
+      // Position stars (desktop only)
+      if (!isMobile) {
+        stars.forEach(star => {
+          star.style.left = `${star.dataset.x}%`;
+          star.style.top = `${star.dataset.y}%`;
+        });
+      }
+
+      // Draw constellation lines
+      const positions = Array.from(stars).map(s => ({
+        x: parseFloat(s.dataset.x),
+        y: parseFloat(s.dataset.y)
+      }));
+
+      if (positions.length >= 2) {
+        const connections = [
+          [0, 1], [1, 3], [3, 2], [2, 0],
+          [0, 3], [1, 2]
+        ];
+
+        connections.forEach(([a, b]) => {
+          if (positions[a] && positions[b]) {
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', `${positions[a].x}%`);
+            line.setAttribute('y1', `${positions[a].y}%`);
+            line.setAttribute('x2', `${positions[b].x}%`);
+            line.setAttribute('y2', `${positions[b].y}%`);
+            line.classList.add('constellation-line');
+            canvas.appendChild(line);
+          }
+        });
+      }
+
+      // Zone activation
+      ScrollTrigger.create({
+        trigger: zone,
+        start: 'top 55%',
+        end: 'bottom 45%',
+        onEnter: () => activateZone(zone, stars),
+        onEnterBack: () => activateZone(zone, stars),
+        onLeave: () => deactivateZone(zone, stars),
+        onLeaveBack: () => deactivateZone(zone, stars)
+      });
+    });
+
+    function activateZone(zone, stars) {
+      zones.forEach(z => z.classList.remove('active'));
+      zone.classList.add('active');
+
+      // Update progress
+      const index = parseInt(zone.dataset.zone);
+      const progress = ((index + 1) / totalZones) * 100;
+      gsap.to(progressFill, { height: `${progress}%`, duration: 0.4 });
+      progressMarker.textContent = index;
+
+      // Stagger star reveals
+      stars.forEach((star, i) => {
+        setTimeout(() => star.classList.add('visible'), i * 200);
+      });
+    }
+
+    function deactivateZone(zone, stars) {
+      zone.classList.remove('active');
+      stars.forEach(s => s.classList.remove('visible'));
+    }
+
+    // ===== BRIDGE ANIMATIONS =====
+    // Hook reveal
+    gsap.to('.bridge-hook', {
+      opacity: 1,
+      y: 0,
+      duration: 0.8,
+      scrollTrigger: {
+        trigger: '.bridge-hook',
+        start: 'top 75%',
+        onEnter: () => document.querySelector('.bridge-hook').classList.add('visible'),
+        onLeaveBack: () => document.querySelector('.bridge-hook').classList.remove('visible')
+      }
+    });
+
+    // Five Whys reveal
+    gsap.to('.five-whys', {
+      opacity: 1,
+      y: 0,
+      duration: 0.8,
+      scrollTrigger: {
+        trigger: '.five-whys',
+        start: 'top 70%',
+        onEnter: () => {
+          document.querySelector('.five-whys').classList.add('visible');
+          // Stagger why items
+          document.querySelectorAll('.why-item').forEach((item, i) => {
+            setTimeout(() => item.classList.add('revealed'), i * 300);
+          });
+        },
+        onLeaveBack: () => {
+          document.querySelector('.five-whys').classList.remove('visible');
+          document.querySelectorAll('.why-item').forEach(item => item.classList.remove('revealed'));
+        }
+      }
+    });
+
+    // Aha moment
+    ScrollTrigger.create({
+      trigger: '.aha-moment',
+      start: 'top 75%',
+      onEnter: () => document.querySelector('.aha-moment').classList.add('visible'),
+      onLeaveBack: () => document.querySelector('.aha-moment').classList.remove('visible')
+    });
+
+    // Promise reveal
+    gsap.to('.bridge-promise', {
+      opacity: 1,
+      y: 0,
+      duration: 0.8,
+      scrollTrigger: {
+        trigger: '.bridge-promise',
+        start: 'top 75%',
+        onEnter: () => document.querySelector('.bridge-promise').classList.add('visible'),
+        onLeaveBack: () => document.querySelector('.bridge-promise').classList.remove('visible')
+      }
+    });
+
+    // Journey preview reveal
+    gsap.to('.journey-preview', {
+      opacity: 1,
+      y: 0,
+      duration: 0.8,
+      scrollTrigger: {
+        trigger: '.journey-preview',
+        start: 'top 75%',
+        onEnter: () => document.querySelector('.journey-preview').classList.add('visible'),
+        onLeaveBack: () => document.querySelector('.journey-preview').classList.remove('visible')
+      }
+    });
+  </script>
+</body>
+</html>

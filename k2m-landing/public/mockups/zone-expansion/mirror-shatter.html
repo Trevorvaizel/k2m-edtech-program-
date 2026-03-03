@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mirror Shatter - Cinematic Zone Reveal</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700;900&family=Inter:wght@300;400;600&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body { font-family: 'Inter', sans-serif; background: #000; color: #fff; overflow-x: hidden; }
+
+    /* ===== HERO SECTION ===== */
+    .bridge-opening {
+      min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: radial-gradient(circle at center, #0A0A0A 0%, #000 100%); position: relative; overflow: hidden;
+    }
+
+    .marquee-band {
+      position: absolute; width: 200%; height: 100%; display: flex; align-items: center;
+      font-family: 'Space Grotesk', sans-serif; font-size: clamp(8rem, 20vw, 20rem); font-weight: 900;
+      color: rgba(64,224,208,0.04); text-transform: uppercase; white-space: nowrap; user-select: none; pointer-events: none;
+    }
+
+    .marquee-band-top { top: -15%; animation: marquee-scroll 25s linear infinite; }
+    .marquee-band-bottom { bottom: -15%; animation: marquee-scroll-reverse 22s linear infinite; }
+
+    @keyframes marquee-scroll { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    @keyframes marquee-scroll-reverse { 0% { transform: translateX(-50%); } 100% { transform: translateX(0); } }
+
+    .bridge-content { text-align: center; z-index: 10; padding: 2rem; max-width: 900px; }
+    .bridge-eyebrow { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.4em; color: #40E0D0; margin-bottom: 2rem; opacity: 0; animation: reveal-up 1s ease forwards 0.5s; }
+    .bridge-headline { font-family: 'Space Grotesk', sans-serif; font-size: clamp(2.5rem, 7vw, 7rem); font-weight: 300; line-height: 1.1; margin-bottom: 2rem; opacity: 0; animation: reveal-up 1s ease forwards 0.7s; }
+    .bridge-headline strong { font-weight: 700; background: linear-gradient(135deg, #40E0D0 0%, #2dd4bf 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .bridge-sub { font-size: clamp(1rem, 2.5vw, 1.5rem); color: #999; line-height: 1.6; margin-bottom: 2rem; opacity: 0; animation: reveal-up 1s ease forwards 0.9s; }
+
+    @keyframes reveal-up { from { opacity: 0; transform: translateY(40px); } to { opacity: 1; transform: translateY(0); } }
+
+    .scroll-hint {
+      position: absolute; bottom: 3rem; left: 50%; transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+      opacity: 0; animation: reveal-up 1s ease forwards 1.2s;
+    }
+    .scroll-hint span { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.2em; color: #666; }
+    .scroll-hint .arrow { width: 20px; height: 20px; border-right: 2px solid #40E0D0; border-bottom: 2px solid #40E0D0;
+      transform: rotate(45deg); animation: bounce-arrow 1.5s ease infinite; }
+    @keyframes bounce-arrow { 0%, 100% { transform: rotate(45deg) translateY(0); } 50% { transform: rotate(45deg) translateY(8px); } }
+
+    /* ===== SHATTER CONTAINER ===== */
+    .shatter-container {
+      position: relative; min-height: 200vh;
+    }
+
+    .shatter-viewport {
+      position: sticky; top: 0; height: 100vh; width: 100%;
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden; background: #000;
+    }
+
+    /* Mirror shards grid */
+    .shards-grid {
+      position: absolute; width: 100%; height: 100%;
+      display: grid; grid-template-columns: repeat(5, 1fr);
+      gap: 4px; padding: 5%;
+    }
+
+    .shard {
+      position: relative; overflow: hidden;
+      background: rgba(10,10,10,0.95); border: 1px solid rgba(64,224,208,0.2);
+      border-radius: 8px; cursor: pointer;
+      transform-origin: center center;
+      transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+                  box-shadow 0.4s ease,
+                  border-color 0.4s ease;
+    }
+
+    .shard::before {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(64,224,208,0.1) 0%, transparent 50%);
+      opacity: 0; transition: opacity 0.4s ease;
+    }
+
+    .shard:hover::before { opacity: 1; }
+    .shard:hover { border-color: rgba(64,224,208,0.5); transform: scale(1.02); }
+
+    .shard.active {
+      border-color: #40E0D0;
+      box-shadow: 0 0 40px rgba(64,224,208,0.4), inset 0 0 30px rgba(64,224,208,0.1);
+      z-index: 10;
+    }
+
+    .shard-content {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 1.5rem; text-align: center;
+      opacity: 0; transform: scale(0.9);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+
+    .shard.revealed .shard-content { opacity: 1; transform: scale(1); }
+
+    .shard-number {
+      font-family: 'Space Grotesk', sans-serif; font-size: clamp(2rem, 5vw, 4rem); font-weight: 900;
+      color: rgba(64,224,208,0.2); line-height: 1; margin-bottom: 0.5rem;
+    }
+
+    .shard-voice {
+      font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.2em; color: #40E0D0;
+      margin-bottom: 1rem;
+    }
+
+    .shard-title {
+      font-family: 'Space Grotesk', sans-serif; font-size: clamp(0.9rem, 2vw, 1.5rem); font-weight: 700;
+      margin-bottom: 1rem; line-height: 1.3;
+    }
+
+    .shard-quote {
+      font-size: clamp(0.7rem, 1.2vw, 0.9rem); color: #888; line-height: 1.5; font-style: italic;
+    }
+
+    /* Initial state: shards scattered */
+    .shards-grid.scattered .shard:nth-child(1) { transform: translate(-100%, -50%) rotate(-15deg) scale(0.8); }
+    .shards-grid.scattered .shard:nth-child(2) { transform: translate(-50%, -80%) rotate(10deg) scale(0.75); }
+    .shards-grid.scattered .shard:nth-child(3) { transform: translate(30%, -60%) rotate(-8deg) scale(0.7); }
+    .shards-grid.scattered .shard:nth-child(4) { transform: translate(80%, -30%) rotate(12deg) scale(0.8); }
+    .shards-grid.scattered .shard:nth-child(5) { transform: translate(120%, 20%) rotate(-5deg) scale(0.85); }
+
+    /* Central "5 VOICES" text that shatters */
+    .shatter-text {
+      position: absolute; z-index: 20;
+      text-align: center; pointer-events: none;
+    }
+
+    .shatter-text h2 {
+      font-family: 'Space Grotesk', sans-serif; font-size: clamp(3rem, 10vw, 8rem); font-weight: 900;
+      color: #fff; line-height: 1;
+      text-shadow: 0 0 60px rgba(64,224,208,0.5);
+    }
+
+    .shatter-text h2 span {
+      display: inline-block;
+      background: linear-gradient(135deg, #40E0D0 0%, #2dd4bf 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+
+    .shatter-text p {
+      font-size: clamp(0.9rem, 2vw, 1.2rem); color: #666;
+      margin-top: 1rem; text-transform: uppercase; letter-spacing: 0.3em;
+    }
+
+    /* ===== EXPANDED ZONE VIEW ===== */
+    .zone-expanded {
+      position: fixed; inset: 0; z-index: 100;
+      background: rgba(0,0,0,0.95); backdrop-filter: blur(20px);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; visibility: hidden;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+
+    .zone-expanded.visible { opacity: 1; visibility: visible; }
+
+    .zone-expanded-content {
+      max-width: 700px; padding: 4rem; text-align: center;
+      transform: translateY(30px); opacity: 0;
+      transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s ease;
+    }
+
+    .zone-expanded.visible .zone-expanded-content { transform: translateY(0); opacity: 1; }
+
+    .zone-expanded .close-btn {
+      position: absolute; top: 2rem; right: 2rem;
+      width: 40px; height: 40px; border: 1px solid rgba(64,224,208,0.3);
+      border-radius: 50%; background: transparent; color: #40E0D0;
+      font-size: 1.5rem; cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .zone-expanded .close-btn:hover { background: rgba(64,224,208,0.1); border-color: #40E0D0; }
+
+    .zone-expanded .zone-number {
+      font-family: 'Space Grotesk', sans-serif; font-size: clamp(4rem, 12vw, 10rem); font-weight: 900;
+      color: rgba(64,224,208,0.15); line-height: 1;
+    }
+
+    .zone-expanded .zone-voice {
+      font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.3em; color: #40E0D0;
+      margin-bottom: 1.5rem;
+    }
+
+    .zone-expanded .zone-title {
+      font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 700;
+      margin-bottom: 1.5rem; line-height: 1.2;
+    }
+
+    .zone-expanded .zone-quote {
+      font-size: clamp(1rem, 2vw, 1.3rem); color: #ccc; line-height: 1.7; font-style: italic;
+      position: relative; padding: 0 2rem;
+    }
+
+    .zone-expanded .zone-quote::before, .zone-expanded .zone-quote::after {
+      content: '"'; font-size: 3rem; color: #40E0D0; font-style: normal; position: absolute;
+    }
+    .zone-expanded .zone-quote::before { top: -0.5rem; left: 0; }
+    .zone-expanded .zone-quote::after { bottom: -1.5rem; right: 0; }
+
+    .zone-expanded .this-is-me {
+      margin-top: 3rem; display: flex; flex-direction: column; align-items: center; gap: 1rem;
+    }
+
+    .zone-expanded .this-is-me button {
+      padding: 1rem 2.5rem; background: linear-gradient(135deg, #40E0D0 0%, #2dd4bf 100%);
+      border: none; border-radius: 50px; color: #000; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.1em; cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .zone-expanded .this-is-me button:hover { transform: scale(1.05); box-shadow: 0 10px 40px rgba(64,224,208,0.5); }
+
+    .zone-expanded .this-is-me span { font-size: 0.75rem; color: #666; }
+
+    /* ===== SURVEY CTA ===== */
+    .survey-cta {
+      min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: radial-gradient(circle at center, rgba(64,224,208,0.08) 0%, #000 70%);
+      text-align: center; padding: 2rem;
+    }
+
+    .survey-content { max-width: 800px; }
+    .survey-headline { font-family: 'Space Grotesk', sans-serif; font-size: clamp(2rem, 6vw, 4rem); font-weight: 700; margin-bottom: 1.5rem; line-height: 1.1; }
+    .survey-headline span { background: linear-gradient(135deg, #40E0D0 0%, #2dd4bf 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .survey-sub { font-size: clamp(1rem, 2vw, 1.25rem); color: #999; line-height: 1.7; margin-bottom: 2.5rem; }
+    .survey-button {
+      display: inline-block; padding: 1.25rem 3rem; background: linear-gradient(135deg, #40E0D0 0%, #2dd4bf 100%);
+      color: #000; text-decoration: none; font-size: 0.9rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.15em; border-radius: 50px; box-shadow: 0 15px 50px rgba(64,224,208,0.4);
+      transition: all 0.4s ease;
+    }
+    .survey-button:hover { transform: translateY(-5px) scale(1.03); box-shadow: 0 25px 70px rgba(64,224,208,0.6); }
+
+    @media (max-width: 768px) {
+      .shards-grid { grid-template-columns: 1fr; grid-template-rows: repeat(5, 1fr); gap: 8px; padding: 10%; }
+      .shards-grid.scattered .shard { transform: translateX(-150%) rotate(-10deg) scale(0.8); }
+      .shard-content { padding: 1rem; }
+      .zone-expanded-content { padding: 2rem; }
+    }
+  </style>
+</head>
+<body>
+  <!-- HERO SECTION -->
+  <section class="bridge-opening">
+    <div class="marquee-band marquee-band-top">5 VOICES — YOUR JOURNEY — FIND YOUR ZONE — 5 VOICES — YOUR JOURNEY — FIND YOUR ZONE — 5 VOICES — YOUR JOURNEY — FIND YOUR ZONE</div>
+    <div class="bridge-content">
+      <div class="bridge-eyebrow">The Territory Map</div>
+      <h1 class="bridge-headline">There are <strong>5 voices</strong><br>in the AI journey.</h1>
+      <p class="bridge-sub">Scroll to shatter the mirror.<br>Find the reflection that's yours.</p>
+    </div>
+    <div class="marquee-band marquee-band-bottom">DISCOVER YOURSELF — WHERE DO YOU FIT? — DISCOVER YOURSELF — WHERE DO YOU FIT? — DISCOVER YOURSELF — WHERE DO YOU FIT?</div>
+    <div class="scroll-hint">
+      <span>Scroll to shatter</span>
+      <div class="arrow"></div>
+    </div>
+  </section>
+
+  <!-- SHATTER SECTION -->
+  <section class="shatter-container">
+    <div class="shatter-viewport">
+      <div class="shatter-text">
+        <h2><span>5</span> Voices</h2>
+        <p>Which one is yours?</p>
+      </div>
+
+      <div class="shards-grid scattered">
+        <!-- Shard 0 -->
+        <div class="shard" data-zone="0">
+          <div class="shard-content">
+            <div class="shard-number">0</div>
+            <div class="shard-voice">Confusion</div>
+            <div class="shard-title">"AI isn't for me"</div>
+            <p class="shard-quote">I'm too old for this. Everyone else gets it — why can't I?</p>
+          </div>
+        </div>
+
+        <!-- Shard 1 -->
+        <div class="shard" data-zone="1">
+          <div class="shard-content">
+            <div class="shard-number">1</div>
+            <div class="shard-voice">Curiosity</div>
+            <div class="shard-title">"I could try this"</div>
+            <p class="shard-quote">What if I just tried one small thing?</p>
+          </div>
+        </div>
+
+        <!-- Shard 2 -->
+        <div class="shard" data-zone="2">
+          <div class="shard-content">
+            <div class="shard-number">2</div>
+            <div class="shard-voice">Trial & Error</div>
+            <div class="shard-title">"AI does tasks for me"</div>
+            <p class="shard-quote">Sometimes brilliant, sometimes garbage.</p>
+          </div>
+        </div>
+
+        <!-- Shard 3 -->
+        <div class="shard" data-zone="3">
+          <div class="shard-content">
+            <div class="shard-number">3</div>
+            <div class="shard-voice">Collaboration</div>
+            <div class="shard-title">"AI understands my intent"</div>
+            <p class="shard-quote">It's like having a thought partner.</p>
+          </div>
+        </div>
+
+        <!-- Shard 4 -->
+        <div class="shard" data-zone="4">
+          <div class="shard-content">
+            <div class="shard-number">4</div>
+            <div class="shard-voice">Confidence</div>
+            <div class="shard-title">"I control the quality"</div>
+            <p class="shard-quote">I direct, refine, and own the outcome.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EXPANDED ZONE OVERLAY -->
+  <div class="zone-expanded">
+    <button class="close-btn">&times;</button>
+    <div class="zone-expanded-content">
+      <div class="zone-number"></div>
+      <div class="zone-voice"></div>
+      <h2 class="zone-title"></h2>
+      <p class="zone-quote"></p>
+      <div class="this-is-me">
+        <button>This Is Me</button>
+        <span>Click to confirm your zone</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- SURVEY CTA -->
+  <section class="survey-cta">
+    <div class="survey-content">
+      <h2 class="survey-headline">See your <span>reflection</span>?</h2>
+      <p class="survey-sub">The mirror doesn't lie. That shard that caught your eye?<br>That's where your journey begins.</p>
+      <a href="#survey" class="survey-button">Confirm My Zone</a>
+    </div>
+  </section>
+
+  <script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    const shardsGrid = document.querySelector('.shards-grid');
+    const shards = gsap.utils.toArray('.shard');
+    const shatterText = document.querySelector('.shatter-text');
+    const container = document.querySelector('.shatter-container');
+    const zoneExpanded = document.querySelector('.zone-expanded');
+    const closeBtn = zoneExpanded.querySelector('.close-btn');
+
+    // Zone data for expanded view
+    const zoneData = [
+      { number: '0', voice: 'Voice of Confusion', title: '"AI isn\'t for me"', quote: 'I\'m too old for this. AI is tech for young people. Everyone else seems to get it — why can\'t I?' },
+      { number: '1', voice: 'Voice of Curiosity', title: '"I could try this"', quote: 'Maybe I\'ve been overthinking this. What if I just tried one small thing and saw what happened?' },
+      { number: '2', voice: 'Voice of Trial & Error', title: '"AI does tasks for me"', quote: 'Sometimes it\'s brilliant, sometimes it\'s garbage. I\'m getting better at spotting the difference.' },
+      { number: '3', voice: 'Voice of Collaboration', title: '"AI understands my intent"', quote: 'It\'s not just a tool anymore — it\'s like having a thought partner who finishes my sentences.' },
+      { number: '4', voice: 'Voice of Confidence', title: '"I control the quality"', quote: 'I know exactly what I want. I direct, refine, and own the outcome. AI accelerates my vision.' }
+    ];
+
+    // Scroll-triggered shatter animation
+    ScrollTrigger.create({
+      trigger: container,
+      start: 'top top',
+      end: 'bottom bottom',
+      scrub: 0.8,
+      onUpdate: (self) => {
+        const progress = self.progress;
+
+        // Fade out shatter text
+        gsap.set(shatterText, { opacity: 1 - progress * 2, scale: 1 + progress * 0.5 });
+
+        // Assemble shards
+        if (progress > 0.2) {
+          shardsGrid.classList.remove('scattered');
+          shards.forEach((shard, i) => {
+            shard.classList.add('revealed');
+            gsap.set(shard, {
+              transform: 'translate(0, 0) rotate(0) scale(1)',
+              transitionDelay: `${i * 0.1}s`
+            });
+          });
+        } else {
+          shardsGrid.classList.add('scattered');
+          shards.forEach(shard => shard.classList.remove('revealed'));
+        }
+      }
+    });
+
+    // Shard click to expand
+    shards.forEach((shard, i) => {
+      shard.addEventListener('click', () => {
+        const data = zoneData[i];
+        zoneExpanded.querySelector('.zone-number').textContent = data.number;
+        zoneExpanded.querySelector('.zone-voice').textContent = data.voice;
+        zoneExpanded.querySelector('.zone-title').textContent = data.title;
+        zoneExpanded.querySelector('.zone-quote').textContent = data.quote;
+        zoneExpanded.classList.add('visible');
+
+        // Highlight this shard
+        shards.forEach(s => s.classList.remove('active'));
+        shard.classList.add('active');
+      });
+    });
+
+    // Close expanded view
+    closeBtn.addEventListener('click', () => {
+      zoneExpanded.classList.remove('visible');
+      shards.forEach(s => s.classList.remove('active'));
+    });
+
+    zoneExpanded.addEventListener('click', (e) => {
+      if (e.target === zoneExpanded) {
+        zoneExpanded.classList.remove('visible');
+        shards.forEach(s => s.classList.remove('active'));
+      }
+    });
+
+    // "This Is Me" button
+    zoneExpanded.querySelector('.this-is-me button').addEventListener('click', () => {
+      // Could trigger survey or store selection
+      zoneExpanded.classList.remove('visible');
+      document.querySelector('.survey-cta').scrollIntoView({ behavior: 'smooth' });
+    });
+  </script>
+</body>
+</html>

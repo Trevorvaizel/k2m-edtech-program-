@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Constellation Mirror - Connected Thoughts</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&family=Inter:wght@300;400;500&display=swap');
+
+    :root {
+      --star: #40E0D0;
+      --nebula: rgba(64,224,208,0.03);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #030812;
+      color: #fff;
+      overflow-x: hidden;
+    }
+
+    /* ===== STAR FIELD BACKGROUND ===== */
+    .starfield {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .star {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: #fff;
+      border-radius: 50%;
+      animation: twinkle var(--duration, 3s) ease-in-out infinite;
+      animation-delay: var(--delay, 0s);
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: var(--min-opacity, 0.3); }
+      50% { opacity: var(--max-opacity, 1); }
+    }
+
+    /* ===== CONSTELLATION ZONE ===== */
+    .constellation-zone {
+      min-height: 100vh;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4rem 2rem;
+      overflow: hidden;
+    }
+
+    /* SVG Canvas for constellation lines */
+    .constellation-canvas {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .constellation-line {
+      stroke: var(--star);
+      stroke-width: 1;
+      stroke-dasharray: 200;
+      stroke-dashoffset: 200;
+      opacity: 0.3;
+      transition: stroke-dashoffset 1.5s ease, opacity 0.5s ease;
+    }
+
+    .constellation-zone.active .constellation-line {
+      stroke-dashoffset: 0;
+      opacity: 0.5;
+    }
+
+    /* Thought stars (whispers) */
+    .thought-star {
+      position: absolute;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      opacity: 0;
+      transform: scale(0);
+      transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .thought-star.visible {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .star-point {
+      width: 12px;
+      height: 12px;
+      background: var(--star);
+      border-radius: 50%;
+      box-shadow: 0 0 20px var(--star), 0 0 40px rgba(64,224,208,0.3);
+      position: relative;
+    }
+
+    .star-point::before {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border: 1px solid rgba(64,224,208,0.3);
+      border-radius: 50%;
+      animation: star-pulse 2s ease-out infinite;
+    }
+
+    @keyframes star-pulse {
+      0% { transform: scale(1); opacity: 1; }
+      100% { transform: scale(2); opacity: 0; }
+    }
+
+    .star-label {
+      padding: 0.5rem 0.75rem;
+      background: rgba(3,8,18,0.8);
+      border: 1px solid rgba(64,224,208,0.15);
+      border-radius: 8px;
+      font-size: 0.7rem;
+      color: rgba(255,255,255,0.7);
+      font-style: italic;
+      white-space: nowrap;
+      max-width: 150px;
+      text-align: center;
+      backdrop-filter: blur(8px);
+    }
+
+    /* Central voice card */
+    .voice-nebula {
+      position: relative;
+      z-index: 20;
+      width: 100%;
+      max-width: 520px;
+      padding: 3rem 2.5rem;
+      background: radial-gradient(ellipse at center, rgba(64,224,208,0.05) 0%, rgba(3,8,18,0.95) 70%);
+      border: 1px solid rgba(64,224,208,0.1);
+      border-radius: 20px;
+      text-align: center;
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.8s ease;
+    }
+
+    .constellation-zone.active .voice-nebula {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Nebula glow effect */
+    .voice-nebula::before {
+      content: '';
+      position: absolute;
+      inset: -40px;
+      background: radial-gradient(ellipse 50% 40% at 50% 50%, rgba(64,224,208,0.08) 0%, transparent 70%);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 1s ease;
+    }
+
+    .constellation-zone.active .voice-nebula::before {
+      opacity: 1;
+    }
+
+    .zone-constellation-name {
+      font-size: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.4em;
+      color: var(--star);
+      margin-bottom: 0.5rem;
+      opacity: 0.7;
+    }
+
+    .zone-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 1rem;
+      background: rgba(64,224,208,0.08);
+      border-radius: 50px;
+      margin-bottom: 1.5rem;
+    }
+
+    .zone-badge .num {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      color: var(--star);
+    }
+
+    .zone-badge .label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--star);
+    }
+
+    .voice-quote {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(1.5rem, 4vw, 2.25rem);
+      font-weight: 600;
+      line-height: 1.3;
+      margin-bottom: 1rem;
+    }
+
+    .voice-inner {
+      font-size: 0.95rem;
+      color: rgba(255,255,255,0.6);
+      line-height: 1.8;
+    }
+
+    .voice-inner em {
+      color: rgba(255,255,255,0.85);
+      font-style: normal;
+    }
+
+    .recognition-star {
+      margin-top: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .recognition-star .icon {
+      font-size: 1.5rem;
+      color: var(--star);
+      animation: glow-pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes glow-pulse {
+      0%, 100% { text-shadow: 0 0 10px var(--star); }
+      50% { text-shadow: 0 0 25px var(--star), 0 0 40px rgba(64,224,208,0.5); }
+    }
+
+    .recognition-star .text {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--star);
+    }
+
+    /* Star pool wrapper (desktop: absolute positioning, mobile: flex scroll) */
+    .star-pool-mobile {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .star-pool-mobile .thought-star {
+      pointer-events: auto;
+    }
+
+    /* ===== HERO ===== */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem;
+      position: relative;
+    }
+
+    .hero-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(2.5rem, 8vw, 5rem);
+      font-weight: 300;
+      line-height: 1.1;
+      margin-bottom: 1.5rem;
+    }
+
+    .hero-title strong {
+      font-weight: 700;
+      background: linear-gradient(135deg, var(--star) 0%, #7dd3fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-sub {
+      font-size: clamp(1rem, 2.5vw, 1.2rem);
+      color: rgba(255,255,255,0.6);
+      max-width: 480px;
+      margin-bottom: 2rem;
+      line-height: 1.7;
+    }
+
+    .scroll-cue {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      color: rgba(255,255,255,0.4);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+    }
+
+    .scroll-cue .dots {
+      display: flex;
+      gap: 4px;
+    }
+
+    .scroll-cue .dots span {
+      width: 4px;
+      height: 4px;
+      background: var(--star);
+      border-radius: 50%;
+      animation: dot-cascade 1.5s ease infinite;
+    }
+
+    .scroll-cue .dots span:nth-child(2) { animation-delay: 0.2s; }
+    .scroll-cue .dots span:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes dot-cascade {
+      0%, 100% { opacity: 0.3; transform: translateY(0); }
+      50% { opacity: 1; transform: translateY(5px); }
+    }
+
+    /* ===== MOBILE ===== */
+    @media (max-width: 768px) {
+      .constellation-canvas { display: none; }
+      .voice-nebula { padding: 2rem 1.5rem; }
+
+      .constellation-zone {
+        flex-direction: column;
+        padding: 3rem 1rem;
+        min-height: auto;
+      }
+
+      /* Mobile: Stars as horizontal scroll */
+      .star-pool-mobile {
+        display: flex;
+        gap: 0.75rem;
+        padding: 1rem 0.5rem;
+        margin-bottom: 1.5rem;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        width: 100%;
+        mask-image: linear-gradient(90deg, transparent, black 5%, black 95%, transparent);
+        -webkit-mask-image: linear-gradient(90deg, transparent, black 5%, black 95%, transparent);
+      }
+
+      .star-pool-mobile::-webkit-scrollbar { display: none; }
+
+      .thought-star {
+        position: relative !important;
+        top: auto !important;
+        left: auto !important;
+        flex: 0 0 auto;
+        scroll-snap-align: center;
+        opacity: 1;
+        transform: none;
+        flex-direction: row;
+        gap: 0.5rem;
+        padding: 0.6rem 1rem;
+        background: rgba(3,8,18,0.85);
+        border: 1px solid rgba(64,224,208,0.15);
+        border-radius: 50px;
+        backdrop-filter: blur(8px);
+      }
+
+      .thought-star .star-point {
+        width: 8px;
+        height: 8px;
+        flex-shrink: 0;
+      }
+
+      .thought-star .star-point::before {
+        display: none;
+      }
+
+      .thought-star .star-label {
+        padding: 0;
+        background: none;
+        border: none;
+        font-size: 0.75rem;
+        white-space: nowrap;
+      }
+
+      .constellation-zone.active .thought-star {
+        opacity: 1;
+        transform: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Star Field -->
+  <div class="starfield" id="starfield"></div>
+
+  <!-- HERO -->
+  <section class="hero constellation-zone" data-zone="hero">
+    <h1 class="hero-title">Map your <strong>inner voice</strong></h1>
+    <p class="hero-sub">Like constellations in the night sky, your thoughts form patterns. Scroll to find the one that connects your experience.</p>
+    <div class="scroll-cue">
+      <span>Chart the stars</span>
+      <div class="dots">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ZONE 0: Confusion -->
+  <section class="constellation-zone" data-zone="0" data-name="Orionis Confusio">
+    <svg class="constellation-canvas" id="canvas0"></svg>
+
+    <div class="star-pool-mobile">
+      <div class="thought-star" data-x="15" data-y="20">
+        <div class="star-point"></div>
+        <span class="star-label">"I feel so behind"</span>
+      </div>
+      <div class="thought-star" data-x="75" data-y="15">
+        <div class="star-point"></div>
+        <span class="star-label">"My kids get it instantly"</span>
+      </div>
+      <div class="thought-star" data-x="10" data-y="70">
+        <div class="star-point"></div>
+        <span class="star-label">"Is it too late?"</span>
+      </div>
+      <div class="thought-star" data-x="80" data-y="75">
+        <div class="star-point"></div>
+        <span class="star-label">"This isn't for me"</span>
+      </div>
+    </div>
+
+    <div class="voice-nebula">
+      <p class="zone-constellation-name">Orionis Confusio</p>
+      <div class="zone-badge">
+        <span class="num">0</span>
+        <span class="label">Voice of Confusion</span>
+      </div>
+      <h2 class="voice-quote">"AI isn't for me."</h2>
+      <p class="voice-inner">
+        I'm too old for this. <em>Everyone talks about it like I should already know.</em> Am I the only one feeling this lost?
+      </p>
+      <div class="recognition-star">
+        <span class="icon">&#9733;</span>
+        <span class="text">Your constellation?</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ZONE 1: Curiosity -->
+  <section class="constellation-zone" data-zone="1" data-name="Stella Curiosa">
+    <svg class="constellation-canvas" id="canvas1"></svg>
+
+    <div class="star-pool-mobile">
+      <div class="thought-star" data-x="20" data-y="25">
+        <div class="star-point"></div>
+        <span class="star-label">"What if I tried?"</span>
+      </div>
+      <div class="thought-star" data-x="70" data-y="20">
+        <div class="star-point"></div>
+        <span class="star-label">"Maybe it's not hard"</span>
+      </div>
+      <div class="thought-star" data-x="25" data-y="75">
+        <div class="star-point"></div>
+        <span class="star-label">"I saw something cool"</span>
+      </div>
+      <div class="thought-star" data-x="75" data-y="70">
+        <div class="star-point"></div>
+        <span class="star-label">"What's the worst?"</span>
+      </div>
+    </div>
+
+    <div class="voice-nebula">
+      <p class="zone-constellation-name">Stella Curiosa</p>
+      <div class="zone-badge">
+        <span class="num">1</span>
+        <span class="label">Voice of Curiosity</span>
+      </div>
+      <h2 class="voice-quote">"I could try this."</h2>
+      <p class="voice-inner">
+        Maybe I've been overthinking. <em>What if I just tried one small thing?</em> What's the worst that could happen?
+      </p>
+      <div class="recognition-star">
+        <span class="icon">&#9733;</span>
+        <span class="text">Your constellation?</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ZONE 2: Trial & Error -->
+  <section class="constellation-zone" data-zone="2" data-name="Iteratio Major">
+    <svg class="constellation-canvas" id="canvas2"></svg>
+
+    <div class="star-pool-mobile">
+      <div class="thought-star" data-x="12" data-y="30">
+        <div class="star-point"></div>
+        <span class="star-label">"It worked! ...wait"</span>
+      </div>
+      <div class="thought-star" data-x="78" data-y="25">
+        <div class="star-point"></div>
+        <span class="star-label">"Sometimes brilliant"</span>
+      </div>
+      <div class="thought-star" data-x="18" data-y="68">
+        <div class="star-point"></div>
+        <span class="star-label">"I can spot errors now"</span>
+      </div>
+      <div class="thought-star" data-x="82" data-y="72">
+        <div class="star-point"></div>
+        <span class="star-label">"Finding my rhythm"</span>
+      </div>
+    </div>
+
+    <div class="voice-nebula">
+      <p class="zone-constellation-name">Iteratio Major</p>
+      <div class="zone-badge">
+        <span class="num">2</span>
+        <span class="label">Voice of Trial & Error</span>
+      </div>
+      <h2 class="voice-quote">"AI does tasks for me."</h2>
+      <p class="voice-inner">
+        Sometimes brilliant. Sometimes garbage. <em>I'm getting better at spotting the difference.</em> Learning what to trust.
+      </p>
+      <div class="recognition-star">
+        <span class="icon">&#9733;</span>
+        <span class="text">Your constellation?</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ZONE 3: Collaboration -->
+  <section class="constellation-zone" data-zone="3" data-name="Synergia Nexus">
+    <svg class="constellation-canvas" id="canvas3"></svg>
+
+    <div class="star-pool-mobile">
+      <div class="thought-star" data-x="15" data-y="22">
+        <div class="star-point"></div>
+        <span class="star-label">"It reads my mind"</span>
+      </div>
+      <div class="thought-star" data-x="72" data-y="18">
+        <div class="star-point"></div>
+        <span class="star-label">"Real conversations"</span>
+      </div>
+      <div class="thought-star" data-x="22" data-y="72">
+        <div class="star-point"></div>
+        <span class="star-label">"New suggestions"</span>
+      </div>
+      <div class="thought-star" data-x="78" data-y="78">
+        <div class="star-point"></div>
+        <span class="star-label">"Better together"</span>
+      </div>
+    </div>
+
+    <div class="voice-nebula">
+      <p class="zone-constellation-name">Synergia Nexus</p>
+      <div class="zone-badge">
+        <span class="num">3</span>
+        <span class="label">Voice of Collaboration</span>
+      </div>
+      <h2 class="voice-quote">"AI understands my intent."</h2>
+      <p class="voice-inner">
+        It's not just a tool anymore. <em>It's like having a thought partner.</em> We think better together.
+      </p>
+      <div class="recognition-star">
+        <span class="icon">&#9733;</span>
+        <span class="text">Your constellation?</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ZONE 4: Confidence -->
+  <section class="constellation-zone" data-zone="4" data-name="Imperium Clarum">
+    <svg class="constellation-canvas" id="canvas4"></svg>
+
+    <div class="star-pool-mobile">
+      <div class="thought-star" data-x="18" data-y="20">
+        <div class="star-point"></div>
+        <span class="star-label">"I know what to ask"</span>
+      </div>
+      <div class="thought-star" data-x="75" data-y="22">
+        <div class="star-point"></div>
+        <span class="star-label">"I direct, it executes"</span>
+      </div>
+      <div class="thought-star" data-x="15" data-y="75">
+        <div class="star-point"></div>
+        <span class="star-label">"Quality is my call"</span>
+      </div>
+      <div class="thought-star" data-x="80" data-y="70">
+        <div class="star-point"></div>
+        <span class="star-label">"I own the outcome"</span>
+      </div>
+    </div>
+
+    <div class="voice-nebula">
+      <p class="zone-constellation-name">Imperium Clarum</p>
+      <div class="zone-badge">
+        <span class="num">4</span>
+        <span class="label">Voice of Confidence</span>
+      </div>
+      <h2 class="voice-quote">"I control the quality."</h2>
+      <p class="voice-inner">
+        I know exactly what I want. <em>I direct, refine, and own the outcome.</em> AI accelerates my vision.
+      </p>
+      <div class="recognition-star">
+        <span class="icon">&#9733;</span>
+        <span class="text">Your constellation?</span>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    // Create background stars
+    const starfield = document.getElementById('starfield');
+    for (let i = 0; i < 150; i++) {
+      const star = document.createElement('div');
+      star.className = 'star';
+      star.style.left = `${Math.random() * 100}%`;
+      star.style.top = `${Math.random() * 100}%`;
+      star.style.width = `${1 + Math.random() * 2}px`;
+      star.style.height = star.style.width;
+      star.style.setProperty('--duration', `${2 + Math.random() * 4}s`);
+      star.style.setProperty('--delay', `${Math.random() * 3}s`);
+      star.style.setProperty('--min-opacity', `${0.1 + Math.random() * 0.3}`);
+      star.style.setProperty('--max-opacity', `${0.6 + Math.random() * 0.4}`);
+      starfield.appendChild(star);
+    }
+
+    // Position thought stars and draw constellation lines
+    const zones = document.querySelectorAll('.constellation-zone[data-zone]');
+    const isMobile = window.matchMedia('(max-width: 768px)').matches;
+
+    zones.forEach(zone => {
+      const starPool = zone.querySelector('.star-pool-mobile');
+      const stars = starPool ? starPool.querySelectorAll('.thought-star') : zone.querySelectorAll('.thought-star');
+      const canvas = zone.querySelector('.constellation-canvas');
+
+      if (!canvas || stars.length === 0) return;
+
+      // Position stars (desktop only - mobile uses flex layout)
+      if (!isMobile) {
+        stars.forEach(star => {
+          star.style.left = `${star.dataset.x}%`;
+          star.style.top = `${star.dataset.y}%`;
+        });
+      }
+
+      // Draw constellation lines (connect all stars in a pattern)
+      const positions = Array.from(stars).map(s => ({
+        x: parseFloat(s.dataset.x),
+        y: parseFloat(s.dataset.y)
+      }));
+
+      // Create SVG lines connecting stars
+      if (positions.length >= 2) {
+        // Connect in a meaningful pattern (not just sequential)
+        const connections = [
+          [0, 1], [1, 3], [3, 2], [2, 0], // Outer square
+          [0, 3], [1, 2] // Cross lines
+        ];
+
+        connections.forEach(([a, b]) => {
+          if (positions[a] && positions[b]) {
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', `${positions[a].x}%`);
+            line.setAttribute('y1', `${positions[a].y}%`);
+            line.setAttribute('x2', `${positions[b].x}%`);
+            line.setAttribute('y2', `${positions[b].y}%`);
+            line.classList.add('constellation-line');
+            canvas.appendChild(line);
+          }
+        });
+      }
+
+      // ScrollTrigger for zone activation
+      ScrollTrigger.create({
+        trigger: zone,
+        start: 'top 55%',
+        end: 'bottom 45%',
+        onEnter: () => activateZone(zone),
+        onEnterBack: () => activateZone(zone),
+        onLeave: () => deactivateZone(zone),
+        onLeaveBack: () => deactivateZone(zone)
+      });
+    });
+
+    function activateZone(zone) {
+      zones.forEach(z => z.classList.remove('active'));
+      zone.classList.add('active');
+
+      // Stagger star reveals
+      const stars = zone.querySelectorAll('.thought-star');
+      stars.forEach((star, i) => {
+        setTimeout(() => star.classList.add('visible'), i * 200);
+      });
+    }
+
+    function deactivateZone(zone) {
+      zone.classList.remove('active');
+      zone.querySelectorAll('.thought-star').forEach(s => s.classList.remove('visible'));
+    }
+  </script>
+</body>
+</html>
