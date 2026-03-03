@@ -1020,7 +1020,7 @@ Claude Sonnet 4.5 (December 2024 version)
 - **Final output:** `_bmad-output/cohort-design-artifacts/playbook-v2/05-discord-ops/diagnostic-form-spec.md` (after review)
 
 **Referenced Foundation Documents:**
-- `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md` (Decisions 7, 15, 16)
+- `_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md` (Decisions 7, 15, 16)
 - `_bmad-output/cohort-design-artifacts/playbook-v2/01-philosophy/` (Epic 1: Guardrails, JTBD, Node Architecture, 4 Habits)
 - `_bmad-output/cohort-design-artifacts/playbook-v2/05-discord-ops/discord-architecture.md` (Story 5.1: Cluster assignment, crisis protocol)
 - `_bmad-output/cohort-design-artifacts/playbook-v2/05-discord-ops/5-2-thinking-lab-setup.md` (Story 5.2: Psychological safety)

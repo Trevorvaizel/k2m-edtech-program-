@@ -1537,7 +1537,7 @@ Claude Sonnet 4.5 (December 2024 version)
 - **Final output:** `_bmad-output/cohort-design-artifacts/playbook-v2/05-discord-ops/discord-architecture.md` (after review)
 
 **Referenced Foundation Documents:**
-- `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md` (Decisions 1, 2, 11, 12, 15)
+- `_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md` (Decisions 1, 2, 11, 12, 15)
 - `_bmad-output/cohort-design-artifacts/playbook-v2/01-philosophy/` (Epic 1: Guardrails, JTBD, Node Architecture, 4 Habits)
 - `_bmad-output/cohort-design-artifacts/playbook-v2/02-weekly-design/week-1-wonder.md` (Epic 2: Daily rhythm, Discord usage)
 - `_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-7-discord-bot-spec.md` (Epic 4: Bot implementation)

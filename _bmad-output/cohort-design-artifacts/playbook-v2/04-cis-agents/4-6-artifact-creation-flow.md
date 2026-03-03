@@ -1527,10 +1527,10 @@ These artifacts prove real growth. Each student showed how they've become someon
 ### References
 
 **Source Documents:**
-- Decision 11: CIS Agent System → `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md` lines 242-275
-- Decision 12: Hybrid Discord Model → `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md` lines 273-292
-- Decision 13: Thinking Artifact → `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md` lines 293-327
-- Decision 14: Artifact Timeline → `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md` lines 328-335
+- Decision 11: CIS Agent System → `_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md` lines 242-275
+- Decision 12: Hybrid Discord Model → `_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md` lines 273-292
+- Decision 13: Thinking Artifact → `_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md` lines 293-327
+- Decision 14: Artifact Timeline → `_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md` lines 328-335
 - Story 4.1: CIS Controller Logic → `_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-1-cis-controller-logic.md`
 - Story 4.2: The Framer Agent Prompt → `_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-2-framer-agent-prompt.md`
 - Story 4.3: The Explorer Agent Prompt → `_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-3-explorer-agent-prompt.md`
@@ -1590,7 +1590,7 @@ These artifacts prove real growth. Each student showed how they've become someon
 - `_bmad-output/implementation-artifacts/4-6-artifact-creation-flow.md` (this file)
 
 **Referenced Foundation Documents:**
-- `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md` (Decisions 11-14)
+- `_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md` (Decisions 11-14)
 - `_bmad-output/cohort-design-artifacts/playbook-v2/01-philosophy/` (Epic 1 foundations)
 - `_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/` (Epic 4 CIS agent stories)
 

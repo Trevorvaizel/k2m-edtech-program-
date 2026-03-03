@@ -414,7 +414,7 @@ FINAL QUESTION: "What's something you've created recently where you can say 'I m
 
 **[ ] 7. Thinking Artifact Requirements (for context)**
 - **Reference:** See requirements document Decision 13 (lines 293-335)
-- **File Path:** `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md`
+- **File Path:** `_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md`
 - **Check:** Do you understand what students will create in Week 8?
 - **Why:** Provides context for where these skills lead
 
@@ -473,7 +473,7 @@ FINAL QUESTION: "What's something you've created recently where you can say 'I m
 2. **Epic 1 outputs:** All in `_bmad-output/cohort-design-artifacts/playbook-v2/01-philosophy/`
 3. **Epic 2 outputs:** All in `_bmad-output/cohort-design-artifacts/playbook-v2/02-weekly-design/`
 4. **Brand artifacts:** All in `_bmad-output/k2m-edtech-brand-artifacts/`
-5. **Requirements doc:** `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md`
+5. **Requirements doc:** `_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md`
 
 **If NotebookLM rejects a file:**
 - Ensure file is in readable format (PDF, TXT, MD)

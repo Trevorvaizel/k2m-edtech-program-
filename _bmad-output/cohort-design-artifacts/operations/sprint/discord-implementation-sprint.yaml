@@ -1,4 +1,4 @@
-﻿# Discord Infrastructure Implementation Sprint
+# Discord Infrastructure Implementation Sprint
 # Created: 2026-02-16
 # Purpose: Track implementation of Discord server + CIS bot for Cohort 1
 # Context: All design stories (Epics 1-6) are COMPLETE. This tracks BUILD+DEPLOY.
@@ -23,7 +23,7 @@ provider_swap_status: "completed (OpenAI active; provider-swappable architecture
 # SOURCE DOCUMENTS (Load these for full context)
 # ============================================================
 source_documents:
-  provider_runtime_override: "_bmad-output/cohort-design-artifacts/provider-runtime-override.md"
+  provider_runtime_override: "_bmad-output/cohort-design-artifacts/design-and-architecture/provider-runtime-override.md"
   server_architecture: "_bmad-output/cohort-design-artifacts/playbook-v2/05-discord-ops/5-1-discord-server-structure.md"
   thinking_lab_spec: "_bmad-output/cohort-design-artifacts/playbook-v2/05-discord-ops/5-2-thinking-lab-setup.md"
   thinking_showcase_spec: "_bmad-output/cohort-design-artifacts/playbook-v2/05-discord-ops/5-3-thinking-showcase-setup.md"
@@ -38,7 +38,7 @@ source_documents:
   synthesizer_agent: "_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-5-synthesizer-agent-prompt.md"
   artifact_creation_flow: "_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-6-artifact-creation-flow.md"
   bot_technical_spec: "_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-7-discord-bot-spec.md"
-  design_sprint_status: "_bmad-output/cohort-design-artifacts/sprint-status.yaml"
+  design_sprint_status: "_bmad-output/cohort-design-artifacts/operations/sprint/sprint-status.yaml"
 
 # ============================================================
 # OVERALL PROGRESS
@@ -50,7 +50,7 @@ progress:
   blocked: 0
   pending: 27
   percent_complete: 56
-  decision_7_revised: "2026-02-20 — Context engine building NOW for Cohort 1 (not deferred)"
+  decision_7_revised: "2026-02-20 � Context engine building NOW for Cohort 1 (not deferred)"
 
 # ============================================================
 # SPRINT 0: AUTOMATED DISCORD SERVER SETUP
@@ -72,11 +72,11 @@ sprint_0:
       description: |
         Manual setup in Discord Developer Portal:
         1. Go to https://discord.com/developers/applications
-        2. Click "New Application" â†’ name it "K2M CIS Bot"
-        3. Go to "Bot" tab â†’ click "Add Bot"
+        2. Click "New Application" → name it "K2M CIS Bot"
+        3. Go to "Bot" tab → click "Add Bot"
         4. Copy bot token (save to .env file as DISCORD_TOKEN)
         5. Enable "Presence Intent", "Server Members Intent", "Message Content Intent"
-        6. Go to "OAuth2" â†’ "URL Generator"
+        6. Go to "OAuth2" → "URL Generator"
         7. Select scopes: bot, applications.commands
         8. Select bot permissions: Administrator (for setup script)
         9. Copy generated URL (use this to invite bot to server)
@@ -93,7 +93,7 @@ sprint_0:
       description: |
         Quick manual server creation:
         1. Open Discord
-        2. Click "+" â†’ "Create My Own" â†’ "For a club or community"
+        2. Click "+" → "Create My Own" → "For a club or community"
         3. Name: "K2M Cohort #1 - AI Thinking Skills"
         4. Set server icon (optional)
         5. Server is now empty and ready for bot setup
@@ -161,7 +161,7 @@ sprint_0:
         load: "source_documents.server_architecture"
         section: "Architecture Compliance Checklist"
       acceptance: "Server fully configured, all channels/roles/content match spec, permissions verified"
-      summary: "âœ… Task 0.5 COMPLETE - Discord server verified (2026-02-17)"
+      summary: "✅ Task 0.5 COMPLETE - Discord server verified (2026-02-17)"
       notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/0.5.md"
     - id: "0.6"
       title: "Build Google Sheets templates (4 sheets)"
@@ -176,7 +176,7 @@ sprint_0:
       agent_context:
         load: "source_documents.sheets_templates"
       acceptance: "4 sheets created with correct columns, formulas, data validation, and cross-references"
-      summary: "âœ… Task 0.6 COMPLETE - 4 Google Sheets templates created (2026-02-16)"
+      summary: "✅ Task 0.6 COMPLETE - 4 Google Sheets templates created (2026-02-16)"
       notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/0.6.md"
 # ============================================================
 # SPRINT 1: BOT CORE ENGINE (formerly Sprint 2)
@@ -205,9 +205,9 @@ sprint_1:
         - Deploy to Railway (or local dev first)
       agent_context:
         load: "source_documents.bot_technical_spec"
-        section: "Discord Bot Architecture â†’ System Architecture"
+        section: "Discord Bot Architecture → System Architecture"
       acceptance: "Bot connects to Discord server, responds to test command in #bot-testing"
-      summary: "âœ… Task 1.1 COMPLETE + code review fixes applied (2026-02-17)"
+      summary: "✅ Task 1.1 COMPLETE + code review fixes applied (2026-02-17)"
       notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/1.1.md"
     - id: "1.2"
       title: "Implement StudentContext + SQLite schema"
@@ -222,7 +222,7 @@ sprint_1:
         load: "source_documents.bot_technical_spec"
         section: "StudentContext & Database Schema"
       acceptance: "Database creates on first run, CRUD operations work, indexes in place"
-      summary: "âœ… Task 1.2 COMPLETE - StudentContext + SQLite schema (2026-02-17)"
+      summary: "✅ Task 1.2 COMPLETE - StudentContext + SQLite schema (2026-02-17)"
       notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/1.2.md"
     - id: "1.3"
       title: "Implement CIS Controller routing logic"
@@ -238,7 +238,7 @@ sprint_1:
         section: "Controller Architecture + State Machine Design"
         also_load: "source_documents.bot_technical_spec"
       acceptance: "Controller routes commands correctly, blocks locked agents with helpful message, state machine tracks student progress"
-      summary: "âœ… Task 1.3 COMPLETE - CIS Controller routing logic (2026-02-17)"
+      summary: "✅ Task 1.3 COMPLETE - CIS Controller routing logic (2026-02-17)"
       notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/1.3.md"
     - id: "1.4"
       title: "Implement /frame agent (The Framer)"
@@ -249,13 +249,13 @@ sprint_1:
         - Provider-routed LLM integration with prompt caching (OpenAI/Zhipu/Anthropic)
         - Habit 1 (Pause) + Habit 2 (Context) scaffolding
         - StudentContext-aware responses (zone, altitude, emotional state)
-        - Conversation lifecycle: initiation â†’ scaffolding â†’ completion â†’ optional share
+        - Conversation lifecycle: initiation → scaffolding → completion → optional share
       agent_context:
         load: "source_documents.framer_agent"
         also_load: "source_documents.bot_technical_spec"
-        section: "Four CIS Agent Implementations â†’ /frame agent"
+        section: "Four CIS Agent Implementations → /frame agent"
       acceptance: "/frame command in #thinking-lab creates DM, bot responds in character, conversation persists in DB"
-      summary: "âœ… Task 1.4 COMPLETE - /frame agent implementation (2026-02-17)"
+      summary: "✅ Task 1.4 COMPLETE - /frame agent implementation (2026-02-17)"
       notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/1.4.md"
     - id: "1.5"
       title: "Implement private DM workflow"
@@ -306,16 +306,16 @@ sprint_1:
         - observability_events table: student_id_hash, event_type, metadata (JSON), timestamp
         - Event types: "agent_used", "stuck_detected", "milestone_reached", "zone_shift"
         - Emit events at key decision points: agent invocation, state transitions, escalation triggers
-        - Student journey visualization: which agents â†’ when â†’ stuck patterns
+        - Student journey visualization: which agents → when → stuck patterns
 
         Trevor admin commands:
-        - /show-aggregate-patterns â†’ aggregate metrics (always-on, no consent needed)
-        - /inspect-journey [student-id] â†’ requires student consent prompt
-        - /show-stuck-students â†’ identify intervention opportunities
+        - /show-aggregate-patterns → aggregate metrics (always-on, no consent needed)
+        - /inspect-journey [student-id] → requires student consent prompt
+        - /show-stuck-students → identify intervention opportunities
 
         GUARDRAIL COMPLIANCE:
         - Guardrail #3: No comparison/ranking (aggregate patterns only, no individual leaderboards)
-        - Guardrail #8: Private process â†’ consent gates for deep inspection
+        - Guardrail #8: Private process → consent gates for deep inspection
         - Student ID hashing for privacy protection
         - Metadata includes {agent, week, zone} NOT full conversation content
         - Deep inspection (full prompt transparency) deferred to Sprint 5
@@ -339,7 +339,7 @@ sprint_1:
         also_load: "source_documents.cis_controller_logic"
         also_section: "State Machine Schema + Error Handling & Resilience"
       acceptance: "observability_events table exists, events emit at key points, Trevor admin commands work, Guardrail #3 + #8 compliance verified, can debug student journey in <5 minutes"
-      summary: "âœ… Task 1.7 COMPLETE - Observability Infrastructure (MVP) (2026-02-18)"
+      summary: "✅ Task 1.7 COMPLETE - Observability Infrastructure (MVP) (2026-02-18)"
       notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/1.7.md"
 # ============================================================
 # SPRINT 2: AUTOMATION + SAFETY SYSTEMS
@@ -366,26 +366,26 @@ sprint_2:
         - Week-aware: posts to correct channel based on current cohort week
       agent_context:
         load: "source_documents.server_architecture"
-        section: "Weekly Channel Design â†’ Week 1 Channel â†’ Daily Structure"
+        section: "Weekly Channel Design → Week 1 Channel → Daily Structure"
         also_load: "playbook-v2/03-sessions/daily-prompt-library.md"
       acceptance: "Bot posts node at 9 AM and prompt at 9:15 AM to correct week channel automatically"
-      summary: "âœ… Task 2.1 COMPLETE - Daily Prompt Scheduling (2026-02-18)"
+      summary: "✅ Task 2.1 COMPLETE - Daily Prompt Scheduling (2026-02-18)"
       notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/2.1.md"
     - id: "2.2"
       title: "Implement bot reactions + participation tracking"
       status: "done"
       description: |
         Per Story 5.1:
-        - Bot reacts ðŸ‘€ (witnessed) to every student submission within 5 minutes
+        - Bot reacts 👀 (witnessed) to every student submission within 5 minutes
         - Tracks participation per student (no public rankings - Guardrail #3)
         - Flags students who haven't posted by 6 PM (private to dashboard)
         - Sends gentle nudge DM to inactive students
         - Evening aggregate peer visibility snapshot (anonymized patterns, no names)
       agent_context:
         load: "source_documents.server_architecture"
-        section: "Week 1 Channel â†’ Bot Behavior + Evening Peer Visibility Snapshot"
+        section: "Week 1 Channel → Bot Behavior + Evening Peer Visibility Snapshot"
       acceptance: "Bot reacts to submissions, tracks participation privately, sends nudges, posts evening snapshot"
-      summary: "âœ… Task 2.2 COMPLETE - Bot Reactions + Participation Tracking (2026-02-18)"
+      summary: "✅ Task 2.2 COMPLETE - Bot Reactions + Participation Tracking (2026-02-18)"
       notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/2.2.md"
     - id: "2.3"
       title: "Implement SafetyFilter (Guardrail #3)"
@@ -402,9 +402,9 @@ sprint_2:
         load: "source_documents.bot_technical_spec"
         section: "SafetyFilter Implementation Specification"
         also_load: "source_documents.server_architecture"
-        also_section: "Moderation Workflow â†’ Level 4 Crisis Intervention"
+        also_section: "Moderation Workflow → Level 4 Crisis Intervention"
       acceptance: "SafetyFilter blocks comparison language, detects crisis keywords, fires correct alerts"
-      summary: "âœ… Task 2.3 COMPLETE - SafetyFilter (Guardrail #3 + Level 4 Crisis Intervention) (2026-02-18)"
+      summary: "✅ Task 2.3 COMPLETE - SafetyFilter (Guardrail #3 + Level 4 Crisis Intervention) (2026-02-18)"
       notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/2.3.md"
     - id: "2.4"
       title: "Implement escalation system"
@@ -412,15 +412,15 @@ sprint_2:
       description: |
         Per Story 5.1:
         Level 1 (Bot): Auto-nudge after no post for 1 day
-        Level 2 (Trevor alert): Student stuck 3+ days â†’ notification in #facilitator-dashboard
-        Level 3 (Trevor DM): Student stuck 7+ days â†’ Trevor DMs directly
-        Level 4 (Crisis): SafetyFilter flags â†’ instant Trevor DM with student's last 3 messages
+        Level 2 (Trevor alert): Student stuck 3+ days → notification in #facilitator-dashboard
+        Level 3 (Trevor DM): Student stuck 7+ days → Trevor DMs directly
+        Level 4 (Crisis): SafetyFilter flags → instant Trevor DM with student's last 3 messages
         All escalations logged to #moderation-logs
       agent_context:
         load: "source_documents.server_architecture"
-        section: "Moderation Workflow â†’ Escalation Path"
+        section: "Moderation Workflow → Escalation Path"
       acceptance: "4-level escalation works with correct triggers, notifications fire to correct channels"
-      summary: "âœ… Task 2.4 COMPLETE - 4-Level Escalation System (2026-02-18)"
+      summary: "✅ Task 2.4 COMPLETE - 4-Level Escalation System (2026-02-18)"
       notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/2.4.md"
     - id: "2.5"
       title: "Implement Friday reflection gating + week unlock"
@@ -437,7 +437,7 @@ sprint_2:
         load: "source_documents.server_architecture"
         section: "Weekly Channel Unlock Mechanism (Progressive Disclosure)"
       acceptance: "Friday reflection gates next week. Saturday auto-unlock works. Laggard handling works. Trevor override works."
-      summary: "âœ… Task 2.5 COMPLETE - Friday Reflection Gating + Week Unlock (2026-02-18)"
+      summary: "✅ Task 2.5 COMPLETE - Friday Reflection Gating + Week Unlock (2026-02-18)"
       notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/2.5.md"
     - id: "2.6"
       title: "Implement #facilitator-dashboard automation"
@@ -451,9 +451,9 @@ sprint_2:
         - Real-time: Escalation notifications (instant for Level 3-4)
       agent_context:
         load: "source_documents.server_architecture"
-        section: "Trevor's 10% Workflow Design â†’ #facilitator-dashboard Channel"
+        section: "Trevor's 10% Workflow Design → #facilitator-dashboard Channel"
       acceptance: "Dashboard posts daily/weekly summaries on schedule, escalation alerts fire in real-time"
-      summary: "âœ… Task 2.6 COMPLETE - #facilitator-dashboard automation (2026-02-18)"
+      summary: "✅ Task 2.6 COMPLETE - #facilitator-dashboard automation (2026-02-18)"
       notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/2.6.md"
 # ============================================================
 # SPRINT 4: FULL CIS AGENT SUITE
@@ -483,7 +483,7 @@ sprint_3:
         load: "source_documents.explorer_agent"
         also_load: "source_documents.bot_technical_spec"
       acceptance: "/diverge command creates DM, agent responds in character, blocked before Week 4 with helpful message"
-      summary: "âœ… Task 3.1 COMPLETE - /diverge agent implementation (2026-02-18)"
+      summary: "✅ Task 3.1 COMPLETE - /diverge agent implementation (2026-02-18)"
       notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/3.1.md"
     - id: "3.2"
       title: "Implement /challenge agent (The Challenger)"
@@ -494,12 +494,12 @@ sprint_3:
         - Habit 4 (Think First) scaffolding
         - Available from Week 4 onwards
         - Stress-tests assumptions with psychological safety
-        - Zone 2â†’3 identity shift scaffolding
+        - Zone 2→3 identity shift scaffolding
       agent_context:
         load: "source_documents.challenger_agent"
         also_load: "source_documents.bot_technical_spec"
       acceptance: "/challenge command creates DM, agent responds in character, blocked before Week 4"
-      summary: "âœ… Task 3.2 COMPLETE - /challenge agent implementation (2026-02-18)"
+      summary: "✅ Task 3.2 COMPLETE - /challenge agent implementation (2026-02-18)"
       notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/3.2.md"
     - id: "3.3"
       title: "Implement /synthesize agent (The Synthesizer)"
@@ -515,7 +515,7 @@ sprint_3:
         load: "source_documents.synthesizer_agent"
         also_load: "source_documents.bot_technical_spec"
       acceptance: "/synthesize command creates DM, agent responds in character, blocked before Week 6"
-      summary: "âœ… Task 3.3 COMPLETE - /synthesize agent implementation (2026-02-18)"
+      summary: "✅ Task 3.3 COMPLETE - /synthesize agent implementation (2026-02-18)"
       notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/3.3.md"
     - id: "3.4"
       title: "Implement graduated agent unlock system"
@@ -534,7 +534,7 @@ sprint_3:
         also_load: "source_documents.server_architecture"
         also_section: "Graduated Agent Introduction (Decision 11)"
       acceptance: "Agent availability matches week schedule exactly. Unlock announcements post to correct channel."
-      summary: "âœ… Task 3.4 COMPLETE - Graduated Agent Unlock System (2026-02-18)"
+      summary: "✅ Task 3.4 COMPLETE - Graduated Agent Unlock System (2026-02-18)"
       notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/3.4.md"
     - id: "3.5"
       title: "Implement share-to-showcase flow"
@@ -551,7 +551,7 @@ sprint_3:
         load: "source_documents.thinking_showcase_spec"
         section: "Publication Flow"
       acceptance: "All 3 sharing options work. Celebration messages match spec. SafetyFilter validates."
-      summary: "âœ… Task 3.5 COMPLETE - Share-to-Showcase Flow (2026-02-19)"
+      summary: "✅ Task 3.5 COMPLETE - Share-to-Showcase Flow (2026-02-19)"
       notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/3.5.md"
 
 # ============================================================
@@ -585,7 +585,7 @@ sprint_4:
         also_load: "source_documents.bot_technical_spec"
         section: "Artifact Creation Flow Implementation"
       acceptance: "/create-artifact creates DM workspace, 6 sections trackable, save/resume works, stuck interventions fire"
-      summary: "✅ Task 4.1 COMPLETE - /create-artifact flow now fully aligned to Story 4.6 with working edit pipeline, proactive inactivity nudges, week-6 gating, DM privacy, and test coverage (2026-02-20)."
+      summary: "? Task 4.1 COMPLETE - /create-artifact flow now fully aligned to Story 4.6 with working edit pipeline, proactive inactivity nudges, week-6 gating, DM privacy, and test coverage (2026-02-20)."
       notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/4.1.md"
 
     - id: "4.2"
@@ -604,7 +604,7 @@ sprint_4:
         load: "source_documents.thinking_showcase_spec"
         section: "Publication Flow + Celebration Culture Design + Graduation"
       acceptance: "Artifacts publish to showcase with correct formatting, celebration fires, badge awarded"
-      summary: "âœ… Task 4.2 COMPLETE - #thinking-showcase publication + celebration (2026-02-19)"
+      summary: "✅ Task 4.2 COMPLETE - #thinking-showcase publication + celebration (2026-02-19)"
       dev_notes: |
         Implementation in cis-discord-bot/commands/artifact.py:
         - publish_artifact_to_showcase(): Main publication flow
@@ -633,7 +633,7 @@ sprint_4:
         load: "source_documents.server_architecture"
         section: "Cluster Assignment System + Voice Channels"
       acceptance: "Auto-assignment works, voice channels create/destroy on schedule, cluster switch works"
-      summary: "✅ Task 4.3 COMPLETE - Auto-assignment, Trevor switching, role creation fallback, cluster voice permissions, and restart-safe voice cleanup verified by tests (2026-02-19)."
+      summary: "? Task 4.3 COMPLETE - Auto-assignment, Trevor switching, role creation fallback, cluster voice permissions, and restart-safe voice cleanup verified by tests (2026-02-19)."
       notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/4.3.md"
 
     - id: "4.4"
@@ -649,7 +649,7 @@ sprint_4:
         load: "source_documents.server_architecture"
         section: "Trevor's Live Session Workflow"
       acceptance: "Announcements fire on schedule, reminders work, post-session summary posts"
-      summary: "✅ Task 4.4 COMPLETE - Dynamic week routing, 24h/1h automation, stable invite TTL, and attendance-count persistence validated (2026-02-19)."
+      summary: "? Task 4.4 COMPLETE - Dynamic week routing, 24h/1h automation, stable invite TTL, and attendance-count persistence validated (2026-02-19)."
       notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/4.4.md"
     - id: "4.5"
       title: "Implement bot failure handling + health checks"
@@ -661,14 +661,14 @@ sprint_4:
         - Discord disconnect: auto-reconnect via discord.py
         - Database failure: switch to in-memory state, alert Trevor
         - Daily database backups
-        - All failures â†’ instant Trevor notification in #facilitator-dashboard
+        - All failures → instant Trevor notification in #facilitator-dashboard
       agent_context:
         load: "source_documents.bot_technical_spec"
         section: "Bot Failure Handling + Preventive Measures"
         also_load: "source_documents.server_architecture"
         also_section: "Bot Failure Handling"
       acceptance: "Health checks run, failure fallbacks work, Trevor gets alerts, DB backs up daily"
-      summary: "✅ Task 4.5 COMPLETE - Bot failure handling + health checks hardened to full playbook compliance (2026-02-20)"
+      summary: "? Task 4.5 COMPLETE - Bot failure handling + health checks hardened to full playbook compliance (2026-02-20)"
       dev_notes: |
         Hardening pass completed against playbook failure-handling requirements:
 
@@ -714,7 +714,7 @@ sprint_4:
         - Dual-Pillar language translation for parents (Intelligence + Expertise)
       agent_context:
         load: "source_documents.thinking_showcase_spec"
-        section: "JTBD Social Job Integration â†’ Parent Email"
+        section: "JTBD Social Job Integration → Parent Email"
         also_load: "playbook-v2/06-artifacts/06-artifact-system-epic-6-unified-design.md"
         also_section: "Story 6.5 - Parent Reporting Format"
       acceptance: "Parent emails send Monday for opted-in students (weekly updates) and Friday in Week 8 (artifact report), content matches spec, privacy enforced"
@@ -748,7 +748,7 @@ sprint_5:
       agent_context:
         load: "source_documents.manual_sops"
       acceptance: "All SOPs validated against live bot. Any gaps identified and fixed."
-      summary: "✅ Task 5.1 COMPLETE - Manual SOPs reconciled to live bot runtime (scheduler cadence, escalation triggers, crisis path, and live-session operations) with verification on 2026-02-20."
+      summary: "? Task 5.1 COMPLETE - Manual SOPs reconciled to live bot runtime (scheduler cadence, escalation triggers, crisis path, and live-session operations) with verification on 2026-02-20."
       notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/5.1.md"
 
     - id: "5.2"
@@ -756,21 +756,21 @@ sprint_5:
       status: "done"
       description: |
         Simulate complete Week 1 flow in #bot-testing:
-        1. Student joins â†’ welcome DM + cluster assignment
-        2. Monday 9 AM â†’ Node 0.1 posts + 9:15 prompt posts
-        3. Student responds â†’ bot reacts ðŸ‘€
-        4. Student uses /frame â†’ DM conversation works
-        5. Student shares to #thinking-showcase â†’ celebration posts
-        6. Evening â†’ peer visibility snapshot posts (anonymized)
-        7. Friday â†’ reflection prompt posts, student submits
-        8. Saturday â†’ next week unlocks, laggard handling works
-        9. Dashboard â†’ all summaries fire correctly
+        1. Student joins → welcome DM + cluster assignment
+        2. Monday 9 AM → Node 0.1 posts + 9:15 prompt posts
+        3. Student responds → bot reacts 👀
+        4. Student uses /frame → DM conversation works
+        5. Student shares to #thinking-showcase → celebration posts
+        6. Evening → peer visibility snapshot posts (anonymized)
+        7. Friday → reflection prompt posts, student submits
+        8. Saturday → next week unlocks, laggard handling works
+        9. Dashboard → all summaries fire correctly
         Test EVERY daily pattern for all 5 days of Week 1.
       agent_context:
         load: "source_documents.server_architecture"
         section: "Week 1 Channel (#week-1-wonder)"
       acceptance: "Complete Week 1 flow works end-to-end with no errors"
-      summary: "✅ Task 5.2 COMPLETE - Added deterministic Week 1 end-to-end integration test (join/welcome+cluster, node+prompt cadence, reaction tracking, /frame DM flow, showcase share, evening snapshot, Friday reflection submission, Saturday unlock+laggard handling, dashboard summaries) with full-suite verification on 2026-02-20."
+      summary: "? Task 5.2 COMPLETE - Added deterministic Week 1 end-to-end integration test (join/welcome+cluster, node+prompt cadence, reaction tracking, /frame DM flow, showcase share, evening snapshot, Friday reflection submission, Saturday unlock+laggard handling, dashboard summaries) with full-suite verification on 2026-02-20."
       notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/5.2.md"
 
     - id: "5.3"
@@ -781,12 +781,12 @@ sprint_5:
         - Week 1: Only /frame works, others blocked with helpful message
         - Week 4: /diverge + /challenge unlock, announcement posts
         - Week 6: /synthesize + /create-artifact unlock, announcement posts
-        - Artifact flow: full 6-section creation â†’ publish â†’ celebration â†’ badge
+        - Artifact flow: full 6-section creation → publish → celebration → badge
       agent_context:
         load: "source_documents.cis_controller_logic"
         section: "Temporal Awareness Logic"
       acceptance: "All agents locked/unlocked per schedule. Announcements fire. Artifact flow complete."
-      summary: "✅ Task 5.3 COMPLETE - Added deterministic graduated-introduction e2e coverage for Week 1 lockouts, Week 4/6 unlock announcements, unlocked command routing, and full 6-section artifact publish/celebration/badge flow with full-suite verification on 2026-02-20."
+      summary: "? Task 5.3 COMPLETE - Added deterministic graduated-introduction e2e coverage for Week 1 lockouts, Week 4/6 unlock announcements, unlocked command routing, and full 6-section artifact publish/celebration/badge flow with full-suite verification on 2026-02-20."
       notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/5.3.md"
 
     - id: "5.4"
@@ -794,17 +794,17 @@ sprint_5:
       status: "done"
       description: |
         Test all safety systems:
-        - Post comparison language in public channel â†’ SafetyFilter blocks
-        - Post crisis keywords â†’ Level 4 protocol fires (instant Trevor alert + Kenya resources)
-        - Simulate 3-day inactive student â†’ escalation fires
-        - Simulate 7-day inactive â†’ Trevor DM prompt
+        - Post comparison language in public channel → SafetyFilter blocks
+        - Post crisis keywords → Level 4 protocol fires (instant Trevor alert + Kenya resources)
+        - Simulate 3-day inactive student → escalation fires
+        - Simulate 7-day inactive → Trevor DM prompt
         - Verify #moderation-logs captures all events
         - Verify no private DM content leaks to public channels
       agent_context:
         load: "source_documents.server_architecture"
         section: "Moderation Workflow + Level 4 Crisis Intervention"
       acceptance: "SafetyFilter catches violations, crisis protocol works, escalations fire, privacy maintained"
-      summary: "✅ Task 5.4 COMPLETE - Added deterministic safety/crisis protocol e2e coverage for Guardrail #3 comparison blocking, Level 4 crisis response + instant Trevor alerts with Kenya resources, 3-day/7-day escalation triggers, moderation-log capture, and DM privacy boundaries; fixed EscalationSystem student query to match current schema (no students.username) on 2026-02-20."
+      summary: "? Task 5.4 COMPLETE - Added deterministic safety/crisis protocol e2e coverage for Guardrail #3 comparison blocking, Level 4 crisis response + instant Trevor alerts with Kenya resources, 3-day/7-day escalation triggers, moderation-log capture, and DM privacy boundaries; fixed EscalationSystem student query to match current schema (no students.username) on 2026-02-20."
       notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/5.4.md"
 
     - id: "5.5"
@@ -823,7 +823,7 @@ sprint_5:
         load: "source_documents.bot_technical_spec"
         section: "Bot Performance Requirements + Cost Management"
       acceptance: "Performance within spec. Cost tracking accurate. Backups running. Health checks working."
-      summary: "✅ Task 5.5 COMPLETE - Added deterministic performance/cost validation coverage for <5s CIS response SLA, 50+ concurrent conversations, rate-limit under load, cost+budget thresholds, backup automation, and 5-minute health cadence with full-suite verification on 2026-02-20."
+      summary: "? Task 5.5 COMPLETE - Added deterministic performance/cost validation coverage for <5s CIS response SLA, 50+ concurrent conversations, rate-limit under load, cost+budget thresholds, backup automation, and 5-minute health cadence with full-suite verification on 2026-02-20."
       notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/5.5.md"
 
     - id: "5.6a"
@@ -832,8 +832,8 @@ sprint_5:
       description: |
         PREREQUISITE FOR ALL SPRINT 6 TASKS.
         Run the party mode prompt from:
-        `_bmad-output/cohort-design-artifacts/party-mode-context-engine-prompt.md`
-        Output: `_bmad-output/cohort-design-artifacts/context-engine-experience-design.md`
+        `_bmad-output/cohort-design-artifacts/prompts/party-mode-context-engine-prompt.md`
+        Output: `_bmad-output/cohort-design-artifacts/design-and-architecture/context-engine-experience-design.md`
         This document becomes the design bible for Sprint 6.
         No Sprint 6 task should begin until this session is complete and output reviewed by Trevor.
       acceptance: "context-engine-experience-design.md exists, Trevor has reviewed and approved"
@@ -870,7 +870,7 @@ sprint_5:
         load: "source_documents.server_architecture"
         section: "Server Handoff to Trevor"
         also_load: "source_documents.manual_sops"
-        design_ref: "_bmad-output/cohort-design-artifacts/cohort-production-go-live-checklist.md"
+        design_ref: "_bmad-output/cohort-design-artifacts/operations/checklists/cohort-production-go-live-checklist.md"
       acceptance: "Bot live in production. Trevor has all access. Invite link ready. Go/no-go decision made."
       summary: "[done] Task 5.7 COMPLETE - Production Railway project/service is live with persistent /data volume, env + runtime commands configured, Python runtime pinned to 3.12 for discord.py compatibility, scheduler dependency/path blockers fixed (pytz + bundled daily prompt library), invite generated, #announcements updated with cohort start date, and go/no-go marked GO (2026-02-20)."
       notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/5.7.md"
@@ -894,21 +894,21 @@ sprint_0_addendum:
       description: |
         Build automated student signup journey:
         - Google Sheets: Add M-Pesa Code column (AC) + Payment Status dropdown (AD: Pending/Confirmed/Failed)
-        - Apps Script trigger 1: onFormSubmit → Brevo Email #1 (Spot Reserved + M-Pesa instructions)
-        - Apps Script trigger 2: onPaymentConfirm (Column AD = Confirmed) → Brevo Email #2 (You're IN + Discord invite)
-        - Apps Script trigger 3: Sunday before Week 1 → Brevo Email #3 (Week 1 preview)
-        - Apps Script trigger 4: Friday Week 1 → Brevo Email #4 (You made it through Week 1)
-        - Apps Script trigger 5: onArtifactPublished → Brevo Email #5 (Your thinking is permanent)
+        - Apps Script trigger 1: onFormSubmit ? Brevo Email #1 (Spot Reserved + M-Pesa instructions)
+        - Apps Script trigger 2: onPaymentConfirm (Column AD = Confirmed) ? Brevo Email #2 (You're IN + Discord invite)
+        - Apps Script trigger 3: Sunday before Week 1 ? Brevo Email #3 (Week 1 preview)
+        - Apps Script trigger 4: Friday Week 1 ? Brevo Email #4 (You made it through Week 1)
+        - Apps Script trigger 5: onArtifactPublished ? Brevo Email #5 (Your thinking is permanent)
         - All emails from Trevor's custom domain via Brevo API
         - Pre-load hook: trigger 2 also calls preload_student() to write to SQLite
-        See full spec: _bmad-output/cohort-design-artifacts/solutions-and-new-automations.md
+        See full spec: _bmad-output/cohort-design-artifacts/design-and-architecture/solutions-and-new-automations.md
       agent_context:
         load: "source_documents.google_forms_diagnostic"
         also_load: "source_documents.sheets_templates"
-        design_ref: "_bmad-output/cohort-design-artifacts/solutions-and-new-automations.md"
+        design_ref: "_bmad-output/cohort-design-artifacts/design-and-architecture/solutions-and-new-automations.md"
       acceptance: |
-        Form submit → Email #1 fires within 60 seconds.
-        Trevor confirms payment → Email #2 + Discord invite fires automatically.
+        Form submit ? Email #1 fires within 60 seconds.
+        Trevor confirms payment ? Email #2 + Discord invite fires automatically.
         All 5 email triggers tested. Custom domain verified in Brevo.
         Pre-load hook writes student to SQLite on Email #2 trigger.
 
@@ -982,12 +982,12 @@ sprint_6:
   type: "development"
   status: "pending"
   estimated_days: 7
-  decision_basis: "Decision 7 revised 2026-02-20 — build NOW not Cohort 2"
+  decision_basis: "Decision 7 revised 2026-02-20 � build NOW not Cohort 2"
   dependencies: "5.6a (experience design complete), sprint_4 (CIS agents built)"
 
   tasks:
     - id: "6.1"
-      title: "Student pre-load bridge (Sheets → SQLite)"
+      title: "Student pre-load bridge (Sheets ? SQLite)"
       status: "pending"
       description: |
         Script: cis-discord-bot/scripts/preload_students.py
@@ -1019,21 +1019,21 @@ sprint_6:
         Extend the existing Student Roster Google Sheet:
         Tab 2: Example_Library
           Columns: id, profession, example_text, week_relevant, habit_tag
-          Content: 10 examples × 4 professions = 40 rows minimum
+          Content: 10 examples � 4 professions = 40 rows minimum
           (Trevor fills content post party mode session)
         Tab 3: Intervention_Library
           Columns: id, barrier_type, week_range, intervention_text
-          Content: 4 barrier types × 2 week ranges = 8 rows minimum
+          Content: 4 barrier types � 2 week ranges = 8 rows minimum
           (Trevor fills content post party mode session)
         Apps Script layer (deployed as web app):
-          getStudentContext(discord_id) → JSON profile
-          getExamplesByProfession(profession, week) → Array[3] of examples
-          getIntervention(barrier_type, week) → intervention text
+          getStudentContext(discord_id) ? JSON profile
+          getExamplesByProfession(profession, week) ? Array[3] of examples
+          getIntervention(barrier_type, week) ? intervention text
         Secret token authentication (Trevor stores in .env).
         Bot calls these webhooks in llm_integration.py before building agent prompts.
       agent_context:
         load: "source_documents.sheets_templates"
-        design_ref: "_bmad-output/cohort-design-artifacts/context-engine-experience-design.md"
+        design_ref: "_bmad-output/cohort-design-artifacts/design-and-architecture/context-engine-experience-design.md"
       acceptance: |
         3 Apps Script webhooks deployed and responding.
         Bot can call all 3 from llm_integration.py with correct auth.
@@ -1055,7 +1055,7 @@ sprint_6:
         /diverge: profession-specific alternative perspectives
         /challenge: examples from same profession who challenged this idea
         /synthesize: references their specific journey arc (zone shift, topics)
-        Fallback: if context unavailable → current generic prompt (safety net)
+        Fallback: if context unavailable ? current generic prompt (safety net)
         Full prompt designs: context-engine-experience-design.md
       agent_context:
         load: "source_documents.cis_controller_logic"
@@ -1063,7 +1063,7 @@ sprint_6:
         also_load: "source_documents.explorer_agent"
         also_load: "source_documents.challenger_agent"
         also_load: "source_documents.synthesizer_agent"
-        design_ref: "_bmad-output/cohort-design-artifacts/context-engine-experience-design.md"
+        design_ref: "_bmad-output/cohort-design-artifacts/design-and-architecture/context-engine-experience-design.md"
       acceptance: |
         All 4 agents receive student context in system prompt.
         Examples are profession-specific and week-relevant.
@@ -1077,8 +1077,8 @@ sprint_6:
         Replace generic time-based nudges with barrier-type-aware interventions:
         Trigger: student misses 3 days OR posts low-engagement signal
         Flow:
-          1. getStudentContext(discord_id) → barrier_type
-          2. getIntervention(barrier_type, current_week) → personalized text
+          1. getStudentContext(discord_id) ? barrier_type
+          2. getIntervention(barrier_type, current_week) ? personalized text
           3. KIRA DM: references their specific barrier + profession
         Four intervention tracks (from Intervention_Library):
           identity: "You mentioned feeling 'not technical'..." (teacher variant, entrepreneur variant, etc.)
@@ -1090,7 +1090,7 @@ sprint_6:
       agent_context:
         load: "source_documents.bot_technical_spec"
         section: "Bot Failure Handling + Escalation"
-        design_ref: "_bmad-output/cohort-design-artifacts/context-engine-experience-design.md"
+        design_ref: "_bmad-output/cohort-design-artifacts/design-and-architecture/context-engine-experience-design.md"
       acceptance: |
         Escalation DM references student's barrier type and profession.
         All 4 intervention tracks tested with mock student profiles.
@@ -1101,10 +1101,10 @@ sprint_6:
       status: "pending"
       description: |
         Route CIS agent calls to appropriate model based on task complexity:
-        /frame, /diverge → claude-haiku-4-5 (volume, fast, cheap)
-        /challenge, /synthesize → claude-sonnet-4-6 (deeper reasoning)
-        /create-artifact → claude-sonnet-4-6 (quality critical)
-        Trevor dashboard summaries → claude-haiku-4-5 (batch processing)
+        /frame, /diverge ? claude-haiku-4-5 (volume, fast, cheap)
+        /challenge, /synthesize ? claude-sonnet-4-6 (deeper reasoning)
+        /create-artifact ? claude-sonnet-4-6 (quality critical)
+        Trevor dashboard summaries ? claude-haiku-4-5 (batch processing)
         Update llm_integration.py model selection logic.
         Add model_used field to observability_events for cost tracking.
         Daily cost breakdown by model in facilitator dashboard.
@@ -1118,7 +1118,7 @@ sprint_6:
       title: "PostgreSQL migration preparation (schema + script)"
       status: "pending"
       description: |
-        NOT deploying to PostgreSQL yet — preparing the migration so it's a 1-hour switch when needed.
+        NOT deploying to PostgreSQL yet � preparing the migration so it's a 1-hour switch when needed.
         Tasks:
         - Document SQLite column types vs PostgreSQL equivalents for all new columns from 6.1
         - Update database/migration.py with new column mappings (profession, barrier_type, etc.)

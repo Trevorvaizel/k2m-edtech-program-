@@ -1,6 +1,6 @@
 # Discord Sprint Task Notes Index
 
-- Source control file: `_bmad-output/cohort-design-artifacts/discord-implementation-sprint.yaml`
+- Source control file: `_bmad-output/cohort-design-artifacts/operations/sprint/discord-implementation-sprint.yaml`
 - Purpose: keep sprint YAML lean while preserving detailed completion history
 
 - `0.1` Create Discord bot application + get token -> `_bmad-output/cohort-design-artifacts/task-notes/0.1.md`

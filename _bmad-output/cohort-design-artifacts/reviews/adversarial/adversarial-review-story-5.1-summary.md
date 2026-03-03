@@ -275,18 +275,18 @@
    - Added Cluster Assignment System
    - Updated completion notes with all fixes
 
-2. **`_bmad-output/cohort-design-artifacts/sprint-status.yaml`**
+2. **`_bmad-output/cohort-design-artifacts/operations/sprint/sprint-status.yaml`**
    - Updated Story 5.1 status: `ready-for-dev` → `completed`
    - Added comprehensive review notes to `reviewed` field
    - Updated progress: 27→28 completed, 77%→80% complete
    - Updated `last_updated` with full fix summary
 
-3. **`_bmad-output/cohort-design-artifacts/adversarial-review-story-5.1-findings.md`** (Created)
+3. **`_bmad-output/cohort-design-artifacts/reviews/adversarial/adversarial-review-story-5.1-findings.md`** (Created)
    - Full adversarial review findings (14 issues)
    - Evidence-based analysis with line references
    - Integration audit (Epic 1, 2, 4 compliance)
 
-4. **`_bmad-output/cohort-design-artifacts/adversarial-review-story-5.1-summary.md`** (This file)
+4. **`_bmad-output/cohort-design-artifacts/reviews/adversarial/adversarial-review-story-5.1-summary.md`** (This file)
    - Executive summary of review process
    - Team consensus documentation
    - Fix application record

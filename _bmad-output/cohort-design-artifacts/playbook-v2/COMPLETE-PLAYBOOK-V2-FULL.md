@@ -13746,7 +13746,7 @@ FINAL QUESTION: "What's something you've created recently where you can say 'I m
 
 **[ ] 7. Thinking Artifact Requirements (for context)**
 - **Reference:** See requirements document Decision 13 (lines 293-335)
-- **File Path:** `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md`
+- **File Path:** `_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md`
 - **Check:** Do you understand what students will create in Week 8?
 - **Why:** Provides context for where these skills lead
 
@@ -13805,7 +13805,7 @@ FINAL QUESTION: "What's something you've created recently where you can say 'I m
 2. **Epic 1 outputs:** All in `_bmad-output/cohort-design-artifacts/playbook-v2/01-philosophy/`
 3. **Epic 2 outputs:** All in `_bmad-output/cohort-design-artifacts/playbook-v2/02-weekly-design/`
 4. **Brand artifacts:** All in `_bmad-output/k2m-edtech-brand-artifacts/`
-5. **Requirements doc:** `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md`
+5. **Requirements doc:** `_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md`
 
 **If NotebookLM rejects a file:**
 - Ensure file is in readable format (PDF, TXT, MD)
@@ -17654,7 +17654,7 @@ async def test_jtbd_example_appears_in_suggestions():
 ### References
 
 **Source Documents:**
-- Decision 11: CIS Agent System for Discord → `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md` lines 242-275
+- Decision 11: CIS Agent System for Discord → `_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md` lines 242-275
 - Epic 1 Foundations → `_bmad-output/cohort-design-artifacts/playbook-v2/01-philosophy/`
 - Party Mode Architecture (2026-01-25) → Multi-agent conversation with Winston, John, Maya, Barry, Victor
 - Claude API Pricing → `https://docs.anthropic.com/en/docs/about-claude/pricing` (accessed 2026-01-25)
@@ -17771,8 +17771,8 @@ Claude Sonnet 4.5 (December 2024 version)
 
 **Output Files:**
 - `_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-1-cis-controller-logic.md` (this file)
-- `_bmad-output/cohort-design-artifacts/adversarial-review-story-4.1-findings.md` (review findings)
-- `_bmad-output/cohort-design-artifacts/adversarial-review-story-4.1-final-consensus.md` (team consensus + fixes)
+- `_bmad-output/cohort-design-artifacts/reviews/adversarial/adversarial-review-story-4.1-findings.md` (review findings)
+- `_bmad-output/cohort-design-artifacts/reviews/adversarial/adversarial-review-story-4.1-final-consensus.md` (team consensus + fixes)
 
 **Referenced Foundation Documents:**
 - `_bmad-output/cohort-design-artifacts/playbook-v2/01-philosophy/guardrails-preserved.md`
@@ -17781,7 +17781,7 @@ Claude Sonnet 4.5 (December 2024 version)
 - `_bmad-output/cohort-design-artifacts/playbook-v2/01-philosophy/four-habits-brand.md`
 
 **Requirements Source:**
-- `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md` (Decision 11 lines 242-275)
+- `_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md` (Decision 11 lines 242-275)
 
 ---
 
@@ -18856,7 +18856,7 @@ def test_framer_altitude_matches_week():
 ### References
 
 **Source Documents:**
-- Decision 11: CIS Agent System → `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md` lines 242-275
+- Decision 11: CIS Agent System → `_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md` lines 242-275
 - Story 4.1: CIS Controller Logic → `_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-1-cis-controller-logic.md`
 - Epic 1 Foundations → `_bmad-output/cohort-design-artifacts/playbook-v2/01-philosophy/`
 
@@ -18921,7 +18921,7 @@ Claude Sonnet 4.5 (December 2024 version)
 - `_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-1-cis-controller-logic.md`
 
 **Requirements Source:**
-- `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md` (Decision 11 lines 242-275)
+- `_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md` (Decision 11 lines 242-275)
 
 ---
 
@@ -20259,7 +20259,7 @@ def test_explorer_altitude_matches_week():
 ### References
 
 **Source Documents:**
-- Decision 11: CIS Agent System → `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md` lines 242-275
+- Decision 11: CIS Agent System → `_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md` lines 242-275
 - Story 4.1: CIS Controller Logic → `_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-1-cis-controller-logic.md`
 - Epic 1 Foundations → `_bmad-output/cohort-design-artifacts/playbook-v2/01-philosophy/`
 
@@ -20343,7 +20343,7 @@ Claude Sonnet 4.5 (December 2024 version)
 - `_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-2-framer-agent-prompt.md`
 
 **Requirements Source:**
-- `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md` (Decision 11 lines 242-275)
+- `_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md` (Decision 11 lines 242-275)
 
 ---
 
@@ -21635,7 +21635,7 @@ def test_challenger_altitude_matches_week():
 ### References
 
 **Source Documents:**
-- Decision 11: CIS Agent System → `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md` lines 242-275
+- Decision 11: CIS Agent System → `_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md` lines 242-275
 - Story 4.1: CIS Controller Logic → `_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-1-cis-controller-logic.md`
 - Story 4.2: The Framer Agent Prompt → `_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-2-framer-agent-prompt.md`
 - Story 4.3: The Explorer Agent Prompt → `_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-3-explorer-agent-prompt.md`
@@ -21731,7 +21731,7 @@ Claude Sonnet 4.5 (December 2024 version)
 - `_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-3-explorer-agent-prompt.md`
 
 **Requirements Source:**
-- `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md` (Decision 11 lines 242-275)
+- `_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md` (Decision 11 lines 242-275)
 
 ---
 
@@ -23234,8 +23234,8 @@ def test_synthesizer_preserves_student_voice():
 ### References
 
 **Source Documents:**
-- Decision 11: CIS Agent System → `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md` lines 242-275
-- Decision 13: Thinking Artifact → `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md` lines 293-326
+- Decision 11: CIS Agent System → `_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md` lines 242-275
+- Decision 13: Thinking Artifact → `_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md` lines 293-326
 - Story 4.1: CIS Controller Logic → `_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-1-cis-controller-logic.md`
 - Story 4.2: The Framer Agent Prompt → `_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-2-framer-agent-prompt.md`
 - Story 4.3: The Explorer Agent Prompt → `_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-3-explorer-agent-prompt.md`
@@ -23316,7 +23316,7 @@ Claude Sonnet 4.5 (December 2024 version)
 - `_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-4-challenger-agent-prompt.md`
 
 **Requirements Source:**
-- `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md` (Decision 11 lines 242-275, Decision 13 lines 293-326)
+- `_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md` (Decision 11 lines 242-275, Decision 13 lines 293-326)
 
 ---
 
@@ -24885,10 +24885,10 @@ These artifacts prove real growth. Each student showed how they've become someon
 ### References
 
 **Source Documents:**
-- Decision 11: CIS Agent System → `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md` lines 242-275
-- Decision 12: Hybrid Discord Model → `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md` lines 273-292
-- Decision 13: Thinking Artifact → `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md` lines 293-327
-- Decision 14: Artifact Timeline → `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md` lines 328-335
+- Decision 11: CIS Agent System → `_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md` lines 242-275
+- Decision 12: Hybrid Discord Model → `_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md` lines 273-292
+- Decision 13: Thinking Artifact → `_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md` lines 293-327
+- Decision 14: Artifact Timeline → `_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md` lines 328-335
 - Story 4.1: CIS Controller Logic → `_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-1-cis-controller-logic.md`
 - Story 4.2: The Framer Agent Prompt → `_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-2-framer-agent-prompt.md`
 - Story 4.3: The Explorer Agent Prompt → `_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-3-explorer-agent-prompt.md`
@@ -24948,7 +24948,7 @@ These artifacts prove real growth. Each student showed how they've become someon
 - `_bmad-output/implementation-artifacts/4-6-artifact-creation-flow.md` (this file)
 
 **Referenced Foundation Documents:**
-- `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md` (Decisions 11-14)
+- `_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md` (Decisions 11-14)
 - `_bmad-output/cohort-design-artifacts/playbook-v2/01-philosophy/` (Epic 1 foundations)
 - `_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/` (Epic 4 CIS agent stories)
 
@@ -26521,7 +26521,7 @@ Claude Sonnet 4.5 (December 2024 version)
 - **Final output:** `_bmad-output/cohort-design-artifacts/playbook-v2/05-discord-ops/discord-architecture.md` (after review)
 
 **Referenced Foundation Documents:**
-- `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md` (Decisions 1, 2, 11, 12, 15)
+- `_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md` (Decisions 1, 2, 11, 12, 15)
 - `_bmad-output/cohort-design-artifacts/playbook-v2/01-philosophy/` (Epic 1: Guardrails, JTBD, Node Architecture, 4 Habits)
 - `_bmad-output/cohort-design-artifacts/playbook-v2/02-weekly-design/week-1-wonder.md` (Epic 2: Daily rhythm, Discord usage)
 - `_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-7-discord-bot-spec.md` (Epic 4: Bot implementation)
@@ -32239,7 +32239,7 @@ Claude Sonnet 4.5 (December 2024 version)
 - **Final output:** `_bmad-output/cohort-design-artifacts/playbook-v2/05-discord-ops/diagnostic-form-spec.md` (after review)
 
 **Referenced Foundation Documents:**
-- `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md` (Decisions 7, 15, 16)
+- `_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md` (Decisions 7, 15, 16)
 - `_bmad-output/cohort-design-artifacts/playbook-v2/01-philosophy/` (Epic 1: Guardrails, JTBD, Node Architecture, 4 Habits)
 - `_bmad-output/cohort-design-artifacts/playbook-v2/05-discord-ops/discord-architecture.md` (Story 5.1: Cluster assignment, crisis protocol)
 - `_bmad-output/cohort-design-artifacts/playbook-v2/05-discord-ops/5-2-thinking-lab-setup.md` (Story 5.2: Psychological safety)
@@ -36062,7 +36062,7 @@ Claude Sonnet 4.5 (December 2024 version)
 6. ✅ **Laggard Handling Added** - New Monday SOP for Story 5.1 channel unlock enforcement (5 minutes, chronic no-post detection, channel withholding until engagement)
 
 **MEDIUM Priority Issues Deferred:**
-- MEDIUM fixes documented in `_bmad-output/cohort-design-artifacts/adversarial-review-story-5.6-findings.md` for future iterations
+- MEDIUM fixes documented in `_bmad-output/cohort-design-artifacts/reviews/adversarial/adversarial-review-story-5.6-findings.md` for future iterations
 
 The Manual Workflow SOPs specification is complete with:
 - ✅ 8 comprehensive SOPs (Pre-Cohort, Monitoring, Interventions, Crisis, Communication, Live Sessions, Parent Outreach, CIS Troubleshooting)
@@ -37625,7 +37625,7 @@ Claude Sonnet 4.5 (December 2024 version)
 - **Final output:** `_bmad-output/cohort-design-artifacts/playbook-v2/05-discord-ops/discord-architecture.md` (after review)
 
 **Referenced Foundation Documents:**
-- `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md` (Decisions 1, 2, 11, 12, 15)
+- `_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md` (Decisions 1, 2, 11, 12, 15)
 - `_bmad-output/cohort-design-artifacts/playbook-v2/01-philosophy/` (Epic 1: Guardrails, JTBD, Node Architecture, 4 Habits)
 - `_bmad-output/cohort-design-artifacts/playbook-v2/02-weekly-design/week-1-wonder.md` (Epic 2: Daily rhythm, Discord usage)
 - `_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-7-discord-bot-spec.md` (Epic 4: Bot implementation)

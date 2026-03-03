@@ -1,6 +1,6 @@
 # Party Mode Session: Context Engine Experience Design
 **Prompt for:** `/bmad:core:workflows:party-mode`
-**Output file:** `_bmad-output/cohort-design-artifacts/context-engine-experience-design.md`
+**Output file:** `_bmad-output/cohort-design-artifacts/design-and-architecture/context-engine-experience-design.md`
 **Date created:** 2026-02-20
 **Decision basis:** Decision 7 revised — build context engine for Cohort 1, not deferred to Cohort 2
 

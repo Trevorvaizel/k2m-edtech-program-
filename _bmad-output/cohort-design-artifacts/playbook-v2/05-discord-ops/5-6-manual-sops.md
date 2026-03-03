@@ -2168,7 +2168,7 @@ Claude Sonnet 4.5 (December 2024 version)
 6. âœ… **Laggard Handling Added** - New Monday SOP for Story 5.1 channel unlock enforcement (5 minutes, chronic no-post detection, channel withholding until engagement)
 
 **MEDIUM Priority Issues Deferred:**
-- MEDIUM fixes documented in `_bmad-output/cohort-design-artifacts/adversarial-review-story-5.6-findings.md` for future iterations
+- MEDIUM fixes documented in `_bmad-output/cohort-design-artifacts/reviews/adversarial/adversarial-review-story-5.6-findings.md` for future iterations
 
 The Manual Workflow SOPs specification is complete with:
 - âœ… 8 comprehensive SOPs (Pre-Cohort, Monitoring, Interventions, Crisis, Communication, Live Sessions, Parent Outreach, CIS Troubleshooting)

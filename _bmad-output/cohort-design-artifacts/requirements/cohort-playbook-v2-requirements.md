@@ -35,20 +35,20 @@ A complete, shippable Cohort Playbook v2 that includes:
 
 | Document | Location | Purpose |
 |----------|----------|---------|
-| Decisions Document | `_bmad-output/cohort-design-artifacts/cohort-facilitation-redesign-decisions.md` | All approved decisions |
+| Decisions Document | `_bmad-output/cohort-design-artifacts/design-and-architecture/cohort-facilitation-redesign-decisions.md` | All approved decisions |
 | Playbook v1 | `_bmad-output/COMPLETE-COHORT-OPERATIONAL-PLAYBOOK/` | Current system to update |
 | Cartographer's Manifesto | `docs/cartographers_manifesto/` | Philosophy foundation |
 | AI Territory Map | `docs/ai_proficiency_territory_map/` | Zone framework |
 | Brand Conversion Framework V3 | `_bmad-output/k2m-edtech-brand-artifacts/k2m-brand-conversion-framework-v3.md` | Voice/altitude guidance for all content |
-
+V
 ### Foundation Documents (Epic 0 & Epic 1 Outputs)
 
 **CRITICAL:** All subsequent epics (2-7) MUST reference and build upon these foundational documents. These are not optional context—they are the load-bearing walls that define the entire v2 system.
 
 | Epic | Story | Document | Location | Purpose |
 |------|-------|----------|----------|---------|
-| **Epic 0** | 0.1 | Requirements Document (this file) | `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md` | Master requirements - single source of truth |
-| **Epic 0** | 0.2 | Sprint Status Tracker | `_bmad-output/cohort-design-artifacts/sprint-status.yaml` | Progress tracking across all epics |
+| **Epic 0** | 0.1 | Requirements Document (this file) | `_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md` | Master requirements - single source of truth |
+| **Epic 0** | 0.2 | Sprint Status Tracker | `_bmad-output/cohort-design-artifacts/operations/sprint/sprint-status.yaml` | Progress tracking across all epics |
 | **Epic 1** | 1.1 | Core Guardrails - Preserved & Enhanced | `playbook-v2/01-philosophy/guardrails-preserved.md` | 10 guardrails that protect framework purity, student safety, and scalability |
 | **Epic 1** | 1.2 | JTBD Identity Transformation Integration | `playbook-v2/01-philosophy/jtbd-integration.md` | Zones as identity shifts, emotional/social jobs, philosophy principles |
 | **Epic 1** | 1.3 | Node-Based Learning Architecture | `playbook-v2/01-philosophy/node-architecture.md` | Mental lattice framework, 16 nodes (4 per zone), node design principles |
@@ -184,13 +184,24 @@ A complete, shippable Cohort Playbook v2 that includes:
 
 ### Decisions from Party Mode Session (2026-01-22)
 
-#### Decision 7: Defer Context Engine
-**Status:** APPROVED
-**Summary:** Manual workflows for Cohort 1. No automated personalization.
+#### Decision 7: Build Context Engine for Cohort 1
+**Status:** REVISED — 2026-02-20 (Trevor)
+**Original Decision:** Defer context engine to Cohort 2+. Manual workflows only.
+**Revised Decision:** Build context engine NOW. Cohort 1 runs on Cohort 2-standard infrastructure.
+**Rationale:** The experience delta between a generic KIRA and a personalized KIRA (knows profession,
+barrier type, situation) is the core product. Running Cohort 1 without it is running a worse product
+when the better one is buildable. ~6.5 dev days. Worth it.
 **Implementation:**
-- Diagnostic via Google Forms → Sheets
-- Trevor manually reviews and decides interventions
-- Context engine automation deferred to Cohort 2+
+- Google Form diagnostic → Sheets (unchanged)
+- Pre-load script: Sheets → SQLite before cohort opens (real names, zone, profession, barrier, goals)
+- Apps Script context layer: 3 webhooks (getStudentContext, getExamplesByProfession, getIntervention)
+- Google Sheets context database: Student_Context tab + Example_Library tab + Intervention_Library tab
+- All CIS agents (/frame, /diverge, /challenge, /synthesize) receive student context in system prompt
+- Automated signup journey: Apps Script + Brevo (M-Pesa gate, 5-email sequence)
+- Intelligent barrier-type escalation routing
+- Full experience design session (party mode) to be run before implementation begins
+**Design session output required before build:**
+- `_bmad-output/cohort-design-artifacts/design-and-architecture/context-engine-experience-design.md`
 
 #### Decision 8: NotebookLM for Node Content Production
 **Status:** APPROVED

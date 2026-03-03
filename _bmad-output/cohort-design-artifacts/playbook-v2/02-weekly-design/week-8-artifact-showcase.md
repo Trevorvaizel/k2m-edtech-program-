@@ -10,12 +10,22 @@
 
 ## Week 8 Overview: The Transformation Complete
 
-**Zone Shift:** Consolidation (no new zone shift - celebration and showcase)
-**From:** "I've been creating my artifact"
-**To:** "I'm someone who thinks WITH AI - here's my proof"
+**Zone Shift:** Graduation (identity becomes public)
+**From:** "I've been creating my artifact privately"
+**To:** "I'm publicly claiming my identity as a thinker"
 
-**Identity Shift:** Director → Graduate (identity cemented)
-**Emotional Job:** Pride ("I'm proud of what I've created")
+**Identity Shift:** Director → Author (public authorship)
+**Emotional Job:** Pride ("I'm proud to share this with the world")
+**Social Job:** Proof ("Here's evidence I can show parents, universities, future")
+
+**Why a Full Week for Graduation:**
+
+Graduation isn't just "submit and done." It's an **identity rite of passage** that requires:
+- Time for final polish and making the artifact truly yours (Monday-Tuesday)
+- Public showcase preparation and peer engagement (Wednesday-Thursday)
+- Graduation ceremony and 4 Habits card award (Friday)
+- Reflection on the 8-week journey and celebration (Friday)
+
 **4 Habits Focus:** All 4 Habits integrated and celebrated
 **CIS Agents:** Full suite active for final artifact polish
 
@@ -109,6 +119,47 @@ The artifact showcase isn't just "submit and done." It's a **celebration of iden
 
 ## Week 8: "The Transformation Complete" (Detailed Design)
 
+### Pre-Week (Saturday Before Week 8) - Privacy Choice
+
+**Agent Posts Privacy Choice Prompt:**
+```
+🔒 SATURDAY: Showcase Privacy Choice
+
+Your artifact is YOUR thinking. YOU decide how to share.
+
+**CHOICE 1: Public Showcase (Recommended)**
+• Your name is attached
+• All 200 peers can see it
+• Builds community and shared learning
+• Best for social proof with parents/future
+
+**CHOICE 2: Anonymous Showcase**
+• Your artifact is shared without your name
+• Peers can learn from your thinking
+• You control your privacy
+• Still receive 4 Habits graduation card
+
+**CHOICE 3: Private Submission**
+• Only Trevor sees your artifact
+• You still graduate and receive 4 Habits card
+• Your thinking stays private
+• Valid choice for sensitive topics
+
+**IMPORTANT:** All three choices = FULL GRADUATION. No judgment.
+
+Post: "I choose Choice [1/2/3]" or DM agent if you want to talk about it.
+
+Your thinking. Your choice. Your artifact. 🔒
+```
+
+**Agent Privacy Choice Handling:**
+- Tracks each student's choice (no public disclosure)
+- Respects sensitive topics (abuse, trauma, mental health)
+- No pressure toward any option
+- All choices celebrated equally
+
+---
+
 ### Pre-Week (Sunday Before Week 8)
 
 **Agent Posts Welcome Message:**
@@ -136,7 +187,7 @@ Let's complete this journey. 🎓
 ```
 
 **Setup Complete:**
-- ✅ No new nodes (consolidation week)
+- ✅ No new nodes (graduation week - celebration and showcase)
 - ✅ Daily prompts configured (9 AM daily)
 - ✅ Trevor session scheduled (Friday - graduation ceremony)
 - ✅ Showcase prompts ready (Wednesday-Thursday)
@@ -161,9 +212,15 @@ Your artifact should feel like YOU - your thinking, your voice, your growth.
 
 Task: Review your artifact-in-progress and ask yourself:
 
-1️⃣ VOICE CHECK: Does this sound like me?
-• Is it too formal? Too casual? Just right?
-• Would my friends recognize this as my thinking?
+1️⃣ VOICE CHECK: Does this feel honest?
+
+Wherever you are in your journey, your artifact should feel real to YOU.
+• Does it sound like how you actually talk?
+• Is it honest (not trying to sound smart or casual)?
+• Would you say "yeah, that's me"?
+
+It's okay if your voice is still emerging. It's okay if it sounds different than you expected.
+The goal isn't "perfect voice" — it's "authentic voice."
 
 2️⃣ COMPLETENESS CHECK: Are all sections strong?
 • THE QUESTION I WRESTLED WITH - Is it clear?
@@ -210,41 +267,37 @@ Notice: Your artifact isn't showing AI's capabilities. It's showing YOUR transfo
 
 ---
 
-### Tuesday (Week 8): "Quality Check - Is It Ready?"
+### Tuesday (Week 8): "Make It Complete - Is Your Artifact Ready?"
 
 **9:00 AM - Agent posts Tuesday Morning Prompt:**
 ```
-🎯 TUESDAY: Quality Check - Is Your Artifact Ready?
+✨ TUESDAY: Make It Complete - Is Your Artifact YOURS?
 
-Yesterday you made it yours. Today: Quality check.
+Yesterday you made it yours. Today: Make it complete.
 
 Before you share publicly tomorrow, make sure your artifact is ready.
 
-THE QUALITY CHECKLIST:
+THE COMPLETION CHECKLIST:
 
-✅ HABIT 1 (PAUSE ⏸️): Does your artifact show you can frame questions?
-• "THE QUESTION I WRESTLED WITH" is clear and specific
+⏸️  PAUSE: "THE QUESTION I WRESTLED WITH" is clear and specific
 • "HOW I REFRAMED IT" shows you paused to clarify what you actually wanted
 
-✅ HABIT 2 (CONTEXT 🎯): Does your artifact show you explain your situation?
-• Your question includes context about YOUR life
+🎯 CONTEXT: Your question includes context about YOUR life
 • Your exploration is specific to YOUR circumstances
 
-✅ HABIT 3 (ITERATE 🔄): Does your artifact show you explore and challenge?
-• "WHAT I EXPLORED" shows you used /diverge or explored multiple angles
+🔄 ITERATE: "WHAT I EXPLORED" shows you explored multiple angles
 • "WHAT I CHALLENGED" shows you tested your assumptions
 
-✅ HABIT 4 (THINK FIRST 🧠): Does your artifact show you use AI to think?
-• "WHAT I CONCLUDED" shows synthesis of your exploration
-• "WHAT THIS TAUGHT ME" reflects on your thinking growth
+🧠 THINK FIRST: "WHAT I CONCLUDED" shows your thinking
+• "WHAT THIS TAUGHT ME" reflects on your growth
 
-✅ VOICE: Does it sound like YOU?
+VOICE: Does it sound like YOU?
 • Not a template. Not AI-generated. YOUR voice.
 
-✅ HONESTY: Are you being real about your journey?
+HONESTY: Are you being real about your journey?
 • Not pretending you're perfect. Showing real growth.
 
-Task: Go through the checklist. For any ❌ items, fix them today.
+Task: Go through the checklist. For any sections that don't feel complete, make them YOURS today.
 
 Post: "I went through the checklist and here's what I improved:" (one sentence)
 
@@ -258,7 +311,7 @@ Post: "I went through the checklist and here's what I improved:" (one sentence)
 
 **Evening - Peer Visibility Moment:**
 ```
-🌟 TODAY'S QUALITY IMPROVEMENTS (anonymized):
+🌟 TODAY'S COMPLETION IMPROVEMENTS (anonymized):
 
 "Realized my 'Question' was vague - made it specific to my situation"
 "Added more of my voice to 'What I Concluded' - was too formal before"
@@ -296,14 +349,24 @@ Today: Share your finished thinking publicly (celebrate what you've created).
 
 📢 SHOWCASE INSTRUCTIONS:
 
+[For students who chose Public or Anonymous showcase]
+
 Your artifact is now LIVE in #thinking-showcase
-• Your name is attached (this is YOUR work)
+• [If public]: Your name is attached (this is YOUR work)
+• [If anonymous]: Shared without name for privacy
 • All peers can see it (200 thinkers like you)
 • This is public proof you think WITH AI
 
-💬 TODAY'S TASK: Engage with 3 peers' artifacts
+[For students who chose Private submission]
 
-Choose 3 artifacts from #thinking-showcase and for each one, post:
+Your artifact has been submitted to Trevor.
+• You still receive your 4 Habits graduation card
+• Your thinking stays private as you chose
+• You've completed the journey. That's what matters.
+
+💬 TODAY'S TASK: Engage with 2-3 peers' artifacts
+
+Choose artifacts from #thinking-showcase that genuinely interest you. For each one, post:
 
 1️⃣ ONE thing that shows their thinking:
 "Their 'What I Challenged' section shows they can spot their own assumptions"
@@ -319,8 +382,9 @@ Choose 3 artifacts from #thinking-showcase and for each one, post:
 • No critique (this is celebration, not feedback)
 • Focus on thinking, not outputs
 • Be specific (not "great job", but "I loved how they...")
+• Quality matters more than quantity - read deeply, celebrate authentically
 
-Post: Share your 3 artifact engagements here when done.
+Post: Share your engagements when done.
 
 🌟 You're not just submitting work. You're joining a community of thinkers.
 ```
@@ -463,7 +527,12 @@ Before graduation, let's reflect on your journey.
 
 **FINAL REFLECTION QUESTIONS:**
 
-1️⃣ IDENTITY SHIFT: Can you say "I'm someone who thinks WITH AI" and mean it? (Yes/No/Working on it - one sentence why)
+1️⃣ IDENTITY SHIFT: When did you feel like "I'm someone who thinks WITH AI"?
+
+Share ONE moment from the 8 weeks when you realized your thinking had shifted.
+• If you're not sure yet, share "I'm still discovering how my thinking has changed"
+
+Both answers are valid. Transformation isn't always sudden.
 
 2️⃣ THE 4 HABITS: Which habit feels most natural to you now?
 • [ ] Habit 1: Pause ⏸️ - I know what I want before asking
@@ -516,7 +585,7 @@ Tools change. These habits follow you forever.
 Through university, internships, jobs, and life.
 
 Graduated: [Date]
-Journey: Zone [reached]
+Journey: COMPLETE ✅
 
 Share this card with pride. You earned it. 🎓
 
@@ -779,8 +848,10 @@ Don't forget it. 🎓
 │                                                          │
 │  "I am someone who thinks WITH AI"                      │
 │                                                          │
-│  Graduated: [Date]                                      │
-│  Journey: [Zone reached: Zone 1/2/3/4]                 │
+│  ═════════════════════════════════════════════════════  │
+│                                                          │
+│  Journey: COMPLETE ✅                                    │
+│  Graduated: [Date]                                       │
 │                                                          │
 ├─────────────────────────────────────────────────────────┤
 │                                                          │
@@ -794,7 +865,6 @@ Don't forget it. 🎓
 **Personalization Elements:**
 - Student name
 - Graduation date
-- Zone reached (based on artifact quality and habit adoption)
 - Unique graduation ID (for verification if needed)
 
 **Badge Details:**
@@ -1085,11 +1155,11 @@ I'm proud of you. See you out in the world."
 **Artifact Completion:**
 - [ ] 95%+ students submit complete artifact (all 6 sections)
 - [ ] 90%+ artifacts demonstrate all 4 Habits clearly
-- [ ] 95%+ students pass quality checklist (self-assessed)
+- [ ] 95%+ students complete completion checklist (self-assessed)
 
 **Showcase Engagement:**
-- [ ] 90%+ students share artifact publicly in #thinking-showcase
-- [ ] 80%+ students engage with 3+ peer artifacts
+- [ ] 90%+ students share artifact (public or anonymous) in #thinking-showcase OR complete private submission
+- [ ] 80%+ students engage with 2-3 peer artifacts (quality-focused engagement)
 - [ ] 200+ total peer celebration posts (average 1+ per student)
 
 **Graduation Metrics:**
@@ -1106,7 +1176,7 @@ I'm proud of you. See you out in the world."
 ### Week 8 vs. Previous Weeks
 
 **Week 8 is different:**
-- No learning curves (consolidation week)
+- No learning curves (graduation week - celebration and showcase)
 - Focus on celebration, not skill-building
 - Public showcase (vs. private practice)
 - Graduation ceremony (vs. weekly reflection)
@@ -1148,27 +1218,30 @@ Evidence:
 - [ ] Agent never evaluates artifact quality
 - [ ] Showcase is celebration, not competition
 - [ ] All 4 Habits visible in each artifact (celebrated, not graded)
-- [ ] Graduation cards awarded to all who complete (no ranking)
-- [ ] Discord hybrid model: Private process → Public showcase
+- [ ] Graduation cards awarded to all who complete (no ranking - "Journey: COMPLETE ✅" binary)
+- [ ] Discord hybrid model: Private process → Public showcase (with privacy options)
+- [ ] Privacy choice system: Public/Anonymous/Private all equal (no tiered graduation)
 - [ ] Brand voice compliance (Revolutionary Hope, Level 4 language)
 - [ ] JTBD altitude appropriate (Identity level - "I am someone who...")
 - [ ] Guardrail #11: Showcase celebrates diverse artifact topics (no generic "best" awards)
 - [ ] 4 Habits card is graduation proof (not certificate of completion)
+- [ ] No zone labeling on public-facing credentials (prevents comparison/hierarchy)
 
 ---
 
 ## Week 8 Production Handoff
 
 **Files Ready for Deployment:**
-1. ✅ This document (complete Week 8 design)
-2. ✅ No NotebookLM podcasts needed (consolidation week)
-3. ✅ 5 daily prompts (Monday-Friday) - ready for agent posting
-4. ✅ Final reflection template (Friday)
-5. ✅ Trevor graduation session script (60 minutes)
-6. ✅ Agent response templates (celebration + graduation)
-7. ✅ Success metrics checklist
-8. ✅ 4 Habits graduation card design
-9. ✅ CIS agents active: All four available for final polish
+1. ✅ This document (complete Week 8 design with all team consensus fixes applied)
+2. ✅ No NotebookLM podcasts needed (graduation week - celebration and showcase)
+3. ✅ Privacy choice system prompt (Saturday before Week 8)
+4. ✅ 5 daily prompts (Monday-Friday) - ready for agent posting
+5. ✅ Final reflection template (Friday)
+6. ✅ Trevor graduation session script (60 minutes)
+7. ✅ Agent response templates (celebration + graduation)
+8. ✅ Success metrics checklist
+9. ✅ 4 Habits graduation card design (no zone labeling - binary complete)
+10. ✅ CIS agents active: All four available for final polish
 
 **Dependencies (Other Epics):**
 - Epic 4: All four CIS agents active for artifact polish
@@ -1212,7 +1285,7 @@ Week 8:    Graduation              - "I'm someone who thinks WITH AI"
 
 **Key Insight:**
 
-Week 8 isn't just "finishing." It's **graduation**.
+Week 8 isn't just "finishing." It's **graduation** — an identity rite of passage.
 
 Not from a program, but from one identity to another:
 - FROM: Someone curious about AI

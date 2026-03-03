@@ -1245,7 +1245,7 @@ def test_challenger_altitude_matches_week():
 ### References
 
 **Source Documents:**
-- Decision 11: CIS Agent System → `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md` lines 242-275
+- Decision 11: CIS Agent System → `_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md` lines 242-275
 - Story 4.1: CIS Controller Logic → `_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-1-cis-controller-logic.md`
 - Story 4.2: The Framer Agent Prompt → `_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-2-framer-agent-prompt.md`
 - Story 4.3: The Explorer Agent Prompt → `_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-3-explorer-agent-prompt.md`
@@ -1341,7 +1341,7 @@ Claude Sonnet 4.5 (December 2024 version)
 - `_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-3-explorer-agent-prompt.md`
 
 **Requirements Source:**
-- `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md` (Decision 11 lines 242-275)
+- `_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md` (Decision 11 lines 242-275)
 
 ---
 

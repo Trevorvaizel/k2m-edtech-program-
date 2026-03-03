@@ -115,6 +115,9 @@ You'll accumulate wins. You'll start to feel like "I'm not terrible at this."
 
 Habit 2 this week: Explain Context First. 🎯
 
+**Emoji Guide:**
+⏸️ = Pause (Habit 1) | 🎯 = Context (Habit 2) | 🎉 = Celebration | 💡 = Insight | 🛡️ = Safe | 🔄 = Habit forming
+
 Your first node drops Monday at 9 AM.
 
 Let's build trust through experience. 💪
@@ -132,13 +135,15 @@ Let's build trust through experience. 💪
 
 ### Monday (Week 2): "Context Changes Everything"
 
-**9:00 AM - Agent posts Node 1.1** (NotebookLM podcast: "The Context Secret")
+**9:00 AM (EAT/UTC+3) - Agent posts Node 1.1** (NotebookLM podcast: "The Context Secret")
 - Duration: 8-12 minutes
 - Format: Conversational podcast between two hosts
 - Delivery: Discord #thinking-lab
 
-**9:15 AM - Agent posts Daily Prompt:**
+**9:15 AM (EAT/UTC+3) - Agent posts Daily Prompt:**
 ```
+⏸️→🎯 PRACTICE: Building on Pause by adding Context
+
 🎯 TODAY'S PRACTICE: The Vague vs. Rich Experiment
 
 You've tried AI. Now let's see WHY it sometimes works great and sometimes... doesn't.
@@ -179,12 +184,14 @@ Notice: AI isn't magic. But it's pretty good at responding to YOUR situation.
 
 ### Tuesday (Week 2): "Real Tasks, Real Results"
 
-**9:00 AM - Agent posts continuation of Node 1.1** (reinforcement)
+**9:00 AM (EAT/UTC+3) - Agent posts continuation of Node 1.1** (reinforcement)
 - Daily reminder post about Habit 2
 - NOT a full node, just a reinforcement message
 
-**9:15 AM - Agent posts Daily Prompt:**
+**9:15 AM (EAT/UTC+3) - Agent posts Daily Prompt:**
 ```
+⏸️→🎯 PRACTICE: Building on Pause by adding Context
+
 🎯 TODAY'S PRACTICE: Apply Context to YOUR Tasks
 
 Yesterday you saw that context matters. Today: Use it for something YOU actually need to do.
@@ -204,7 +211,7 @@ Post: What was the difference? Be honest - did better context actually help?
 Real tasks. Real context. Real results.
 ```
 
-**6:00 PM - Optional Office Hours**
+**6:00 PM (EAT/UTC+3) - Optional Office Hours**
 - Trevor available in voice channel for 30 minutes
 - Models Habit 2: "Before I help you, tell me your situation"
 - No lectures, just conversations
@@ -213,13 +220,15 @@ Real tasks. Real context. Real results.
 
 ### Wednesday (Week 2): "Wins Start Accumulating"
 
-**9:00 AM - Agent posts Node 1.2** (NotebookLM podcast: "The Confidence Compound Effect")
+**9:00 AM (EAT/UTC+3) - Agent posts Node 1.2** (NotebookLM podcast: "The Confidence Compound Effect")
 - Duration: 8-12 minutes
 - Focus: Progressive confidence through small wins
 - Stories of students who tried, failed slightly, adjusted, and succeeded
 
-**9:15 AM - Agent posts Daily Prompt:**
+**9:15 AM (EAT/UTC+3) - Agent posts Daily Prompt:**
 ```
+⏸️→🎯 PRACTICE: Building on Pause by adding Context
+
 🎯 TODAY'S PRACTICE: Track Your Wins
 
 You've now used AI multiple times with context. Let's notice something:
@@ -258,12 +267,27 @@ Notice: These aren't "impressive AI outputs." They're real tasks for real studen
 Wins accumulate. That's confidence building.
 ```
 
+**Wednesday Evening - Mid-Week Habit Check:**
+```
+⏸️→🎯 QUICK CHECK: How are BOTH habits working together?
+
+Mid-week reminder: You're building on Week 1's Pause (⏸️) by adding Context (🎯).
+
+Quick reflection: When you used AI this week, did you:
+• Pause first to figure out what you wanted? (Habit 1)
+• Then explain your situation before asking? (Habit 2)
+
+That's the habit stack working. Both matter, every time.
+```
+
 ---
 
 ### Thursday (Week 2): "Context Becoming Natural"
 
-**9:00 AM - Agent posts Daily Prompt:**
+**9:00 AM (EAT/UTC+3) - Agent posts Daily Prompt:**
 ```
+⏸️→🎯 PRACTICE: Building on Pause by adding Context
+
 🎯 TODAY'S PRACTICE: Habit 2 in Real Life
 
 You've seen context works. You've tracked wins. Today: Notice yourself.
@@ -292,8 +316,10 @@ When you explain context first, everything changes.
 
 ### Friday (Week 2): Consolidation & Reflection
 
-**9:00 AM - Agent posts Weekly Reflection Prompt:**
+**9:00 AM (EAT/UTC+3) - Agent posts Weekly Reflection Prompt:**
 ```
+⏸️→🎯 PRACTICE: Building on Pause by adding Context
+
 🤔 WEEK 2 REFLECTION: You're Building Trust
 
 You came into this week having tried AI once or twice.
@@ -323,8 +349,12 @@ Take 10 minutes. Be honest. No grading - just noticing your growth.
 **All Day - Agent Processes Reflections:**
 - Mechanical verification: Did they post? (Yes/No)
 - Self-assessment routing based on Habit 2 check
-- Proof-of-work check: Context-specific sentence?
-- Gating: Week 3 content unlocks only after reflection WITH proof-of-work
+- Proof-of-work validation: Sentence shows AI understood THEIR specific context?
+  - ✅ Valid: Mentions specific situation explained (e.g., "I'm shy," "I'm visual learner," specific constraints)
+  - ✅ Valid: Shows AI's response was tailored to that context
+  - ❌ Invalid: Generic response with no context mentioned
+  - ❌ Invalid: Only outputs, no context
+- Gating: Week 3 content unlocks only after reflection WITH valid proof-of-work
 
 **Agent Routing Based on Self-Assessment:**
 
@@ -359,7 +389,7 @@ And we'll notice when AI becomes automatic for you.
 
 Rest this weekend. You've earned it. 💪
 
-🎯 WEEKEND CHALLENGE (optional):
+🎯 WEEKEND INVITATION (optional):
 Notice yourself in a situation this weekend where you could use AI.
 Don't actually use it - just NOTICE:
 "I could ask AI about this. Here's how I'd explain my situation..."
@@ -398,27 +428,30 @@ You're building trust that lasts. Let's keep going. 🛡️
 
 ### Monday (Week 3): "When AI Gets It Wrong"
 
-**9:00 AM - Agent posts Node 1.3** (NotebookLM podcast: "How to Fail Safely with AI")
+**9:00 AM (EAT/UTC+3) - Agent posts Node 1.3** (NotebookLM podcast: "How to Fail Safely with AI")
 - Duration: 8-12 minutes
 - Focus: Failure safety, error recovery
 - Stories of "bad" AI responses that turned into learning
 
-**9:15 AM - Agent posts Daily Prompt:**
+**9:15 AM (EAT/UTC+3) - Agent posts Daily Prompt:**
 ```
+⏸️→🎯 PRACTICE: Building on Pause by adding Context
+
 🎯 TODAY'S PRACTICE: Error-Friendly Experiment
 
-Sometimes AI gives unhelpful responses. Here's the secret: THAT'S OKAY.
+Sometimes AI gives unhelpful responses. Here's the thing: Mistakes are learning steps.
 
 Task: Share a time when AI didn't give you what you wanted.
 
+**OPTION A:** Share a real error story
 • What did you ask?
 • What went wrong?
 • What did you do next?
 
-OR (if you haven't had a bad experience yet):
+**OPTION B:** Try an intentional experiment
 Try asking AI something intentionally vague. See what happens. That's data.
 
-Post your error story. Let's normalize that AI isn't perfect.
+Choose ONE option and post your response.
 
 🎯 HABIT 2 PRACTICE: When AI "gets it wrong," ask yourself:
 "Did I explain my situation well enough?"
@@ -448,10 +481,12 @@ You can't break this. Mistakes are just steps toward better context.
 
 ### Tuesday (Week 3): "Errors Are Learning Steps"
 
-**9:00 AM - Agent posts continuation of Node 1.3** (reinforcement)
+**9:00 AM (EAT/UTC+3) - Agent posts continuation of Node 1.3** (reinforcement)
 
-**9:15 AM - Agent posts Daily Prompt:**
+**9:15 AM (EAT/UTC+3) - Agent posts Daily Prompt:**
 ```
+⏸️→🎯 PRACTICE: Building on Pause by adding Context
+
 🎯 TODAY'S PRACTICE: Turn Error into Insight
 
 Yesterday we normalized mistakes. Today: Learn from them.
@@ -474,7 +509,7 @@ AFTER: "I'm studying for [specific exam], I'm struggling with [specific topic], 
 Every error teaches you how to explain your situation better. That's skill.
 ```
 
-**6:00 PM - Optional Office Hours**
+**6:00 PM (EAT/UTC+3) - Optional Office Hours**
 - Trevor available for 30 minutes
 - Models error-friendly approach: "Ah, that didn't work. Let me think about why..."
 - Normalizes Trevor's own mistakes with AI
@@ -483,13 +518,15 @@ Every error teaches you how to explain your situation better. That's skill.
 
 ### Wednesday (Week 3): "Noticing Habit Formation"
 
-**9:00 AM - Agent posts Node 1.4** (NotebookLM podcast: "When AI Becomes a Habit")
+**9:00 AM (EAT/UTC+3) - Agent posts Node 1.4** (NotebookLM podcast: "When AI Becomes a Habit")
 - Duration: 8-12 minutes
 - Focus: Habit formation, automaticity
 - Stories of "did you notice you just reached for AI?"
 
-**9:15 AM - Agent posts Daily Prompt:**
+**9:15 AM (EAT/UTC+3) - Agent posts Daily Prompt:**
 ```
+⏸️→🎯 PRACTICE: Building on Pause by adding Context
+
 🎯 TODAY'S PRACTICE: Notice the Automatic Reach
 
 You've been using AI for 3 weeks now. Something might be happening without you realizing it.
@@ -527,12 +564,27 @@ Notice: AI isn't something you "try" anymore. It's something you USE.
 That's trust. That's habit. You're building something real.
 ```
 
+**Wednesday Evening - Mid-Week Habit Check:**
+```
+⏸️→🎯 QUICK CHECK: How are BOTH habits working together?
+
+Mid-week reminder: You're building on Week 1's Pause (⏸️) by adding Context (🎯).
+
+Quick reflection: When you used AI this week, did you:
+• Pause first to figure out what you wanted? (Habit 1)
+• Then explain your situation before asking? (Habit 2)
+
+That's the habit stack working. Both matter, every time.
+```
+
 ---
 
 ### Thursday (Week 3): "Habit Integration"
 
-**9:00 AM - Agent posts Daily Prompt:**
+**9:00 AM (EAT/UTC+3) - Agent posts Daily Prompt:**
 ```
+⏸️→🎯 PRACTICE: Building on Pause by adding Context
+
 🎯 TODAY'S PRACTICE: Both Habits, Working Together
 
 You've been practicing Habit 1 (Pause ⏸️) and Habit 2 (Context 🎯).
@@ -561,8 +613,10 @@ You're not just "using AI." You're thinking WITH AI.
 
 ### Friday (Week 3): Consolidation & Reflection
 
-**9:00 AM - Agent posts Weekly Reflection Prompt:**
+**9:00 AM (EAT/UTC+3) - Agent posts Weekly Reflection Prompt:**
 ```
+⏸️→🎯 PRACTICE: Building on Pause by adding Context
+
 🤔 WEEK 3 REFLECTION: Trust Built
 
 Three weeks ago, AI was "something I could try."
@@ -592,8 +646,12 @@ Take 10 minutes. Be honest. No grading - just noticing your growth.
 **All Day - Agent Processes Reflections:**
 - Mechanical verification: Did they post? (Yes/No)
 - Self-assessment routing
-- Proof-of-work check: Context-specific impact?
-- Gating: Week 4 content unlocks only after reflection WITH proof-of-work
+- Proof-of-work validation: Sentence shows THEIR context changed AI's response?
+  - ✅ Valid: Mentions specific context added (e.g., "I explained I'm visual learner," "I added my time constraints")
+  - ✅ Valid: Shows how AI's response was better because of that context
+  - ❌ Invalid: Generic statement with no context mentioned
+  - ❌ Invalid: Only AI output, no evidence of user's context
+- Gating: Week 4 content unlocks only after reflection WITH valid proof-of-work
 
 **Agent Routing:**
 
@@ -630,7 +688,7 @@ Where are you now?
 
 • You've witnessed AI (Week 1)
 • You've experienced it working for YOU (Week 2)
-• You've learned mistakes are okay (Week 3)
+• You've learned mistakes are learning steps (Week 3)
 • You're building habits that last (Habit 1 + Habit 2)
 
 Next week is Week 4: CONVERSE.
@@ -639,7 +697,7 @@ You'll start treating AI like a thinking PARTNER, not just a tool.
 
 Rest this weekend. You've earned it. 🛡️
 
-🎯 WEEKEND CHALLENGE (optional):
+🎯 WEEKEND INVITATION (optional):
 Notice yourself this weekend WITHOUT trying to use AI.
 Just observe: "In that moment, I would've reached for AI and explained my situation..."
 
@@ -1268,6 +1326,108 @@ You're ready for this. See you in Discord. 🔄"
 [Proof-of-work validation]:
 "This sentence shows your context changed AI's response: [paste]. That's the power of Habit 2. Week 4 unlocked! 🔓"
 ```
+
+---
+
+### Stalled Student Intervention Protocol
+
+**Purpose:** Ensure no student falls behind without support while respecting psychological safety (no forced participation)
+
+**Definition of "Stalled":** Student has not posted to daily prompt or Friday reflection for consecutive days
+
+**Intervention Tiers:**
+
+**Day 1-2: Automated Gentle Nudge (6 PM Check-in)**
+```
+[If not posted by 6:00 PM (EAT/UTC+3)]:
+"Hey! Today's practice is waiting when you're ready. No pressure. 🎯
+
+Remember: Small progress counts. Even a one-sentence response is great."
+```
+- Delivery: Automated agent DM
+- Tone: Invitational, not demanding
+- No public flags (psychological safety)
+
+**Day 3: Trevor Personal Outreach (Escalation Trigger)**
+```
+[Trevor receives flag: "Student [Name] hasn't posted in 3 days"]
+
+[Trevor sends personal DM]:
+"Hi [Name]! I noticed you haven't been around in Discord the last couple days.
+
+Everything okay? Sometimes life happens - totally normal.
+
+Want to hop on a quick 10-min call? No catch, just checking in. If you're stuck or overwhelmed, we can figure it out together.
+
+If you're just taking space, that's cool too. Just let me know you're alright?
+
+Best,
+Trevor"
+```
+- Trigger: Automated flag to Trevor at 9:00 AM on Day 3
+- Delivery: Personal DM from Trevor (human, not automated)
+- Approach: "Is everything okay?" not "Why haven't you posted?"
+- Alternative: Student can request space (pause protocol)
+
+**Day 4+: Intervention Protocol (Escalation to Trevor Review)**
+```
+[If student doesn't respond to Day 3 DM within 24 hours]:
+
+[Trevor receives flag: "Student [Name] - Day 4+ no response"]
+
+[Trevor escalates to intervention]:
+1. Check last activity in Discord
+2. Review previous engagement patterns
+3. Decision paths:
+   a) If student was engaged before: Life circumstances likely changed → Offer pause/extension
+   b) If student never engaged: Approach mismatch or onboarding issue → 1:1 discovery call
+   c) If student seems dropped: Personal outreach + parent contact (if minor)
+```
+- Trigger: Automated flag at 9:00 AM on Day 4
+- Scope: Trevor's 10% human role (active intervention)
+- Documentation: Track intervention in student profile
+
+**Pause Protocol (Student-Requested Space):**
+```
+[If student says "I need a break" or "Life is crazy right now"]:
+
+[Trevor response]:
+"Totally understand. Life happens.
+
+Here's what I can do:
+• Pause your progress for [X days/week]
+• Auto-unpause when you say you're ready
+• No judgment, no pressure
+
+You want me to pause things? Just say 'pause' and I'll handle it."
+
+[Agent behavior during pause]:
+• Stop ALL nudges and check-ins
+• No automated messages
+• Wait for student to say "I'm back"
+• Upon return: "Welcome back! Pick up where you left off. No catch-up needed."
+```
+- Philosophy: Voluntary engagement only
+- No forced participation (violates psychological safety)
+- Resume at current week (no forced catch-up)
+
+** Intervention Tracking:**
+- All stalled students logged in sprint tracker
+- Trevor notes intervention outcome
+- Patterns inform future design (e.g., if 30% stall at Week 3 → review Week 3 difficulty)
+
+**Psychological Safety Guardrails:**
+- ❌ Never shame publicly ("Where's [Name]?")
+- ❌ Never compare participation rates
+- ❌ Never threaten consequences for non-participation
+- ✅ Always approach with curiosity ("Is everything okay?")
+- ✅ Always offer opt-out ("This cohort might not be the right time")
+- ✅ Always normalize pauses ("Life happens")
+
+**Integration with Existing Templates:**
+- Day 1-2 automated nudge: Already integrated (line 1281-1282: "Gentle nudge if not posted by 6 PM")
+- Day 3+ escalation: New specification (this section)
+- Pause protocol: Safety valve for overwhelmed students
 
 ---
 

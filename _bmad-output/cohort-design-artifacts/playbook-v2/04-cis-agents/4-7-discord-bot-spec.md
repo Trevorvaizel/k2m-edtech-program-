@@ -1571,7 +1571,7 @@ Story 4.7 and Story 5.3 have tight integration for #thinking-showcase implementa
 - Developer must reference BOTH stories to implement complete #thinking-showcase functionality
 
 **Referenced Foundation Documents:**
-- `_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md` (Decisions 11, 12, 14, 15)
+- `_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md` (Decisions 11, 12, 14, 15)
 - `_bmad-output/cohort-design-artifacts/playbook-v2/01-philosophy/` (Epic 1: Guardrails, JTBD, Node Architecture, 4 Habits)
 - `_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-1-cis-controller-logic.md` (Controller architecture)
 - `_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-2-framer-agent-prompt.md` (The Framer)

@@ -13,7 +13,7 @@ This checklist is intentionally grounded in playbook-v2 and Story 5.1/5.6 operat
   - `SOP 2: Daily & Weekly Monitoring Routine`
   - `SOP 3: Intervention Escalation Protocols`
   - `SOP 4: Crisis Management`
-- `_bmad-output/cohort-design-artifacts/discord-implementation-sprint.yaml`
+- `_bmad-output/cohort-design-artifacts/operations/sprint/discord-implementation-sprint.yaml`
   - Sprint 5 Task `5.7`
 
 ## Go-Live Gates (as of 2026-02-20)

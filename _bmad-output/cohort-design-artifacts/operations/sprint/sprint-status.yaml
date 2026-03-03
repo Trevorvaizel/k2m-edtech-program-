@@ -3,7 +3,7 @@
 # Source: cohort-playbook-v2-requirements.md
 
 project_name: "K2M Cohort Playbook v2"
-requirements_doc: "_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md"
+requirements_doc: "_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md"
 output_folder: "_bmad-output/cohort-design-artifacts/playbook-v2"
 
 # Sprint Overview
@@ -20,11 +20,11 @@ epics:
       - id: "0.1"
         title: "Create consolidated requirements document"
         status: "completed"
-        output: "_bmad-output/cohort-design-artifacts/cohort-playbook-v2-requirements.md"
+        output: "_bmad-output/cohort-design-artifacts/requirements/cohort-playbook-v2-requirements.md"
       - id: "0.2"
         title: "Create sprint-status.yaml tracking file"
         status: "completed"
-        output: "_bmad-output/cohort-design-artifacts/sprint-status.yaml"
+        output: "_bmad-output/cohort-design-artifacts/operations/sprint/sprint-status.yaml"
       - id: "0.3"
         title: "Set up output folder structure"
         status: "completed"
@@ -183,7 +183,7 @@ epics:
         title: "Write manual workflow SOPs"
         status: "completed"
         output: "playbook-v2/05-discord-ops/5-6-manual-sops.md"
-        reviewed: "2026-01-25 - ADVERSARIAL REVIEW COMPLETE + ALL HIGH FIXES APPLIED. Reviewer: Winston (Architect) + CIS team (John PM, Maya Design Thinking, Bob Scrum Master, Dr. Quinn Problem Solver). Issues found: 27 total (15 HIGH, 8 MEDIUM, 4 LOW). HIGH fixes applied: (1) Time budget honesty - changed from false '8-12 hours/week' to honest '10-18 hours/week (typical: 10-12, high-need: up to 18)', (2) Engagement tracking language - replaced 'Lagging/Stuck' with neutral 'Posted intermittently/Not posted' (Guardrail #3), (3) Quality-based sorting removed - Friday spot-checks now cluster-random, not quality-ranked (Guardrail #3), (4) Directive language fixed - Email template changed from 'How to Support: Ask/Celebrate/Normalize' to invitational 'Ways to Connect: Try asking/When they share/If they're struggling' (Guardrail #2), (5) Generic examples replaced - Changed 'Netflix recommendations' to pre-university: 'University applications, course selection, career exploration' (Guardrail #11), (6) Laggard handling added - New Monday SOP for Story 5.1 channel unlock enforcement. Story 5.6 READY FOR DEVELOPMENT with honest time budgets, guardrail-compliant engagement tracking, pre-university relevant examples, and complete SOP workflows. Epic 5 COMPLETE - All 6 stories ready for development. Adversarial review findings document: _bmad-output/cohort-design-artifacts/adversarial-review-story-5.6-findings.md"
+        reviewed: "2026-01-25 - ADVERSARIAL REVIEW COMPLETE + ALL HIGH FIXES APPLIED. Reviewer: Winston (Architect) + CIS team (John PM, Maya Design Thinking, Bob Scrum Master, Dr. Quinn Problem Solver). Issues found: 27 total (15 HIGH, 8 MEDIUM, 4 LOW). HIGH fixes applied: (1) Time budget honesty - changed from false '8-12 hours/week' to honest '10-18 hours/week (typical: 10-12, high-need: up to 18)', (2) Engagement tracking language - replaced 'Lagging/Stuck' with neutral 'Posted intermittently/Not posted' (Guardrail #3), (3) Quality-based sorting removed - Friday spot-checks now cluster-random, not quality-ranked (Guardrail #3), (4) Directive language fixed - Email template changed from 'How to Support: Ask/Celebrate/Normalize' to invitational 'Ways to Connect: Try asking/When they share/If they're struggling' (Guardrail #2), (5) Generic examples replaced - Changed 'Netflix recommendations' to pre-university: 'University applications, course selection, career exploration' (Guardrail #11), (6) Laggard handling added - New Monday SOP for Story 5.1 channel unlock enforcement. Story 5.6 READY FOR DEVELOPMENT with honest time budgets, guardrail-compliant engagement tracking, pre-university relevant examples, and complete SOP workflows. Epic 5 COMPLETE - All 6 stories ready for development. Adversarial review findings document: _bmad-output/cohort-design-artifacts/reviews/adversarial/adversarial-review-story-5.6-findings.md"
 
   - id: "epic-6"
     title: "Artifact System & Measurement (Modules 10, 12)"

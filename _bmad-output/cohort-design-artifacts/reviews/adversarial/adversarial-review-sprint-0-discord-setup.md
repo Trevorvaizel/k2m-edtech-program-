@@ -304,8 +304,8 @@ Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
 - .env.example (NEW)
 - .gitignore
 - README.md (NEW)
-- _bmad-output/cohort-design-artifacts/discord-implementation-sprint.yaml
-- _bmad-output/cohort-design-artifacts/adversarial-review-sprint-0-discord-setup.md
+- _bmad-output/cohort-design-artifacts/operations/sprint/discord-implementation-sprint.yaml
+- _bmad-output/cohort-design-artifacts/reviews/adversarial/adversarial-review-sprint-0-discord-setup.md
 
 **Files to EXCLUDE:**
 - .env (NEVER commit secrets)

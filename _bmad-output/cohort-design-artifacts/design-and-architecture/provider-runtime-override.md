@@ -18,7 +18,7 @@ Runtime has been swapped and validated on OpenAI. Without an explicit override, 
 1. Runtime env in deployment (`AI_PROVIDER`, provider API key, model vars)
 2. `cis-discord-bot/.env` and `cis-discord-bot/.env.template`
 3. `cis-discord-bot/cis_controller/llm_integration.py`
-4. Sprint tracker: `_bmad-output/cohort-design-artifacts/discord-implementation-sprint.yaml`
+4. Sprint tracker: `_bmad-output/cohort-design-artifacts/operations/sprint/discord-implementation-sprint.yaml`
 5. Older playbook language that names a specific provider
 
 ## Normalization Rule for Legacy Docs

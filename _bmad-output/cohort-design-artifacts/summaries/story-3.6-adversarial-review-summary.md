@@ -162,12 +162,12 @@
 ## Files Created/Modified
 
 **Created:**
-1. `_bmad-output/cohort-design-artifacts/adversarial-review-story-3.6-daily-prompts.md` - Full adversarial review (5 critical/high/medium/low issues)
-2. `_bmad-output/cohort-design-artifacts/story-3.6-adversarial-review-summary.md` - This summary
+1. `_bmad-output/cohort-design-artifacts/reviews/adversarial/adversarial-review-story-3.6-daily-prompts.md` - Full adversarial review (5 critical/high/medium/low issues)
+2. `_bmad-output/cohort-design-artifacts/summaries/story-3.6-adversarial-review-summary.md` - This summary
 
 **Modified:**
 1. `_bmad-output/cohort-design-artifacts/playbook-v2/03-sessions/daily-prompt-library.md` - Applied all fixes
-2. `_bmad-output/cohort-design-artifacts/sprint-status.yaml` - Updated progress
+2. `_bmad-output/cohort-design-artifacts/operations/sprint/sprint-status.yaml` - Updated progress
 
 ---
 

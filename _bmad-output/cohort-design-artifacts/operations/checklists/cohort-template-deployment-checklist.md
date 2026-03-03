@@ -8,7 +8,7 @@ Canonical runbook for spinning up a new K2M cohort server from the existing Disc
   - Section: `Copy-Paste Server Template`
   - Section: `Deployment Checklist (Per New Cohort)`
   - Constraint: `Time to Deploy: ~30 minutes (with template)`
-- `_bmad-output/cohort-design-artifacts/discord-implementation-sprint.yaml` (Task `5.6`)
+- `_bmad-output/cohort-design-artifacts/operations/sprint/discord-implementation-sprint.yaml` (Task `5.6`)
 
 ## Template Artifact
 - Template URL: `https://discord.new/Eqz6DMNHuVHU`
