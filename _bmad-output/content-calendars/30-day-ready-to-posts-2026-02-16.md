@@ -2101,4 +2101,4 @@ For each remaining day, use these templates:
 *Created: 2026-02-16*
 *Status: Ready to post*
 
-**File:** `_bmad-output/30-day-ready-to-posts-2026-02-16.md`
+**File:** `_bmad-output/content-calendars/30-day-ready-to-posts-2026-02-16.md`

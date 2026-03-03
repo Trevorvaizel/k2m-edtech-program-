@@ -1489,7 +1489,7 @@ Territory (story) → Map (framework) → Transformation (realization)
 **Complete Document:**
 ```
 /mnt/c/Users/OMEN/Documents/K2M/k2m-edtech-program-/
-_bmad-output/content-calendar-territory-first-2026-02-16.md
+_bmad-output/content-calendars/content-calendar-territory-first-2026-02-16.md
 ```
 
 **What's Inside:**

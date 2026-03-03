@@ -3,7 +3,7 @@ const { chromium } = require('@playwright/test');
 (async () => {
   const browser = await chromium.launch();
   const page = await browser.newPage();
-  const filePath = 'file:///mnt/c/Users/OMEN/Documents/K2M/k2m-edtech-program-/_bmad-output/ky4y-cbo-constitution.html';
+  const filePath = 'file:///mnt/c/Users/OMEN/Documents/K2M/k2m-edtech-program-/_bmad-output/ky4y/ky4y-cbo-constitution.html';
 
   await page.goto(filePath);
   await page.waitForLoadState('networkidle');

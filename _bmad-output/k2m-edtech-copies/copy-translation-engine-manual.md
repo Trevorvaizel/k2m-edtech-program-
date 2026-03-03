@@ -98,7 +98,7 @@ OUTPUT BAY:
 
 **Component 2: 7-Module Invisible Writing Framework (Translation Engine)**
 - M1-M7: Psychological functions that execute in sequence
-- Reference: `/docs/Invinsible writting frameworks/`
+- Reference: `/docs/invisible-writing-frameworks/`
 - Core principle: Respect attention through suggestion, not declaration
 
 **Component 3: Abstraction Ladder (Level Selection)**
@@ -1378,10 +1378,10 @@ Go back to the module checklist. One or more failed.
 ## Appendix: Reference Documents
 
 **Invisible Writing Framework:**
-- `/docs/Invinsible writting frameworks/invisible_mode_quick_reference.md`
-- `/docs/Invinsible writting frameworks/invisible_mode_repurposing_framework.md`
-- `/docs/Invinsible writting frameworks/k2m_attention_control_prompt.md`
-- `/docs/Invinsible writting frameworks/The Invisible Writing Mode_ Rewiring Perception, Identity, and Agency.pdf`
+- `/docs/invisible-writing-frameworks/invisible_mode_quick_reference.md`
+- `/docs/invisible-writing-frameworks/invisible_mode_repurposing_framework.md`
+- `/docs/invisible-writing-frameworks/k2m_attention_control_prompt.md`
+- `/docs/invisible-writing-frameworks/The Invisible Writing Mode_ Rewiring Perception, Identity, and Agency.pdf`
 
 **JTBD Research:**
 - (Add path to validation report when available)

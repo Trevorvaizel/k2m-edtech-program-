@@ -1045,4 +1045,4 @@ Start Day 1 (Monday) with the 10-minute hook test. See what happens. Adjust base
 *Version: V2.0 (Adversarial Review Applied)*
 *Status: READY FOR EXECUTION*
 
-**File Location:** `_bmad-output/2-month-daily-content-calendar-v2-2026-02-16.md`
+**File Location:** `_bmad-output/content-calendars/2-month-daily-content-calendar-v2-2026-02-16.md`
