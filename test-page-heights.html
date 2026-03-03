@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Test Page Heights</title>
+<style>
+  body { font-family: monospace; padding: 20px; }
+  .result { margin: 10px 0; padding: 10px; background: #f0f0f0; }
+  .overflow { background: #ffcccc; }
+  .ok { background: #ccffcc; }
+</style>
+</head>
+<body>
+<h1>Page Height Analysis</h1>
+<p>Checking each page's rendered height...</p>
+<div id="results"></div>
+
+<iframe id="testFrame" style="display:none;"></iframe>
+
+<script>
+const constitutionPath = '_bmad-output/ky4y-cbo-constitution.html';
+
+fetch(constitutionPath)
+  .then(r => r.text())
+  .then(html => {
+    // Load into iframe to measure
+    const frame = document.getElementById('testFrame');
+    frame.style.display = 'block';
+    frame.style.width = '210mm';
+    frame.srcdoc = html;
+
+    frame.onload = () => {
+      const doc = frame.contentDocument;
+      const pages = doc.querySelectorAll('.page');
+      const results = document.getElementById('results');
+
+      // A4 height in pixels at 96 DPI: ~1123px (297mm * 3.7795)
+      const A4_HEIGHT_PX = 1123;
+      const MM_TO_PX = 3.7795;
+
+      pages.forEach((page, i) => {
+        const height = page.scrollHeight;
+        const heightMM = (height / MM_TO_PX).toFixed(1);
+        const isOverflow = height > A4_HEIGHT_PX;
+        const overflowMM = isOverflow ? (height - A4_HEIGHT_PX) / MM_TO_PX : 0;
+
+        const div = document.createElement('div');
+        div.className = `result ${isOverflow ? 'overflow' : 'ok'}`;
+        div.innerHTML = `
+          <strong>Page ${i + 1}:</strong>
+          ${heightMM}mm (${height}px)
+          ${isOverflow ? ` ✗ OVERFLOW by ${overflowMM.toFixed(1)}mm` : ' ✓ OK'}
+        `;
+        results.appendChild(div);
+      });
+
+      // Hide iframe after measuring
+      frame.style.display = 'none';
+    };
+  });
+</script>
+</body>
+</html>

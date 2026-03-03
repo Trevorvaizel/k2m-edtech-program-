@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KY4Y — Constitution of the Kasipul Youth for Youth Movement</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Lora:ital,wght@0,400;0,600;1,400&display=swap');
+
+  :root {
+    --navy: #1B3A8C;
+    --orange: #F47920;
+    --light-navy: #e8eef7;
+    --text: #1a1a1a;
+    --muted: #555;
+    --gold: #D4A418;
+    --accent-blue: #2E5CBE;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: #c0c0c0;
+    font-family: 'Lora', Georgia, serif;
+    font-size: 11pt;
+    color: var(--text);
+    line-height: 1.62;
+  }
+
+  /* ── PAGE SHELL ── */
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    background: #fff;
+    margin: 10mm auto;
+    padding: 15mm 18mm 15mm 20mm;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+    position: relative;
+    page-break-after: always;
+    overflow: visible;
+  }
+
+  /* ── COVER PAGE ── */
+  .cover {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    height: 100%;
+    gap: 0;
+    background: linear-gradient(135deg, #fef9f3 0%, #fff 50%, #f8f4ff 100%);
+  }
+
+  .cover-logo-svg {
+    width: 50mm;
+    height: auto;
+    margin-bottom: 6mm;
+    filter: drop-shadow(0 4px 12px rgba(27, 58, 140, 0.15));
+  }
+
+  .cover-org {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 8pt;
+    font-weight: 600;
+    color: var(--muted);
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    margin-bottom: 3mm;
+  }
+
+  .cover-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 20pt;
+    font-weight: 800;
+    color: var(--navy);
+    line-height: 1.15;
+    margin-bottom: 2mm;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-shadow: 2px 2px 0px rgba(244, 121, 32, 0.1);
+  }
+
+  .cover-title span {
+    color: var(--orange);
+    background: linear-gradient(135deg, var(--orange), var(--gold));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .cover-subtitle {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 10pt;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 4mm;
+    letter-spacing: 0.5px;
+  }
+
+  .cover-act {
+    font-size: 9pt;
+    color: var(--muted);
+    font-style: italic;
+    margin-bottom: 7mm;
+  }
+
+  .cover-divider {
+    width: 40mm;
+    height: 3px;
+    background: linear-gradient(90deg, var(--navy) 0%, var(--gold) 50%, var(--orange) 100%);
+    margin: 0 auto 7mm;
+    border-radius: 2px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+
+  .cover-meta {
+    background: linear-gradient(135deg, var(--light-navy) 0%, #fff 100%);
+    border-left: 5px solid var(--navy);
+    padding: 5mm 8mm;
+    text-align: left;
+    width: 100%;
+    max-width: 118mm;
+    font-size: 9.5pt;
+    line-height: 1.8;
+    box-shadow: 0 2px 8px rgba(27, 58, 140, 0.1);
+  }
+
+  .cover-meta strong {
+    color: var(--navy);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 8pt;
+    font-weight: 700;
+  }
+
+  .cover-footer {
+    position: absolute;
+    bottom: 11mm;
+    left: 0; right: 0;
+    text-align: center;
+    font-size: 7.5pt;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  .cover-slogan {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 9pt;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--orange), var(--gold));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 7mm;
+  }
+
+  /* ── RUNNING HEADER ── */
+  .running-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 2px solid var(--navy);
+    padding-bottom: 1.8mm;
+    margin-bottom: 5mm;
+    background: linear-gradient(90deg, var(--navy) 0%, transparent 100%);
+    background-position: bottom left;
+    background-repeat: no-repeat;
+    background-size: 60% 2px;
+  }
+
+  .running-header .rh-left {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 7.5pt;
+    font-weight: 800;
+    color: var(--navy);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .running-header .rh-right {
+    font-size: 7.5pt;
+    color: var(--muted);
+    font-style: italic;
+    font-family: 'Lora', serif;
+    font-weight: 600;
+  }
+
+  /* ── PAGE NUMBER ── */
+  .page-num {
+    position: absolute;
+    bottom: 8mm;
+    left: 0; right: 0;
+    text-align: center;
+    font-size: 8pt;
+    color: var(--muted);
+    font-family: 'Montserrat', sans-serif;
+  }
+
+  /* ── HEADINGS ── */
+  h2 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11pt;
+    font-weight: 800;
+    color: var(--navy);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin: 3.5mm 0 2mm;
+    padding-bottom: 1.2mm;
+    border-bottom: 2px solid var(--orange);
+    page-break-after: avoid;
+    position: relative;
+  }
+
+  h2::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 60px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--gold), var(--orange));
+  }
+
+  h3 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 9.5pt;
+    font-weight: 700;
+    color: var(--navy);
+    margin: 3mm 0 1.5mm;
+    page-break-after: avoid;
+  }
+
+  h4 {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 9pt;
+    font-weight: 700;
+    color: var(--orange);
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    margin: 2.8mm 0 1.5mm;
+    padding: 1.2mm 2.5mm;
+    background: linear-gradient(135deg, var(--light-navy) 0%, #fff 100%);
+    border-left: 4px solid var(--orange);
+    page-break-after: avoid;
+  }
+
+  /* ── PREAMBLE ── */
+  .preamble-box {
+    background: var(--light-navy);
+    border-left: 4px solid var(--navy);
+    padding: 4.5mm 6.5mm;
+    margin: 3.5mm 0;
+    font-style: italic;
+    font-size: 11pt;
+  }
+
+  .preamble-box ul { margin: 2mm 0 2mm 5mm; }
+  .preamble-box li { margin-bottom: 1.5mm; }
+
+  /* ── BODY TEXT ── */
+  p {
+    margin-bottom: 1.5mm;
+    orphans: 3;
+    widows: 3;
+    page-break-inside: avoid;
+  }
+
+  .clause {
+    margin-bottom: 1.8mm;
+    padding-left: 0;
+    font-size: 10.5pt;
+    line-height: 1.58;
+    orphans: 3;
+    widows: 3;
+  }
+
+  .clause-label {
+    font-weight: 700;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 9.5pt;
+    color: var(--navy);
+  }
+
+  ul { margin: 1mm 0 1.5mm 5.5mm; }
+  li { margin-bottom: 0.7mm; font-size: 10.5pt; line-height: 1.55; orphans: 2; widows: 2; }
+
+  strong { color: var(--navy); }
+  em { color: var(--muted); }
+
+  /* ── DEFINITIONS ── */
+  .definition {
+    margin-bottom: 1.8mm;
+    padding-left: 2.2mm;
+    border-left: 2px solid var(--light-navy);
+    font-size: 10.5pt;
+    line-height: 1.55;
+    orphans: 2;
+    widows: 2;
+  }
+
+  .def-term {
+    font-weight: 700;
+    color: var(--navy);
+    font-family: 'Montserrat', sans-serif;
+    font-size: 9pt;
+  }
+
+  /* ── TABLES ── */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 2mm 0 2.5mm;
+    font-size: 9.5pt;
+  }
+
+  thead { display: table-header-group; }
+
+  th {
+    background: var(--navy);
+    color: #fff;
+    font-family: 'Montserrat', sans-serif;
+    font-size: 7.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    padding: 1.5mm 2.5mm;
+    text-align: left;
+    border: 1px solid var(--navy);
+  }
+
+  td {
+    padding: 1.5mm 2.5mm;
+    border: 1px solid #ccd4e8;
+    vertical-align: top;
+    font-size: 9.5pt;
+    line-height: 1.5;
+  }
+
+  tr:nth-child(even) td { background: var(--light-navy); }
+  tr:nth-child(odd) td { background: #fff; }
+  td strong { color: var(--navy); }
+
+  /* ── PLEDGE BOX ── */
+  .pledge {
+    border: 1.5px solid var(--navy);
+    border-radius: 2px;
+    padding: 3mm 5mm;
+    margin: 2mm 0;
+    font-style: italic;
+    background: #fafbff;
+    font-size: 10pt;
+    line-height: 1.6;
+    page-break-inside: avoid;
+  }
+
+  /* ── NOTE BOX ── */
+  .note {
+    background: #fff8f0;
+    border-left: 3px solid var(--orange);
+    padding: 2mm 3mm;
+    margin: 1.5mm 0 2mm;
+    font-size: 9pt;
+    font-style: italic;
+    color: #555;
+    line-height: 1.55;
+    page-break-inside: avoid;
+  }
+
+  /* ── SIGNATURE BLOCK ── */
+  .sig-block { margin: 3mm 0; page-break-inside: avoid; }
+
+  .sig-label {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 8pt;
+    font-weight: 700;
+    color: var(--navy);
+    margin-bottom: 2.2mm;
+  }
+
+  .sig-line {
+    display: flex;
+    gap: 6mm;
+    margin-bottom: 4mm;
+    align-items: flex-end;
+  }
+
+  .sig-field { flex: 1; }
+
+  .sig-field span {
+    display: block;
+    border-bottom: 1px solid #888;
+    height: 5.5mm;
+    margin-bottom: 1mm;
+  }
+
+  .sig-field label {
+    font-size: 6.5pt;
+    color: var(--muted);
+    font-style: italic;
+    font-family: 'Lora', serif;
+  }
+
+  /* ── CERTIFICATION BOX ── */
+  .cert-box {
+    border: 2px solid var(--navy);
+    padding: 4mm 6mm;
+    margin: 3mm 0;
+    background: var(--light-navy);
+    page-break-inside: avoid;
+  }
+
+  .cert-box p {
+    font-size: 9.5pt;
+    font-style: italic;
+    font-weight: 600;
+    margin-bottom: 0;
+    line-height: 1.6;
+  }
+
+  /* ── PATRON BOX ── */
+  .patron-box {
+    border: 2px solid var(--orange);
+    padding: 4mm 6mm;
+    margin: 4mm 0;
+    background: #fff8f0;
+    page-break-inside: avoid;
+  }
+
+  .patron-box h4 {
+    background: var(--orange);
+    color: #fff;
+    border: none;
+    margin: -4mm -6mm 3mm;
+    padding: 1.8mm 6mm;
+  }
+
+  /* ── DOC FOOTER ── */
+  .doc-footer {
+    font-size: 7pt;
+    color: var(--muted);
+    text-align: center;
+    font-style: italic;
+    margin-top: 3.5mm;
+    padding-top: 2mm;
+    border-top: 1px solid #ddd;
+    line-height: 1.5;
+  }
+
+  /* ── TIER LABELS ── */
+  .tier-1 { color: #4a7c59; font-weight: 700; }
+  .tier-2 { color: #2563a8; font-weight: 700; }
+  .tier-3 { color: var(--orange); font-weight: 700; }
+  .tier-4 { color: var(--navy); font-weight: 700; }
+
+  /* ── PRINT STYLES ── */
+  @media print {
+    body { background: none; }
+    .page {
+      margin: 0;
+      box-shadow: none;
+      page-break-after: auto;
+      padding: 15mm 18mm 15mm 20mm;
+      width: 210mm;
+      min-height: auto;
+      max-height: none;
+      height: auto;
+      overflow: visible;
+    }
+    .page:last-child { page-break-after: auto; }
+
+    /* Force page breaks before each .page div */
+    .page {
+      break-before: page;
+    }
+
+    /* Prevent breaks in bad places */
+    h2, h3, h4 { page-break-after: avoid; break-inside: avoid; }
+    .pledge, .cert-box, .patron-box, .note, .sig-block { page-break-inside: avoid; break-inside: avoid; }
+    .clause, .definition, ul { orphans: 3; widows: 3; }
+    table { break-inside: avoid; }
+
+    /* Improve text quality */
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+
+  @page {
+    size: A4;
+    margin: 0;
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- PAGE 1 — COVER -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="cover">
+
+    <!-- INLINE SVG LOGO -->
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 520" class="cover-logo-svg" role="img" aria-label="Kasipul Youth for Youth Movement Logo">
+      <defs>
+        <linearGradient id="kGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#F47920"/>
+          <stop offset="52%" stop-color="#F47920"/>
+          <stop offset="100%" stop-color="#1B3A8C"/>
+        </linearGradient>
+      </defs>
+      <!-- Flag pole -->
+      <line x1="200" y1="3" x2="200" y2="70" stroke="#bbb" stroke-width="3"/>
+      <!-- Flag body (orange) -->
+      <path d="M200,6 C235,4 275,9 308,14 C302,23 296,31 300,36 C296,40 302,46 295,52 C265,47 236,43 200,45 Z" fill="#F47920"/>
+      <!-- Flag navy stripe -->
+      <path d="M200,31 C230,29 268,32 297,36 C296,40 302,46 295,52 C265,47 236,43 200,45 Z" fill="#1B3A8C" opacity="0.88"/>
+      <!-- Flag star -->
+      <polygon points="253,14 256,22 264,22 258,27 261,35 253,30 245,35 248,27 242,22 250,22" fill="#1B3A8C"/>
+
+      <!-- KASIPUL text -->
+      <text x="200" y="112" text-anchor="middle" font-family="'Arial Black','Impact',Arial,sans-serif" font-weight="900" font-size="70" fill="url(#kGrad)" letter-spacing="2">KASIPUL</text>
+
+      <!-- Orange ribbon banner -->
+      <rect x="50" y="124" width="300" height="36" fill="#F47920"/>
+      <polygon points="50,124 27,142 50,160" fill="#B84F00"/>
+      <polygon points="350,124 373,142 350,160" fill="#B84F00"/>
+      <text x="200" y="148" text-anchor="middle" font-family="Arial,sans-serif" font-weight="800" font-size="15.5" fill="white" letter-spacing="0.5">YOUTH FOR YOUTH MOVEMENT</text>
+
+      <!-- Outer circle rings -->
+      <circle cx="200" cy="310" r="120" fill="white" stroke="#1B3A8C" stroke-width="6"/>
+      <circle cx="200" cy="310" r="112" fill="white" stroke="#1B3A8C" stroke-width="2.5"/>
+
+      <!-- Left laurel wreath -->
+      <path d="M85,272 Q76,308 82,350" stroke="#F47920" stroke-width="2.5" fill="none"/>
+      <g fill="#1B3A8C">
+        <ellipse cx="80" cy="278" rx="12" ry="6" transform="rotate(-62 80 278)"/>
+        <ellipse cx="74" cy="293" rx="12" ry="6" transform="rotate(-56 74 293)"/>
+        <ellipse cx="70" cy="310" rx="12" ry="6" transform="rotate(-50 70 310)"/>
+        <ellipse cx="71" cy="327" rx="12" ry="6" transform="rotate(-43 71 327)"/>
+        <ellipse cx="75" cy="343" rx="12" ry="6" transform="rotate(-36 75 343)"/>
+        <ellipse cx="94" cy="275" rx="12" ry="6" transform="rotate(-28 94 275)"/>
+        <ellipse cx="89" cy="291" rx="12" ry="6" transform="rotate(-22 89 291)"/>
+        <ellipse cx="87" cy="308" rx="12" ry="6" transform="rotate(-16 87 308)"/>
+        <ellipse cx="88" cy="325" rx="12" ry="6" transform="rotate(-10 88 325)"/>
+        <ellipse cx="93" cy="342" rx="12" ry="6" transform="rotate(-4 93 342)"/>
+      </g>
+
+      <!-- Right laurel wreath (mirrored) -->
+      <path d="M315,272 Q324,308 318,350" stroke="#F47920" stroke-width="2.5" fill="none"/>
+      <g fill="#1B3A8C" transform="translate(400,0) scale(-1,1)">
+        <ellipse cx="80" cy="278" rx="12" ry="6" transform="rotate(-62 80 278)"/>
+        <ellipse cx="74" cy="293" rx="12" ry="6" transform="rotate(-56 74 293)"/>
+        <ellipse cx="70" cy="310" rx="12" ry="6" transform="rotate(-50 70 310)"/>
+        <ellipse cx="71" cy="327" rx="12" ry="6" transform="rotate(-43 71 327)"/>
+        <ellipse cx="75" cy="343" rx="12" ry="6" transform="rotate(-36 75 343)"/>
+        <ellipse cx="94" cy="275" rx="12" ry="6" transform="rotate(-28 94 275)"/>
+        <ellipse cx="89" cy="291" rx="12" ry="6" transform="rotate(-22 89 291)"/>
+        <ellipse cx="87" cy="308" rx="12" ry="6" transform="rotate(-16 87 308)"/>
+        <ellipse cx="88" cy="325" rx="12" ry="6" transform="rotate(-10 88 325)"/>
+        <ellipse cx="93" cy="342" rx="12" ry="6" transform="rotate(-4 93 342)"/>
+      </g>
+
+      <!-- Africa continent silhouette (orange) -->
+      <path d="M192,220 C204,213 218,214 228,222 C238,230 245,247 248,265 C255,257 261,264 258,274 C255,283 248,279 247,272 C249,291 249,309 245,325 C239,341 231,355 223,365 C215,375 208,384 200,388 C192,384 185,375 177,365 C169,355 161,341 155,325 C151,309 151,291 153,271 C141,268 136,278 137,291 C138,303 148,309 155,301 C156,289 158,273 162,261 C170,241 180,226 192,220 Z" fill="#F47920"/>
+
+      <!-- Upward sweep arc -->
+      <path d="M108,340 Q155,376 200,370 Q245,364 292,340" fill="none" stroke="#F47920" stroke-width="6.5" stroke-linecap="round" opacity="0.6"/>
+
+      <!-- Upward arrow (orange) -->
+      <line x1="256" y1="312" x2="256" y2="254" stroke="#F47920" stroke-width="7" stroke-linecap="round"/>
+      <polyline points="247,263 256,254 265,263" stroke="#F47920" stroke-width="7" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+      <!-- Youth figure (navy) -->
+      <circle cx="200" cy="247" r="13" fill="#1B3A8C"/>
+      <line x1="200" y1="260" x2="200" y2="287" stroke="#1B3A8C" stroke-width="9" stroke-linecap="round"/>
+      <line x1="196" y1="268" x2="179" y2="252" stroke="#1B3A8C" stroke-width="7" stroke-linecap="round"/>
+      <line x1="204" y1="268" x2="221" y2="252" stroke="#1B3A8C" stroke-width="7" stroke-linecap="round"/>
+      <line x1="196" y1="287" x2="190" y2="310" stroke="#1B3A8C" stroke-width="6.5" stroke-linecap="round"/>
+      <line x1="204" y1="287" x2="210" y2="310" stroke="#1B3A8C" stroke-width="6.5" stroke-linecap="round"/>
+
+      <!-- Bottom navy banner -->
+      <rect x="36" y="408" width="328" height="38" fill="#1B3A8C"/>
+      <polygon points="36,408 13,427 36,446" fill="#0d1f5c"/>
+      <polygon points="364,408 387,427 364,446" fill="#0d1f5c"/>
+      <text x="200" y="432" text-anchor="middle" font-family="Arial,sans-serif" font-weight="700" font-size="13" fill="white" letter-spacing="1.2">YOUTH UNITED, FUTURE SECURED</text>
+    </svg>
+
+    <div class="cover-org">Constitution of the</div>
+    <div class="cover-title">Kasipul <span>Youth for Youth</span><br>Movement</div>
+    <div class="cover-subtitle">(KY4Y)</div>
+    <div class="cover-act">A Community Based Organization Registered Under the<br>Community Groups Registration Act No. 30 of 2022</div>
+    <div class="cover-divider"></div>
+    <div class="cover-meta">
+      <strong>County:</strong> Homa Bay<br>
+      <strong>Sub-County:</strong> Rachuonyo South<br>
+      <strong>Constituency:</strong> Kasipul<br>
+      <strong>Wards of Operation:</strong> All 8 Wards of Kasipul Constituency<br>
+      <strong>Honorary Patron:</strong> Hon. Boyd Were, MP — Kasipul Constituency
+    </div>
+    <div class="cover-slogan">Youth United, Future Secured</div>
+  </div>
+  <div class="cover-footer">
+    Document Version 1.0 &nbsp;|&nbsp; Drafted: February 2026<br>
+    <em>This document is a draft for review and adoption by KY4Y founding members.</em>
+  </div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- PAGE 2 — PREAMBLE + ARTICLES 1 & 2 -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="running-header">
+    <span class="rh-left">KY4Y — Constitution</span>
+    <span class="rh-right">Preamble &amp; Articles 1–2</span>
+  </div>
+
+  <h2>Preamble</h2>
+  <div class="preamble-box">
+    <p>We, the founding members of the KASIPUL YOUTH FOR YOUTH MOVEMENT, coming together as youth of Kasipul Constituency, do hereby establish this organization in the conviction that:</p>
+    <ul>
+      <li>The youth of Kasipul are not a problem to be managed — they are a majority to be mobilized</li>
+      <li>Lasting empowerment comes not from what is given, but from what is built together</li>
+      <li>Peer-to-peer support — youth serving youth — is the most sustainable engine of community transformation</li>
+      <li>Transparent, accountable institutions outlast any individual leader</li>
+    </ul>
+    <p style="margin-top:2mm;">We adopt this Constitution as the foundation of our community, our commitment to one another, and our covenant with Kasipul.</p>
+  </div>
+
+  <h2>Article 1: Name and Registered Office</h2>
+  <div class="clause"><span class="clause-label">1.1</span> The name of this organization shall be the <strong>KASIPUL YOUTH FOR YOUTH MOVEMENT</strong>, hereinafter referred to as "KY4Y" or "the Movement."</div>
+  <div class="clause"><span class="clause-label">1.2</span> The registered physical address of KY4Y shall be within Kasipul Constituency, Rachuonyo South Sub-County, Homa Bay County, Kenya.</div>
+  <div class="clause"><span class="clause-label">1.3</span> KY4Y shall maintain an official email address, postal address, and telephone number, details of which shall be filed with the Registering Authority and updated within 30 days of any change.</div>
+
+  <h2>Article 2: Interpretation</h2>
+  <p style="margin-bottom:2.5mm;">In this Constitution, unless the context otherwise requires:</p>
+
+  <div class="definition"><span class="def-term">"Act"</span> means the Community Groups Registration Act No. 30 of 2022 and any amendments thereto.</div>
+  <div class="definition"><span class="def-term">"AGM"</span> means the Annual General Meeting of the Movement.</div>
+  <div class="definition"><span class="def-term">"Chairperson"</span> means the elected head of the Executive Committee.</div>
+  <div class="definition"><span class="def-term">"Director of the Department"</span> means the Director of the Department of Gender and Social Development under the Ministry of Labour and Social Protection.</div>
+  <div class="definition"><span class="def-term">"Honorary Patron"</span> means the serving Member of Parliament for Kasipul Constituency, holding a non-executive, non-voting ceremonial and advocacy role within KY4Y as provided under Article 14.</div>
+  <div class="definition"><span class="def-term">"Executive Committee"</span> means the governing body of KY4Y as constituted under Article 6.</div>
+  <div class="definition"><span class="def-term">"Financial Year"</span> means the period from 1st January to 31st December of each calendar year.</div>
+  <div class="definition"><span class="def-term">"General Assembly"</span> means the supreme decision-making body comprising all paid-up members in good standing.</div>
+  <div class="definition"><span class="def-term">"Member"</span> means any person duly admitted to KY4Y in accordance with this Constitution.</div>
+  <div class="definition"><span class="def-term">"Registering Authority"</span> means the Department of Gender and Social Development, Ministry of Labour and Social Protection, or its designated sub-county representative.</div>
+  <div class="definition"><span class="def-term">"Ward Representative"</span> means an elected representative of a specific ward within Kasipul Constituency.</div>
+  <div class="definition"><span class="def-term">"Youth"</span> for purposes of this Constitution means persons aged 18–35 years, consistent with Kenya's national youth policy definition.</div>
+
+  <div class="page-num">— 2 —</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- PAGE 3 — ARTICLE 3 (OBJECTIVES) + ARTICLE 4.1–4.3 -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="running-header">
+    <span class="rh-left">KY4Y — Constitution</span>
+    <span class="rh-right">Articles 3–4: Objectives &amp; Membership</span>
+  </div>
+
+  <h2>Article 3: Objectives and Purposes</h2>
+  <h3>3.1 Primary Objectives</h3>
+  <p>KY4Y is established to pursue the following objectives within Kasipul Constituency:</p>
+  <div class="clause"><span class="clause-label">(a)</span> To empower youth aged 18–35 economically, socially, and intellectually through peer-to-peer mentorship, skills development, and enterprise incubation.</div>
+  <div class="clause"><span class="clause-label">(b)</span> To facilitate the creation and growth of youth-owned enterprises, cooperatives, and income-generating projects within Kasipul Constituency.</div>
+  <div class="clause"><span class="clause-label">(c)</span> To build a culture of excellence, accountability, and mutual support among the youth of Kasipul — grounded in the principle that youth help youth.</div>
+  <div class="clause"><span class="clause-label">(d)</span> To advocate for the interests, rights, and opportunities of young people in Kasipul Constituency before government institutions, private sector entities, and civil society.</div>
+  <div class="clause"><span class="clause-label">(e)</span> To connect Kasipul youth to regional, national, and global networks, resources, and opportunities in the digital economy, skilled trades, and entrepreneurship.</div>
+  <div class="clause"><span class="clause-label">(f)</span> To document and share the "Kasipul Model" of youth-led development as a replicable framework for other communities in Kenya.</div>
+  <div class="clause"><span class="clause-label">(g)</span> To promote civic engagement, transparency, and accountable leadership among youth in Kasipul Constituency.</div>
+
+  <h3>3.2 Ancillary Activities</h3>
+  <p>In furtherance of its objectives, KY4Y may:</p>
+  <ul>
+    <li>Organize training programs, workshops, and mentorship sessions</li>
+    <li>Partner with government agencies, private sector organizations, NGOs, and international bodies</li>
+    <li>Receive grants, donations, and contributions from lawful sources</li>
+    <li>Establish Ward-level chapters and peer networks across all 8 wards of Kasipul Constituency</li>
+    <li>Publish reports, newsletters, and communications documenting its activities and impact</li>
+    <li>Manage projects and programs consistent with its objectives</li>
+  </ul>
+
+  <h3>3.3 Non-Political Clause</h3>
+  <p>KY4Y is non-partisan and shall not engage in partisan political activities.</p>
+
+  <h2>Article 4: Membership</h2>
+  <h3>4.1 Nature of Membership</h3>
+  <p>Membership of KY4Y is <strong>open</strong> to all eligible persons who meet the criteria set out in Article 4.2 and subscribe to the values and objectives of the Movement.</p>
+
+  <h3>4.2 Eligibility for Membership</h3>
+  <p>Any person is eligible for membership in KY4Y if they:</p>
+  <div class="clause"><span class="clause-label">(a)</span> Are a Kenyan citizen or legal resident aged <strong>18 to 35 years</strong> at the time of application;</div>
+  <div class="clause"><span class="clause-label">(b)</span> Reside, work, study, or have a demonstrated connection to Kasipul Constituency, Homa Bay County;</div>
+  <div class="clause"><span class="clause-label">(c)</span> Agree to abide by this Constitution, the Movement's values, and any rules or policies adopted by the General Assembly;</div>
+  <div class="clause"><span class="clause-label">(d)</span> Pay the prescribed membership subscription fee as determined by the General Assembly from time to time.</div>
+  <div class="note"><em><strong>Note:</strong> Associate membership (non-voting, advisory) may be extended to persons outside the 18–35 age range who wish to support KY4Y's mission, subject to Executive Committee approval. Associate members may not attend Executive Committee meetings, participate in ExCo deliberations, hold any advisory role in governance decisions, or represent KY4Y externally in any official capacity. Associate membership confers no governance rights of any kind.</em></div>
+
+  <h3>4.3 Admission of Members</h3>
+  <div class="clause"><span class="clause-label">(a)</span> A person wishing to join KY4Y shall complete a membership application form as prescribed by the Executive Committee.</div>
+  <div class="clause"><span class="clause-label">(b)</span> The application shall be submitted to the Secretary General together with the membership subscription fee.</div>
+  <div class="clause"><span class="clause-label">(c)</span> The Executive Committee shall review and approve or decline applications within <strong>14 days</strong> of receipt. Reasons for any decline shall be communicated in writing.</div>
+  <div class="clause"><span class="clause-label">(d)</span> Upon approval, the applicant's name shall be entered into the Member Register and the applicant shall receive a membership card or acknowledgment.</div>
+
+  <div class="page-num">— 3 —</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- PAGE 4 — ARTICLE 4.4–4.9 + ARTICLE 5 -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="running-header">
+    <span class="rh-left">KY4Y — Constitution</span>
+    <span class="rh-right">Articles 4–5: Membership (continued) &amp; Discipline</span>
+  </div>
+
+  <h3>4.4 Membership Subscription</h3>
+  <div class="clause"><span class="clause-label">(a)</span> The annual membership subscription fee shall be determined by the General Assembly.</div>
+  <div class="clause"><span class="clause-label">(b)</span> The initial annual subscription fee is <strong>KSh 200</strong> per member, payable upon joining and annually thereafter.</div>
+  <div class="clause"><span class="clause-label">(c)</span> The subscription fee may be waived or subsidized for members demonstrating financial hardship, subject to Executive Committee approval.</div>
+  <div class="clause"><span class="clause-label">(d)</span> A member who fails to pay their annual subscription within <strong>3 months</strong> of the due date shall be considered a member not in good standing and shall lose voting rights until the arrears are settled.</div>
+
+  <h3>4.5 Rights of Members</h3>
+  <p>Every member in good standing shall have the right to:</p>
+  <div class="clause"><span class="clause-label">(a)</span> Attend and participate in General Assembly meetings;</div>
+  <div class="clause"><span class="clause-label">(b)</span> Vote in elections and on resolutions at General Assembly meetings;</div>
+  <div class="clause"><span class="clause-label">(c)</span> Contest for any elected position within KY4Y, subject to the eligibility criteria for each position;</div>
+  <div class="clause"><span class="clause-label">(d)</span> Access KY4Y programs, resources, and networks as made available by the Executive Committee;</div>
+  <div class="clause"><span class="clause-label">(e)</span> Inspect the Member Register and audited financial statements upon written request to the Secretary General;</div>
+  <div class="clause"><span class="clause-label">(f)</span> Raise grievances and seek redress through the Movement's dispute resolution procedures.</div>
+
+  <h3>4.6 Duties of Members</h3>
+  <p>Every member shall:</p>
+  <div class="clause"><span class="clause-label">(a)</span> Uphold this Constitution and the values of KY4Y;</div>
+  <div class="clause"><span class="clause-label">(b)</span> Pay membership subscriptions on time;</div>
+  <div class="clause"><span class="clause-label">(c)</span> Actively participate in Movement activities and programs;</div>
+  <div class="clause"><span class="clause-label">(d)</span> Maintain confidentiality of any sensitive organizational information;</div>
+  <div class="clause"><span class="clause-label">(e)</span> Conduct themselves with integrity and respect toward fellow members, officials, and community members;</div>
+  <div class="clause"><span class="clause-label">(f)</span> Not use the KY4Y name, logo, or resources for personal gain or unauthorized purposes.</div>
+
+  <h3>4.7 Tiers of Participation</h3>
+  <p>KY4Y recognizes four tiers of active participation — not separate membership classes, but recognition levels reflecting a member's journey and contribution:</p>
+  <table>
+    <tr><th>Tier</th><th>Title</th><th>How Earned</th></tr>
+    <tr><td style="text-align:center;"><strong>1</strong></td><td><span class="tier-1">Builder</span></td><td>Active member who has completed at least one KY4Y program or activity</td></tr>
+    <tr><td style="text-align:center;"><strong>2</strong></td><td><span class="tier-2">Mentor</span></td><td>Builder who has achieved an income milestone AND mentored at least 2 other members</td></tr>
+    <tr><td style="text-align:center;"><strong>3</strong></td><td><span class="tier-3">Architect</span></td><td>Mentor who has led a Ward-level initiative AND documented a learnable lesson</td></tr>
+    <tr><td style="text-align:center;"><strong>4</strong></td><td><span class="tier-4">Ambassador</span></td><td>Architect nominated by the Executive Committee to represent KY4Y externally</td></tr>
+  </table>
+  <p>Tiers carry no additional voting rights but determine eligibility for certain leadership positions as specified in this Constitution.</p>
+
+  <h3>4.8 Voluntary Departure</h3>
+  <div class="clause"><span class="clause-label">(a)</span> A member wishing to leave KY4Y shall submit a written notice to the Secretary General.</div>
+  <div class="clause"><span class="clause-label">(b)</span> Departure takes effect upon receipt of the notice. The member's name shall be removed from the Member Register accordingly.</div>
+  <div class="clause"><span class="clause-label">(c)</span> No subscription fees paid prior to departure shall be refunded.</div>
+
+  <h3>4.9 Removal of Members</h3>
+  <div class="clause"><span class="clause-label">(a)</span> A member may be removed from KY4Y for: gross misconduct or behavior bringing KY4Y into disrepute; persistent non-payment of subscriptions (beyond 6 months in arrears); acting against the interests, values, or objectives of KY4Y; or conviction of a criminal offence.</div>
+  <div class="clause"><span class="clause-label">(b)</span> Before removal, the member shall be given written notice of the alleged conduct, afforded an opportunity to respond in writing or in person before the Executive Committee within 14 days, and informed of the decision in writing with reasons.</div>
+  <div class="clause"><span class="clause-label">(c)</span> A member aggrieved by a removal decision may appeal to the General Assembly. The decision of the General Assembly on appeal shall be final.</div>
+  <div class="clause"><span class="clause-label">(d)</span> A removed member's name shall be struck from the Member Register.</div>
+
+  <h2>Article 5: Discipline</h2>
+  <div class="clause"><span class="clause-label">5.1</span> The Executive Committee shall be responsible for maintaining the discipline and conduct standards of KY4Y.</div>
+  <div class="clause"><span class="clause-label">5.2</span> The following disciplinary measures may be applied in ascending order of severity: <strong>(a) Verbal Warning</strong> — for minor infractions; <strong>(b) Written Warning</strong> — for repeated minor infractions or first moderate infractions; <strong>(c) Suspension</strong> — temporary removal of membership rights for a specified period; <strong>(d) Removal</strong> — permanent removal from membership (per Article 4.9).</div>
+  <div class="clause"><span class="clause-label">5.3</span> All disciplinary proceedings shall follow natural justice principles: the member shall be informed of the allegation and given a fair opportunity to respond before any sanction is applied.</div>
+  <div class="clause"><span class="clause-label">5.4</span> A member shall have the right to appeal any disciplinary decision to the General Assembly within 21 days of receiving the decision. The General Assembly's ruling on appeal is final.</div>
+
+  <div class="page-num">— 4 —</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- PAGE 5 — ARTICLE 6.1 & 6.2 (GOVERNANCE STRUCTURE) -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="running-header">
+    <span class="rh-left">KY4Y — Constitution</span>
+    <span class="rh-right">Article 6: Governance and Officials</span>
+  </div>
+
+  <h2>Article 6: Governance and Officials</h2>
+  <h3>6.1 Governing Structure</h3>
+  <p>KY4Y shall be governed through three levels:</p>
+  <ul>
+    <li><strong>General Assembly</strong> — The supreme body (all members)</li>
+    <li><strong>Executive Committee</strong> — The governing committee (elected officials)</li>
+    <li><strong>Ward Representatives</strong> — Ward-level leadership (one per ward)</li>
+  </ul>
+
+  <h3>6.2 The Executive Committee</h3>
+  <p>The Executive Committee shall consist of the following <strong>four (4) elected officials:</strong></p>
+  <table>
+    <tr><th>Position</th><th>Primary Mandate</th></tr>
+    <tr><td><strong>Chairperson</strong></td><td>Overall leadership, representation, and strategic direction of KY4Y</td></tr>
+    <tr><td><strong>Secretary General</strong></td><td>Official records, legal compliance, Member Register, and institutional memory</td></tr>
+    <tr><td><strong>Treasurer</strong></td><td>Financial management, accounts, transparency, and audit coordination</td></tr>
+    <tr><td><strong>Director of Communications</strong></td><td>Brand narrative, public communications, digital presence, and strategic documentation</td></tr>
+  </table>
+
+  <p><strong>General Eligibility for All Executive Committee Positions:</strong></p>
+  <div class="clause"><span class="clause-label">(a)</span> Must be a KY4Y member in good standing for at least <strong>3 months</strong> prior to the date of nomination;</div>
+  <div class="clause"><span class="clause-label">(b)</span> Must be aged <strong>18–35 years</strong> at the time of election and must not have attained the age of <strong>36 years</strong> at any point during their term of office; any official who turns 36 during their term shall complete that term but shall not be eligible for re-election to any KY4Y Executive Committee position;</div>
+  <div class="clause"><span class="clause-label">(c)</span> Must not hold any elected public office at the time of taking up the position (MP, MCA, Senator, County Governor, Ward Administrator, etc.);</div>
+  <div class="clause"><span class="clause-label">(d)</span> Must not have been removed from a previous KY4Y elected position for misconduct or financial impropriety;</div>
+  <div class="clause"><span class="clause-label">(e)</span> Must not have been convicted of any criminal offence involving fraud, dishonesty, or moral turpitude;</div>
+  <div class="clause"><span class="clause-label">(f)</span> Must be free from any undisclosed conflict of interest with KY4Y's objectives.</div>
+
+  <p style="margin-top:3mm;"><strong>Position-Specific Eligibility:</strong></p>
+  <table>
+    <tr><th>Position</th><th>Additional Requirement</th></tr>
+    <tr><td><strong>Chairperson</strong></td><td>Must have been a KY4Y member for at least <strong>6 months</strong> and hold minimum <strong>Mentor tier</strong> recognition</td></tr>
+    <tr><td><strong>Secretary General</strong></td><td>Must demonstrate literacy in both English and Kiswahili; must be willing to serve as the official contact person with the Registering Authority</td></tr>
+    <tr><td><strong>Treasurer</strong></td><td>Must demonstrate basic financial literacy; must not be an undischarged bankrupt; must have no outstanding financial dispute with KY4Y</td></tr>
+    <tr><td><strong>Director of Communications</strong></td><td>Must demonstrate ability to communicate effectively across digital platforms; must have access to a smartphone and reliable internet</td></tr>
+  </table>
+
+  <p><strong>Term of Office:</strong></p>
+  <ul>
+    <li>All Executive Committee positions carry a term of <strong>2 years</strong></li>
+    <li>Officials may serve a maximum of <strong>2 consecutive terms</strong> in the same position</li>
+    <li>After 2 consecutive terms in one position, the official must step down for at least <strong>1 full term</strong> before re-contesting that same position</li>
+    <li>An official may contest a different position after completing their maximum terms in one position</li>
+  </ul>
+
+  <div class="page-num">— 5 —</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- PAGE 6 — ARTICLE 6.3: CHAIRPERSON + SECRETARY GENERAL -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="running-header">
+    <span class="rh-left">KY4Y — Constitution</span>
+    <span class="rh-right">Article 6.3: Roles — Chairperson &amp; Secretary General</span>
+  </div>
+
+  <h3>6.3 Roles, Responsibilities and Powers of Officials</h3>
+
+  <h4>Chairperson</h4>
+  <p><strong>Responsibilities:</strong></p>
+  <ul>
+    <li>Presides over all Executive Committee and General Assembly meetings</li>
+    <li>Provides overall strategic leadership and direction for KY4Y</li>
+    <li>Represents KY4Y officially in dealings with government, private sector, civil society, and the media</li>
+    <li>Ensures KY4Y operates in accordance with this Constitution and the Act</li>
+    <li>Sets the agenda for Executive Committee meetings in consultation with the Secretary General</li>
+    <li>Leads annual planning and review processes</li>
+    <li>Coordinates all eight Ward Representatives and oversees ward-level program delivery</li>
+  </ul>
+  <p style="margin-top:2mm;"><strong>Powers:</strong></p>
+  <ul>
+    <li>Authority to enter into agreements, contracts, and partnerships on behalf of KY4Y up to a value of <strong>KSh 50,000</strong> without prior Executive Committee approval; commitments between <strong>KSh 50,001 and KSh 200,000</strong> require Executive Committee approval; commitments above <strong>KSh 200,000</strong> require General Assembly approval</li>
+    <li>First mandatory signatory on all KY4Y bank transactions</li>
+    <li>Authority to convene emergency Executive Committee meetings with 48 hours' notice</li>
+    <li>Authority to suspend any Executive Committee official (other than the Treasurer or Secretary General) from duties pending disciplinary proceedings, not exceeding 30 days, subject to Executive Committee ratification within 7 days. Suspension of the Treasurer or Secretary General requires a resolution passed by at least <strong>4 members of the Executive Committee</strong>, and an emergency General Assembly shall be convened within <strong>14 days</strong> of any such suspension</li>
+    <li>Casting vote at all meetings in the event of a tie</li>
+    <li>Authority to speak to media and make public statements on behalf of KY4Y (may delegate to the Director of Communications)</li>
+    <li>Authority to co-sign official KY4Y correspondence with the Secretary General</li>
+  </ul>
+
+  <h4>Secretary General</h4>
+  <p><strong>Responsibilities:</strong></p>
+  <ul>
+    <li>Maintains the official Member Register (full names, ID numbers, dates of birth, ward, phone, tier status)</li>
+    <li>Records accurate minutes of all Executive Committee and General Assembly meetings and distributes them within <strong>7 days</strong></li>
+    <li>Manages all official correspondence (incoming and outgoing)</li>
+    <li>Maintains custody of KY4Y's constitutional documents, registration certificate, and legal records</li>
+    <li>Files all required reports and returns with the Registering Authority on schedule</li>
+    <li>Coordinates the annual General Meeting logistics (notice, agenda, venue, quorum confirmation)</li>
+    <li>Serves as the primary point of contact between KY4Y and the Registering Authority</li>
+  </ul>
+  <p style="margin-top:2mm;"><strong>Powers:</strong></p>
+  <ul>
+    <li>Sole authority to certify, authenticate, and issue official KY4Y documents and correspondence</li>
+    <li>Authority to verify and confirm KY4Y membership status for any member upon request</li>
+    <li>Custodian of the KY4Y seal (if adopted) and authorized to affix it to official documents</li>
+    <li>Authority to reject or return to sender any unsigned or incorrectly addressed official communication</li>
+    <li>Authority to decline admission of a membership application on administrative grounds, subject to Executive Committee ratification</li>
+    <li>Co-signatory (with Chairperson) on official KY4Y letters, contracts, and legal submissions</li>
+  </ul>
+
+  <div class="page-num">— 6 —</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- PAGE 7 — ARTICLE 6.3: TREASURER + DIRECTOR OF COMMUNICATIONS -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="running-header">
+    <span class="rh-left">KY4Y — Constitution</span>
+    <span class="rh-right">Article 6.3: Roles — Treasurer &amp; Director of Communications</span>
+  </div>
+
+  <h4>Treasurer</h4>
+  <p><strong>Responsibilities:</strong></p>
+  <ul>
+    <li>Manages KY4Y's bank account(s) and all financial transactions</li>
+    <li>Prepares monthly financial summaries for the Executive Committee</li>
+    <li>Prepares the annual financial statement for presentation at the AGM</li>
+    <li>Ensures all income is receipted and all expenditure is supported by documentation</li>
+    <li>Maintains financial records and supporting documents for a minimum of <strong>7 years</strong></li>
+    <li>Coordinates the engagement of the annual external auditor (subject to General Assembly appointment)</li>
+    <li>Prepares and presents the annual budget for General Assembly approval</li>
+    <li>Ensures KY4Y's financial operations comply with the Act and applicable Kenyan law</li>
+  </ul>
+  <p style="margin-top:2mm;"><strong>Powers:</strong></p>
+  <ul>
+    <li>Authority to approve routine operational expenditures up to <strong>KSh 5,000</strong> per item (within approved budget lines) without additional approval</li>
+    <li>Authority (jointly with Chairperson) to authorize all bank transactions</li>
+    <li>Authority to <strong>refuse</strong> any expenditure claim that lacks proper documentation or authorization</li>
+    <li>Authority to place a temporary hold on any financial transaction pending clarification, and to report suspected financial irregularities to the Executive Committee immediately</li>
+    <li>Second mandatory signatory on all KY4Y bank transactions</li>
+    <li>Authority to engage with the external auditor and respond to audit queries on behalf of KY4Y</li>
+  </ul>
+
+  <h4>Director of Communications</h4>
+  <p><strong>Responsibilities:</strong></p>
+  <ul>
+    <li>Develops and maintains KY4Y's brand narrative, messaging framework, and visual identity</li>
+    <li>Manages KY4Y's public communications across all channels: social media (WhatsApp, TikTok, Instagram, X/Twitter), press releases, newsletters, and community notices</li>
+    <li>Documents KY4Y activities, milestones, member stories, and impact data for reporting and public record</li>
+    <li>Produces the public-facing sections of KY4Y's half-yearly and annual reports</li>
+    <li>Coordinates media relations — managing press inquiries and media appearances</li>
+    <li>Develops KY4Y's annual communications and visibility strategy for Executive Committee approval</li>
+    <li>Manages KY4Y's digital presence including any websites, social media pages, or digital platforms</li>
+    <li>Archives photographs, video, written content, and impact evidence from all KY4Y activities</li>
+    <li>Liaises with the KYDC (Kasipul Youth Development Corporation) on shared communications and narrative alignment</li>
+  </ul>
+  <p style="margin-top:2mm;"><strong>Powers:</strong></p>
+  <ul>
+    <li>Authority to publish communications on behalf of KY4Y across all official channels, within the messaging framework approved by the Executive Committee</li>
+    <li>Authority to speak to media and represent KY4Y publicly on communications matters, unless the Chairperson elects to lead on a specific engagement</li>
+    <li>Authority to develop and approve KY4Y's social media content calendar without individual Executive Committee sign-off (subject to adherence to approved messaging guidelines)</li>
+    <li>Authority to engage media houses, content creators, and communications consultants on KY4Y's behalf, for amounts up to <strong>KSh 10,000</strong> per engagement within budget</li>
+    <li>Authority to decline or correct any unauthorized communications made in KY4Y's name and to issue corrections or retractions as needed</li>
+    <li>Authority to manage access rights to KY4Y's official digital accounts and platforms. All KY4Y official digital accounts (WhatsApp, Instagram, TikTok, X/Twitter, Facebook, email, and any other platforms) shall be registered using KY4Y's official email address and phone number — not personal accounts</li>
+  </ul>
+
+  <div class="page-num">— 7 —</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- PAGE 8 — ARTICLE 6.4: ELECTIONS (SECTIONS A–C) -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="running-header">
+    <span class="rh-left">KY4Y — Constitution</span>
+    <span class="rh-right">Article 6.4: Election of Officials — Notice, Nominations &amp; Campaigning</span>
+  </div>
+
+  <h3>6.4 Election of Officials</h3>
+
+  <h4>A. Notice and Scheduling</h4>
+  <div class="clause"><span class="clause-label">(a)</span> Elections shall be held at the AGM (in election years) or at a Special General Meeting convened specifically for that purpose.</div>
+  <div class="clause"><span class="clause-label">(b)</span> The Secretary General shall give all members at least <strong>21 days' notice</strong> that elections will be held, specifying the positions to be contested, the date, time, and venue.</div>
+  <div class="clause"><span class="clause-label">(c)</span> Elections shall be presided over by a <strong>Presiding Officer</strong> — a neutral person appointed by the General Assembly from among members in good standing who is NOT contesting any position. The Presiding Officer must not have a known personal, financial, or political relationship with any candidate, as confirmed by the General Assembly before appointment. Any member may object to a proposed Presiding Officer on grounds of partiality; the General Assembly shall rule on the objection by simple majority before proceeding. The Presiding Officer's role is to ensure a fair, orderly process and to declare results. Scrutineers (minimum two) shall be nominated by candidates collectively, not appointed by the Presiding Officer.</div>
+
+  <h4>B. Nominations</h4>
+  <div class="clause"><span class="clause-label">(d)</span> Any eligible member wishing to contest a position shall submit a written <strong>Nomination Form</strong> to the Secretary General at least <strong>7 days</strong> before the election date. The Nomination Form shall include: the candidate's full name, ID number, and membership tier; the position being contested; a declaration that the candidate meets all eligibility criteria under Article 6.2; a declaration of any conflict of interest; signatures of <strong>two (2) members in good standing</strong> who propose and second the nomination; and the candidate's signed acceptance.</div>
+  <div class="clause"><span class="clause-label">(e)</span> The Secretary General shall verify eligibility and publish the list of confirmed candidates at least <strong>5 days</strong> before the election date.</div>
+  <div class="clause"><span class="clause-label">(f)</span> If no valid nomination is received for a position, the General Assembly may nominate a candidate from the floor on election day, subject to that candidate meeting all eligibility criteria and accepting the nomination.</div>
+
+  <h4>C. Campaigning Rules</h4>
+  <div class="clause"><span class="clause-label">(g)</span> Campaigning by candidates is permitted from the date nominations close until the day before the election. The following rules apply:
+    <ul style="margin-top:1.5mm;">
+      <li>Candidates shall campaign only on the basis of their ideas, plans, and character</li>
+      <li>No candidate shall use KY4Y resources, funds, equipment, or platforms for personal campaigning</li>
+      <li>No candidate shall offer gifts, money, food, drinks, or any material benefit to members in exchange for votes (vote-buying) — any candidate found to have done so shall be immediately disqualified</li>
+      <li>No candidate shall make defamatory statements about other candidates</li>
+      <li>All candidates shall have equal opportunity to address members at a candidates' forum, organized by the Presiding Officer, not less than 3 days before election day</li>
+    </ul>
+  </div>
+  <div class="clause"><span class="clause-label">(h)</span> Any complaint about campaigning conduct shall be submitted in writing to the Presiding Officer, who shall investigate and rule within 48 hours.</div>
+
+  <div class="page-num">— 8 —</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- PAGE 9 — ARTICLE 6.4 D–E + ARTICLE 6.5 + ARTICLE 6.7 -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="running-header">
+    <span class="rh-left">KY4Y — Constitution</span>
+    <span class="rh-right">Articles 6.4–6.7: Voting, Taking Office, Transitional &amp; Vacancy</span>
+  </div>
+
+  <h4>D. Voting</h4>
+  <div class="clause"><span class="clause-label">(i)</span> All members in good standing present at the election meeting are entitled to vote.</div>
+  <div class="clause"><span class="clause-label">(j)</span> Elections shall be conducted by <strong>secret ballot</strong> where there is more than one candidate. Where only one candidate has been nominated and confirmed eligible, that candidate shall be declared elected by acclamation.</div>
+  <div class="clause"><span class="clause-label">(k)</span> The Presiding Officer shall organize, supervise, and count the ballot. At least two scrutineers (nominated by candidates collectively) shall observe and verify the count.</div>
+  <div class="clause"><span class="clause-label">(l)</span> A candidate receiving the <strong>simple majority</strong> of valid votes cast shall be declared elected.</div>
+  <div class="clause"><span class="clause-label">(m)</span> In the event of a tie, a <strong>re-vote</strong> shall be held immediately. If the tie persists, the matter shall be resolved by <strong>drawing of lots</strong> conducted by the Presiding Officer.</div>
+  <div class="clause"><span class="clause-label">(n)</span> Results shall be announced by the Presiding Officer immediately upon conclusion of counting for each position.</div>
+
+  <h4>E. Taking Office</h4>
+  <div class="clause"><span class="clause-label">(o)</span> Elected officials shall take office by making the following <strong>Pledge of Office</strong> before the General Assembly:</div>
+  <div class="pledge">"I, [full name], having been elected to the position of [position] of the Kasipul Youth for Youth Movement, do solemnly pledge to serve the Movement and its members faithfully and honestly; to uphold this Constitution and the laws of Kenya; to act in the interests of the youth of Kasipul and not for personal gain; and to surrender this office peacefully at the end of my term or upon the lawful direction of the General Assembly. So help me."</div>
+  <div class="clause"><span class="clause-label">(p)</span> An outgoing official shall continue in office and hand over all records, accounts, assets, and passwords to their successor within <strong>7 days</strong> of the election results being declared.</div>
+  <div class="clause"><span class="clause-label">(q)</span> No official shall retain any KY4Y property, documents, accounts access, or digital credentials beyond 7 days of leaving office.</div>
+
+  <h3>6.5 Transitional Provisions (Founding Period)</h3>
+  <div class="clause"><span class="clause-label">(a)</span> The founding Executive Committee shall serve a transitional term not exceeding <strong>12 months</strong> from the date of CBO registration, after which a full election open to all eligible members shall be held.</div>
+  <div class="clause"><span class="clause-label">(b)</span> The first Annual General Meeting shall be held not later than <strong>6 months</strong> from the date of CBO registration. Elections shall be held at this meeting or at a Special General Meeting called within the 12-month window.</div>
+  <div class="clause"><span class="clause-label">(c)</span> For the purpose of the founding election only, the Mentor tier requirement for the Chairperson position under Article 6.2 is waived. From the second election onwards, the Mentor tier requirement applies in full.</div>
+  <div class="clause"><span class="clause-label">(d)</span> Founding members who are appointed to Executive Committee positions under Article 15 shall be subject to all rules, responsibilities, and powers of this Constitution from the date of registration, and shall stand for election at the first General Meeting.</div>
+
+  <h3>6.7 Vacancy in Office</h3>
+  <div class="clause"><span class="clause-label">(a)</span> An office becomes vacant upon: resignation (written notice to the Secretary General); removal following disciplinary proceedings; death; failure to attend 3 consecutive Executive Committee meetings without reasonable cause; or ceasing to be a member in good standing.</div>
+  <div class="clause"><span class="clause-label">(b)</span> Where a vacancy arises, the Executive Committee may appoint an acting replacement from among members in good standing until a by-election is held within 60 days.</div>
+  <div class="clause"><span class="clause-label">(c)</span> Where the Chairperson's position falls vacant, the remaining Executive Committee members shall appoint an Acting Chairperson from among themselves by majority vote until a by-election is held within 60 days.</div>
+
+  <div class="page-num">— 9 —</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- PAGE 10 — ARTICLES 6.8, 6.9 + ARTICLE 7.1–7.3 -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="running-header">
+    <span class="rh-left">KY4Y — Constitution</span>
+    <span class="rh-right">Articles 6.8–7: Ward Representatives, Conflict of Interest &amp; Meetings</span>
+  </div>
+
+  <h3>6.8 Ward Representatives</h3>
+  <div class="clause"><span class="clause-label">(a)</span> Each of the 8 wards of Kasipul Constituency shall have one Ward Representative elected by KY4Y members resident in that ward.</div>
+  <div class="clause"><span class="clause-label">(b)</span> Ward Representatives shall: coordinate KY4Y activities within their ward; serve as the primary point of contact between ward members and the Executive Committee; report ward-level activities and needs to the Executive Committee quarterly; and attend Executive Committee meetings as non-voting participants (unless also holding an Executive Committee position).</div>
+  <div class="clause"><span class="clause-label">(c)</span> Ward Representatives shall serve a term of 2 years, renewable once.</div>
+  <div class="clause"><span class="clause-label">(d)</span> Ward Representative elections shall follow the same nomination, notice, campaigning, voting, and handover procedures as Executive Committee elections under Article 6.4, presided over by the Secretary General or their designee. A Ward Representative election shall be conducted separately for each ward, with only KY4Y members resident in that ward eligible to vote in their respective ward election.</div>
+
+  <h3>6.9 Conflict of Interest Register</h3>
+  <div class="clause"><span class="clause-label">(a)</span> The Secretary General shall maintain a <strong>Conflict of Interest Register</strong> as a permanent record of KY4Y.</div>
+  <div class="clause"><span class="clause-label">(b)</span> All Executive Committee officials shall declare in writing, before taking office and annually thereafter, any personal, financial, political, or business interest that may conflict with KY4Y's objectives or any decision before the Committee.</div>
+  <div class="clause"><span class="clause-label">(c)</span> Where a conflict of interest arises in relation to a specific agenda item, the official with the conflict shall: declare the conflict at the start of that agenda item; absent themselves from the discussion and vote on that item; and have their absence and the reason recorded in the minutes.</div>
+  <div class="clause"><span class="clause-label">(d)</span> The Conflict of Interest Register shall be available for inspection by any member upon written request to the Secretary General.</div>
+  <div class="clause"><span class="clause-label">(e)</span> Failure to declare a known conflict of interest is grounds for disciplinary proceedings under Article 5.</div>
+
+  <h2>Article 7: Meetings</h2>
+  <h3>7.1 Annual General Meeting (AGM)</h3>
+  <div class="clause"><span class="clause-label">(a)</span> KY4Y shall hold an Annual General Meeting <strong>once every calendar year</strong>, not later than <strong>30th June</strong> of each year.</div>
+  <div class="clause"><span class="clause-label">(b)</span> The Secretary General shall give members at least <strong>14 days' written notice</strong> of the AGM, including the date, time, venue, and agenda.</div>
+  <div class="clause"><span class="clause-label">(c)</span> The AGM shall: receive and approve the annual activity report from the Chairperson; receive and approve the audited financial statements from the Treasurer; elect officials (in election years); set membership subscription fees for the coming year; approve KY4Y's annual work plan and budget; and transact any other business of which proper notice has been given.</div>
+
+  <h3>7.2 Special General Meetings</h3>
+  <div class="clause"><span class="clause-label">(a)</span> The Chairperson may convene a Special General Meeting at any time upon giving 14 days' notice to all members.</div>
+  <div class="clause"><span class="clause-label">(b)</span> The Secretary General shall convene a Special General Meeting upon receipt of a written request signed by at least <strong>one-third of members in good standing</strong>, within 21 days of receiving such request.</div>
+  <div class="clause"><span class="clause-label">(c)</span> Only the business stated in the notice of a Special General Meeting shall be transacted at that meeting.</div>
+
+  <h3>7.3 Quorum</h3>
+  <div class="clause"><span class="clause-label">(a)</span> The quorum for a General Assembly meeting (AGM or Special) shall be <strong>one-third of members in good standing</strong> or 20 members, whichever is lesser.</div>
+  <div class="clause"><span class="clause-label">(b)</span> If a quorum is not present within 30 minutes of the scheduled start time, the meeting shall be adjourned to a date not more than 14 days later. At the adjourned meeting, a minimum of <strong>15 members in good standing</strong> shall constitute quorum, regardless of total membership size. No adjourned meeting shall proceed with fewer than 15 members present.</div>
+
+  <div class="page-num">— 10 —</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- PAGE 11 — ARTICLE 7.4–7.6 + ARTICLE 8 (FINANCE) -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="running-header">
+    <span class="rh-left">KY4Y — Constitution</span>
+    <span class="rh-right">Articles 7–8: Meetings (continued) &amp; Financial Management</span>
+  </div>
+
+  <h3>7.4 Voting at General Assembly Meetings</h3>
+  <div class="clause"><span class="clause-label">(a)</span> Each member in good standing shall have one vote.</div>
+  <div class="clause"><span class="clause-label">(b)</span> Decisions shall be made by simple majority of votes cast, except where this Constitution requires a higher threshold.</div>
+  <div class="clause"><span class="clause-label">(c)</span> The Chairperson shall have a casting vote in the event of a tie (except in elections, where drawing of lots applies).</div>
+  <div class="clause"><span class="clause-label">(d)</span> Voting shall ordinarily be by show of hands. Any member may request a secret ballot, which shall be granted by the Chairperson.</div>
+  <div class="clause"><span class="clause-label">(e)</span> Proxy voting is not permitted.</div>
+
+  <h3>7.5 Executive Committee Meetings</h3>
+  <div class="clause"><span class="clause-label">(a)</span> The Executive Committee shall meet at least <strong>once per month</strong>.</div>
+  <div class="clause"><span class="clause-label">(b)</span> The quorum for Executive Committee meetings shall be <strong>3 members</strong> of the Committee.</div>
+  <div class="clause"><span class="clause-label">(c)</span> Decisions shall be by simple majority. The Chairperson has a casting vote in the event of a tie.</div>
+  <div class="clause"><span class="clause-label">(d)</span> Minutes of all Executive Committee meetings shall be recorded by the Secretary General and distributed to all Committee members within 7 days.</div>
+
+  <h3>7.6 Records of Meetings</h3>
+  <p>All meeting minutes shall be: signed by the Chairperson and Secretary General; retained in KY4Y's official records for a minimum of 7 years; and made available for inspection by members upon written request.</p>
+
+  <h2>Article 8: Financial Management</h2>
+  <h3>8.1 Funds of KY4Y</h3>
+  <p>The funds of KY4Y shall consist of: membership subscription fees; donations, grants, and contributions from lawful sources; revenue from KY4Y-approved income-generating activities; and any other funds lawfully received.</p>
+
+  <h3>8.2 Bank Account</h3>
+  <div class="clause"><span class="clause-label">(a)</span> KY4Y shall maintain an official bank account in the name of <strong>KASIPUL YOUTH FOR YOUTH MOVEMENT</strong> at a reputable bank within Homa Bay County or as approved by the General Assembly.</div>
+  <div class="clause"><span class="clause-label">(b)</span> The bank account shall require the signatures of <strong>both</strong> of the following officials for any withdrawal or transaction: the <strong>Chairperson</strong> and the <strong>Treasurer</strong>.</div>
+  <div class="clause"><span class="clause-label">(c)</span> No single official shall authorize withdrawals alone under any circumstances.</div>
+
+  <h3>8.3 Use of Funds</h3>
+  <div class="clause"><span class="clause-label">(a)</span> KY4Y funds shall only be used for purposes approved by the Executive Committee and consistent with the objectives of this Constitution.</div>
+  <div class="clause"><span class="clause-label">(b)</span> Expenditure between <strong>KSh 50,001 and KSh 200,000</strong> shall require prior approval of the Executive Committee. Any expenditure exceeding <strong>KSh 200,000</strong> shall require prior approval of the General Assembly. In a declared emergency, the Executive Committee may authorize expenditure above these thresholds, subject to ratification by the appropriate body at its next meeting.</div>
+  <div class="clause"><span class="clause-label">(c)</span> No officer, member, or third party shall receive personal benefit from KY4Y funds except as reasonable compensation for services duly approved by the Executive Committee and documented.</div>
+
+  <h3>8.4 Financial Records</h3>
+  <div class="clause"><span class="clause-label">(a)</span> The Treasurer shall maintain accurate books of accounts recording all income and expenditure of KY4Y.</div>
+  <div class="clause"><span class="clause-label">(b)</span> Financial records shall be retained for a minimum of <strong>7 years</strong>.</div>
+  <div class="clause"><span class="clause-label">(c)</span> The Treasurer shall prepare and present a financial report at every Executive Committee meeting and a comprehensive annual financial statement at the AGM.</div>
+
+  <h3>8.5 Audit</h3>
+  <div class="clause"><span class="clause-label">(a)</span> KY4Y's accounts shall be audited annually by an independent auditor appointed by the General Assembly.</div>
+  <div class="clause"><span class="clause-label">(b)</span> Audited financial statements shall be presented to the General Assembly at the AGM.</div>
+  <div class="clause"><span class="clause-label">(c)</span> Audited statements shall be filed with the Registering Authority as required by the Act.</div>
+
+  <h3>8.6 Financial Year</h3>
+  <p>The financial year of KY4Y shall run from <strong>1st January to 31st December</strong> of each calendar year.</p>
+
+  <h3>8.7 Transparency</h3>
+  <div class="clause"><span class="clause-label">(a)</span> KY4Y is committed to full financial transparency. Summary financial reports shall be made available to all members and, where appropriate, to the general public of Kasipul Constituency.</div>
+  <div class="clause"><span class="clause-label">(b)</span> Any member may inspect the books of accounts upon written request to the Treasurer, given at least 7 days' notice.</div>
+
+  <div class="page-num">— 11 —</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- PAGE 12 — ARTICLE 9 + ARTICLES 10–12 -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="running-header">
+    <span class="rh-left">KY4Y — Constitution</span>
+    <span class="rh-right">Articles 9–12: Records, Amendments, Disputes &amp; Dissolution</span>
+  </div>
+
+  <h2>Article 9: Records and Reporting</h2>
+  <h3>9.1 Member Register</h3>
+  <div class="clause"><span class="clause-label">(a)</span> The Secretary General shall maintain an up-to-date Member Register containing for each member: full name; National ID number; date of birth; ward of residence within Kasipul Constituency; phone number and email (where applicable); date of joining; membership tier (Builder / Mentor / Architect / Ambassador); and date of departure or removal (if applicable).</div>
+  <div class="clause"><span class="clause-label">(b)</span> The Member Register shall be available for inspection by the Registering Authority at any time.</div>
+  <div class="clause"><span class="clause-label">(c)</span> A member may inspect their own entry in the Member Register by request to the Secretary General at any time.</div>
+
+  <h3>9.2 Reports to the Registering Authority</h3>
+  <p>KY4Y shall submit to the Registering Authority:</p>
+  <div class="clause"><span class="clause-label">(a)</span> <strong>Half-yearly progress reports</strong> covering activities undertaken, membership changes, and financial summary — due by <strong>31st July</strong> (for January–June) and <strong>31st January</strong> (for July–December of the preceding year).</div>
+  <div class="clause"><span class="clause-label">(b)</span> <strong>Annual audited financial statements</strong> — within 6 months of the end of each financial year.</div>
+  <div class="clause"><span class="clause-label">(c)</span> <strong>Amended constitution</strong> — within <strong>1 month</strong> of any constitutional amendment.</div>
+  <div class="clause"><span class="clause-label">(d)</span> <strong>Updated list of officials</strong> — within <strong>1 month</strong> of any change in Executive Committee membership.</div>
+
+  <h3>9.3 Access to Records</h3>
+  <p>KY4Y shall grant the Registering Authority access to all records, documents, and facilities upon request, as required by the Act.</p>
+
+  <h2>Article 10: Amendments to this Constitution</h2>
+  <div class="clause"><span class="clause-label">10.1</span> This Constitution may be amended by a resolution passed by at least <strong>two-thirds (2/3)</strong> of members present and voting at a General Assembly meeting.</div>
+  <div class="clause"><span class="clause-label">10.2</span> Notice of any proposed amendment shall be given to all members at least <strong>21 days</strong> before the meeting at which it is to be considered. The notice shall include the full text of the proposed amendment.</div>
+  <div class="clause"><span class="clause-label">10.3</span> No amendment shall be made that is inconsistent with the Community Groups Registration Act No. 30 of 2022 or any other written law of Kenya.</div>
+  <div class="clause"><span class="clause-label">10.4</span> Any amendment to this Constitution shall be submitted to the Registering Authority within <strong>1 month</strong> of adoption, together with the amended constitution.</div>
+
+  <h2>Article 11: Disputes and Conflict Resolution</h2>
+  <div class="clause"><span class="clause-label">11.1</span> KY4Y shall seek to resolve internal disputes through dialogue and mediation before escalating to formal proceedings.</div>
+  <div class="clause"><span class="clause-label">11.2</span> Any dispute between members, or between a member and the Executive Committee, shall first be referred to the Chairperson for mediation. If the Chairperson is a party to the dispute, the Secretary General shall mediate.</div>
+  <div class="clause"><span class="clause-label">11.3</span> If mediation fails, the dispute shall be referred to the General Assembly, whose decision shall be final on internal matters.</div>
+  <div class="clause"><span class="clause-label">11.4</span> Nothing in this Article shall prevent a member from exercising any legal right available to them under Kenyan law.</div>
+
+  <h2>Article 12: Dissolution</h2>
+  <div class="clause"><span class="clause-label">12.1</span> KY4Y may be dissolved by a resolution passed by at least <strong>three-quarters (3/4)</strong> of all members in good standing at a Special General Meeting convened specifically for that purpose, with at least <strong>21 days' notice</strong> given to all members.</div>
+  <div class="clause"><span class="clause-label">12.2</span> Upon dissolution, after payment of all debts and liabilities, the remaining assets of KY4Y shall not be distributed among members but shall be transferred to one or more organizations registered in Kenya with similar objectives, as determined by the General Assembly at the dissolution meeting.</div>
+  <div class="clause"><span class="clause-label">12.3</span> The Executive Committee shall notify the Registering Authority of the dissolution within <strong>14 days</strong> of the General Assembly resolution.</div>
+
+  <div class="page-num">— 12 —</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- PAGE 13 — ARTICLES 13–14 (GENERAL + PATRON) -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="running-header">
+    <span class="rh-left">KY4Y — Constitution</span>
+    <span class="rh-right">Articles 13–14: General Provisions &amp; Honorary Patron</span>
+  </div>
+
+  <h2>Article 13: General Provisions</h2>
+  <div class="clause"><span class="clause-label">13.1</span> <strong>Compliance with Law</strong> — KY4Y shall comply with the Community Groups Registration Act No. 30 of 2022 and all other applicable laws of Kenya at all times.</div>
+  <div class="clause"><span class="clause-label">13.2</span> <strong>Non-Distribution</strong> — No part of KY4Y's income or assets shall be distributed to or for the personal benefit of any member, officer, or associate, except as reasonable and approved compensation for services rendered.</div>
+  <div class="clause"><span class="clause-label">13.3</span> <strong>Official Seal and Logo</strong> — KY4Y may adopt an official seal and logo. The use of the KY4Y name, seal, and logo shall be regulated by the Executive Committee.</div>
+  <div class="clause"><span class="clause-label">13.4</span> <strong>Indemnity</strong> — KY4Y shall indemnify officials and members acting in good faith in the lawful discharge of their duties from personal liability arising from such acts.</div>
+  <div class="clause"><span class="clause-label">13.5</span> <strong>Headings</strong> — Article headings are for convenience only and shall not affect the interpretation of this Constitution.</div>
+
+  <h2>Article 14: Honorary Patron and Founding Patrons</h2>
+  <h3>14.1 Honorary Patron</h3>
+  <p>The serving <strong>Member of Parliament for Kasipul Constituency</strong> is hereby invited to serve as the <strong>Honorary Patron</strong> of KY4Y. The inaugural Honorary Patron is the <strong>Honourable Boyd Were, MP for Kasipul Constituency</strong>.</p>
+
+  <div class="clause" style="margin-top:2mm;"><span class="clause-label">14.2</span> The Honorary Patron shall:
+    <ul style="margin-top:1.5mm;">
+      <li>Represent the formal relationship between KY4Y and Kasipul Constituency's elected parliamentary leadership</li>
+      <li>Champion KY4Y's objectives before Parliament, government institutions, and the private sector</li>
+      <li>Attend and address General Assembly meetings and official KY4Y events upon invitation</li>
+      <li>Lend their name, voice, and platform to advance the interests and visibility of KY4Y and the youth of Kasipul</li>
+    </ul>
+  </div>
+  <div class="clause"><span class="clause-label">14.3</span> The Honorary Patron shall have <strong>no voting rights, no financial authority, no executive function, and no power of appointment or dismissal</strong> within KY4Y. The Honorary Patron may not attend Executive Committee meetings unless specifically invited by the Chairperson for a defined advisory purpose.</div>
+  <div class="clause"><span class="clause-label">14.4</span> The Honorary Patron role is attached to the <strong>office</strong> of Member of Parliament for Kasipul Constituency, not to any individual. Upon a change in constituency representation, the Executive Committee shall formally invite the incoming MP to continue in the role of Honorary Patron.</div>
+
+  <h3>14.5 Founding Patrons</h3>
+  <div class="clause"><span class="clause-label">14.5</span> KY4Y may recognise individuals who have made significant contributions to the founding or early growth of the Movement as <strong>Founding Patrons</strong>.</div>
+  <div class="clause"><span class="clause-label">14.6</span> Founding Patron status shall be conferred by a resolution of the Executive Committee and recorded in the Movement's official register.</div>
+  <div class="clause"><span class="clause-label">14.7</span> Founding Patrons shall be recognised at official KY4Y events, listed in KY4Y's public communications, and may be invited to address the General Assembly at the discretion of the Executive Committee.</div>
+  <div class="clause"><span class="clause-label">14.8</span> Founding Patron status carries <strong>no voting rights, no financial authority, no executive function, and no power of appointment</strong> within KY4Y. Founding Patrons may not attend Executive Committee meetings unless specifically invited by the Chairperson for a defined advisory purpose.</div>
+  <div class="clause"><span class="clause-label">14.9</span> Founding Patron status may be revoked by the Executive Committee for conduct inconsistent with KY4Y's values or for any action that brings the Movement into disrepute.</div>
+
+  <div class="page-num">— 13 —</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- PAGE 14 — ARTICLE 15: FOUNDING MEMBERS -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="running-header">
+    <span class="rh-left">KY4Y — Constitution</span>
+    <span class="rh-right">Article 15: Founding Members</span>
+  </div>
+
+  <h2>Article 15: Founding Members and Certification</h2>
+  <p>We, the undersigned founding members of the KASIPUL YOUTH FOR YOUTH MOVEMENT, hereby adopt this Constitution as the governing document of our organization, and commit to uphold its values, objectives, and rules.</p>
+
+  <div style="margin:3mm 0; display:flex; gap:7mm;">
+    <div><strong>Date of Adoption:</strong> &nbsp; <span style="border-bottom:1px solid #888; display:inline-block; width:55mm;">&nbsp;</span></div>
+    <div><strong>Venue:</strong> &nbsp; <span style="border-bottom:1px solid #888; display:inline-block; width:55mm;">&nbsp;</span></div>
+  </div>
+
+  <table>
+    <tr>
+      <th style="width:8%;">#</th>
+      <th style="width:30%;">Full Name</th>
+      <th style="width:20%;">Phone / ID No.</th>
+      <th style="width:22%;">Position</th>
+      <th style="width:20%;">Signature</th>
+    </tr>
+    <tr><td style="text-align:center;">1</td><td><strong>Onuko Wilson</strong></td><td></td><td><strong>Chairperson</strong></td><td></td></tr>
+    <tr><td style="text-align:center;">2</td><td><strong>Jeff Mc'ondoro</strong></td><td>0702617775</td><td><strong>Secretary General</strong></td><td></td></tr>
+    <tr><td style="text-align:center;">3</td><td><strong>Beryl Shantel Onyango</strong></td><td>0708006319</td><td><strong>Treasurer</strong></td><td></td></tr>
+    <tr><td style="text-align:center;">4</td><td><strong>Trevor Richard</strong></td><td>0724749763</td><td><strong>Director of Communications</strong></td><td></td></tr>
+    <tr><td style="text-align:center;">5</td><td><strong>Diana Marion</strong></td><td></td><td><strong>Vice Chairperson</strong></td><td></td></tr>
+    <tr><td style="text-align:center;">6</td><td><strong>Maurine Achieng</strong></td><td></td><td><strong>Deputy Secretary General</strong></td><td></td></tr>
+    <tr><td style="text-align:center;">7</td><td><strong>Marvine Ochieng</strong></td><td>0799975675</td><td>Director of IT</td><td></td></tr>
+    <tr><td style="text-align:center;">8</td><td>Jackson Onyango</td><td>0707835752</td><td>Member</td><td></td></tr>
+    <tr><td style="text-align:center;">9</td><td>Steven Okumu</td><td>0748269005</td><td>Member</td><td></td></tr>
+    <tr><td style="text-align:center;">10</td><td>Siwo Zekky</td><td>0798976272</td><td>Member</td><td></td></tr>
+    <tr><td style="text-align:center;">11</td><td>Fredrick Opiyo</td><td>0745861680</td><td>Member</td><td></td></tr>
+    <tr><td style="text-align:center;">12</td><td>Philip Ohito Ngiela</td><td>0703850383</td><td>Member</td><td></td></tr>
+    <tr><td style="text-align:center;">13</td><td>Charles Kai</td><td>0768683820</td><td>Member</td><td></td></tr>
+  </table>
+  <p style="margin-top:1mm;"><em>Additional founding members may be listed on a separate annexure signed and dated on the same date as this Constitution.</em></p>
+
+  <div class="page-num">— 14 —</div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════════ -->
+<!-- PAGE 15 — CERTIFICATION AND SIGNATURES -->
+<!-- ═══════════════════════════════════════════════════ -->
+<div class="page">
+  <div class="running-header">
+    <span class="rh-left">KY4Y — Constitution</span>
+    <span class="rh-right">Certification &amp; Signatures</span>
+  </div>
+
+  <div class="cert-box">
+    <p>We certify that this Constitution was duly adopted by the founding members of the KASIPUL YOUTH FOR YOUTH MOVEMENT at a duly constituted meeting held on the date indicated above, and that all founding members were present and consented to its adoption.</p>
+  </div>
+
+  <div class="sig-block" style="margin-top:4mm;">
+    <div class="sig-label">Chairperson</div>
+    <div class="sig-line">
+      <div class="sig-field"><span>&nbsp;</span><label>Name (Print)</label></div>
+      <div class="sig-field"><span>&nbsp;</span><label>Signature</label></div>
+      <div class="sig-field" style="flex:0.5;"><span>&nbsp;</span><label>Date</label></div>
+    </div>
+    <div class="sig-label">Secretary General</div>
+    <div class="sig-line">
+      <div class="sig-field"><span>&nbsp;</span><label>Name (Print)</label></div>
+      <div class="sig-field"><span>&nbsp;</span><label>Signature</label></div>
+      <div class="sig-field" style="flex:0.5;"><span>&nbsp;</span><label>Date</label></div>
+    </div>
+    <div class="sig-label">Vice Chairperson</div>
+    <div class="sig-line">
+      <div class="sig-field"><span>&nbsp;</span><label>Name (Print)</label></div>
+      <div class="sig-field"><span>&nbsp;</span><label>Signature</label></div>
+      <div class="sig-field" style="flex:0.5;"><span>&nbsp;</span><label>Date</label></div>
+    </div>
+    <div class="sig-label">Deputy Secretary General</div>
+    <div class="sig-line">
+      <div class="sig-field"><span>&nbsp;</span><label>Name (Print)</label></div>
+      <div class="sig-field"><span>&nbsp;</span><label>Signature</label></div>
+      <div class="sig-field" style="flex:0.5;"><span>&nbsp;</span><label>Date</label></div>
+    </div>
+  </div>
+
+  <div class="patron-box" style="margin-top:4mm;">
+    <h4>Acknowledgment by Honorary Patron</h4>
+    <p style="font-style:italic; margin-bottom:3.5mm;">I, the undersigned, being the Member of Parliament for Kasipul Constituency, acknowledge and support the establishment of the KASIPUL YOUTH FOR YOUTH MOVEMENT and accept the role of Honorary Patron as provided under Article 14 of this Constitution.</p>
+    <div class="sig-line">
+      <div class="sig-field"><span>&nbsp;</span><label><strong>Hon. Boyd Were, MP — Kasipul Constituency</strong></label></div>
+      <div class="sig-field"><span>&nbsp;</span><label>Signature</label></div>
+      <div class="sig-field" style="flex:0.5;"><span>&nbsp;</span><label>Date</label></div>
+    </div>
+  </div>
+
+  <div class="doc-footer">
+    <p>This Constitution complies with the Community Groups Registration Act No. 30 of 2022 (Kenya) and the requirements of the Department of Gender and Social Development, Ministry of Labour and Social Protection.</p>
+    <p style="margin-top:1mm;"><strong>For registration, submit to:</strong> Sub-County Labour &amp; Social Protection Office, Rachuonyo South Sub-County, Homa Bay County &nbsp;|&nbsp; OR &nbsp;|&nbsp; Oyugis Huduma Centre &nbsp;&nbsp; <strong>Registration Fee: KSh 1,000</strong></p>
+    <p style="margin-top:1.5mm;">Document Version 1.0 &nbsp;|&nbsp; Drafted: February 2026</p>
+  </div>
+
+  <div class="page-num">— 15 —</div>
+</div>
+
+</body>
+</html>

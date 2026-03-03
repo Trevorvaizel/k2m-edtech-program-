@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KY4Y — Leadership Vacancy</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Open+Sans:wght@400;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --navy: #1B3A8C;
+    --orange: #F47920;
+    --light-orange: #FFF3E8;
+    --white: #FFFFFF;
+    --light-gray: #F5F7FA;
+  }
+
+  body {
+    background: #E8EAF0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    padding: 40px 20px;
+    font-family: 'Open Sans', sans-serif;
+  }
+
+  .poster {
+    width: 794px;
+    min-height: 1123px;
+    background: var(--white);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .top-bar {
+    height: 8px;
+    background: linear-gradient(90deg, var(--orange) 0%, var(--navy) 100%);
+  }
+
+  .logo-section {
+    background: var(--white);
+    padding: 28px 40px 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-bottom: 3px solid var(--light-orange);
+  }
+
+  .logo-icon { width: 80px; height: 80px; margin-bottom: 8px; }
+
+  .youth-text {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    color: var(--orange);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .four-badge {
+    background: var(--navy);
+    color: var(--white);
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 900;
+    font-size: 24px;
+    width: 40px; height: 40px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .kasipul-text {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 900;
+    font-size: 42px;
+    color: var(--navy);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    line-height: 1;
+    margin-top: 2px;
+  }
+
+  .tagline-banner {
+    background: var(--orange);
+    color: var(--white);
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 5px 32px;
+    margin-top: 8px;
+    border-radius: 2px;
+  }
+
+  .doc-type {
+    background: var(--navy);
+    color: var(--white);
+    text-align: center;
+    padding: 12px 40px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  /* HERO */
+  .hero-call {
+    background: var(--navy);
+    padding: 40px 56px 36px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-call::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 180px; height: 180px;
+    border-radius: 50%;
+    background: rgba(244,121,32,0.1);
+  }
+
+  .call-label {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--orange);
+    margin-bottom: 14px;
+  }
+
+  .call-title {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 900;
+    font-size: 40px;
+    color: var(--white);
+    line-height: 1.1;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+  }
+
+  .call-title .highlight { color: var(--orange); }
+
+  .call-sub {
+    font-family: 'Open Sans', sans-serif;
+    font-size: 15px;
+    color: rgba(255,255,255,0.8);
+    line-height: 1.6;
+    margin-bottom: 24px;
+    max-width: 520px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* POSITIONS GRID */
+  .positions-grid {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 30px;
+  }
+
+  .position-card {
+    flex: 1;
+    border: 2px solid var(--navy);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .position-card .card-header {
+    background: var(--navy);
+    color: var(--white);
+    padding: 12px 18px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .position-card .card-header .gender-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--orange);
+    flex-shrink: 0;
+  }
+
+  .position-card .card-body {
+    padding: 16px 18px;
+    background: var(--light-gray);
+  }
+
+  .position-card .role-title {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 900;
+    font-size: 16px;
+    color: var(--navy);
+    margin-bottom: 6px;
+  }
+
+  .position-card .role-desc {
+    font-size: 13px;
+    color: #555;
+    line-height: 1.5;
+  }
+
+  /* CONTENT */
+  .content {
+    flex: 1;
+    padding: 30px 56px 24px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .section-label {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--orange);
+    margin-bottom: 12px;
+  }
+
+  /* WHO WE NEED */
+  .who-box {
+    background: var(--light-orange);
+    border: 1px solid #FADDBC;
+    border-radius: 6px;
+    padding: 22px 24px;
+    margin-bottom: 24px;
+  }
+
+  .who-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px dashed #F0C898;
+    font-size: 14px;
+    color: #333;
+    line-height: 1.55;
+  }
+
+  .who-item:last-child { border-bottom: none; }
+
+  .who-item .tick {
+    color: var(--orange);
+    font-weight: 900;
+    font-size: 16px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .who-item strong {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    color: var(--navy);
+  }
+
+  /* DEADLINE BANNER */
+  .deadline-banner {
+    background: var(--orange);
+    color: var(--white);
+    border-radius: 6px;
+    padding: 18px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+  }
+
+  .deadline-banner .deadline-label {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.8);
+    margin-bottom: 4px;
+  }
+
+  .deadline-banner .deadline-date {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 900;
+    font-size: 22px;
+    color: var(--white);
+    letter-spacing: 1px;
+  }
+
+  .deadline-banner .deadline-note {
+    font-size: 12px;
+    color: rgba(255,255,255,0.85);
+    text-align: right;
+    max-width: 200px;
+    line-height: 1.5;
+  }
+
+  /* HOW TO APPLY */
+  .apply-box {
+    background: var(--navy);
+    color: var(--white);
+    border-radius: 6px;
+    padding: 22px 24px;
+    margin-bottom: 20px;
+  }
+
+  .apply-box .apply-label {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--orange);
+    margin-bottom: 14px;
+  }
+
+  .apply-steps {
+    display: flex;
+    gap: 0;
+    counter-reset: step;
+  }
+
+  .apply-step {
+    flex: 1;
+    text-align: center;
+    padding: 0 12px;
+    border-right: 1px solid rgba(255,255,255,0.1);
+    position: relative;
+  }
+
+  .apply-step:last-child { border-right: none; }
+
+  .step-num {
+    background: var(--orange);
+    color: var(--white);
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 900;
+    font-size: 16px;
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 10px;
+  }
+
+  .apply-step .step-text {
+    font-size: 12px;
+    line-height: 1.5;
+    color: rgba(255,255,255,0.85);
+  }
+
+  .apply-step .step-text strong {
+    color: var(--white);
+    display: block;
+    margin-bottom: 3px;
+    font-size: 13px;
+  }
+
+  /* EMAIL */
+  .email-line {
+    text-align: center;
+    padding: 14px 0;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--navy);
+    border: 2px dashed var(--navy);
+    border-radius: 4px;
+    margin-bottom: 0;
+  }
+
+  .email-line .email-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #888;
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  .email-line .email-addr {
+    color: var(--orange);
+  }
+
+  /* FOOTER */
+  .footer {
+    border-top: 3px solid var(--navy);
+    padding: 20px 56px 22px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    background: var(--light-gray);
+  }
+
+  .signature-block .name {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    color: var(--navy);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .signature-block .title {
+    font-size: 11px;
+    color: #666;
+    margin-top: 2px;
+  }
+
+  .bottom-bar {
+    height: 6px;
+    background: linear-gradient(90deg, var(--navy) 0%, var(--orange) 100%);
+  }
+</style>
+</head>
+<body>
+<div class="poster">
+  <div class="top-bar"></div>
+
+  <!-- LOGO -->
+  <div class="logo-section">
+    <div class="logo-icon">
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="50,4 53,14 63,14 55,20 58,30 50,24 42,30 45,20 37,14 47,14" fill="#F47920"/>
+        <circle cx="32" cy="38" r="7" fill="#F47920"/>
+        <rect x="28" y="46" width="8" height="18" rx="4" fill="#F47920"/>
+        <circle cx="68" cy="38" r="7" fill="#1B3A8C"/>
+        <rect x="64" y="46" width="8" height="18" rx="4" fill="#1B3A8C"/>
+        <line x1="32" y1="52" x2="20" y2="42" stroke="#F47920" stroke-width="3" stroke-linecap="round"/>
+        <line x1="68" y1="52" x2="80" y2="42" stroke="#1B3A8C" stroke-width="3" stroke-linecap="round"/>
+        <rect x="44" y="60" width="12" height="16" rx="2" fill="#1B3A8C"/>
+        <text x="50" y="72" text-anchor="middle" font-family="Arial" font-weight="900" font-size="12" fill="white">4</text>
+      </svg>
+    </div>
+    <div style="text-align:center;">
+      <div style="display:flex; align-items:center; gap:12px; justify-content:center; margin-bottom:5px;">
+        <span class="youth-text">YOUTH</span>
+        <span class="four-badge">4</span>
+        <span class="youth-text">YOUTH</span>
+      </div>
+      <div class="kasipul-text">KASIPUL</div>
+      <div class="tagline-banner">THE FUTURE IS NOW</div>
+    </div>
+  </div>
+
+  <div class="doc-type">Call for Leadership &nbsp;|&nbsp; 18th February 2026</div>
+
+  <!-- HERO -->
+  <div class="hero-call">
+    <div class="call-label">&#9733; &nbsp; Kasipul, We Need You &nbsp; &#9733;</div>
+    <div class="call-title">
+      Your Community<br>Is <span class="highlight">Calling You</span> to Serve.
+    </div>
+    <div class="call-sub">
+      We are looking for two young people from Kasipul —
+      people who are already out there, already doing something,
+      already giving back — to carry this organisation forward.
+    </div>
+  </div>
+
+  <!-- POSITIONS -->
+  <div style="padding: 28px 56px 0;">
+    <div class="section-label">Two Open Positions</div>
+    <div class="positions-grid">
+      <div class="position-card">
+        <div class="card-header">
+          <div class="gender-dot"></div>
+          Position One
+        </div>
+        <div class="card-body">
+          <div class="role-title">Secretary General</div>
+          <div class="role-desc">The lead role. You speak for our members, keep things moving, and make sure our work in the community is felt.</div>
+        </div>
+      </div>
+      <div class="position-card">
+        <div class="card-header">
+          <div class="gender-dot"></div>
+          Position Two
+        </div>
+        <div class="card-body">
+          <div class="role-title">Assistant Secretary General</div>
+          <div class="role-desc">You work alongside the SG, cover what they cannot, and make sure no member and no ward is left behind.</div>
+        </div>
+      </div>
+    </div>
+    <div style="font-size:12px; color:#888; text-align:center; margin-top:8px; margin-bottom:24px; font-style:italic;">
+      &#9432; &nbsp; One position for a male candidate, one for a female candidate — both must be filled.
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <div class="section-label">Who We Are Looking For</div>
+    <div class="who-box">
+      <div class="who-item">
+        <div class="tick">✦</div>
+        <div>
+          <strong>An active Kasipul youth</strong> — You must be a member currently involved in grassroot development in this constituency. This is not for observers. It is for those already in the field.
+        </div>
+      </div>
+      <div class="who-item">
+        <div class="tick">✦</div>
+        <div>
+          <strong>Genuinely serving</strong> — Not serving on paper. Not serving for position. We are looking for someone whose community can already see their impact.
+        </div>
+      </div>
+      <div class="who-item">
+        <div class="tick">✦</div>
+        <div>
+          <strong>Dedicated to youth</strong> — Your motivation must be the youth of Kasipul — their growth, their dignity, their future. Everything else is secondary.
+        </div>
+      </div>
+    </div>
+
+    <!-- DEADLINE -->
+    <div class="deadline-banner">
+      <div>
+        <div class="deadline-label">Application Deadline</div>
+        <div class="deadline-date">Wednesday, 25th February 2026</div>
+      </div>
+      <div class="deadline-note">
+        Late applications will not be considered. Submit before the deadline.
+      </div>
+    </div>
+
+    <!-- HOW TO APPLY -->
+    <div class="apply-box">
+      <div class="apply-label">How to Apply</div>
+      <div class="apply-steps">
+        <div class="apply-step">
+          <div class="step-num">1</div>
+          <div class="step-text">
+            <strong>Write a Letter</strong>
+            Tell us who you are and why you want to serve.
+          </div>
+        </div>
+        <div class="apply-step">
+          <div class="step-num">2</div>
+          <div class="step-text">
+            <strong>State Your Impact</strong>
+            Tell us what you have already done in this community.
+          </div>
+        </div>
+        <div class="apply-step">
+          <div class="step-num">3</div>
+          <div class="step-text">
+            <strong>Send It In</strong>
+            Email or deliver to the Chairman by the deadline.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EMAIL -->
+    <div class="email-line">
+      <span class="email-label">Send Applications To</span>
+      <span class="email-addr">youthkasipul@gmail.com</span>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <div class="signature-block">
+      <div class="name">Onuko Wilson</div>
+      <div class="title">Chairman</div>
+    </div>
+    <div style="text-align:center; font-size:12px; color:#888;">
+      Kasipul Constituency Youth For Youth<br>
+      <span style="color:#F47920; font-weight:600;">youthkasipul@gmail.com</span>
+    </div>
+    <div class="signature-block" style="text-align:right;">
+      <div class="name">Trevor Richard</div>
+      <div class="title">Strategy &amp; Communications</div>
+    </div>
+  </div>
+
+  <div class="bottom-bar"></div>
+</div>
+</body>
+</html>

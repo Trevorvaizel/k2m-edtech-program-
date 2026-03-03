@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KY4Y — Disciplinary Notice</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800;900&family=Open+Sans:wght@400;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --navy: #1B3A8C;
+    --orange: #F47920;
+    --light-orange: #FFF3E8;
+    --white: #FFFFFF;
+    --light-gray: #F5F7FA;
+    --red-accent: #C0392B;
+  }
+
+  body {
+    background: #E8EAF0;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+    padding: 40px 20px;
+    font-family: 'Open Sans', sans-serif;
+  }
+
+  .poster {
+    width: 794px;
+    min-height: 1123px;
+    background: var(--white);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .top-bar {
+    height: 8px;
+    background: linear-gradient(90deg, var(--navy) 60%, var(--orange) 100%);
+  }
+
+  .logo-section {
+    background: var(--white);
+    padding: 28px 40px 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-bottom: 3px solid #E0E6F0;
+  }
+
+  .logo-icon {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 8px;
+  }
+
+  .youth-text {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 22px;
+    color: var(--orange);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .four-badge {
+    background: var(--navy);
+    color: var(--white);
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 900;
+    font-size: 24px;
+    width: 40px;
+    height: 40px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .kasipul-text {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 900;
+    font-size: 42px;
+    color: var(--navy);
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    line-height: 1;
+    margin-top: 2px;
+  }
+
+  .tagline-banner {
+    background: var(--orange);
+    color: var(--white);
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    padding: 5px 32px;
+    margin-top: 8px;
+    border-radius: 2px;
+  }
+
+  .doc-type {
+    background: var(--navy);
+    color: var(--white);
+    text-align: center;
+    padding: 12px 40px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  /* SECTION HEADER */
+  .section-header {
+    background: var(--navy);
+    color: var(--white);
+    padding: 18px 56px;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .section-header .icon {
+    font-size: 28px;
+  }
+
+  .section-header h2 {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 900;
+    font-size: 22px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .content {
+    flex: 1;
+    padding: 36px 56px 28px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .intro-text {
+    font-size: 15px;
+    line-height: 1.8;
+    color: #333;
+    margin-bottom: 32px;
+    border-left: 4px solid var(--navy);
+    padding-left: 20px;
+    font-style: italic;
+  }
+
+  /* CASES TABLE */
+  .cases-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 36px;
+    border: 2px solid var(--navy);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+
+  .cases-table thead {
+    background: var(--navy);
+    color: var(--white);
+  }
+
+  .cases-table thead th {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    padding: 14px 18px;
+    text-align: left;
+  }
+
+  .cases-table tbody tr {
+    border-bottom: 1px solid #E0E6F0;
+  }
+
+  .cases-table tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  .cases-table tbody tr:nth-child(even) {
+    background: var(--light-gray);
+  }
+
+  .cases-table tbody td {
+    padding: 18px 18px;
+    font-size: 14px;
+    color: #222;
+    vertical-align: middle;
+  }
+
+  .cases-table tbody td:first-child {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    color: var(--navy);
+    font-size: 15px;
+  }
+
+  .case-number {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 900;
+    color: var(--orange);
+    font-size: 18px;
+    width: 40px;
+  }
+
+  .outcome-badge {
+    display: inline-block;
+    padding: 5px 14px;
+    border-radius: 3px;
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .outcome-relieved {
+    background: #EBF0FB;
+    color: var(--navy);
+    border: 1px solid var(--navy);
+  }
+
+  .outcome-expelled {
+    background: #FBEAEA;
+    color: var(--red-accent);
+    border: 1px solid var(--red-accent);
+  }
+
+  /* NOTICE BOX */
+  .notice-box {
+    background: var(--light-orange);
+    border: 2px solid var(--orange);
+    border-radius: 4px;
+    padding: 22px 28px;
+    margin-bottom: 28px;
+  }
+
+  .notice-box .notice-label {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--orange);
+    margin-bottom: 10px;
+  }
+
+  .notice-box p {
+    font-size: 14px;
+    line-height: 1.8;
+    color: #444;
+  }
+
+  .notice-box strong {
+    color: var(--navy);
+    font-weight: 700;
+  }
+
+  .principle-statement {
+    text-align: center;
+    padding: 24px 20px;
+    border-top: 1px solid #E0E6F0;
+    margin-top: auto;
+  }
+
+  .principle-statement p {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--navy);
+    line-height: 1.5;
+  }
+
+  .principle-statement span {
+    color: var(--orange);
+  }
+
+  .footer {
+    border-top: 3px solid var(--navy);
+    padding: 22px 56px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    background: var(--light-gray);
+  }
+
+  .signature-block .name {
+    font-family: 'Montserrat', sans-serif;
+    font-weight: 800;
+    font-size: 13px;
+    color: var(--navy);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .signature-block .title {
+    font-size: 11px;
+    color: #666;
+    margin-top: 2px;
+  }
+
+  .bottom-bar {
+    height: 6px;
+    background: linear-gradient(90deg, var(--orange) 0%, var(--navy) 100%);
+  }
+</style>
+</head>
+<body>
+<div class="poster">
+  <div class="top-bar"></div>
+
+  <!-- LOGO -->
+  <div class="logo-section">
+    <div class="logo-icon">
+      <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <polygon points="50,4 53,14 63,14 55,20 58,30 50,24 42,30 45,20 37,14 47,14" fill="#F47920"/>
+        <circle cx="32" cy="38" r="7" fill="#F47920"/>
+        <rect x="28" y="46" width="8" height="18" rx="4" fill="#F47920"/>
+        <circle cx="68" cy="38" r="7" fill="#1B3A8C"/>
+        <rect x="64" y="46" width="8" height="18" rx="4" fill="#1B3A8C"/>
+        <line x1="32" y1="52" x2="20" y2="42" stroke="#F47920" stroke-width="3" stroke-linecap="round"/>
+        <line x1="68" y1="52" x2="80" y2="42" stroke="#1B3A8C" stroke-width="3" stroke-linecap="round"/>
+        <rect x="44" y="60" width="12" height="16" rx="2" fill="#1B3A8C"/>
+        <text x="50" y="72" text-anchor="middle" font-family="Arial" font-weight="900" font-size="12" fill="white">4</text>
+      </svg>
+    </div>
+    <div style="text-align:center;">
+      <div style="display:flex; align-items:center; gap:12px; justify-content:center; margin-bottom:5px;">
+        <span class="youth-text">YOUTH</span>
+        <span class="four-badge">4</span>
+        <span class="youth-text">YOUTH</span>
+      </div>
+      <div class="kasipul-text">KASIPUL</div>
+      <div class="tagline-banner">THE FUTURE IS NOW</div>
+    </div>
+  </div>
+
+  <div class="doc-type">Official Notice &nbsp;|&nbsp; 18th February 2026</div>
+
+  <div class="section-header">
+    <div class="icon">⚖️</div>
+    <h2>Disciplinary Actions</h2>
+  </div>
+
+  <div class="content">
+
+    <p class="intro-text">
+      We hold ourselves to a standard. When members fall short of that standard,
+      we act. The Chairman's Desk has reviewed three cases and reached the following
+      decisions, which take effect immediately.
+    </p>
+
+    <table class="cases-table">
+      <thead>
+        <tr>
+          <th style="width:36px;">#</th>
+          <th>Member</th>
+          <th>Finding</th>
+          <th>Outcome</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="case-number">1</td>
+          <td>Billy Noah</td>
+          <td>Chronic Absenteeism</td>
+          <td><span class="outcome-badge outcome-relieved">Relieved of Duties</span></td>
+        </tr>
+        <tr>
+          <td class="case-number">2</td>
+          <td>Willis Ojwang'</td>
+          <td>Absconding of Duties</td>
+          <td><span class="outcome-badge outcome-relieved">Relieved of Duties</span></td>
+        </tr>
+        <tr>
+          <td class="case-number">3</td>
+          <td>Vickins Bondo</td>
+          <td>Gross Misconduct</td>
+          <td><span class="outcome-badge outcome-expelled">Expelled</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="notice-box">
+      <div class="notice-label">⚠ Right of Appeal</div>
+      <p>
+        If you are affected by any decision in this notice and you feel it was unfair,
+        you have the right to appeal.
+        <br><br>
+        <strong>Write to the Chairman within 14 days of this date.</strong>
+        After that, these decisions are final.
+      </p>
+    </div>
+
+    <div class="principle-statement">
+      <p>
+        Every seat in this organisation is <span>earned, not given</span>.<br>
+        You keep it by <span>showing up, doing the work, and serving with integrity.</span>
+      </p>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <div class="signature-block">
+      <div class="name">Onuko Wilson</div>
+      <div class="title">Chairman</div>
+    </div>
+    <div style="text-align:center; font-size:12px; color:#888;">
+      Kasipul Constituency Youth For Youth<br>
+      <span style="color:#F47920; font-weight:600;">youthkasipul@gmail.com</span>
+    </div>
+    <div class="signature-block" style="text-align:right;">
+      <div class="name">Trevor Richard</div>
+      <div class="title">Strategy &amp; Communications</div>
+    </div>
+  </div>
+
+  <div class="bottom-bar"></div>
+</div>
+</body>
+</html>
