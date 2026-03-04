@@ -6,6 +6,7 @@
 #
 # HOW TO USE THIS FILE:
 #   - Before starting work, read this file to know what's done and what's next
+#   - Read execution_contract.mandatory_read_order before implementing any task
 #   - After completing a task, update status + short summary, and save full notes in task-notes/
 #   - If blocked, set status to "blocked" and add blocker summary
 #   - The "agent_context" field tells you what files to load for that task
@@ -13,9 +14,13 @@
 # STATUS VALUES: pending | in_progress | done | blocked | skipped
 
 project: "K2M Cohort 1 - Discord Infrastructure"
-cohort_launch_target: "TBD"
+cohort_launch_target: "2026-03-16"
+cohort_week1_start_date: "2026-03-16"
+cohort_first_session_date: "2026-03-18"
+payment_verification_team: "Trevor + Bruce + Mkunzi — all three hold @Facilitator role in Discord"
+facilitator_role_design: "@Facilitator Discord role (not 'Trevor'). Anyone with this role sees: #facilitator-dashboard, KIRA escalation DMs, admin channels. Add Trevor, Bruce, Mkunzi to this role pre-launch."
 builder: "Trevor (with BMAD agents)"
-tech_stack: "Discord + Python (discord.py) + Provider-routed LLM API (OpenAI active runtime) + SQLite"
+tech_stack: "Discord + Python (discord.py) + Provider-routed LLM API (OpenAI active runtime) + PostgreSQL (migrated from SQLite, decision 2026-03-04 pre-mortem)"
 active_llm_provider: "openai"
 provider_swap_status: "completed (OpenAI active; provider-swappable architecture retained)"
 
@@ -23,7 +28,11 @@ provider_swap_status: "completed (OpenAI active; provider-swappable architecture
 # SOURCE DOCUMENTS (Load these for full context)
 # ============================================================
 source_documents:
+  canonical_v3: "_bmad-output/cohort-design-artifacts/design-and-architecture/onboarding-context-canonical-v3.md"
   provider_runtime_override: "_bmad-output/cohort-design-artifacts/design-and-architecture/provider-runtime-override.md"
+  enrollment_flow_design: "_bmad-output/cohort-design-artifacts/design-and-architecture/student-onboarding-and-enrollment-flow.md"
+  context_engine_design: "_bmad-output/cohort-design-artifacts/design-and-architecture/context-engine-experience-design.md"
+  community_culture_architecture: "_bmad-output/cohort-design-artifacts/design-and-architecture/discord-community-culture-and-architecture.md"
   server_architecture: "_bmad-output/cohort-design-artifacts/playbook-v2/05-discord-ops/5-1-discord-server-structure.md"
   thinking_lab_spec: "_bmad-output/cohort-design-artifacts/playbook-v2/05-discord-ops/5-2-thinking-lab-setup.md"
   thinking_showcase_spec: "_bmad-output/cohort-design-artifacts/playbook-v2/05-discord-ops/5-3-thinking-showcase-setup.md"
@@ -39,18 +48,131 @@ source_documents:
   artifact_creation_flow: "_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-6-artifact-creation-flow.md"
   bot_technical_spec: "_bmad-output/cohort-design-artifacts/playbook-v2/04-cis-agents/4-7-discord-bot-spec.md"
   design_sprint_status: "_bmad-output/cohort-design-artifacts/operations/sprint/sprint-status.yaml"
+  pre_mortem_session_3: "_bmad-output/cohort-design-artifacts/design-and-architecture/pre-mortem-2026-03-04-decisions.md"
+  pre_mortem_session_4: "_bmad-output/cohort-design-artifacts/design-and-architecture/pre-mortem-session-4-decisions.md"
+
+# ============================================================
+# EXECUTION CONTRACT (AUDITABLE READ ORDER)
+# ============================================================
+execution_contract:
+  intent: "Keep design intent, implementation status, and playbook traceability aligned."
+  mandatory_read_order:
+    - "source_documents.canonical_v3"
+    - "source_documents.enrollment_flow_design"
+    - "source_documents.context_engine_design"
+    - "source_documents.community_culture_architecture"
+    - "source_documents.discord_architecture_overview"
+    - "this sprint file (task + status)"
+  precedence_rules:
+    - "Canonical merge decisions: canonical_v3 wins."
+    - "Enrollment/payment behavior: enrollment_flow_design wins."
+    - "Context/personalization behavior: context_engine_design wins."
+    - "Channel/culture/permission behavior: community_culture_architecture wins."
+    - "Task sequencing and implementation status: sprint YAML wins."
+  audit_requirements:
+    - "Every completed task must include notes_ref in task-notes/."
+    - "If implementation differs from design docs, log deviation in task notes with rationale."
+    - "Update this YAML status + summary in same change set as implementation update."
+
+canonical_merge_v3:
+  active: true
+  effective_date: "2026-03-04"
+  source: "source_documents.canonical_v3"
+  superseded_items:
+    - "0.7.1 intermediary token system superseded by 7.2 invite_code linkage."
+    - "6.6 PostgreSQL preparation superseded by 7.6 full PostgreSQL migration."
+    - "Any Stop 0 before-Stop-1 sequence superseded by Sprint 7 value-first order."
+    - "Any SQLite runtime storage requirement superseded by PostgreSQL runtime contract."
+  sprint_execution_order:
+    - "7.0"
+    - "7.6"
+    - "7.1"
+    - "7.2"
+    - "7.3"
+    - "7.11"
+    - "7.4"
+    - "7.5"
+    - "7.7"
+    - "7.8"
+    - "7.10"
+    - "7.12"
+    - "7.13"
+    - "7.14"
+    - "7.9"
+    - "7.15"
+    - "7.16"
+    - "6.1"
+    - "6.2"
+    - "6.3"
+    - "6.4"
+    - "6.7"
+    - "6.5"
+
+# ============================================================
+# PLAYBOOK TRACEABILITY (AUDIT CROSSWALK)
+# ============================================================
+playbook_traceability:
+  crosswalk:
+    "0.7a":
+      - "source_documents.enrollment_flow_design"
+      - "source_documents.google_forms_diagnostic"
+      - "source_documents.sheets_templates"
+    "0.7b":
+      - "source_documents.enrollment_flow_design"
+      - "source_documents.manual_sops"
+    "0.7c":
+      - "source_documents.context_engine_design"
+      - "source_documents.bot_technical_spec"
+    "0.7d":
+      - "source_documents.enrollment_flow_design"
+      - "source_documents.community_culture_architecture"
+      - "source_documents.manual_sops"
+    "5.8a":
+      - "source_documents.context_engine_design"
+      - "source_documents.community_culture_architecture"
+    "6.1":
+      - "source_documents.enrollment_flow_design"
+      - "source_documents.context_engine_design"
+      - "source_documents.bot_technical_spec"
+  audit_outputs:
+    - "task-notes/<task-id>.md"
+    - "summary line in this sprint YAML"
+    - "file refs to changed implementation/docs"
 
 # ============================================================
 # OVERALL PROGRESS
 # ============================================================
 progress:
-  total_tasks: 61
-  done: 34
+  total_tasks: 92
+  done: 36
   in_progress: 0
   blocked: 0
-  pending: 27
-  percent_complete: 56
-  decision_7_revised: "2026-02-20 � Context engine building NOW for Cohort 1 (not deferred)"
+  pending: 56
+  percent_complete: 39
+  decision_7_revised: "2026-02-20 — Context engine building NOW for Cohort 1 (not deferred)"
+  adversarial_review_2: "2026-03-04 — Pre-mortem on enrollment flow. 5 P0 bugs fixed, 5 P1 issues resolved. Task 0.7 split into 0.7a-d. Payment amount standardized to KES 5,000. Source-of-truth set via execution_contract."
+  adversarial_review_3: "2026-03-04 — Pre-mortem party mode (Sally+John+Winston+Amelia+DrQuinn+Murat+Mary+Maya). North star: zero Discord experience. Found 3 critical blockers, 6 high issues, 8 medium issues. Added Sprint 7. Migrated to PostgreSQL immediately (promoted from 6.6 prep). Full decisions log: pre-mortem-2026-03-04-decisions.md"
+  adversarial_review_4: "2026-03-04 — Session 4 party mode (same panel). UX lens: Don't Make Me Think, 100 Things, Emotional Design, Design of Everyday Things. Found 4 critical, 10 high, 11 medium gaps. Key themes: 8-surface context switches, undesigned waiting periods, activation moment needs emotional weight. 25 decisions, 10 new tasks, 84 total tasks. Full decisions log: pre-mortem-session-4-decisions.md"
+  decisions_confirmed_2026_03_04:
+    - "Form technology: Custom web forms at /join /enroll /mpesa-submit (NOT Google Forms)"
+    - "Discord username: Auto-captured via on_member_join. NOT in any form."
+    - "Email service: Brevo"
+    - "M-Pesa URL: Token-based (not email-in-URL)"
+  decisions_confirmed_2026_03_04_b:
+    - "Decision 3: Cluster assignment = Option F (stratified diversity + Trevor override). CLOSED."
+  decisions_confirmed_2026_03_04_preMortem:
+    - "B-01: on_member_join match key = unique per-student Discord invite links (Column R). CLOSED."
+    - "B-02: /join slash command REMOVED. Landing page form = Stage 1. /api/interest is entry point. CLOSED."
+    - "B-03: KIRA cannot DM pre-join users. All pre-join comms = Brevo only. KIRA DMs start at on_member_join. CLOSED."
+    - "H-01: M-Pesa token day-5 warning DM + /renew command + expiry page message. CLOSED."
+    - "H-02: Immediate KIRA DM on payment submission + 24h silence checker + not-verified path. CLOSED."
+    - "H-03: PostgreSQL migration promoted from 6.6 prep to Sprint 7 full migration. BLOCKING. CLOSED."
+    - "H-04: Railway hosting confirmed. Health endpoint + !recover_member command added. CLOSED."
+    - "H-05: Onboarding Stop 0 (4-question DM profile) runs after Stops 1-3 (value-first). CLOSED."
+    - "H-06: Sheets=enrollment truth, PostgreSQL=runtime truth. preload_students.py is bridge. CLOSED."
+    - "M-05: Enrollment cap = 30 students. Waitlist logic added to /api/interest. CLOSED."
+    - "Full decisions doc: _bmad-output/cohort-design-artifacts/design-and-architecture/pre-mortem-2026-03-04-decisions.md"
+  decisions_pending: []
 
 # ============================================================
 # SPRINT 0: AUTOMATED DISCORD SERVER SETUP
@@ -620,20 +742,37 @@ sprint_4:
 
     - id: "4.3"
       title: "Implement cluster assignment + voice channels"
-      status: "done"
+      status: "needs_update"
       description: |
-        Per Story 5.1:
-        - On student join: assign @Student role + cluster role (@Cluster-1 through @Cluster-8)
-        - Cluster by last name (A-F, G-L, M-R, S-Z)
-        - Welcome DM with cluster info and session schedule
+        Per Story 5.1 — CLUSTER ALGORITHM UPDATED 2026-03-04 (Decision 3 confirmed):
+        ORIGINAL: alphabetical by last name (A-F, G-L, M-R, S-Z) — SUPERSEDED
+        NEW: Option F — Stratified diversity + Trevor override
+
+        Algorithm (implement in preload_students.py):
+        - Cluster count: ceil(total_enrolled / 7), max 8
+        - Assignment: sort by profession then zone, assign round-robin across clusters
+        - Late joiners: assigned to smallest cluster at activation time
+        - Column U in Sheets: written by preload webhook (not a Sheets formula)
+
+        Trevor override:
+        - /move-cluster @Student [1-8] — reassigns role + updates SQLite + posts confirmation to dashboard
+        - Trevor reviews assignments in #facilitator-dashboard before invites go out
+
+        Voice channels (unchanged):
         - Before live session: create temporary voice channel for cluster
         - After session: delete voice channel
-        - Cluster switching via Trevor command
       agent_context:
         load: "source_documents.server_architecture"
         section: "Cluster Assignment System + Voice Channels"
-      acceptance: "Auto-assignment works, voice channels create/destroy on schedule, cluster switch works"
-      summary: "? Task 4.3 COMPLETE - Auto-assignment, Trevor switching, role creation fallback, cluster voice permissions, and restart-safe voice cleanup verified by tests (2026-02-19)."
+        design_ref: "_bmad-output/cohort-design-artifacts/design-and-architecture/student-onboarding-and-enrollment-flow.md"
+        design_section: "Decision 8: Cluster Assignment"
+      acceptance: |
+        assign_cluster() produces profession/zone-diverse clusters (verified with test fixture of 30 students).
+        assign_cluster_single() assigns late joiner to smallest cluster.
+        /move-cluster command updates role + SQLite + posts to dashboard.
+        Column U written by preload webhook (not Sheets formula).
+        Voice channels unchanged — still create/destroy on schedule.
+      summary: "Task 4.3 NEEDS UPDATE — cluster algorithm changed from alphabetical to Option F (stratified diversity). Voice channel logic unchanged. Algorithm in preload_students.py. /move-cluster override command needed. (2026-03-04)"
       notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/4.3.md"
 
     - id: "4.4"
@@ -828,7 +967,7 @@ sprint_5:
 
     - id: "5.6a"
       title: "Run context engine experience design party mode session"
-      status: "pending"
+      status: "done"
       description: |
         PREREQUISITE FOR ALL SPRINT 6 TASKS.
         Run the party mode prompt from:
@@ -837,6 +976,8 @@ sprint_5:
         This document becomes the design bible for Sprint 6.
         No Sprint 6 task should begin until this session is complete and output reviewed by Trevor.
       acceptance: "context-engine-experience-design.md exists, Trevor has reviewed and approved"
+      summary: "[done] Task 5.6a COMPLETE - Party mode session run 2026-03-02. Produced full context engine design bible (context-engine-experience-design.md) covering: Context Schema (full JSON + barrier inference logic), Example Library (40 examples across 4 professions, Kenya-grounded), Intervention Library (8 DMs x barrier type x week range), 7 Juncture DM templates, 4 personalized CIS agent system prompts, Welcome DM template, Ethical Guardrails, and 8 open questions for Trevor. All Sprint 6 tasks now unblocked. Additional architectural decisions surfaced in 2026-03-03 session: mixed audience confirmed (teachers + professionals + students in Cohort 1), gap year cohort confirmed as Cohort 2 (separate server, same codebase), cluster assignment redesign discussed; Decision 3 later closed (Option F stratified diversity)."
+      notes_ref: "_bmad-output/cohort-design-artifacts/design-and-architecture/context-engine-experience-design.md"
 
     - id: "5.6"
       title: "Create server template for future cohorts"
@@ -884,33 +1025,591 @@ sprint_0_addendum:
   name: "Student Onboarding Automation"
   type: "development"
   status: "pending"
-  estimated_days: 2
+  estimated_days: 4
   dependencies: "5.6a (experience design session must be complete)"
+  decisions_resolved: |
+    2026-03-04 adversarial review 2:
+    - Form technology: Custom web forms (NOT Google Forms) — CONFIRMED
+    - Discord username: Auto-captured via on_member_join, NOT in any form — CONFIRMED
+    - M-Pesa URL: Token-based (not email-in-URL) — CONFIRMED
+    - Payment amount: KES 5,000 — CONFIRMED
+    - Email service: Brevo — CONFIRMED
+    - Cluster assignment: Decision 3 CLOSED (Option F stratified diversity + Trevor override)
+    SOURCE OF TRUTH:
+    - source_documents.enrollment_flow_design (behavior contract)
+    - source_documents.context_engine_design (personalization contract)
+    - source_documents.community_culture_architecture (channel/culture contract)
 
   tasks:
-    - id: "0.7"
-      title: "Student onboarding automation (Apps Script + Brevo + M-Pesa)"
+    - id: "0.7a"
+      title: "Landing site API endpoints (/api/interest, /api/enroll, /api/mpesa-submit)"
       status: "pending"
       description: |
-        Build automated student signup journey:
-        - Google Sheets: Add M-Pesa Code column (AC) + Payment Status dropdown (AD: Pending/Confirmed/Failed)
-        - Apps Script trigger 1: onFormSubmit ? Brevo Email #1 (Spot Reserved + M-Pesa instructions)
-        - Apps Script trigger 2: onPaymentConfirm (Column AD = Confirmed) ? Brevo Email #2 (You're IN + Discord invite)
-        - Apps Script trigger 3: Sunday before Week 1 ? Brevo Email #3 (Week 1 preview)
-        - Apps Script trigger 4: Friday Week 1 ? Brevo Email #4 (You made it through Week 1)
-        - Apps Script trigger 5: onArtifactPublished ? Brevo Email #5 (Your thinking is permanent)
-        - All emails from Trevor's custom domain via Brevo API
-        - Pre-load hook: trigger 2 also calls preload_student() to write to SQLite
-        See full spec: _bmad-output/cohort-design-artifacts/design-and-architecture/solutions-and-new-automations.md
+        Build 3 custom web form API endpoints in k2m-landing:
+
+        POST /api/interest:
+        - Accept: first_name, email, profession
+        - Duplicate email check (return helpful message if exists)
+        - Append to Google Sheets Student Roster tab
+        - Send Brevo Email #1 (Discord invite)
+        - Return success/error JSON
+
+        POST /api/enroll:
+        - Accept: first_name, last_name, email, profession, zone, situation,
+          goals, emotional_baseline, parent_email, consent
+          + hidden: discord_id, discord_username (from URL params set by bot)
+        - Find existing row by email, update with all enrollment fields
+        - Write discord_id + discord_username to Column D
+        - Generate submit_token (secrets.token_urlsafe(12)), write to Column P
+        - Write token_expiry (7 days) to Column Q
+        - Send Brevo Email #2 (payment instructions with mpesa-submit token URL)
+        - Trigger KIRA confirmation DM via bot webhook
+
+        POST /api/mpesa-submit:
+        - Accept: token, mpesa_code
+        - Look up row by token (Column P)
+        - Check token expiry (Column Q) — return error if expired
+        - Write mpesa_code to Column K, set Column L = "Pending"
+        - Invalidate token (clear Column P)
+        - Send Brevo Email #3 (code received)
+        - Post to #facilitator-dashboard via bot webhook
       agent_context:
-        load: "source_documents.google_forms_diagnostic"
-        also_load: "source_documents.sheets_templates"
-        design_ref: "_bmad-output/cohort-design-artifacts/design-and-architecture/solutions-and-new-automations.md"
+        load: "source_documents.enrollment_flow_design"
+        section: "THE 4-STEP ENROLLMENT JOURNEY + TECHNICAL ARCHITECTURE"
+        also_load: "source_documents.context_engine_design"
+        also_section: "1.3.1 Data Flow"
       acceptance: |
-        Form submit ? Email #1 fires within 60 seconds.
-        Trevor confirms payment ? Email #2 + Discord invite fires automatically.
-        All 5 email triggers tested. Custom domain verified in Brevo.
-        Pre-load hook writes student to SQLite on Email #2 trigger.
+        /api/interest: duplicate check works, row appended, Email #1 fires <60s.
+        /api/enroll: discord_id + discord_username in Column D from URL params. Token in Columns P+Q.
+        /api/mpesa-submit: token lookup works. Expired token returns clear error. M-Pesa code in Column K.
+        All 3 endpoints return JSON {success, message}. Mobile-friendly form pages exist at /join /enroll /mpesa-submit.
+
+    - id: "0.7b"
+      title: "Apps Script activation trigger (hardened)"
+      status: "pending"
+      description: |
+        Rewrite activateStudent() per hardened spec in enrollment-flow doc:
+        - Read discord_id from Column D (bot-written, numeric)
+        - Call upgradeDiscordRoleById(discord_id) — NOT upgradeDiscordRole(username)
+        - Add duplicate activation guard (check Column O before running)
+        - Add error handling: flag Column M + alert Trevor on any failure
+        - Call preloadStudentToCisBot() webhook (calls preload_student.py)
+        - Send Brevo Email #4 (activation welcome; include cluster if assigned, otherwise omit gracefully)
+        - Call KIRA activation DM webhook
+        - Write timestamp to Column O on success
+      agent_context:
+        load: "source_documents.enrollment_flow_design"
+        section: "STEP 4: Trevor Verifies"
+        also_load: "source_documents.context_engine_design"
+        also_section: "1.3.1 Data Flow"
+      acceptance: |
+        Confirms with discord_id (not username). Duplicate guard works.
+        Error in any step flags Column M + posts ⚠️ to dashboard. Column O written on success.
+
+    - id: "0.7c"
+      title: "preload_students.py — full context engine columns"
+      status: "pending"
+      description: |
+        Build cis-discord-bot/scripts/preload_students.py per enrollment-flow doc Section D:
+        - Accepts webhook POST from Apps Script with full student row
+        - Upserts all 21 columns to SQLite students table (ON CONFLICT DO UPDATE)
+        - Runs infer_barrier_type() to populate barrier_type + barrier_confidence
+        - Sets initial_zone = zone (at enrollment time)
+        - Returns {success, error} JSON to Apps Script caller
+        Idempotent: safe to call multiple times for same student.
+      agent_context:
+        load: "source_documents.enrollment_flow_design"
+        section: "Database Pre-load"
+        also_load: "source_documents.context_engine_design"
+        also_section: "CONTEXT SCHEMA + Barrier Type Inference Logic"
+      acceptance: |
+        All 21 columns written. barrier_type inferred correctly from test fixtures.
+        Idempotency verified (run twice = same result). Returns {success: true} on success.
+
+    - id: "0.7d"
+      title: "Payment queue dashboard + pre-cohort holding experience"
+      status: "pending"
+      description: |
+        Two scheduler additions:
+
+        A) check_payment_queue() — hourly job:
+        - Reads Column L (Pending rows) from Google Sheets via API
+        - If any Pending rows exist during business hours (8AM-8PM EAT): post queue summary to #facilitator-dashboard
+        - SLA alerts: 4h=🔔, 8h=⚠️, 24h=🚨 (based on Column N Created At)
+        - Format: student list with name, wait time, M-Pesa code
+
+        B) Pre-cohort holding experience:
+        - Countdown posts in #pre-launch: 3 days, 2 days, 1 day before Week 1
+        - KIRA DM to early activations (>48h before Week 1): "You're early, here's what to do"
+        - Night-before DM to all students with onboarding_stop=4: "Week 1 starts tomorrow"
+        - Students with incomplete onboarding get: "Finish setup: /onboarding"
+      agent_context:
+        load: "source_documents.enrollment_flow_design"
+        section: "PRE-COHORT HOLDING EXPERIENCE + Payment Queue Bot Behavior"
+        also_load: "source_documents.community_culture_architecture"
+        also_section: "2. CHANNEL ARCHITECTURE + 4. PERMISSION SYSTEM"
+      acceptance: |
+        Payment queue: posts on new M-Pesa submission + hourly if pending rows. SLA escalation emojis correct.
+        Pre-cohort: countdown posts fire. Early activation DM fires. Night-before DM fires.
+        Incomplete onboarding detected and routed to /onboarding.
+
+# ============================================================
+# SPRINT 0.7 PATCH: PRE-MORTEM CRITICAL FIXES
+# Address 4 critical blockers found in adversarial pre-mortem (2026-03-04)
+# Estimated: ~25 hours (3-4 days for 1 dev)
+# BLOCKER: Must complete before cohort launch
+# ============================================================
+sprint_0_7_patch:
+  name: "Pre-Mortem Critical Fixes"
+  type: "development"
+  status: "pending"
+  estimated_days: 4
+  dependencies: "sprint_0_addendum (all tasks must be done)"
+  decisions_resolved: |
+    2026-03-04 adversarial pre-mortem party mode (Maya + Sally + Winston + Amelia + Dr. Quinn + John + Mary):
+    Full report: adversarial-pre-mortem-onboarding-journey-2026-03-04.md
+
+    CRITICAL FIXES (blockers):
+    - D-01: Replace invite code matching with 6-digit intermediary token — APPROVED
+    - D-02: Add URL parameter cryptographic signing — APPROVED
+    - D-02: Implement transactional state machine for activation — APPROVED
+    - D-02: Build error communications matrix — APPROVED
+
+    HIGH PRIORITY (churn risks):
+    - D-03: Discord orientation mini-course — APPROVED
+    - D-03: Relocate Stop 0 after first /frame — APPROVED
+    - D-03: Context switching bridge (KIRA DM after form) — APPROVED
+    - D-03: Explicit intent matching for onboarding — APPROVED
+
+  tasks:
+    - id: "0.7.1"
+      title: "Intermediary token system (replaces invite code matching)"
+      status: "pending"
+      priority: "P0 - BLOCKER"
+      description: |
+        CRITICAL FIX #1 — Replace unreliable invite code matching (Amendment A-02) with 6-digit token system.
+
+        IMPLEMENTATION:
+        1. POST /api/interest generates 6-digit link_token (e.g., "847291")
+           - Store in Google Sheets Column R (was invite_code)
+           - Include in Email #1: "Your link code is 847291. Join Discord, then DM KIRA: CODE 847291"
+
+        2. on_member_join handler:
+           - Remove invite diffing logic entirely
+           - Send welcome DM asking: "What's your 6-digit code?"
+           - Handle "CODE <token>" command from student
+
+        3. Token lookup:
+           - Query Google Sheets Column R for matching link_token
+           - On match: write discord_id + discord_username to Column D, mark student_linked
+           - On no match: send helpful DM: "Email Trevor at trevor@k2m.edtech with your Discord username"
+
+        4. Fallback:
+           - Manual command: /link-student <discord_id> <email>
+           - Trevor can manually link unmatched students
+
+        BENEFITS:
+        - No Discord API dependency for matching
+        - Student actively participates (feels in control)
+        - Manual fallback always available
+        - Testable in unit tests (unlike invite diffing)
+
+        REPLACES: Amendment A-02 (invite code matching) — DEPRECATED
+      agent_context:
+        load: "source_documents.enrollment_flow_design"
+        section: "AMENDMENT A-09"
+        also_load: "_bmad-output/cohort-design-artifacts/design-and-architecture/adversarial-pre-mortem-onboarding-journey-2026-03-04.md"
+        also_section: "Solution #1: Intermediary Token System"
+      acceptance: |
+        /api/interest generates 6-digit token, stores in Column R. Email #1 includes token.
+        Student joins Discord, KIRA asks for code. Student DMs "CODE 847291", bot matches in Sheets.
+        Manual /link-student command works. No invite diffing logic remains in code.
+
+    - id: "0.7.2"
+      title: "URL parameter cryptographic signing (security fix)"
+      status: "pending"
+      priority: "P0 - BLOCKER"
+      description: |
+        CRITICAL FIX #2 — Prevent enrollment URL tampering (Amendment A-10).
+
+        VULNERABILITY: Students can modify discord_id in enrollment URL to hijack other enrollments.
+
+        IMPLEMENTATION:
+        1. Generate signed params in on_member_join:
+           ```python
+           import hmac, hashlib
+
+           def generate_signed_params(discord_id, discord_username):
+               payload = f"{discord_id}|{discord_username}"
+               signature = hmac.new(
+                   SECRET_KEY.encode(),
+                   payload.encode(),
+                   hashlib.sha256
+               ).hexdigest()[:16]
+               return f"{ENROLL_URL}?data={payload}&sig={signature}"
+           ```
+
+        2. Verify in POST /api/enroll:
+           ```python
+           def verify_signed_params(data, signature):
+               expected = hmac.new(
+                   SECRET_KEY.encode(),
+                   data.encode(),
+                   hashlib.sha256
+               ).hexdigest()[:16]
+               return hmac.compare_digest(expected, signature)
+           ```
+
+        3. Reject with error if signature invalid
+
+        SECURITY: SECRET_KEY must be environment variable, never hardcoded
+      agent_context:
+        load: "source_documents.enrollment_flow_design"
+        section: "AMENDMENT A-10"
+        also_load: "_bmad-output/cohort-design-artifacts/design-and-architecture/adversarial-pre-mortem-onboarding-journey-2026-03-04.md"
+        also_section: "Critical #2: URL Parameter Tampering (Security Hole)"
+      acceptance: |
+        Enrollment URL includes ?data=<payload>&sig=<signature>. /api/enroll verifies signature before processing.
+        Tampered URLs return 400 error. Unit tests cover tampering scenarios. SECRET_KEY in env vars.
+
+    - id: "0.7.3"
+      title: "Transactional state machine for activation"
+      status: "pending"
+      priority: "P0 - BLOCKER"
+      description: |
+        CRITICAL FIX #3 — Prevent partial activations (Amendment A-11).
+
+        PROBLEM: Apps Script activateStudent() has no rollback. If step 2 fails, student has @Student role but no DB record.
+
+        IMPLEMENTATION:
+        1. Add activation state tracking:
+           - States: activation_started → role_upgraded → db_preloaded → email_sent → dm_sent → fully_activated
+           - Or: activation_partial (one or more steps failed)
+
+        2. Error handling in activateStudent():
+           ```javascript
+           function activateStudent(rowNumber) {
+               var state = 'activation_started';
+               var errors = [];
+
+               try {
+                   if (!upgradeDiscordRoleById(discordId, 'Student')) {
+                       throw new Error('Role upgrade failed');
+                   }
+                   state = 'role_upgraded';
+
+                   var dbResult = preloadStudentToCisBot(row);
+                   if (!dbResult.success) {
+                       throw new Error('DB preload failed: ' + dbResult.error);
+                   }
+                   state = 'db_preloaded';
+
+                   MailApp.sendEmail({ ... });
+                   state = 'email_sent';
+
+                   if (!sendKiraActivationDmById(discordId, firstName)) {
+                       throw new Error('DM failed');
+                   }
+                   state = 'fully_activated';
+
+               } catch (err) {
+                   errors.push(err.message);
+                   sheet.getRange(row, 13).setValue(`⚠️ PARTIAL: ${state} - ${errors.join(' | ')}`);
+                   logToFacilitatorDashboard(`⚠️ PARTIAL: ${firstName} stuck at ${state}`);
+
+                   if (state !== 'db_preloaded') {
+                       MailApp.sendEmail({
+                           to: 'trevor@k2m.edtech',
+                           subject: `⚠️ Manual Fix: ${firstName}`,
+                           body: `Activation failed at ${state}. Errors: ${errors.join(' | ')}`
+                       });
+                   }
+               }
+           }
+           ```
+
+        3. Add /retry-activation command (see task 0.7.8)
+
+        BENEFITS:
+        - No silent failures
+        - Clear recovery paths
+        - Trevor gets alerted on partial activations
+      agent_context:
+        load: "source_documents.enrollment_flow_design"
+        section: "AMENDMENT A-11"
+        also_load: "_bmad-output/cohort-design-artifacts/design-and-architecture/adversarial-pre-mortem-onboarding-journey-2026-03-04.md"
+        also_section: "Critical #3: No Transactional Rollback"
+      acceptance: |
+        activateStudent() has state tracking with try/catch. Partial activations write to Column M + dashboard.
+        Trevor gets email on partial activations. /retry-activation command retries from failed step.
+
+    - id: "0.7.4"
+      title: "Error communications matrix"
+      status: "pending"
+      priority: "P0 - BLOCKER"
+      description: |
+        CRITICAL FIX #4 — All failure modes need user-facing messages (Amendment A-12).
+
+        PROBLEM: 5 failure modes defined but ZERO user-facing error messages.
+
+        IMPLEMENTATION:
+        For each failure mode, add:
+
+        1. student_unmatched:
+           - User DM: "Having trouble linking your account. Email Trevor with your Discord username"
+           - Trevor dashboard: Post with student details
+           - Recovery: /link-student command
+
+        2. activation_partial:
+           - User: Nothing (broken experience — unavoidable if email fails)
+           - Trevor: Email "Manual fix required: [Name] stuck at [state]"
+           - Recovery: /retry-activation command
+
+        3. payment_unverifiable:
+           - User DM: "Had trouble verifying payment. Send screenshot to #help"
+           - Trevor: Dashboard log
+           - Recovery: Trevor manually verifies screenshot
+
+        4. token_expired:
+           - User: Friendly HTML "Link expired. Type `/renew` in DM to KIRA"
+           - Trevor: Nothing
+           - Recovery: /renew-token command
+
+        5. role_upgrade_failed:
+           - User: Nothing (silent failure)
+           - Trevor: Dashboard log + email alert
+           - Recovery: /force-role command
+
+        REQUIREMENTS:
+        - All messages warm, not technical
+        - All messages actionable (tell them what to do)
+        - All messages offer clear next step
+      agent_context:
+        load: "source_documents.enrollment_flow_design"
+        section: "AMENDMENT A-12"
+        also_load: "_bmad-output/cohort-design-artifacts/design-and-architecture/adversarial-pre-mortem-onboarding-journey-2026-03-04.md"
+        also_section: "Critical #4: No Error State Communications"
+      acceptance: |
+        All 5 failure modes have user-facing messages + admin notifications + recovery paths.
+        Error messages tested in development. Recovery commands implemented and tested.
+
+    - id: "0.7.5"
+      title: "Discord orientation mini-course (video + updated emails)"
+      status: "pending"
+      priority: "P1 - HIGH (churn risk)"
+      description: |
+        HIGH PRIORITY FIX #1 — Reduce first-time Discord user confusion (Amendment A-13).
+
+        PROBLEM: 20-30% of first-time users drop off because they don't understand Discord interface.
+
+        IMPLEMENTATION:
+        1. Update Email #1 template:
+           - Add: "NEW TO DISCORD? 90% of your cohort is too."
+           - Add: "Watch this 60-second video before you join: [VIDEO LINK]"
+           - Add: "Key things to know: KIRA will DM you. On mobile: tap Discord icon → your profile picture. On desktop: click Discord icon → look for 'Message Requests'"
+
+        2. Update KIRA welcome DM:
+           - Add mobile tip: "📱 ON YOUR PHONE? Tap ☰ (top left) to see channels. To come back here: Tap Discord icon → DMs → KIRA"
+           - Add desktop tip: "💻 ON DESKTOP? Channels in left sidebar. To come back here: Click Discord icon → Click 'Direct Messages' → Click KIRA"
+           - Add: "FIRST TIME ON DISCORD? Most of your cohort is too. You're in good company."
+
+        3. Create 60-second video:
+           - Screen recording of Discord mobile app
+           - Show: How to find DMs, click channel links, return to DMs
+           - Script: "Hi! Welcome to K2M. If you're new to Discord, here's what you need to know..."
+           - Host on YouTube or Vimeo (not auto-play)
+
+        EXPECTED IMPACT: Reduce first-time user drop-off from 20-30% to <10%
+
+        ESTIMATED: 2 hours (record video, update email templates)
+      agent_context:
+        load: "source_documents.enrollment_flow_design"
+        section: "AMENDMENT A-13"
+        also_load: "_bmad-output/cohort-design-artifacts/design-and-architecture/adversarial-pre-mortem-onboarding-journey-2026-03-04.md"
+        also_section: "High #1: Discord-First-Time User Confusion"
+      acceptance: |
+        Email #1 template updated with video link + Discord tips. KIRA welcome DM updated with navigation hints.
+        60-second orientation video created and hosted. Video tested with first-time Discord user.
+
+    - id: "0.7.6"
+      title: "Relocate Stop 0 after first /frame (value-first onboarding)"
+      status: "pending"
+      priority: "P1 - HIGH (psychological design)"
+      description: |
+        HIGH PRIORITY FIX #2 — Move Stop 0 questions to after value delivery (Amendment A-14).
+
+        PROBLEM: Asking questions BEFORE value feels like a test, not support. Violates emotional design principles.
+
+        CURRENT ORDER: Stop 0 (questions) → Stop 1 (KIRA intro) → Stop 2 (optional intro) → Stop 3 (first /frame)
+
+        NEW ORDER: Stop 1 (KIRA intro) → Stop 3 (first /frame) → **VALUE DELIVERED** → Stop 0 (questions, framed as support) → Stop 2 (optional intro)
+
+        IMPLEMENTATION:
+        1. Remove Stop 0 from initial onboarding flow
+        2. After first /frame completes, trigger Stop 0 DM:
+           ```
+           KIRA: Grace, that was Habit 1 in action! ✅
+
+           You just did something most teachers never do:
+           you paused to notice the real question behind the request.
+
+           I want to make sure I can give you the best support possible.
+           Can I ask you 4 quick questions to personalize your experience?
+
+           This helps me understand:
+           • What tech support you might need
+           • When to schedule your cluster sessions
+           • How to adapt examples to your context
+
+           [4 questions from Amendment A-07]
+
+           Thanks Grace! This helps me:
+           • Schedule your cluster sessions at times that work
+           • Give you the right tech support
+           • Adapt examples to your context
+
+           You're all set. Head over to #week-1-wonder for your first daily prompt!
+           ```
+
+        3. Update onboarding state machine:
+           - Skip Stop 0 in initial sequence
+           - Trigger Stop 0 after first /frame completion
+           - Stop 2 (optional intro) can happen anytime after
+
+        BENEFITS:
+        - Value-first psychology
+        - Reciprocity (KIRA gave value first)
+        - Higher completion rates
+        - Better data quality
+
+        EXPECTED IMPACT: Increase Stop 0 completion rate from ~60% to >90%
+      agent_context:
+        load: "source_documents.enrollment_flow_design"
+        section: "AMENDMENT A-14"
+        also_load: "_bmad-output/cohort-design-artifacts/design-and-architecture/adversarial-pre-mortem-onboarding-journey-2026-03-04.md"
+        also_section: "High #2: Stop 0 Feels Like a Test, Not Support"
+      acceptance: |
+        Onboarding flow restructured. Stop 0 removed from initial sequence, triggered after first /frame.
+        Reframed script tested. Completion rate tracked in first cohort.
+
+    - id: "0.7.7"
+      title: "Explicit intent matching for onboarding (fix false advancement)"
+      status: "pending"
+      priority: "P1 - HIGH"
+      description: |
+        HIGH PRIORITY FIX #4 — Fix false positive advancement (Amendment A-15).
+
+        PROBLEM: Current is_continue_signal() treats ANY short message (≤15 chars) as completion.
+        Student asks "Where is it?" (13 chars) → bot advances instead of helping.
+
+        IMPLEMENTATION:
+        Replace is_continue_signal() with detect_onboarding_intent():
+
+        ```python
+        def detect_onboarding_intent(message_content: str) -> str:
+            """Returns: 'complete' | 'skip' | 'help' | 'ambiguous'"""
+            content = message_content.lower().strip()
+
+            # Explicit completion signals
+            if any(word in content for word in ['done', 'ready', 'finished', 'complete', 'next']):
+                return 'complete'
+
+            # Explicit skip signals
+            if 'skip' in content:
+                return 'skip'
+
+            # Explicit help signals
+            if any(word in content for word in ['help', 'confused', 'lost', "don't see", 'where', 'how', '?', '???']):
+                return 'help'
+
+            # Ambiguous — ask for clarification
+            return 'ambiguous'
+
+        async def handle_onboarding_dm(student, message_content: str):
+            intent = detect_onboarding_intent(message_content)
+
+            if intent == 'complete':
+                await advance_onboarding(student)
+
+            elif intent == 'skip':
+                await advance_onboarding(student, skipped=True)
+
+            elif intent == 'help':
+                await student.send(
+                    "No problem! Let me help.\n\n"
+                    "[Contextual help based on current stop]\n\n"
+                    "Reply 'done' when you're ready to continue."
+                )
+
+            else:  # ambiguous
+                await student.send(
+                    "I'm not sure if you're ready to continue. "
+                    "Reply 'done' to move on, or 'help' if you need assistance."
+                )
+        ```
+
+        BENEFITS:
+        - No false advancement
+        - Clear help path
+        - Better user experience
+      agent_context:
+        load: "source_documents.enrollment_flow_design"
+        section: "AMENDMENT A-15"
+        also_load: "_bmad-output/cohort-design-artifacts/design-and-architecture/adversarial-pre-mortem-onboarding-journey-2026-03-04.md"
+        also_section: "High #4: is_continue_signal() Logic is Overly Permissive"
+      acceptance: |
+        is_continue_signal() replaced with detect_onboarding_intent(). Three paths: complete, skip, help.
+        Help messages tested with real user questions. No false advancement in beta testing.
+
+    - id: "0.7.8"
+      title: "Admin command suite (manual override capability)"
+      status: "pending"
+      priority: "P2 - MEDIUM (operational resilience)"
+      description: |
+        MEDIUM PRIORITY FIX — Build manual override commands (Amendment A-16).
+
+        PROBLEM: No manual override commands when automation fails.
+
+        IMPLEMENTATION:
+        Add 5 admin commands to cis-discord-bot/commands/admin.py:
+
+        1. /manual-activate @student email=...
+           - Bypasses invite matching
+           - Directly activates from email lookup
+           - Usage: When intermediary token system fails
+
+        2. /link-student <discord_id> email=...
+           - Manually link Discord account to enrollment row
+           - Writes discord_id to Google Sheets Column D
+           - Usage: When student loses their code
+
+        3. /renew-token email=... days=7
+           - Extend M-Pesa submission token
+           - Regenerates token, updates expiry, sends new email
+           - Usage: When token expires before payment
+
+        4. /retry-activation @student
+           - Retry activation for partially-activated student
+           - Reads activation state from DB, retries from failed step
+           - Usage: When transactional state machine fails mid-process
+
+        5. /force-role @student @role
+           - Manually assign Discord role
+           - Bypasses normal role upgrade logic
+           - Usage: When role upgrade fails
+
+        SECURITY REQUIREMENTS:
+        - All commands verify caller is Trevor (check Discord ID or @Facilitator role)
+        - All commands log to #facilitator-dashboard
+        - All commands require confirmation before executing (except /link-student)
+      agent_context:
+        load: "source_documents.enrollment_flow_design"
+        section: "AMENDMENT A-16"
+        also_load: "_bmad-output/cohort-design-artifacts/design-and-architecture/adversarial-pre-mortem-onboarding-journey-2026-03-04.md"
+        also_section: "Medium #2: No Manual Override Commands"
+      acceptance: |
+        All 5 admin commands implemented. Trevor-only access enforced. All commands log to dashboard.
+        Confirmation prompts work. Commands tested in development environment.
 
 # ============================================================
 # SPRINT 5 ADDENDUM: DISCORD UX HARDENING
@@ -982,35 +1681,58 @@ sprint_6:
   type: "development"
   status: "pending"
   estimated_days: 7
-  decision_basis: "Decision 7 revised 2026-02-20 � build NOW not Cohort 2"
+  decision_basis: "Decision 7 revised 2026-02-20 � build NOW not Cohort 2"
   dependencies: "5.6a (experience design complete), sprint_4 (CIS agents built)"
 
   tasks:
     - id: "6.1"
-      title: "Student pre-load bridge (Sheets ? SQLite)"
+      title: "Student pre-load bridge (Sheets -> SQLite) + member_join Discord linker"
       status: "pending"
       description: |
-        Script: cis-discord-bot/scripts/preload_students.py
-        - Reads confirmed students from Google Sheets (Payment Status = Confirmed)
-        - Maps form fields to SQLite columns:
-            first_name, last_name, email, zone (self-assessed), profession,
-            situation (freeform), goals (freeform), barrier_type (inferred from form),
-            parent_email, preloaded=True
-        - New SQLite columns to add (migration):
-            profession TEXT, barrier_type TEXT, situation TEXT,
-            goals TEXT, real_last_name TEXT, preloaded BOOLEAN DEFAULT 0
-        - Idempotent: safe to run multiple times (upsert, not insert)
-        - Trevor runs this once before cohort opens
-        - Task 0.7 trigger 2 also calls this automatically on payment confirm
+        TWO COMPONENTS - both required for full context engine behavior:
+
+        COMPONENT A: preload_students.py (planned artifact)
+        Script target: cis-discord-bot/scripts/preload_students.py
+        - Reads APPROVED rows only from Google Sheets (Payment Status = Confirmed).
+        - Uses Column D identity written by bot (`discord_id|discord_username`), not a form-entered username.
+        - Upserts context fields to SQLite:
+            discord_id, discord_username, first_name, real_last_name, email,
+            profession, zone, initial_zone, situation, goals, emotional_baseline,
+            barrier_type, barrier_confidence, cluster_id, parent_email,
+            consent_preference, preloaded, engagement_level, zone_shift_count,
+            frame_sessions_count, showcase_posts_count, last_frame_topic,
+            cis_journey_summary, artifact_title
+        - Idempotent: safe to run multiple times (upsert, not insert).
+        - Triggered by payment confirmation flow from sprint 0.7b/0.7c.
+
+        FORM REQUIREMENTS (aligned to onboarding source of truth):
+        - Discord username is NOT collected manually in any form.
+        - Profession remains structured dropdown.
+        - Email remains primary row lookup key for /api/enroll updates.
+
+        COMPONENT B: member_join event handler (main.py now, optional future events module)
+        - Fires when user joins Discord.
+        - Captures discord_id + discord_username and writes identity bridge (Sheets/webhook path).
+        - Keeps user as @Guest until payment confirmation path upgrades role by discord_id.
+        - Logs observability event: student_linked or student_unmatched.
+
+        SQLite migration requirement:
+        - Add all missing context-engine columns from context_engine_design section 1.3
+          before enabling personalized prompt injection in sprint 6.3.
       agent_context:
-        load: "source_documents.google_forms_diagnostic"
-        section: "Google Sheets Column Structure"
-        also_load: "source_documents.bot_technical_spec"
-        section: "Database Schema"
+        load: "source_documents.enrollment_flow_design"
+        section: "Google Sheets COLUMN MAP (Updated) + Decision 9"
+        also_load: "source_documents.context_engine_design"
+        also_section: "1.3 New SQLite Columns Required + 1.3.1 Data Flow"
+        design_ref: "source_documents.bot_technical_spec"
       acceptance: |
-        preload_students.py runs without errors against live Sheet.
-        SQLite has new columns. Student records populated with form data.
-        Idempotency verified (run twice = same result). Cluster assignment uses real_last_name.
+        preload_students.py runs without errors against live Sheet (approved rows only).
+        Full SQLite migration applied - context-engine columns present.
+        Student records populated with structured profession and Discord identity bridge fields.
+        Idempotency verified (run twice = same result).
+        member_join handler captures identity and does NOT grant @Student before payment confirmation.
+        Unmatched joins create anonymous records (existing fallback preserved).
+        student_linked / student_unmatched events logged to observability_events.
 
     - id: "6.2"
       title: "Google Sheets context database + Apps Script webhooks"
@@ -1019,11 +1741,11 @@ sprint_6:
         Extend the existing Student Roster Google Sheet:
         Tab 2: Example_Library
           Columns: id, profession, example_text, week_relevant, habit_tag
-          Content: 10 examples � 4 professions = 40 rows minimum
+          Content: 10 examples � 4 professions = 40 rows minimum
           (Trevor fills content post party mode session)
         Tab 3: Intervention_Library
           Columns: id, barrier_type, week_range, intervention_text
-          Content: 4 barrier types � 2 week ranges = 8 rows minimum
+          Content: 4 barrier types � 2 week ranges = 8 rows minimum
           (Trevor fills content post party mode session)
         Apps Script layer (deployed as web app):
           getStudentContext(discord_id) ? JSON profile
@@ -1116,9 +1838,14 @@ sprint_6:
 
     - id: "6.6"
       title: "PostgreSQL migration preparation (schema + script)"
-      status: "pending"
+      status: "needs_update"
+      needs_update_reason: |
+        2026-03-04 pre-mortem: Trevor migrating to PostgreSQL NOW (not prep-only).
+        Full migration promoted to Sprint 7 task 7.6 (blocking, before cohort launch).
+        This task is superseded by Sprint 7 task 7.6.
+        See: pre-mortem-2026-03-04-decisions.md Decision H-03
       description: |
-        NOT deploying to PostgreSQL yet � preparing the migration so it's a 1-hour switch when needed.
+        NOT deploying to PostgreSQL yet � preparing the migration so it's a 1-hour switch when needed.
         Tasks:
         - Document SQLite column types vs PostgreSQL equivalents for all new columns from 6.1
         - Update database/migration.py with new column mappings (profession, barrier_type, etc.)
@@ -1133,27 +1860,630 @@ sprint_6:
         migration.py handles all new columns. cohort_id field added.
         Migration runbook written. Test migration succeeds against copy of prod DB.
 
+
+    - id: "6.7"
+      title: "'Other' profession — LLM inference to closest profession example set"
+      status: "pending"
+      description: |
+        DECISION N-18 (Session 4 pre-mortem).
+        Students who select profession = "other" currently fall back to working_professional examples.
+        If 5 of 30 students are "other" (gap year, NGO, county government), 16% get a personalization mismatch.
+
+        Implementation:
+        - On a student's first /frame session, check if student.profession == "other"
+        - If yes: fire a Haiku LLM call (~200 tokens):
+          Prompt: "Based on this student's situation and goals: [situation] / [goals],
+          which is closest: teacher, entrepreneur, university_student, working_professional?
+          Return only one word."
+        - Store result as students.profession_inferred in PostgreSQL
+        - CIS agent system prompts: use profession_inferred when profession == "other"
+        - NEVER shown to the student, NEVER overwrites students.profession
+        - Cost: ~200 tokens = ~$0.0001 per student. Negligible.
+
+        Fallback: if LLM inference fails or returns unexpected value, use working_professional as default.
+      agent_context:
+        load: "source_documents.context_engine_design"
+        section: "Section 5 CIS Agent System Prompts"
+        also_load: "source_documents.bot_technical_spec"
+      acceptance: |
+        /frame for a student with profession="other" triggers inference call.
+        profession_inferred written to DB. CIS prompts use profession_inferred.
+        Students with profession != "other" are unaffected.
+
+
+# ============================================================
+# SPRINT 7: PRE-MORTEM REMEDIATION (2026-03-04)
+# Blockers and high-priority fixes from adversarial pre-mortem
+# North star: zero Discord experience, maximum simplicity
+# BLOCKING: All Sprint 7 tasks must complete before cohort launch
+# Pre-read: pre-mortem-2026-03-04-decisions.md
+# Estimated: 5-6 days
+# Dependencies: sprint_1 (bot scaffolded), k2m-landing exists
+# ============================================================
+sprint_7:
+  name: "Pre-Mortem Remediation (Sessions 3 + 4)"
+  type: "development"
+  status: "pending"
+  estimated_days: 10
+  blocking: true
+  pre_reads:
+    - "source_documents.pre_mortem_session_3"
+    - "source_documents.pre_mortem_session_4"
+    - "source_documents.enrollment_flow_design"
+  decision_basis: "2026-03-04 adversarial pre-mortem party mode session"
+  pre_read: "_bmad-output/cohort-design-artifacts/design-and-architecture/pre-mortem-2026-03-04-decisions.md"
+  dependencies: "sprint_1 (bot scaffolded), k2m-landing exists"
+
+  tasks:
+    - id: "7.0"
+      title: "BLOCKING PRE-REQUISITE: Set cohort launch date config before any other Sprint 7 task"
+      status: "pending"
+      description: |
+        DECISION N-04 (Session 4 pre-mortem). MUST COMPLETE BEFORE ANY OTHER SPRINT 7 TASK.
+
+        PARTIALLY RESOLVED (2026-03-04):
+        - COHORT_1_START_DATE = 2026-03-16 ✅ CONFIRMED by Trevor
+        - COHORT_1_FIRST_SESSION_DATE = TBC (Trevor to confirm the live peer cluster call date)
+        - payment_verification_team = Trevor + Bruce + Mkunzi ✅ CONFIRMED
+
+        Remaining actions:
+        1. Trevor confirms first live session date (cluster call) — separate from Week 1 start
+        2. Set Railway environment variables:
+           COHORT_1_START_DATE=2026-03-16
+           COHORT_1_FIRST_SESSION_DATE=YYYY-MM-DD (pending Trevor confirmation)
+        3. Grant Bruce + Mkunzi Google Sheets "Student Roster" edit access
+        4. Share M-Pesa verification process with Bruce + Mkunzi (SOPs task 5.1)
+        5. Add startup validation to bot main.py:
+           if not os.environ.get('COHORT_1_START_DATE'):
+               raise EnvironmentError("COHORT_1_START_DATE not set — bot refusing to start")
+        6. Update all Brevo email templates with real dates (done in task 7.14)
+      agent_context:
+        load: "source_documents.pre_mortem_session_4"
+        section: "DECISION N-04 + OPEN QUESTIONS RESOLVED"
+      acceptance: |
+        COHORT_1_START_DATE=2026-03-16 in Railway. COHORT_1_FIRST_SESSION_DATE populated.
+        Bot startup validation in place. Bruce + Mkunzi have Sheets access.
+        cohort_launch_target = 2026-03-16 in this YAML (done).
+      notes_ref: "task-notes/7.0.md"
+
+    - id: "7.1"
+      title: "Stage 1 redesign: remove /join, landing page = entry point + refund policy + enrollment cap"
+      status: "pending"
+      description: |
+        DECISIONS B-02, M-04, M-05. SESSION 4: N-10 (refund in Email #2), N-19 (phone field).
+        1. Remove /join slash command from cis-discord-bot/main.py entirely.
+        2. Update /api/interest (k2m-landing):
+           - Check enrollment cap (max 30 confirmed enrollments in Sheet)
+           - If cap reached: set waitlisted=true, send Brevo waitlist email (Email #5 new template)
+           - Duplicate check: return helpful message if email exists
+           - Append to Google Sheets Student Roster
+           - Generate unique invite link (see task 7.2) + store in Column R
+           - Send Brevo Email #1 (Discord invite + next steps)
+           - Return JSON {success, waitlisted}
+        3. Update landing page /join form to call /api/interest directly
+        4. Add refund policy to Brevo Email #4 template and #welcome pinned message
+        5. Remove any instructions to type /join from landing page copy
+      agent_context:
+        load: "_bmad-output/cohort-design-artifacts/design-and-architecture/pre-mortem-2026-03-04-decisions.md"
+        section: "DECISION B-02"
+        also_load: "source_documents.enrollment_flow_design"
+      acceptance: |
+        /join command does not exist in bot. /api/interest appends row, generates invite link,
+        sends Email #1 < 60s. Enrollment cap check works (waitlist email fires at >= 30).
+        Refund policy in Email #4 and #welcome pin. Landing form targets /api/interest.
+
+    - id: "7.2"
+      title: "Unique per-student Discord invite links (on_member_join match key)"
+      status: "pending"
+      description: |
+        DECISION B-01 + GAP FIX #1. SESSION 4: N-07 (asyncio.Lock() around invite diff). Resolves critical on_member_join match key gap.
+        1. In /api/interest: call Discord API to create unique invite per student:
+           discord.Invite.create(channel=welcome_channel, max_uses=1, unique=True)
+           Store returned invite.code in Google Sheets Column R (invite_code)
+           Also store referral_channel metadata if URL param present (e.g. ?ref=pastor_john)
+        2. In cis-discord-bot/main.py on_member_join:
+           - CRITICAL FIX: ALWAYS refresh invites before AND after each join to catch concurrent joins:
+             invites_before = {invite.code: invite.uses for invite in await guild.invites()}
+             # ... process join ...
+             invites_after = {invite.code: invite.uses for invite in await guild.invites()}
+           - Compare to find used invite (Atomic Discord API increment guarantees detection)
+           - Query PostgreSQL: SELECT * FROM students WHERE invite_code = used_invite.code
+           - On match: write discord_id + discord_username to Column D
+             log observability_event: student_linked
+             trigger personalized welcome DM (task 5.8a)
+           - On no match: assign @Guest only, log student_unmatched, no automation
+        3. Add !recover_member @user command (Trevor-only):
+           - Try invite code match first (normal case)
+           - GAP FIX #8: If no match, fallback to temporal lookup (last 24h enrollments)
+           - Fallback: get_student_by_recent_join(hours=24) → Trevor manually confirms match
+           - Manual edge case: if multiple students enrolled in 24h, Trevor picks right one
+      agent_context:
+        load: "_bmad-output/cohort-design-artifacts/design-and-architecture/pre-mortem-2026-03-04-decisions.md"
+        section: "DECISION B-01 + GAP FIX #1 + GAP FIX #8"
+        also_load: "source_documents.enrollment_flow_design"
+      acceptance: |
+        on_member_join matches enrolled student via invite code. Column D written.
+        Unmatched joins: @Guest only, student_unmatched logged.
+        Concurrent joins detected via refresh-after pattern (tested with 2-join simulation).
+        !recover_member command works with email fallback for downtime joins.
+        Invite cache correct after each join.
+
+    - id: "7.3"
+      title: "KIRA DM architecture audit: Brevo-only pre-join, KIRA post-join"
+      status: "pending"
+      description: |
+        DECISION B-03 + GAP FIX #2. Audit and fix all DM trigger points.
+        Rules:
+        - ALL comms before on_member_join fires = Brevo email ONLY
+        - KIRA DMs begin ONLY after on_member_join successfully matches student
+        Audit tasks:
+        1. Search codebase for any DM sends triggered before discord_id is set
+           Gate all KIRA DMs: if student.discord_id is None: skip DM
+        2. Verify Brevo email timing:
+           Email #1: /api/interest (pre-join) - OK
+           Email #2: /api/enroll - gate on discord_id presence in Column D
+           Email #3: /api/mpesa-submit - OK (student in Discord by then)
+           Email #4: activateStudent() - OK
+        3. /api/enroll: only send Brevo Email #2 if discord_id already in Column D.
+           GAP FIX #2: If not yet set, implement retry logic with exponential backoff:
+             - Poll Google Sheets for discord_id up to 3 times (1s, 2s, 4s delays)
+             - If found: send Email #2 with personalized Discord ID placeholder
+             - If not found after 3 retries: queue Email #2 for later delivery via scheduler
+             - Log warning: "discord_id not found after 3 retries for {email}"
+        4. Add 48h enroll nudge: if student has been in Discord > 48h and Column E empty,
+           KIRA DMs: "Ready to enroll? Here is your enrollment form link: [url]"
+      agent_context:
+        load: "_bmad-output/cohort-design-artifacts/design-and-architecture/pre-mortem-2026-03-04-decisions.md"
+        section: "DECISION B-03 + GAP FIX #2"
+        also_load: "source_documents.enrollment_flow_design"
+      acceptance: |
+        Zero KIRA DMs fire before on_member_join match (grep guard verified).
+        /api/enroll gates Email #2 on discord_id with retry logic (1s, 2s, 4s backoff).
+        Queued emails delivered when discord_id becomes available. 48h enroll nudge DM works.
+
+    - id: "7.4"
+      title: "M-Pesa token lifecycle: day-5 warning + /renew command + expiry page"
+      status: "pending"
+      description: |
+        DECISION H-01 + GAP FIX #4. Token lifecycle management with idempotency guard.
+        1. Scheduler: nightly token_expiry_check() job:
+           Query Sheets for rows where Column Q (token_expiry) is within 48h of NOW()
+           GAP FIX #4: Check token_warning_sent flag before sending:
+             - Add token_warning_sent column to PostgreSQL (BOOLEAN, default FALSE)
+             - Only send KIRA DM if token_warning_sent = FALSE
+             - After sending DM: UPDATE students SET token_warning_sent = TRUE
+             - Reset flag on /renew: token_warning_sent = FALSE (for new token cycle)
+           DM text: "Your enrollment link expires in 2 days: [token URL]"
+           Log: token_expiry_warning_sent event
+        2. /api/mpesa-submit: when token expired, return friendly HTML page:
+           "Your link has expired. In Discord, type /renew in a DM to KIRA, or visit #help."
+        3. /renew slash command (Trevor or admin only):
+           /renew email:grace@example.com
+           Generate new token, write to Column P + Q (7-day TTL reset)
+           Reset token_warning_sent = FALSE for new warning cycle
+           Send fresh Brevo Email #2 to student
+           Confirm to Trevor in Discord
+      agent_context:
+        load: "_bmad-output/cohort-design-artifacts/design-and-architecture/pre-mortem-2026-03-04-decisions.md"
+        section: "DECISION H-01 + GAP FIX #4"
+        also_load: "source_documents.enrollment_flow_design"
+      acceptance: |
+        Nightly scheduler sends day-5 warning DM for tokens expiring within 48h.
+        token_warning_sent flag prevents duplicate warnings (verified with test: run scheduler twice).
+        /renew resets flag for next cycle. Expired token URL shows friendly expiry page (not 500).
+        /renew regenerates token and sends Email #2. Trevor confirmation works.
+
+    - id: "7.5"
+      title: "Payment feedback DMs: immediate + 24h silence + unverifiable path"
+      status: "pending"
+      description: |
+        DECISIONS H-02, M-01. SESSION 4 UPDATE: N-23 — KIRA escalation DMs go to ALL THREE facilitators (Trevor + Bruce + Mkunzi) at 8h+ pending threshold, not Trevor alone.
+        1. /api/mpesa-submit: after writing Column K, immediately send KIRA DM:
+           "Got your M-Pesa code! Trevor reviews within 24 hours. I will DM you when you are activated."
+        2. Scheduler: payment_queue_silence_check() every 6h:
+           Find Column L = Pending AND Column N age > 24h
+           Send KIRA DM once (guard: do not re-send):
+           "Still reviewing your payment. If urgent, post in #help channel."
+        3. Add Column L value "Unverifiable":
+           When Trevor sets Column L = Unverifiable, KIRA DMs:
+           "We had trouble verifying your payment. Please send a screenshot of your
+           M-Pesa confirmation to #help or DM Trevor directly."
+        4. Dashboard: show Unverifiable rows with red X indicator
+      agent_context:
+        load: "_bmad-output/cohort-design-artifacts/design-and-architecture/pre-mortem-2026-03-04-decisions.md"
+        section: "DECISION H-02"
+        also_load: "source_documents.enrollment_flow_design"
+      acceptance: |
+        Immediate DM fires < 30s after M-Pesa submit. 24h DM fires once (not repeated).
+        Unverifiable DM fires on Column L = Unverifiable. Dashboard shows indicator.
+
+    - id: "7.6"
+      title: "PostgreSQL full production migration (promoted from 6.6)"
+      status: "pending"
+      description: |
+        DECISIONS H-03, H-06 + GAP FIX #3. BLOCKING. Must complete before cohort launch.
+        PostgreSQL replaces SQLite. Railway Postgres plugin is the target.
+        1. Provision Railway PostgreSQL plugin in existing Railway project
+        2. Update .env: DATABASE_URL=postgresql://... (Railway provides this)
+        3. Replace SQLite connection in database/store.py with asyncpg connection pool
+           Pool size: min=2, max=10
+        4. Schema migration in PostgreSQL:
+           - All existing tables: students, conversations, api_usage, observability_events
+           - All Sprint 6.1 context-engine columns
+           - cohort_id field (VARCHAR, default cohort-1) for multi-cohort isolation
+           - invite_code field (VARCHAR 20) for Decision B-01
+           - onboarding_stop_0_complete (BOOLEAN) for Decision H-05
+           - GAP FIX #3: manual_override_timestamp (TIMESTAMP) to preserve Trevor's manual edits
+        5. Data migration: migrate any cohort-1.db data to PostgreSQL
+        6. Remove SQLite from requirements.txt, add asyncpg + psycopg2-binary
+        7. Update health_monitor.py: PostgreSQL connectivity check
+        8. Sheets to PostgreSQL sync (Decision H-06):
+           - preload_students.py writes to PostgreSQL (not SQLite)
+           - GAP FIX #3: Nightly sync respects manual_override_timestamp:
+             - IF sheet_row.manual_override_timestamp > student.last_active:
+               Skip sync (Trevor's manual edit takes precedence)
+             - ELSE: Write PostgreSQL engagement fields back to Sheets
+             - Synced fields: onboarding_stop, last_active, frame_sessions_count
+        9. Run full test suite against PostgreSQL (all 470+ tests must pass)
+       10. Deploy and verify bot starts with PostgreSQL connection
+      agent_context:
+        load: "_bmad-output/cohort-design-artifacts/design-and-architecture/pre-mortem-2026-03-04-decisions.md"
+        section: "DECISION H-03 + H-06 + GAP FIX #3"
+        also_load: "source_documents.bot_technical_spec"
+        section2: "Database + Storage"
+      acceptance: |
+        Bot logs: DB: PostgreSQL connected on startup. All 470+ tests pass.
+        SQLite dependency removed. cohort_id, invite_code, onboarding_stop_0_complete, manual_override_timestamp present.
+        preload_students.py writes to PostgreSQL. Nightly engagement sync respects manual_override_timestamp (verified: manual edit survives sync cycle).
+        Railway health check passes.
+
+    - id: "7.7"
+      title: "Onboarding Stop 0 (profile DM) + is_continue_signal() scope fix + day-8 re-entry"
+      status: "pending"
+      description: |
+        DECISIONS H-05, M-06, M-07 + GAP FIX #5 + GAP FIX #6 + GAP FIX #7.
+        PART A - Stop 0 (4-question conversational DM after activation):
+          GAP FIX #6: RESEQUENCE - Stop 0 happens AFTER Stop 1 (preserves excitement moment)
+          New order: Stop 1 (welcome) → Stop 2 (channels) → Stop 3 (introduce) → Stop 0 (profile) → Stop 4+
+          Q1: "How do you usually access the internet? Reply: phone data / home wifi / office wifi / mixed"
+          Q2: "How many hours per week can you dedicate? (Just a rough guess)"
+          Q3: "On a scale of 1-5, how confident are you with tech tools? (1=nervous, 5=comfortable)"
+          Q4: "Any times that are completely off-limits? (e.g., Sunday mornings, late evenings)"
+          - GAP FIX #5: Free-text parsing failure handling:
+            - Document Q1-Q4 as free-input fields (not structured choice)
+            - Parsing failures → flag for manual review (do not block onboarding)
+            - Create SOP: Trevor reviews flagged profiles in #facilitator-dashboard weekly
+            - Log profile_parse_flagged event with raw response text
+          - Parse and write to PostgreSQL: primary_device_context, study_hours_per_week,
+            confidence_level, family_obligations_hint
+          - Skip with: student types "skip" -> mark profile_complete=false -> proceed to Stop 1
+          - Timeout: 48h with no response -> proceed to Stop 1 with defaults
+          - Stop 0 never blocks cohort access
+        PART B - is_continue_signal() scope fix:
+          GAP FIX #7: Three-layer guard to prevent multi-DM bot confusion:
+            - GUARD 1: message.channel.type == discord.ChannelType.private (DM only)
+            - GUARD 2: NOT message.author.bot (ignore other bots)
+            - GUARD 3: message.channel.recipient == bot.user (sent to THIS bot, not another bot)
+          Only advance onboarding stop if all 3 guards pass AND message.author.id == expected student discord_id
+        PART C - Day-8 re-entry DM:
+          Scheduler: onboarding_timeout_check() daily
+          Students with onboarding_stop < 4 AND last activity > 7 days ago
+          Send DM: "Hey [name], your setup is still waiting! Reply continue to pick up where you left off."
+      agent_context:
+        load: "_bmad-output/cohort-design-artifacts/design-and-architecture/pre-mortem-2026-03-04-decisions.md"
+        section: "DECISION H-05 + M-06 + M-07 + GAP FIX #5 + GAP FIX #6 + GAP FIX #7"
+        also_load: "source_documents.context_engine_design"
+      acceptance: |
+        Stop 0 fires AFTER Stop 1 (resequence preserves excitement). 4 questions asked.
+        Free-text failures flagged for manual review (SOP documented). 48h timeout fallback works.
+        is_continue_signal() has 3-layer guard (DM-only, not bot, recipient check).
+        Day-8 re-entry DM fires for stuck students.
+
+    - id: "7.8"
+      title: "Bot reliability: health endpoint + !recover_member + Apps Script error alerts"
+      status: "pending"
+      description: |
+        DECISIONS H-04, M-02.
+        PART A - Railway health endpoint:
+          Add HTTP health server thread to main.py (aiohttp or http.server):
+          GET /health -> 200 OK {"status": "healthy", "db": "connected", "discord": "connected"}
+          Configure Railway health check: path=/health, interval=30s, timeout=5s
+        PART B - !recover_member already specified in task 7.2 (collocated there).
+        PART C - Apps Script error surfacing:
+          Wrap all Apps Script functions in try/catch:
+          On error: UrlFetchApp.fetch(DASHBOARD_WEBHOOK_URL, {type: apps_script_error, fn, error})
+          KIRA receives webhook -> posts to #facilitator-dashboard:
+          "Apps Script error in [fn]: [message]"
+          Trevor adds DASHBOARD_WEBHOOK_URL to Apps Script project settings.
+      agent_context:
+        load: "_bmad-output/cohort-design-artifacts/design-and-architecture/pre-mortem-2026-03-04-decisions.md"
+        section: "DECISION H-04 + M-02"
+        also_load: "source_documents.bot_technical_spec"
+      acceptance: |
+        GET /health returns 200 JSON. Railway health check configured in project settings.
+        Apps Script errors post to dashboard within 60s. Error type and function name visible.
+
+    # ============================================================
+    # SESSION 4 PRE-MORTEM TASKS (N-01 through N-25)
+    # Added: 2026-03-04 — adversarial review session 4
+    # Pre-read: pre-mortem-session-4-decisions.md
+    # ============================================================
+
+    - id: "7.9"
+      title: "Drop-off recovery email sequence: Stage 1→2 re-engagement (48h + 5-day nudge)"
+      status: "pending"
+      description: |
+        DECISION N-01 (Session 4). Highest-volume dropout point: student submits interest form
+        but never clicks Discord invite. No re-engagement exists. Email open-and-act rates ~20%.
+
+        1. Add scheduler job: check_stage1_dropoff()
+           - Runs nightly
+           - Finds rows where Column D is empty AND Column G (created_at) > 48h ago
+           - At 48h: send Brevo Email #1.5 (friendly nudge — "Did you get in OK?")
+           - At 5 days: send Brevo Email #1.75 ("Last chance — invite expires soon")
+           - Stop condition: once Column D populated, cancel all future nudges for this row
+        2. Add Column V: nudge_email_sent (1.5 | 1.75 | null) to prevent duplicate sends
+        3. Brevo templates for Email #1.5 and #1.75 (created in task 7.14)
+        4. If phone_number present and Email #1.5 bounces: send Africa's Talking WhatsApp nudge
+      agent_context:
+        load: "source_documents.pre_mortem_session_4"
+        section: "DECISION N-01"
+        also_load: "source_documents.enrollment_flow_design"
+      acceptance: |
+        Student who doesn't join Discord within 48h receives Email #1.5.
+        Student who still hasn't joined at day 5 receives Email #1.75.
+        No duplicate nudges. Student who joins Discord receives no further nudges.
+      notes_ref: "task-notes/7.9.md"
+
+    - id: "7.10"
+      title: "KIRA DM templates: progress indicators + M-Pesa URL inline + activation redesign"
+      status: "pending"
+      description: |
+        DECISIONS N-02, N-09, N-24, N-25 (Session 4). Bundle of KIRA DM and UX improvements.
+
+        PART A — M-Pesa submit URL in KIRA DM (N-02):
+          Update /api/enroll KIRA confirmation DM to include token URL inline:
+          "Got your enrollment form! ✅ Next step: pay via M-Pesa then submit your code here:
+          → [token_url] (expires in 7 days). Check email too for backup copy."
+
+        PART B — Progress indicators in all KIRA DMs (N-09):
+          Add stage marker to each KIRA DM:
+          - Post-join welcome DM: "Step 2 complete — here's Step 3"
+          - Post-enroll DM: "Step 3 of 4 — payment next"
+          - Post-M-Pesa DM: "Payment received! Step 4: Trevor verifies (usually 24h)"
+          - Activation DM: "Step 4 complete — you're in!"
+
+        PART C — Discord mental model DM bridge (N-24):
+          Add to KIRA welcome DM (on_member_join):
+          "Quick Discord guide on mobile: Tap ☰ to see channels.
+           Tap inbox icon → see my messages. I'll walk you through everything step by step."
+
+        PART D — Activation DM redesign (N-25):
+          New activation DM opens with: "[Name] — you're in. [affirmation of what they DID]"
+          One clear action (not a list). Stops 1-3 intro moved to NEXT message.
+          See pre-mortem-session-4-decisions.md Decision N-25 for exact copy.
+
+        Also add "Step N of 4" to /api/interest and /api/enroll success page responses.
+      agent_context:
+        load: "source_documents.pre_mortem_session_4"
+        section: "DECISIONS N-02, N-09, N-24, N-25"
+        also_load: "source_documents.enrollment_flow_design"
+      acceptance: |
+        KIRA enrollment confirmation DM includes M-Pesa token URL inline.
+        All KIRA DMs include stage markers. Welcome DM includes Discord navigation tip.
+        Activation DM matches N-25 copy. /api/enroll success page shows "Step 3 of 4".
+      notes_ref: "task-notes/7.10.md"
+
+    - id: "7.11"
+      title: "Webhook authentication: HMAC-SHA256 on all Apps Script → bot endpoints"
+      status: "pending"
+      description: |
+        DECISION N-03 (Session 4). Apps Script → Railway webhooks are currently unauthenticated.
+        An attacker who discovers the URL can trigger role upgrades for arbitrary discord_ids.
+
+        1. Generate WEBHOOK_SECRET (32 bytes, random): store in Railway env var + Apps Script
+           Script Properties (Project Settings → Script properties, not in code)
+        2. Apps Script: sign all webhook payloads before sending:
+           signature = Utilities.computeHmacSha256Signature(payload_json, WEBHOOK_SECRET)
+           Add header: X-K2M-Signature: sha256={hex(signature)}
+        3. Bot (Flask/aiohttp endpoint): validate before executing:
+           received_sig = request.headers.get('X-K2M-Signature')
+           expected_sig = hmac.new(WEBHOOK_SECRET, payload_json, sha256).hexdigest()
+           if not hmac.compare_digest(received_sig, "sha256=" + expected_sig):
+               return 401, "Unauthorized"
+        4. Apply to ALL inbound bot webhooks:
+           - role upgrade endpoint
+           - preload_students endpoint
+           - any future Apps Script → bot calls
+        5. Log all 401s to #facilitator-dashboard with source IP
+      agent_context:
+        load: "source_documents.pre_mortem_session_4"
+        section: "DECISION N-03"
+      acceptance: |
+        POST without valid signature returns 401. POST with valid signature executes normally.
+        WEBHOOK_SECRET in Railway env. Apps Script uses Script Properties (not hardcoded).
+        401 events visible in facilitator dashboard.
+      notes_ref: "task-notes/7.11.md"
+
+    - id: "7.12"
+      title: "#welcome-lounge channel: @Guest waiting room during payment verification"
+      status: "pending"
+      description: |
+        DECISION N-05 (Session 4). Students waiting 24h for payment verification as @Guest
+        see only locked channels. Creates trust collapse: "did I get scammed?"
+
+        1. Create #welcome-lounge channel in Discord server (visible to @Guest, read + write)
+        2. KIRA posts pinned message when first student activates (or at bot startup):
+           "Your payment is being verified — usually within 24 hours. While you wait..."
+        3. Add 3 KIRA posts to #welcome-lounge: anonymized previews from daily-prompt-library.md
+           (week 1 examples showing the type of thinking prompts they'll engage with)
+        4. Scheduler: update pinned message nightly with confirmed student count
+        5. KIRA listens in #welcome-lounge and responds to questions (@Guest can ask KIRA anything)
+           Bot responds with canned FAQ or forwards to #facilitator-dashboard for Trevor
+        6. On @Guest → @Student upgrade: KIRA DMs student: "#welcome-lounge served its purpose —
+           your full access is now unlocked!"
+        7. @Student cannot post in #welcome-lounge (they have all the real channels now)
+      agent_context:
+        load: "source_documents.pre_mortem_session_4"
+        section: "DECISION N-05"
+        also_load: "source_documents.community_culture_architecture"
+      acceptance: |
+        @Guest can read and post in #welcome-lounge. @Student cannot.
+        Pinned message posted. 3 preview posts visible. Student count updates nightly.
+        KIRA responds to @Guest questions in the channel.
+      notes_ref: "task-notes/7.12.md"
+
+    - id: "7.13"
+      title: "Brevo: account setup + domain authentication (DKIM/SPF)"
+      status: "pending"
+      description: |
+        DECISION N-13 (Session 4). No Brevo setup tasks existed despite Brevo being the
+        primary communication channel. Launch blocker.
+
+        1. Create Brevo account (if not yet done). Store API key in Railway env: BREVO_API_KEY
+        2. Add k2m.edtech sending domain in Brevo > Senders & Domains
+        3. Add Brevo-provided DKIM record to k2m.edtech DNS (contact domain registrar)
+        4. Add Brevo-provided SPF record to k2m.edtech DNS
+        5. Verify domain in Brevo dashboard (may take 24h for DNS propagation)
+        6. Set default sender: "Trevor from K2M <trevor@k2m.edtech>"
+        7. Add annotated Discord screenshot to Email #1 assets (Decision N-24):
+           Shows: channel list sidebar, DM icon, server name. Annotated in plain language.
+        8. Test send to trevor@k2m.edtech to verify domain authentication working
+      agent_context:
+        load: "source_documents.pre_mortem_session_4"
+        section: "DECISIONS N-13, N-24"
+      acceptance: |
+        DKIM and SPF records verified in Brevo. Domain shows "Authenticated" status.
+        Test email from trevor@k2m.edtech to Gmail arrives without spam warning.
+        BREVO_API_KEY in Railway environment.
+      notes_ref: "task-notes/7.13.md"
+
+    - id: "7.14"
+      title: "Brevo: create all 7 email templates"
+      status: "pending"
+      description: |
+        DECISION N-13 (Session 4). All email templates must be created in Brevo before
+        end-to-end testing. Depends on task 7.13 (domain auth).
+
+        Templates to create (use Brevo Template IDs, stored in Railway env):
+        - Email #1: Discord invite (with Discord screenshot from task 7.13)
+        - Email #1.5: 48h nudge (Stage 1→2 drop-off)
+        - Email #1.75: 5-day final nudge (Stage 1→2 drop-off)
+        - Email #2: Payment instructions (includes M-Pesa tutorial link + refund policy)
+        - Email #3: M-Pesa code received confirmation
+        - Email #4: Welcome to Cohort 1 (activation) — includes first session date, cluster, refund policy
+        - Email #5: Waitlist confirmation
+
+        All templates must:
+        - Include "Step N of 4" progress marker in subject or header (where applicable)
+        - Reference {{first_name}}, {{week1_start_date}}, {{first_session_date}} etc. from Railway env
+        - Be mobile-responsive (Brevo's drag-and-drop is fine)
+        - Include K2M brand: "Trevor from K2M <trevor@k2m.edtech>" as sender
+
+        Store Brevo template IDs as Railway env vars:
+        BREVO_TEMPLATE_EMAIL_1, BREVO_TEMPLATE_EMAIL_1_5, etc.
+      agent_context:
+        load: "source_documents.enrollment_flow_design"
+        section: "Email Templates"
+        also_load: "source_documents.pre_mortem_session_4"
+      acceptance: |
+        All 7 templates created and active in Brevo. Template IDs stored in Railway env.
+        Test send of each template succeeds. Progress markers present. Sender is trevor@k2m.edtech.
+      notes_ref: "task-notes/7.14.md"
+
+    - id: "7.15"
+      title: "Brevo deliverability test (Cohort 1 scope — SMS backup deferred to Cohort 2)"
+      status: "pending"
+      description: |
+        DECISIONS M-08, N-13 (Sessions 3 + 4). Brevo deliverability verified against Kenyan
+        email providers before launch. Depends on tasks 7.13, 7.14.
+
+        NOTE: Africa's Talking SMS automation DEFERRED to Cohort 2 (Trevor decision 2026-03-04).
+        Phone numbers collected for manual WhatsApp follow-up by Trevor/Bruce/Mkunzi only.
+        No automated SMS in Cohort 1.
+
+        1. Send all 7 email templates to test addresses:
+           - Safaricom email (e.g. xxxxx@safaricom.co.ke)
+           - Airtel Kenya email (if available)
+           - Gmail, Yahoo
+        2. Check each inbox AND spam folder. Record results in task notes.
+        3. If Safaricom/Airtel delivery is poor:
+           - Trevor/facilitators manually WhatsApp students whose emails bounce
+           - Phone number in Google Sheets Column S enables this
+           - Flag for Africa's Talking automated SMS in Cohort 2 sprint planning
+        4. If Gmail delivery is poor: escalate DKIM/SPF troubleshooting before launch.
+      agent_context:
+        load: "source_documents.pre_mortem_session_4"
+        section: "DECISIONS N-13, N-19 (updated)"
+      acceptance: |
+        All 7 templates delivered to Gmail without spam classification.
+        Safaricom/Airtel delivery results documented. Trevor/Bruce/Mkunzi aware of
+        manual WhatsApp fallback process if email fails.
+      notes_ref: "task-notes/7.15.md"
+
+    - id: "7.16"
+      title: "End-to-end smoke test: full enrollment pipeline validation before launch"
+      status: "pending"
+      description: |
+        DECISION N-14 (Session 4). No smoke test existed. Launch is blocked until this passes.
+        Depends on ALL other Sprint 7 tasks.
+
+        Create test accounts (use a dedicated test email domain or +test suffixes):
+        Step 1: Submit interest form with test data → verify Email #1 arrives < 60s
+        Step 2: Click Discord invite → verify on_member_join fires → Column D written → KIRA DM arrives
+        Step 3: Submit /enroll form → verify Email #2 + KIRA DM both arrive with M-Pesa URL
+        Step 4: Submit test M-Pesa code (TESTTEST01) → verify #facilitator-dashboard notification
+        Step 5: Trevor confirms payment in test row → verify:
+                - @Guest → @Student role upgraded in Discord
+                - preload_students.py executes → PostgreSQL row written
+                - Brevo Email #4 delivered
+                - KIRA activation DM with N-25 redesigned copy
+        Step 6: Complete Stops 1-3 → verify onboarding_stop = 4 in DB
+        Step 7: Complete Stop 0 (after stop 3) → verify profile fields in PostgreSQL
+        Step 8: Check #welcome-lounge was visible during @Guest phase
+
+        Also test failure paths:
+        - Expired M-Pesa token → friendly expiry page + KIRA DM
+        - Day-5 token warning DM fires
+        - Webhook auth: POST without signature → 401 returned
+        - Stage 1→2 nudge: no Discord join after 48h → Email #1.5 fires
+
+        All steps pass: mark sprint_7 status = "done" and update progress.
+      agent_context:
+        load: "source_documents.pre_mortem_session_4"
+        section: "DECISION N-14"
+        also_load: "source_documents.enrollment_flow_design"
+      acceptance: |
+        All 7 happy-path steps pass in a single run. All 5 failure-path tests pass.
+        Zero manual interventions required beyond Trevor's payment confirmation.
+        Full results documented in task-notes/7.16.md.
+      notes_ref: "task-notes/7.16.md"
+
 # ============================================================
 # NOTES FOR AGENTS
 # ============================================================
 agent_instructions: |
   WHEN LOADING THIS FILE:
   1. Check progress section for overall status
-  2. Find the first sprint with status != "done"
-  3. Within that sprint, find first task with status "pending" or "in_progress"
-  4. Load the agent_context files specified for that task
-  5. Execute the task per its description
-  6. When done, update task status to "done", add a short summary, and store full details in task-notes/
-  7. Update progress section totals
+  2. If canonical_merge_v3.active = true, follow canonical_merge_v3.sprint_execution_order
+  3. If canonical_merge_v3.active = false, find the first sprint with status != "done"
+  4. Within that sprint, find first task with status "pending" or "in_progress"
+  5. Read execution_contract.mandatory_read_order in sequence
+  6. Load the task-level agent_context files specified for that task
+  7. Execute the task per its description and precedence rules
+  8. When done, update task status to "done", add a short summary, and store full details in task-notes/
+  9. Update progress section totals
 
   CRITICAL RULES:
   - NEVER skip a task's dependencies
-  - ALWAYS load the specified source documents before starting
-  - The design documents are the BIBLE - implement what they specify, don't improvise
+  - ALWAYS load specified source documents before starting
+  - FOLLOW execution_contract.precedence_rules when docs conflict
+  - If a design artifact is planned but not implemented, keep status pending and record gap in notes
   - Test in #bot-testing before deploying to production channels
   - Update this file after EVERY completed task
+  - Keep each task auditable: link notes_ref and reference changed files in the summary
 
 # Last Updated
-last_updated: "2026-02-20"
-updated_by: "Dev Agent (Amelia) - Task 5.7 complete: production Railway deployment stabilized (runtime + scheduler blockers fixed), invite and launch announcement posted, and go/no-go set to GO."
+last_updated: "2026-03-04"
+updated_by: "Maya (Design Thinking Coach) + adversarial pre-mortem panel session 4 (Sally+Winston+Amelia+DrQuinn+John+Mary+Murat). Session 4 added 25 new decisions (N-01 to N-25) addressing: UX experience gaps, context switch reduction, undesigned waiting periods, emotional design of activation moment. New tasks: 7.0 (launch date config), 7.9 (drop-off recovery emails), 7.10 (KIRA DM redesigns), 7.11 (webhook auth), 7.12 (#welcome-lounge), 7.13-7.15 (Brevo setup + deliverability), 7.16 (smoke test), 6.7 (other profession inference). Total tasks: 84. Sprint 7 now 17 tasks (7.0-7.16). Decisions: pre-mortem-session-4-decisions.md"
 
