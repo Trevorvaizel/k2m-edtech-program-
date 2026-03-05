@@ -2004,7 +2004,7 @@ sprint_7:
 
     - id: "7.1"
       title: "Stage 1 redesign: remove /join, landing page = entry point + refund policy + enrollment cap"
-      status: "pending"
+      status: "done"
       description: |
         DECISIONS B-02, M-04, M-05. SESSION 4: N-10 (refund in Email #2), N-19 (phone field).
         1. Remove /join slash command from cis-discord-bot/main.py entirely.
@@ -2027,6 +2027,15 @@ sprint_7:
         /join command does not exist in bot. /api/interest appends row, generates invite link,
         sends Email #1 < 60s. Enrollment cap check works (waitlist email fires at >= 30).
         Refund policy in Email #4 and #welcome pin. Landing form targets /api/interest.
+      notes_ref: "task-notes/7.1.md"
+      summary: |
+        2026-03-05 — FULLY COMPLETE. Created /api/interest endpoint in cis-discord-bot using aiohttp pattern.
+        Integrated with Google Sheets API (enrollment cap check, duplicate detection, row append).
+        Integrated with EmailService for Brevo emails. Created Brevo Email #5 waitlist template with warm tone.
+        Created enrollment form modal in k2m-landing (dark theme, mobile-responsive).
+        Updated CTA "Enroll Now" button to open form. Added refund policy to Brevo Email #4 template.
+        /join command removal confirmed (already nonexistent). Landing page form POSTs to /api/interest endpoint.
+        Environment variables documented (.env.example for VITE_INTEREST_API_URL).
 
     - id: "7.2"
       title: "Unique per-student Discord invite links (on_member_join match key)"

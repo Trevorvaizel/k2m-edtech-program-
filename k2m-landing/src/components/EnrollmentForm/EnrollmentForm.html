@@ -1,0 +1,136 @@
+<!-- Enrollment Form Modal - Task 7.1 -->
+<!-- Opens when user clicks "Apply Now" or enrollment CTA -->
+<!-- Integrates with /api/interest endpoint in cis-discord-bot -->
+
+<div class="enrollment-modal" id="enrollmentModal" aria-hidden="true" role="dialog" aria-labelledby="enrollmentTitle">
+  <div class="modal-backdrop" id="modalBackdrop"></div>
+
+  <div class="modal-container">
+    <button class="modal-close" id="modalClose" aria-label="Close form">&times;</button>
+
+    <div class="modal-content">
+      <!-- Logo/Header -->
+      <div class="modal-header">
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" class="modal-logo" width="64" height="64">
+          <line x1="50" y1="50" x2="28" y2="32" stroke="#3b82f6" stroke-width="3" stroke-linecap="round"/>
+          <line x1="50" y1="50" x2="22" y2="48" stroke="#2563eb" stroke-width="3" stroke-linecap="round"/>
+          <line x1="50" y1="50" x2="28" y2="68" stroke="#60a5fa" stroke-width="3" stroke-linecap="round"/>
+          <line x1="50" y1="50" x2="38" y2="78" stroke="#3b82f6" stroke-width="2" stroke-linecap="round"/>
+          <line x1="50" y1="50" x2="72" y2="32" stroke="#10b981" stroke-width="3" stroke-linecap="round"/>
+          <line x1="50" y1="50" x2="78" y2="48" stroke="#059669" stroke-width="3" stroke-linecap="round"/>
+          <line x1="50" y1="50" x2="72" y2="68" stroke="#34d399" stroke-width="3" stroke-linecap="round"/>
+          <line x1="50" y1="50" x2="62" y2="78" stroke="#10b981" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="28" cy="32" r="5" fill="#3b82f6"/>
+          <circle cx="22" cy="48" r="4" fill="#2563eb"/>
+          <circle cx="28" cy="68" r="5" fill="#60a5fa"/>
+          <circle cx="38" cy="78" r="3" fill="#93c5fd"/>
+          <circle cx="72" cy="32" r="5" fill="#10b981"/>
+          <circle cx="78" cy="48" r="4" fill="#059669"/>
+          <circle cx="72" cy="68" r="5" fill="#34d399"/>
+          <circle cx="62" cy="78" r="3" fill="#6ee7b7"/>
+          <line x1="50" y1="50" x2="50" y2="22" stroke="#06b6d4" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="50" cy="18" r="4" fill="#22d3ee"/>
+          <circle cx="50" cy="50" r="10" fill="#06b6d4"/>
+          <circle cx="50" cy="50" r="5" fill="#0891b2"/>
+        </svg>
+        <h2 id="enrollmentTitle" class="modal-title">Secure Your Spot</h2>
+        <p class="modal-subtitle">Cohort 1: AI Thinking Skills Program</p>
+      </div>
+
+      <!-- Urgency Badge -->
+      <div class="modal-urgency">
+        <span class="urgency-dot"></span>
+        <span class="urgency-text">30 spots total • First come, first served</span>
+      </div>
+
+      <!-- Form -->
+      <form class="enrollment-form" id="enrollmentForm">
+        <div class="form-group">
+          <label for="enrollmentName" class="form-label">Full Name</label>
+          <input
+            type="text"
+            id="enrollmentName"
+            name="name"
+            class="form-input"
+            placeholder="e.g., Trevor Otsie"
+            required
+            autocomplete="name"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="enrollmentEmail" class="form-label">Email Address</label>
+          <input
+            type="email"
+            id="enrollmentEmail"
+            name="email"
+            class="form-input"
+            placeholder="you@example.com"
+            required
+            autocomplete="email"
+          />
+          <p class="form-hint">We'll send your Discord invitation here</p>
+        </div>
+
+        <div class="form-group">
+          <label for="enrollmentPhone" class="form-label">Phone Number (WhatsApp)</label>
+          <input
+            type="tel"
+            id="enrollmentPhone"
+            name="phone"
+            class="form-input"
+            placeholder="+254 XXX XXX XXX"
+            required
+            autocomplete="tel"
+          />
+          <p class="form-hint">For urgent program updates</p>
+        </div>
+
+        <div class="form-group">
+          <label for="enrollmentProfession" class="form-label">Current Status</label>
+          <select id="enrollmentProfession" name="profession" class="form-select" required>
+            <option value="">Select your status...</option>
+            <option value="Gap Year Student">Gap Year Student</option>
+            <option value="Recent Graduate">Recent Graduate</option>
+            <option value="University Student">University Student</option>
+            <option value="Teacher">Teacher / Educator</option>
+            <option value="Professional">Working Professional</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+
+        <div class="form-assurance">
+          <p class="assurance-text">🔒 No payment required now. We'll reach out with next steps.</p>
+        </div>
+
+        <button type="submit" class="form-submit" id="formSubmit">
+          <span class="submit-text">Enroll Now</span>
+          <span class="submit-loader" hidden>Submitting...</span>
+        </button>
+
+        <p class="form-terms">
+          By enrolling, you agree to receive program updates via email and WhatsApp.
+        </p>
+      </form>
+
+      <!-- Success Message (hidden by default) -->
+      <div class="form-success" id="formSuccess" hidden>
+        <div class="success-icon">✓</div>
+        <h3 class="success-title">Check your email!</h3>
+        <p class="success-message">
+          Your Discord invitation is on the way.
+        </p>
+        <p class="success-detail">
+          If you don't see it within 5 minutes, check your spam folder.
+        </p>
+      </div>
+
+      <!-- Error Message (hidden by default) -->
+      <div class="form-error" id="formError" hidden>
+        <div class="error-icon">⚠</div>
+        <p class="error-message" id="errorText">Something went wrong. Please try again.</p>
+        <button class="error-retry" id="errorRetry">Try Again</button>
+      </div>
+    </div>
+  </div>
+</div>

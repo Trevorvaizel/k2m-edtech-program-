@@ -1,11 +1,12 @@
 import './styles/token.css'
 import './style.css'
 import './components/Hero/Hero.css'
-import './components/ResonanceZone/resonanceZone.css'
+import './components/ResonanceZone/ResonanceZone.css'
 import './components/Bridge/Bridge.css'
 import './components/CTA/CTA.css'
 import './components/Contact/Contact.css'
 import './components/Footer/Footer.css'
+import './components/EnrollmentForm/EnrollmentForm.css'
 
 // Import component HTML
 import heroHtml from './components/Hero/Hero.html?raw';
@@ -14,6 +15,7 @@ import bridgeHtml from './components/Bridge/Bridge.html?raw';
 import ctaHtml from './components/CTA/CTA.html?raw';
 import contactHtml from './components/Contact/Contact.html?raw';
 import footerHtml from './components/Footer/Footer.html?raw';
+import enrollmentModalHtml from './components/EnrollmentForm/EnrollmentForm.html?raw';
 
 // K2M Landing Page Entry Point
 // Full page flow: Hero → Resonance Zones → Bridge → CTA → Contact → Footer
@@ -24,7 +26,7 @@ const progressNavHtml = '<nav class="progress-nav"></nav>';
 // Load all section HTML into app container
 const app = document.getElementById('app');
 if (app) {
-  app.innerHTML = heroHtml + progressNavHtml + resonanceZonesHtml + bridgeHtml + ctaHtml + contactHtml + footerHtml;
+  app.innerHTML = heroHtml + progressNavHtml + resonanceZonesHtml + bridgeHtml + ctaHtml + contactHtml + footerHtml + enrollmentModalHtml;
   console.log('✅ All sections loaded');
 } else {
   console.error('❌ App container not found');
@@ -76,6 +78,9 @@ import { initProgressNav } from './components/ProgressNav/ProgressNav.js';
 import { initBridgeAnimations } from './components/Bridge/Bridge.js';
 import { initCTAAnimations } from './components/CTA/CTA.js';
 
+// Import Enrollment Form (Task 7.1)
+import { initEnrollmentForm } from './components/EnrollmentForm/EnrollmentForm.js';
+
 // Initialize all components after page load
 window.addEventListener('load', () => {
   try {
@@ -113,6 +118,14 @@ window.addEventListener('load', () => {
     initCTAAnimations();
   } catch (error) {
     console.error('❌ Error initializing CTA animations:', error);
+  }
+
+  // Initialize Enrollment Form (Task 7.1)
+  try {
+    initEnrollmentForm();
+    console.log('✅ Enrollment form initialized');
+  } catch (error) {
+    console.error('❌ Error initializing enrollment form:', error);
   }
 
   // Fade starfield out approaching footer

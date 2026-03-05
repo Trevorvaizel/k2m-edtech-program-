@@ -68,6 +68,7 @@ WEEKLY_CHANNEL_MAPPING = {
 daily_prompt_scheduler = None
 health_monitor = None
 parent_unsubscribe_server = None
+interest_api_server = None
 
 # Validate required environment variables
 if not DISCORD_TOKEN:
@@ -206,7 +207,7 @@ async def sync_slash_commands() -> None:
 @bot.event
 async def on_ready():
     """Bot startup initialization."""
-    global _slash_synced, daily_prompt_scheduler, health_monitor, parent_unsubscribe_server
+    global _slash_synced, daily_prompt_scheduler, health_monitor, parent_unsubscribe_server, interest_api_server
 
     logger.info("%s has connected to Discord!", bot.user)
     logger.info("Serving %s guilds", len(bot.guilds))
@@ -389,6 +390,24 @@ async def on_ready():
             logger.info("Parent unsubscribe server disabled by ENABLE_PARENT_UNSUBSCRIBE_SERVER=false")
     except Exception as exc:
         logger.error("Failed to start parent unsubscribe server: %s", exc, exc_info=True)
+
+    # Initialize Interest API server (Task 7.1 - landing page enrollment endpoint)
+    try:
+        enable_interest_api = os.getenv(
+            "ENABLE_INTEREST_API",
+            "true",
+        ).strip().lower() in {"1", "true", "yes", "on"}
+
+        if enable_interest_api:
+            from cis_controller.interest_api_server import InterestAPIServer
+
+            if interest_api_server is None:
+                interest_api_server = InterestAPIServer()
+            await interest_api_server.start()
+        elif not enable_interest_api:
+            logger.info("Interest API server disabled by ENABLE_INTEREST_API=false")
+    except Exception as exc:
+        logger.error("Failed to start interest API server: %s", exc, exc_info=True)
 
     # Set bot status
     await bot.change_presence(
@@ -917,6 +936,11 @@ def main():
         if parent_unsubscribe_server:
             parent_unsubscribe_server.stop_sync()
             parent_unsubscribe_server = None
+
+        # Stop Interest API server when bot shuts down
+        if interest_api_server:
+            interest_api_server.stop_sync()
+            interest_api_server = None
 
         set_runtime_failure_notifier(None)
 
