@@ -6,6 +6,7 @@ This bot implements the complete CIS Agent System for Discord-based cohort facil
 Bot Name: KIRA (K2M Interactive Reasoning Agent)
 """
 
+import asyncio
 import logging
 import os
 from pathlib import Path
@@ -70,6 +71,11 @@ health_monitor = None
 parent_unsubscribe_server = None
 interest_api_server = None
 
+# Task 7.2 — Decision N-07: asyncio.Lock + invite snapshot for on_member_join diff
+# Dict shape: { guild_id: { invite_code: uses_count } }
+_guild_invite_snapshot: dict = {}
+_member_join_lock = asyncio.Lock()
+
 # Validate required environment variables
 if not DISCORD_TOKEN:
     raise ValueError(
@@ -78,11 +84,11 @@ if not DISCORD_TOKEN:
     )
 
 if not os.environ.get("COHORT_1_START_DATE"):
-    raise EnvironmentError("COHORT_1_START_DATE not set â€” bot refusing to start")
+    raise EnvironmentError("COHORT_1_START_DATE not set - bot refusing to start")
 
 if not os.environ.get("COHORT_1_FIRST_SESSION_DATE"):
     logger.warning(
-        "COHORT_1_FIRST_SESSION_DATE not set â€” using COHORT_1_START_DATE as fallback"
+        "COHORT_1_FIRST_SESSION_DATE not set - using COHORT_1_START_DATE as fallback"
     )
 
 if ENVIRONMENT in {"production", "prod"} and not (
@@ -220,7 +226,8 @@ async def on_ready():
     runtime_participation_tracker = None
     runtime_escalation_system = None
 
-    # Initialize database â€” PostgreSQL (Railway) if DATABASE_URL set, else SQLite (local/tests)
+    # Initialize database — PostgreSQL is the production primary.
+    # SQLite is retained only as a local/test fallback when DATABASE_URL is absent.
     try:
         from database import get_store, set_runtime_store
 
@@ -365,6 +372,20 @@ async def on_ready():
         logger.error("Failed to start daily prompt scheduler: %s", exc, exc_info=True)
 
     # Optional lightweight unsubscribe endpoint for parent email links.
+    enable_interest_api = os.getenv(
+        "ENABLE_INTEREST_API",
+        "true",
+    ).strip().lower() in {"1", "true", "yes", "on"}
+    mount_interest_on_parent = os.getenv(
+        "MOUNT_INTEREST_API_ON_PARENT_SERVER",
+        "true",
+    ).strip().lower() in {"1", "true", "yes", "on"}
+
+    if enable_interest_api and interest_api_server is None:
+        from cis_controller.interest_api_server import InterestAPIServer
+
+        interest_api_server = InterestAPIServer()
+
     try:
         enable_unsubscribe_server = os.getenv(
             "ENABLE_PARENT_UNSUBSCRIBE_SERVER",
@@ -379,8 +400,14 @@ async def on_ready():
             path = os.getenv("PARENT_UNSUBSCRIBE_PATH", "/parent/unsubscribe")
 
             if parent_unsubscribe_server is None:
+                mountable_interest_api = (
+                    interest_api_server
+                    if (enable_interest_api and mount_interest_on_parent)
+                    else None
+                )
                 parent_unsubscribe_server = ParentUnsubscribeServer(
                     store=runtime_store,
+                    interest_api_server=mountable_interest_api,
                     host=host,
                     port=port,
                     path=path,
@@ -393,21 +420,37 @@ async def on_ready():
 
     # Initialize Interest API server (Task 7.1 - landing page enrollment endpoint)
     try:
-        enable_interest_api = os.getenv(
-            "ENABLE_INTEREST_API",
-            "true",
-        ).strip().lower() in {"1", "true", "yes", "on"}
-
         if enable_interest_api:
-            from cis_controller.interest_api_server import InterestAPIServer
-
-            if interest_api_server is None:
-                interest_api_server = InterestAPIServer()
-            await interest_api_server.start()
+            mounted_on_parent = bool(
+                parent_unsubscribe_server
+                and getattr(parent_unsubscribe_server, "interest_api_server", None) is not None
+            )
+            if mounted_on_parent:
+                logger.info(
+                    "Interest API mounted on parent unsubscribe server; standalone listener skipped."
+                )
+            elif interest_api_server is not None:
+                await interest_api_server.start()
         elif not enable_interest_api:
             logger.info("Interest API server disabled by ENABLE_INTEREST_API=false")
     except Exception as exc:
         logger.error("Failed to start interest API server: %s", exc, exc_info=True)
+
+    # Task 7.2 — Decision B-01: snapshot guild invites for on_member_join diff matching
+    for guild in bot.guilds:
+        try:
+            invites = await guild.invites()
+            _guild_invite_snapshot[guild.id] = {inv.code: inv.uses for inv in invites}
+            logger.info(
+                "Invite snapshot: %d invites cached for guild %s", len(invites), guild.id
+            )
+        except discord.Forbidden:
+            logger.warning(
+                "Missing Manage Guild permission — invite tracking unavailable for guild %s",
+                guild.id,
+            )
+        except Exception as exc:
+            logger.warning("Could not snapshot invites for guild %s: %s", guild.id, exc)
 
     # Set bot status
     await bot.change_presence(
@@ -765,101 +808,207 @@ async def post_session_summary_slash(
     await post_session_summary(interaction, store, cluster_id, session_notes, attendance_count)
 
 
+# ============================================================
+# Task 7.2 — !recover_member (Decision B-01, GAP FIX #8)
+# Temporal fallback for members who joined without their invite
+# ============================================================
+
+@bot.tree.command(
+    name="recover-member",
+    description="Manually link a member who joined without their unique invite (Trevor only).",
+)
+@app_commands.describe(
+    member="The Discord member to recover",
+    invite_code="Invite code from their enrollment email (Column R). Omit to use 24h temporal fallback.",
+)
+async def recover_member_slash(
+    interaction: discord.Interaction,
+    member: discord.Member,
+    invite_code: Optional[str] = None,
+):
+    """
+    Task 7.2 Decision B-01 + GAP FIX #8: Temporal fallback for unmatched joins.
+    - With invite_code: exact match against students table
+    - Without invite_code: finds most recently enrolled unlinked student within 24h
+    Trevor-only.
+    """
+    await interaction.response.defer(ephemeral=True)
+
+    store = _get_store()
+    student = None
+
+    if invite_code:
+        student = store.get_student_by_invite_code(invite_code.strip())
+        if not student:
+            await interaction.followup.send(
+                f"No enrolled student found with invite code `{invite_code}`.",
+                ephemeral=True,
+            )
+            return
+    else:
+        # Temporal fallback: most recent unlinked student enrolled within 24h
+        try:
+            student = store.get_recent_unlinked_student(hours=24)
+        except Exception as exc:
+            logger.error("recover_member temporal fallback failed: %s", exc, exc_info=True)
+            student = None
+        if not student:
+            await interaction.followup.send(
+                "No unlinked student found enrolled within the last 24 hours. "
+                "Provide the `invite_code` to match explicitly.",
+                ephemeral=True,
+            )
+            return
+
+    used_code = student.get("invite_code", "") or ""
+    linked = store.link_student_by_invite(
+        invite_code=used_code,
+        discord_id=str(member.id),
+        discord_username=str(member.name),
+    )
+
+    if linked:
+        guest_role = discord.utils.get(member.guild.roles, name="Guest")
+        if guest_role and guest_role not in member.roles:
+            try:
+                await member.add_roles(guest_role)
+            except Exception as role_exc:
+                logger.warning("recover_member: could not assign @Guest: %s", role_exc)
+
+        logger.info(
+            "recover_member: linked discord_id=%s to email=%s invite=%s",
+            member.id,
+            student.get("enrollment_email", "?"),
+            used_code,
+        )
+        await interaction.followup.send(
+            f"**Member recovered.**\n"
+            f"Linked {member.mention} → `{student.get('enrollment_email', '?')}` "
+            f"(invite: `{used_code}`)",
+            ephemeral=True,
+        )
+    else:
+        await interaction.followup.send(
+            "Link failed — the student row may already be claimed by another Discord account. "
+            "Check the database or contact Trevor.",
+            ephemeral=True,
+        )
+
+
 @bot.event
 async def on_member_join(member: discord.Member):
     """
-    Handle new member joining - auto-assign cluster (Task 4.3).
+    Task 7.2 — Decision B-01 + N-07.
 
-    Per Story 5.1:
-    1. Extract last name from display_name
-    2. Auto-assign to cluster based on last name (8 clusters)
-    3. Assign @Student role
-    4. Assign @Cluster-X role
-    5. Send welcome DM with cluster info
+    Invite diff matching with asyncio.Lock:
+    1. Snapshot guild invites before/after diff to find which invite was used
+    2. Match invite_code → enrolled student in PostgreSQL
+    3. Assign @Guest only (Guardrail #8: @Student granted after payment)
+    4. Log student_linked or student_unmatched observability events
+    5. Send personalised DM if matched, generic DM if unmatched
     """
-    # Skip bots
     if member.bot:
         return
 
-    try:
-        # Initialize store
-        store = _get_store()
-
-        # Extract last name from display_name
-        # Format: "John Anderson" or "Anderson" or "John"
-        display_name = member.display_name or member.name
-        last_name = display_name.split()[-1] if display_name else None
-
-        # Create student with cluster assignment
-        student = store.create_student(
-            discord_id=str(member.id),
-            last_name=last_name
-        )
-
-        cluster_id = student["cluster_id"]
-
-        # Assign @Student role
-        student_role = discord.utils.get(member.guild.roles, name="Student")
-        if student_role:
-            await member.add_roles(student_role)
-            logger.info(f"Assigned @Student role to {member.display_name}")
-        else:
-            logger.warning(f"@Student role not found for {member.display_name}")
-
-        # Assign @Cluster-X role
-        cluster_role_name = f"Cluster-{cluster_id}"
-        cluster_role = discord.utils.get(member.guild.roles, name=cluster_role_name)
-        if cluster_role:
-            await member.add_roles(cluster_role)
-            logger.info(f"Assigned @{cluster_role_name} to {member.display_name}")
-        else:
-            logger.warning(f"@{cluster_role_name} role not found for {member.display_name}; creating role")
+    async with _member_join_lock:
+        try:
+            # Fetch current invites (post-join state)
             try:
-                cluster_role = await member.guild.create_role(name=cluster_role_name, mentionable=False)
-                await member.add_roles(cluster_role)
-                logger.info(f"Created and assigned @{cluster_role_name} to {member.display_name}")
-            except Exception as role_exc:
-                logger.error("Failed to create %s role: %s", cluster_role_name, role_exc, exc_info=True)
+                current_invites = await member.guild.invites()
+            except discord.Forbidden:
+                logger.warning(
+                    "Missing Manage Guild permission — invite diff unavailable for %s",
+                    member.name,
+                )
+                current_invites = []
 
-        from scheduler.cluster_sessions import ClusterSessionScheduler
+            current_map = {inv.code: inv.uses for inv in current_invites}
+            old_map = _guild_invite_snapshot.get(member.guild.id, {})
 
-        schedule_helper = ClusterSessionScheduler(
-            bot=bot,
-            store=store,
-            guild_id=member.guild.id,
-            channel_mapping=WEEKLY_CHANNEL_MAPPING,
-            cohort_start_date=COHORT_1_START_DATE,
-        )
-        schedule_text = schedule_helper.get_cluster_schedule_text(cluster_id)
+            # Find the invite that was consumed:
+            # Case 1 — invite still exists but uses count incremented
+            # Case 2 — invite disappeared (max_uses=1 consumed and deleted by Discord)
+            used_code = None
+            for code, uses in current_map.items():
+                if uses > old_map.get(code, 0):
+                    used_code = code
+                    break
+            if used_code is None:
+                for code in old_map:
+                    if code not in current_map:
+                        used_code = code
+                        break
 
-        # Send welcome DM
-        cluster_names = {
-            1: "A-F", 2: "G-L", 3: "M-R", 4: "S-Z",
-            5: "A-F (overflow)", 6: "G-L (overflow)", 7: "M-R (overflow)", 8: "S-Z (overflow)"
-        }
+            # Refresh snapshot for the next join event
+            _guild_invite_snapshot[member.guild.id] = current_map
 
-        welcome_message = f"""ðŸ‘‹ Welcome to K2M Cohort #1, **{member.display_name}**!
+            # --- DB match ---
+            store = _get_store()
+            student = None
+            student_linked = False
 
-You're in **Cluster {cluster_id}** (Last names: {cluster_names.get(cluster_id, 'Unknown')})
+            if used_code:
+                student = store.get_student_by_invite_code(used_code)
+                if student:
+                    student_linked = store.link_student_by_invite(
+                        invite_code=used_code,
+                        discord_id=str(member.id),
+                        discord_username=str(member.name),
+                    )
 
-ðŸ“… **Cluster Session Schedule:**
-Cluster {cluster_id} meets **{schedule_text}**
+            # --- Observability ---
+            event_type = "student_linked" if student_linked else "student_unmatched"
+            logger.info(
+                "%s: discord_id=%s invite_code=%s",
+                event_type, member.id, used_code,
+            )
+            try:
+                store.log_observability_event(
+                    discord_id=str(member.id),
+                    event_type=event_type,
+                    metadata={"invite_code": used_code, "guild_id": str(member.guild.id)},
+                )
+            except Exception:
+                pass  # Observability must not block onboarding
 
-ðŸŽ¯ **What to do now:**
-1. Introduce yourself in #week-1-wonder
-2. Check your daily prompts at 9:15 AM EAT
-3. Use `/frame` when you have a question to think through
+            # --- Role assignment: @Guest only (Guardrail #8) ---
+            guest_role = discord.utils.get(member.guild.roles, name="Guest")
+            if guest_role:
+                await member.add_roles(guest_role)
+                logger.info("Assigned @Guest to %s", member.display_name)
+            else:
+                logger.warning("@Guest role not found for %s", member.display_name)
 
-See you Monday! Let's build some thinking skills together ðŸš€
+            # --- Welcome DM ---
+            if student_linked:
+                enrollment_name = (
+                    student.get("enrollment_name") or member.display_name
+                )
+                first_name = enrollment_name.strip().split()[0] if enrollment_name else member.display_name
+                welcome_message = (
+                    f"Hey **{first_name}** — welcome to K2M Cohort #1!\n\n"
+                    "Your enrollment is confirmed. I'm KIRA, your AI guide for this cohort.\n\n"
+                    "Head to **#start-here** to complete your onboarding profile and "
+                    "I'll take it from there.\n\n"
+                    "— KIRA (K2M Interactive Reasoning Agent)"
+                )
+            else:
+                welcome_message = (
+                    f"Hey **{member.display_name}** — welcome!\n\n"
+                    "It looks like you joined without a personal invite link. "
+                    "To get full access, contact the program coordinator or use "
+                    "the invite link from your enrollment confirmation email.\n\n"
+                    "— KIRA"
+                )
 
-â€” KIRA (K2M Interactive Reasoning Agent)
-"""
+            try:
+                await member.send(welcome_message)
+                logger.info("Sent welcome DM to %s (linked=%s)", member.display_name, student_linked)
+            except discord.Forbidden:
+                logger.warning("Could not DM %s — DMs disabled", member.display_name)
 
-        await member.send(welcome_message)
-        logger.info(f"Sent welcome DM to {member.display_name} (Cluster {cluster_id})")
-
-    except Exception as exc:
-        logger.error(f"Error handling member join for {member.display_name}: {exc}", exc_info=True)
+        except Exception as exc:
+            logger.error("Error in on_member_join for %s: %s", member.display_name, exc, exc_info=True)
 
 
 @bot.event
@@ -947,4 +1096,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 

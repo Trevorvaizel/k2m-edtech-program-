@@ -14,6 +14,7 @@ import database
 from scheduler.daily_prompts import WeekDay
 from scheduler.scheduler import DailyPromptScheduler
 from preload_students import sync_engagement_back_to_sheets
+from database.pg_store import PgConnectionWrapper
 
 
 def _make_fake_psycopg2(rows):
@@ -212,3 +213,42 @@ def test_database_factory_selects_pg_store_when_database_url_is_postgres():
     assert store is sentinel
     mock_get_pg_store.assert_called_once_with(database_url="postgresql://example.com/db")
 
+
+def test_pg_connection_wrapper_cursor_supports_sqlite_style_calls():
+    executed = {}
+
+    class _FakeCursor:
+        rowcount = 1
+
+        def execute(self, sql, params=None):
+            executed["sql"] = sql
+            executed["params"] = params
+
+        def fetchone(self):
+            return {"ok": True}
+
+        def fetchall(self):
+            return [{"ok": True}]
+
+    class _FakeConn:
+        def cursor(self, cursor_factory=None):
+            return _FakeCursor()
+
+        def commit(self):
+            return None
+
+        def rollback(self):
+            return None
+
+    class _FakePool:
+        def putconn(self, _conn):
+            return None
+
+    conn = PgConnectionWrapper(_FakeConn(), _FakePool())
+
+    cursor = conn.cursor()
+    row = cursor.execute("SELECT 1 WHERE id = ?", (7,)).fetchone()
+
+    assert row == {"ok": True}
+    assert executed["sql"] == "SELECT 1 WHERE id = %s"
+    assert executed["params"] == (7,)

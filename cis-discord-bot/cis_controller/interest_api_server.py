@@ -1,21 +1,8 @@
-"""
-Interest Form API Server - Task 7.1 Implementation
+﻿"""
+Interest Form API Server - Task 7.1 reconciliation.
 
-Provides HTTP POST /api/interest endpoint for landing page enrollment.
-Integrates with Google Sheets + Brevo email using existing infrastructure.
-
-ENVIRONMENT VARIABLES REQUIRED:
-    DATABASE_URL          - PostgreSQL URL (from Railway)
-    GOOGLE_SHEETS_CREDS  - Google service account credentials (JSON)
-    GOOGLE_SHEETS_ID     - Student Roster spreadsheet ID
-    GOOGLE_SHEETS_RANGE  - Sheet range, default "Student Roster!A:Z"
-    BREVO_API_KEY         - Brevo API key for sending emails
-    ENROLLMENT_CAP        - Max paid enrollments (default: 30)
-
-INTEGRATION:
-    - Google Sheets API (from preload_students.py)
-    - EmailService (cis_controller/email_service.py)
-    - Pattern from ParentUnsubscribeServer (aiohttp)
+Provides HTTP POST /api/interest for landing-page enrollment.
+Integrates with Google Sheets and Brevo email delivery.
 """
 
 from __future__ import annotations
@@ -24,45 +11,97 @@ import asyncio
 import json
 import logging
 import os
-from datetime import datetime
-from typing import Dict, List, Optional
-
-from aiohttp import web
-from dotenv import load_dotenv
-
-# Load Sheets integration functions
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
+from typing import Dict, Optional
+
+import httpx
+from aiohttp import web
 
 BOT_DIR = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(BOT_DIR))
 
-from preload_students import (
-    _build_sheets_service,
-    _load_json_source,
-    _safe_get,
-)
+from preload_students import _build_sheets_service, _safe_get
 
 logger = logging.getLogger(__name__)
 
-# Column indices (from preload_students.py)
+# Column indices (0-based, canonical runtime mapping)
 COL_NAME = 0        # A
 COL_EMAIL = 1       # B
 COL_PHONE = 2       # C
 COL_DISCORD_ID = 3  # D
 COL_PROFESSION = 4  # E
-COL_PAYMENT = 11    # L  (Payment status)
-COL_INVITE = 17     # R  (invite_code)
+COL_PAYMENT = 11    # L
+COL_INVITE = 17     # R
 
 ENROLLMENT_CAP = int(os.getenv("ENROLLMENT_CAP", "30").strip())
 
 
-def _load_sheets_credentials(creds_path: Optional[str] = None) -> Dict:
-    """Load Google Sheets credentials."""
-    creds_source = creds_path or os.getenv("GOOGLE_SHEETS_CREDS", "")
-    if not creds_source:
-        raise ValueError("GOOGLE_SHEETS_CREDS env var not set")
-    return _load_json_source(creds_source)
+def _cors_headers() -> Dict[str, str]:
+    return {"Access-Control-Allow-Origin": "*"}
+
+
+def _generate_placeholder_invite_code(email: str) -> str:
+    """
+    Short fallback invite code used when Discord invite API is unavailable.
+    Task 7.2 introduces full invite lifecycle/linkage.
+    """
+    local_part = "".join(ch for ch in email.split("@")[0].lower() if ch.isalnum())[:6] or "user"
+    ts_suffix = format(int(datetime.now(timezone.utc).timestamp()), "x")[-8:]
+    return f"k2m{local_part}{ts_suffix}"[:20]
+
+
+async def create_discord_invite_link() -> Optional[Dict[str, str]]:
+    """
+    Create a unique Discord invite via API.
+
+    Required env:
+      - DISCORD_TOKEN
+      - DISCORD_INVITE_CHANNEL_ID
+
+    Returns:
+      {"code": "...", "url": "https://discord.gg/..."} or None.
+    """
+    token = os.getenv("DISCORD_TOKEN", "").strip()
+    channel_id = os.getenv("DISCORD_INVITE_CHANNEL_ID", "").strip()
+
+    if not token or not channel_id:
+        return None
+
+    url = f"https://discord.com/api/v10/channels/{channel_id}/invites"
+    headers = {
+        "Authorization": f"Bot {token}",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "max_age": 604800,  # 7 days
+        "max_uses": 1,
+        "unique": True,
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.post(url, headers=headers, json=payload)
+
+        if response.status_code not in (200, 201):
+            logger.warning(
+                "Discord invite creation failed: status=%s body=%s",
+                response.status_code,
+                response.text[:300],
+            )
+            return None
+
+        body = response.json()
+        code = str(body.get("code", "")).strip()
+        if not code:
+            logger.warning("Discord invite creation returned empty code")
+            return None
+
+        return {"code": code, "url": f"https://discord.gg/{code}"}
+    except Exception as exc:
+        logger.warning("Discord invite creation error: %s", exc)
+        return None
 
 
 async def check_enrollment_cap(
@@ -71,10 +110,10 @@ async def check_enrollment_cap(
     creds_path: Optional[str] = None,
 ) -> Dict[str, int]:
     """
-    Check current enrollment cap status by counting paid students.
+    Count confirmed/paid enrollments against the cap.
 
     Returns:
-        {"paid_count": int, "cap": int, "available": int}
+      {"paid_count": int, "cap": int, "available": int}
     """
     try:
         service = _build_sheets_service(creds_path=creds_path, read_only=True)
@@ -86,27 +125,22 @@ async def check_enrollment_cap(
 
         rows = result.get("values", [])
         paid_count = 0
-
-        # Start from row 2 (skip header)
         for row in rows[1:]:
             payment = _safe_get(row, COL_PAYMENT).lower()
-            if payment in ("paid", "confirmed", "yes"):
+            if payment in ("paid", "confirmed", "yes", "check"):
                 paid_count += 1
 
         available = max(0, ENROLLMENT_CAP - paid_count)
-
         logger.info(
-            f"Enrollment check: {paid_count}/{ENROLLMENT_CAP} paid, {available} available"
+            "Enrollment check: %s/%s paid, %s available",
+            paid_count,
+            ENROLLMENT_CAP,
+            available,
         )
-
-        return {
-            "paid_count": paid_count,
-            "cap": ENROLLMENT_CAP,
-            "available": available,
-        }
+        return {"paid_count": paid_count, "cap": ENROLLMENT_CAP, "available": available}
     except Exception as exc:
-        logger.error(f"Failed to check enrollment cap: {exc}")
-        # On error, assume cap reached (fail-safe)
+        logger.error("Failed to check enrollment cap: %s", exc)
+        # Fail-safe: do not over-enroll when sheet read fails.
         return {"paid_count": ENROLLMENT_CAP, "cap": ENROLLMENT_CAP, "available": 0}
 
 
@@ -116,12 +150,7 @@ async def check_duplicate_email(
     sheet_range: str = "Student Roster!A:Z",
     creds_path: Optional[str] = None,
 ) -> bool:
-    """
-    Check if email already exists in Column B.
-
-    Returns:
-        True if duplicate found, False otherwise
-    """
+    """Return True if the email already exists in Column B."""
     try:
         service = _build_sheets_service(creds_path=creds_path, read_only=True)
         sheet = service.spreadsheets()
@@ -133,16 +162,16 @@ async def check_duplicate_email(
         rows = result.get("values", [])
         email_lower = email.strip().lower()
 
-        for row in rows[1:]:  # Skip header
+        for row in rows[1:]:
             existing_email = _safe_get(row, COL_EMAIL).lower()
             if existing_email == email_lower:
-                logger.info(f"Duplicate email found: {email}")
+                logger.info("Duplicate email found: %s", email)
                 return True
 
         return False
     except Exception as exc:
-        logger.error(f"Failed to check duplicate email: {exc}")
-        # On error, assume NOT duplicate (allow submission)
+        logger.error("Failed to check duplicate email: %s", exc)
+        # Allow submissions when duplicate check is unavailable.
         return False
 
 
@@ -152,54 +181,61 @@ async def append_to_student_roster(
     phone: str,
     profession: str,
     invite_code: str,
+    waitlisted: bool,
     spreadsheet_id: str,
+    sheet_range: str = "Student Roster!A:Z",
     creds_path: Optional[str] = None,
 ) -> bool:
-    """
-    Append new student to Google Sheets Student Roster.
-
-    Returns:
-        True if successful, False otherwise
-    """
+    """Append a new lead row to Student Roster."""
     try:
         service = _build_sheets_service(creds_path=creds_path, read_only=False)
-        sheet = service.spreadsheets().values()
+        values_api = service.spreadsheets().values()
 
-        # Prepare row data (A-R columns)
-        # A=Name, B=Email, C=Phone, D=DiscordID, E=Profession, ..., R=invite_code
+        payment_status = "Waitlisted" if waitlisted else "Lead"
+        created_at = datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+        # Canonical row: A-R
         row_data = [[
             name,              # A
             email,             # B
             phone,             # C
-            "",                # D (Discord ID - filled later)
+            "",                # D
             profession,        # E
-            "", "", "", "", "",  # F-J (empty for now)
-            "", "", "", "",  # K-O (empty for now)
-            "Pending",         # P (Payment status - empty)
-            "",                # Q (empty)
-            invite_code,       # R (invite_code placeholder)
+            "",                # F
+            "",                # G
+            "",                # H
+            "",                # I
+            "",                # J
+            "",                # K
+            payment_status,    # L
+            "",                # M
+            created_at,        # N
+            "",                # O
+            "",                # P
+            "",                # Q
+            invite_code,       # R
         ]]
 
-        # Append to sheet
         sheet_name = sheet_range.split("!", 1)[0] if "!" in sheet_range else "Student Roster"
-        range_spec = f"{sheet_name}!A{len(row_data) + 2}:R{len(row_data) + 2}"
+        range_spec = f"{sheet_name}!A:R"
 
-        body = {
-            "values": row_data,
-            "valueInputOption": "RAW",
-        }
-
-        service.append(
+        values_api.append(
             spreadsheetId=spreadsheet_id,
             range=range_spec,
-            body=body,
+            valueInputOption="RAW",
+            insertDataOption="INSERT_ROWS",
+            body={"values": row_data},
         ).execute()
 
-        logger.info(f"Appended to Student Roster: {email} (invite_code={invite_code})")
+        logger.info(
+            "Appended roster row: email=%s invite_code=%s waitlisted=%s",
+            email,
+            invite_code,
+            waitlisted,
+        )
         return True
-
     except Exception as exc:
-        logger.error(f"Failed to append to Student Roster: {exc}")
+        logger.error("Failed to append to Student Roster: %s", exc)
         return False
 
 
@@ -207,110 +243,44 @@ async def send_brevo_email(
     to_email: str,
     first_name: str,
     waitlisted: bool,
+    invite_link: Optional[str] = None,
     waitlist_number: Optional[int] = None,
-    template_params: Optional[Dict] = None,
 ) -> bool:
-    """
-    Send Brevo email (Email #1 or Email #5) using EmailService.
-
-    Args:
-        to_email: Recipient email
-        first_name: Student's first name
-        waitlisted: True for Email #5, False for Email #1
-        waitlist_number: Position in waitlist (if applicable)
-        template_params: Additional template variables
-
-    Returns:
-        True if successful, False otherwise
-    """
+    """Send Email #1 (invite) or Email #5 (waitlist)."""
     try:
         from cis_controller.email_service import EmailService
 
         email_service = EmailService()
-
-        # Extract first name from full name
         first_name_only = first_name.strip().split()[0] if first_name else "there"
 
         if waitlisted:
-            # TODO: Replace with actual Brevo Email #5 template ID
-            # For now, sending simple HTML email
-            subject = "You're on our priority list! 🌟"
+            subject = "You're on our priority list!"
             waitlist_num = waitlist_number or (ENROLLMENT_CAP + 1)
-
             html_content = f"""
             <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <style>
-                    body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-                    .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-                    .header {{ background: #050608; color: #13d7d0; padding: 20px; text-align: center; border-radius: 12px 12px 0 0; }}
-                    .content {{ background: #0b0f14; color: #d1d5db; padding: 30px; border: 1px solid #1f2937; }}
-                    .footer {{ background: #050608; color: #9ca3af; padding: 15px; text-align: center; font-size: 12px; border-radius: 0 0 12px 12px; }}
-                    h1 {{ margin: 0; font-size: 32px; }}
-                    .cta {{ display: inline-block; padding: 12px 24px; background: linear-gradient(90deg, #13d7d0 0%, #39e6de 100%); color: #041014; text-decoration: none; border-radius: 999px; font-weight: bold; margin: 20px 0; }}
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="header">
-                        <h1>You're on our priority list! 🌟</h1>
-                    </div>
-                    <div class="content">
-                        <p>Hey {first_name_only},</p>
-                        <p>This cohort filled up faster than expected — you're <strong>#{waitlist_num}</strong> on our priority list for the next cohort.</p>
-                        <p>We cap each cohort at {ENROLLMENT_CAP} students to ensure the best experience. Your spot is secured, and you'll be the <strong>first to know</strong> when we open enrollment.</p>
-                        <p>In the meantime, check out what past students have created!</p>
-                        <p style="text-align: center;">
-                            <a href="https://k2m-edtech.program" class="cta">Explore the Program</a>
-                        </p>
-                    </div>
-                    <div class="footer">
-                        <p>Questions? Just reply to this email.</p>
-                        <p>&copy; {datetime.now().year} K2M Labs. All rights reserved.</p>
-                    </div>
-                </div>
-            </body>
-            </html>
+            <html><body style="font-family:Arial,sans-serif;line-height:1.6;">
+              <h2>You're on our priority list</h2>
+              <p>Hey {first_name_only},</p>
+              <p>This cohort is full. You're <strong>#{waitlist_num}</strong> on the priority list for the next cohort.</p>
+              <p>We'll email you first when enrollment opens.</p>
+            </body></html>
             """
         else:
-            # TODO: Replace with actual Brevo Email #1 template ID
-            # For now, sending simple HTML email
-            subject = "Your Discord invitation is ready! 🚀"
+            if not invite_link:
+                logger.error("Cannot send Email #1 without invite_link")
+                return False
 
+            subject = "Your Discord invitation is ready"
             html_content = f"""
             <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <style>
-                    body {{ font-family: Arial, sans-serif; line-height: 1.6; color: #333; }}
-                    .container {{ max-width: 600px; margin: 0 auto; padding: 20px; }}
-                    .header {{ background: #050608; color: #13d7d0; padding: 20px; text-align: center; border-radius: 12px 12px 0 0; }}
-                    .content {{ background: #0b0f14; color: #d1d5db; padding: 30px; border: 1px solid #1f2937; }}
-                    .footer {{ background: #050608; color: #9ca3af; padding: 15px; text-align: center; font-size: 12px; border-radius: 0 0 12px 12px; }}
-                    h1 {{ margin: 0; font-size: 32px; }}
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <div class="header">
-                        <h1>Welcome to K2M! 🚀</h1>
-                    </div>
-                    <div class="content">
-                        <p>Hey {first_name_only},</p>
-                        <p>Thanks for your interest in K2M's AI Thinking Skills Cohort!</p>
-                        <p>We've received your submission and you're enrolled. Next steps will arrive in your email soon.</p>
-                        <p>Check your inbox (and spam folder) for your Discord invitation.</p>
-                    </div>
-                    <div class="footer">
-                        <p>Questions? Just reply to this email.</p>
-                        <p>&copy; {datetime.now().year} K2M Labs. All rights reserved.</p>
-                    </div>
-                </div>
-            </body>
-            </html>
+            <html><body style="font-family:Arial,sans-serif;line-height:1.6;">
+              <h2>Welcome to K2M</h2>
+              <p>Hey {first_name_only},</p>
+              <p>Thanks for your interest. Join Discord using your personal invite:</p>
+              <p><a href="{invite_link}">{invite_link}</a></p>
+              <p>After you join, KIRA will DM your next step.</p>
+              <p>If this link does not work, reply to this email for a fresh invite.</p>
+            </body></html>
             """
 
         result = await email_service.send_email(
@@ -320,24 +290,23 @@ async def send_brevo_email(
         )
 
         if result.success:
-            logger.info(f"Email sent successfully to {to_email} (waitlisted={waitlisted})")
+            logger.info("Email sent: to=%s waitlisted=%s", to_email, waitlisted)
         else:
-            logger.warning(f"Email send failed: {result.error_message}")
+            logger.warning("Email send failed: %s", result.error)
 
         return result.success
-
     except Exception as exc:
-        logger.error(f"Failed to send email: {exc}")
+        logger.error("Failed to send email: %s", exc)
         return False
 
 
 class InterestAPIServer:
-    """HTTP API server for /api/interest endpoint."""
+    """HTTP server hosting /api/interest."""
 
     def __init__(
         self,
         host: str = "0.0.0.0",
-        port: int = 8081,  # Different port than unsubscribe server
+        port: int = 8081,
         spreadsheet_id: Optional[str] = None,
         creds_path: Optional[str] = None,
     ):
@@ -345,11 +314,11 @@ class InterestAPIServer:
         self.port = port
         self.spreadsheet_id = spreadsheet_id or os.getenv("GOOGLE_SHEETS_ID", "")
         self.creds_path = creds_path or os.getenv("GOOGLE_SHEETS_CREDS", "")
+        self.sheet_range = os.getenv("GOOGLE_SHEETS_RANGE", "Student Roster!A:Z")
         self._runner: Optional[web.AppRunner] = None
         self._site: Optional[web.BaseSite] = None
 
     async def _handle_cors(self, request: web.Request) -> web.Response:
-        """Handle CORS preflight requests."""
         return web.Response(
             status=200,
             headers={
@@ -360,111 +329,137 @@ class InterestAPIServer:
         )
 
     async def _handle_interest(self, request: web.Request) -> web.Response:
-        """Handle POST /api/interest - enrollment form submission."""
         try:
-            # Parse JSON body
             data = await request.json()
 
             name = data.get("name", "").strip()
-            email = data.get("email", "").strip()
+            email = data.get("email", "").strip().lower()
             phone = data.get("phone", "").strip()
-            profession = data.get("profession", "Other").strip()
+            profession = data.get("profession", "Other").strip() or "Other"
 
-            # Validation
-            if not name or not email:
+            if not self.spreadsheet_id:
                 return web.json_response(
-                    {"success": False, "error": "Name and email are required"},
-                    status=400,
-                    headers={
-                        "Access-Control-Allow-Origin": "*",
-                    },
+                    {"success": False, "error": "Enrollment backend is not configured"},
+                    status=503,
+                    headers=_cors_headers(),
                 )
 
-            # Check duplicate email
+            if not name or not email or not phone:
+                return web.json_response(
+                    {"success": False, "error": "Name, email, and phone are required"},
+                    status=400,
+                    headers=_cors_headers(),
+                )
+
             is_duplicate = await check_duplicate_email(
                 email=email,
                 spreadsheet_id=self.spreadsheet_id,
+                sheet_range=self.sheet_range,
                 creds_path=self.creds_path,
             )
-
             if is_duplicate:
                 return web.json_response(
                     {
                         "success": False,
-                        "error": "We already have your submission! Check your email for your Discord invitation.",
+                        "error": "We already have your submission. Check your email for your Discord invitation.",
                     },
-                    status=409,  # Conflict
-                    headers={
-                        "Access-Control-Allow-Origin": "*",
-                    },
+                    status=409,
+                    headers=_cors_headers(),
                 )
 
-            # Check enrollment cap
             cap_status = await check_enrollment_cap(
                 spreadsheet_id=self.spreadsheet_id,
+                sheet_range=self.sheet_range,
                 creds_path=self.creds_path,
             )
-
             waitlisted = cap_status["available"] <= 0
 
-            # Generate invite code (placeholder for Task 7.2)
-            invite_code = f"k2m-{email.split('@')[0][:12]}"
+            invite_code = _generate_placeholder_invite_code(email)
+            invite_link = os.getenv("DISCORD_INVITE_FALLBACK_URL", "").strip()
 
-            # Append to Sheets
+            if not waitlisted:
+                invite_data = await create_discord_invite_link()
+                if invite_data:
+                    invite_code = invite_data["code"]
+                    invite_link = invite_data["url"]
+                elif not invite_link:
+                    return web.json_response(
+                        {
+                            "success": False,
+                            "error": "Unable to create Discord invite right now. Please retry shortly.",
+                        },
+                        status=503,
+                        headers=_cors_headers(),
+                    )
+
             appended = await append_to_student_roster(
                 name=name,
                 email=email,
                 phone=phone,
                 profession=profession,
                 invite_code=invite_code,
+                waitlisted=waitlisted,
                 spreadsheet_id=self.spreadsheet_id,
+                sheet_range=self.sheet_range,
                 creds_path=self.creds_path,
             )
+            if not appended:
+                return web.json_response(
+                    {"success": False, "error": "Could not save your enrollment. Please try again."},
+                    status=500,
+                    headers=_cors_headers(),
+                )
 
-            # Send email
             waitlist_number = None
             if waitlisted:
-                waitlist_number = cap_status["paid_count"] - ENROLLMENT_CAP + 1
+                waitlist_number = max(1, cap_status["paid_count"] - ENROLLMENT_CAP + 1)
 
             email_sent = await send_brevo_email(
                 to_email=email,
                 first_name=name,
                 waitlisted=waitlisted,
+                invite_link=invite_link,
                 waitlist_number=waitlist_number,
             )
+            if not email_sent:
+                return web.json_response(
+                    {
+                        "success": False,
+                        "error": "Enrollment saved, but email delivery failed. Contact support for your invite.",
+                    },
+                    status=502,
+                    headers=_cors_headers(),
+                )
 
             return web.json_response(
                 {
                     "success": True,
                     "waitlisted": waitlisted,
-                    "message": "Check your email for your Discord invitation!" if not waitlisted else "You're on our priority list for the next cohort!",
+                    "message": (
+                        "Check your email for your Discord invitation!"
+                        if not waitlisted
+                        else "You're on our priority list for the next cohort!"
+                    ),
                 },
                 status=200,
-                headers={
-                    "Access-Control-Allow-Origin": "*",
-                },
+                headers=_cors_headers(),
             )
 
         except json.JSONDecodeError:
             return web.json_response(
                 {"success": False, "error": "Invalid JSON"},
                 status=400,
-                headers={
-                    "Access-Control-Allow-Origin": "*",
-                },
+                headers=_cors_headers(),
             )
         except Exception as exc:
-            logger.error(f"Error handling interest request: {exc}", exc_info=True)
+            logger.error("Error handling interest request: %s", exc, exc_info=True)
             return web.json_response(
                 {"success": False, "error": "Internal server error"},
                 status=500,
-                headers={
-                    "Access-Control-Allow-Origin": "*",
-                },
+                headers=_cors_headers(),
             )
 
     async def start(self) -> None:
-        """Start the Interest API HTTP server."""
         if self._runner is not None:
             return
 
@@ -488,7 +483,6 @@ class InterestAPIServer:
         )
 
     async def stop(self) -> None:
-        """Stop the Interest API HTTP server."""
         if self._runner is None:
             return
         await self._runner.cleanup()
@@ -497,7 +491,6 @@ class InterestAPIServer:
         logger.info("Interest API server stopped")
 
     def stop_sync(self) -> None:
-        """Best-effort sync-safe stop helper."""
         if self._runner is None:
             return
         try:

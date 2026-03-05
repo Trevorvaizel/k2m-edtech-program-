@@ -197,12 +197,12 @@ playbook_traceability:
 # ============================================================
 progress:
   total_tasks: 92
-  done: 38
+  done: 39
   in_progress: 0
   blocked: 0
-  pending: 54
-  percent_complete: 41
-  last_updated: "2026-03-05 â€” Task 7.6 COMPLETE after truth reconciliation. PostgreSQL runtime wiring finalized, schema contract columns + idempotent migrations added, nightly Sheets sync implemented/wired, full test suite green (516 passed), and Railway production validations passed (DB startup/health/dry-run)."
+  pending: 53
+  percent_complete: 42
+  last_updated: “2026-03-05 — Task 7.2 COMPLETE. Unique per-student Discord invite links implemented: create_discord_invite_link() wired into /api/interest, on_member_join rewritten with asyncio.Lock + invite diff (uses-increment + disappear cases), @Guest assigned on join (Guardrail #8), student_linked/student_unmatched observability events, personalised vs generic DM, !recover_member slash command with invite code + 24h temporal fallback. DB already done (schema_pg.sql + pg_store methods from Task 7.6). 13 new tests all green.”
   decision_7_revised: "2026-02-20 â€” Context engine building NOW for Cohort 1 (not deferred)"
   adversarial_review_2: "2026-03-04 â€” Pre-mortem on enrollment flow. 5 P0 bugs fixed, 5 P1 issues resolved. Task 0.7 split into 0.7a-d. Payment amount standardized to KES 5,000. Source-of-truth set via execution_contract."
   adversarial_review_3: "2026-03-04 â€” Pre-mortem party mode (Sally+John+Winston+Amelia+DrQuinn+Murat+Mary+Maya). North star: zero Discord experience. Found 3 critical blockers, 6 high issues, 8 medium issues. Added Sprint 7. Migrated to PostgreSQL immediately (promoted from 6.6 prep). Full decisions log: pre-mortem-2026-03-04-decisions.md"
@@ -2029,17 +2029,19 @@ sprint_7:
         Refund policy in Email #4 and #welcome pin. Landing form targets /api/interest.
       notes_ref: "task-notes/7.1.md"
       summary: |
-        2026-03-05 — FULLY COMPLETE. Created /api/interest endpoint in cis-discord-bot using aiohttp pattern.
-        Integrated with Google Sheets API (enrollment cap check, duplicate detection, row append).
-        Integrated with EmailService for Brevo emails. Created Brevo Email #5 waitlist template with warm tone.
-        Created enrollment form modal in k2m-landing (dark theme, mobile-responsive).
-        Updated CTA "Enroll Now" button to open form. Added refund policy to Brevo Email #4 template.
-        /join command removal confirmed (already nonexistent). Landing page form POSTs to /api/interest endpoint.
-        Environment variables documented (.env.example for VITE_INTEREST_API_URL).
+        2026-03-05 — RECONCILED COMPLETE after gap audit.
+        /api/interest now enforces truthful outcomes: no success response when Sheets append or email send fails.
+        Google Sheets append fixed to canonical A-R row contract (Column L payment status, Column R invite_code, created_at captured).
+        Enrollment cap + duplicate checks remain active; waitlist path writes waitlisted rows and sends waitlist email.
+        Invite/email path now requires a real invite URL (Discord API invite when configured, or explicit fallback URL) before sending Email #1.
+        Landing page continues to post to /api/interest; /join command remains absent.
+        Refund policy present in Email #4 and now seeded as a pinned #welcome policy message via setup script.
+        Regression tests added for interest API error-path truthfulness and canonical sheet write shape.
 
     - id: "7.2"
       title: "Unique per-student Discord invite links (on_member_join match key)"
-      status: "pending"
+      status: "done"
+      completed: "2026-03-05"
       description: |
         DECISION B-01 + GAP FIX #1. SESSION 4: N-07 (asyncio.Lock() around invite diff). Resolves critical on_member_join match key gap.
         1. In /api/interest: call Discord API to create unique invite per student:

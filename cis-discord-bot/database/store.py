@@ -3,7 +3,8 @@ Database Store Module
 Story 4.7 Implementation: StudentContext & Database Schema
 
 Provides database operations for the CIS bot.
-Uses SQLite for Cohort 1 (100-200 students).
+PostgreSQL is the production runtime store (Task 7.6).
+SQLite is retained for local development/tests and compatibility fallback paths.
 """
 
 import sqlite3

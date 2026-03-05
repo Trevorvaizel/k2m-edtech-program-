@@ -15,14 +15,14 @@ This bot implements the complete CIS Agent System specified in Story 4.7 of the 
 - ✅ Dependencies configured (requirements.txt)
 - ✅ Environment variables template (.env.template)
 - ✅ Main bot entry point (main.py)
-- ✅ Database schema (SQLite)
-- ✅ Database operations layer (store.py)
+- ✅ Runtime database migration complete (PostgreSQL on Railway)
+- ✅ Database operations layer (store.py + PostgreSQL compatibility wrapper)
 - ✅ CIS Controller router stub
 - ✅ Framer agent system prompt
 - ✅ Frame command handler stub
 
 ### Next Tasks (Sprint 1)
-- [ ] Task 1.2: Implement StudentContext + SQLite schema operations
+- [ ] Task 1.2: Implement StudentContext + schema operations
 - [ ] Task 1.3: Implement CIS Controller routing logic
 - [ ] Task 1.4: Implement /frame agent (The Framer)
 - [ ] Task 1.5: Implement private DM workflow
@@ -73,6 +73,16 @@ Optional secure Brevo key setup (hidden prompt, no key echo):
 
 ```bash
 powershell -ExecutionPolicy Bypass -File .\scripts\set-brevo-key.ps1
+```
+
+Optional secure Railway variable setup (hidden prompt for value):
+
+```bash
+powershell -ExecutionPolicy Bypass -File .\scripts\set-railway-secret.ps1
+# Example (prompts hidden for value):
+#   Variable name: BREVO_API_KEY
+#   Service: kira-bot
+#   Environment: production
 ```
 
 ### 3. Run the Bot
@@ -127,7 +137,8 @@ cis-discord-bot/
 │   └── synthesizer_prompt.py   # The Synthesizer (Habit 4)
 │
 ├── database/                   # Database Layer
-│   ├── schema.sql              # SQLite schema
+│   ├── schema.sql              # Legacy SQLite/local-test schema
+│   ├── schema_pg.sql           # PostgreSQL production schema
 │   ├── models.py               # StudentContext ORM (Task 1.2)
 │   └── store.py                # Database operations
 │
@@ -151,7 +162,7 @@ cis-discord-bot/
 | **Language** | Python | 3.10+ | Bot implementation |
 | **Discord Library** | discord.py | 2.3.2 | Discord API wrapper |
 | **LLM Provider** | OpenAI (active) / Anthropic / Zhipu | Env-swappable | CIS agent intelligence |
-| **Database** | SQLite | 3.38+ | State persistence |
+| **Database** | PostgreSQL (primary) + SQLite (local/tests only) | PG 14+ | State persistence |
 | **Environment** | python-dotenv | 1.0.0 | Configuration management |
 
 ## Architecture

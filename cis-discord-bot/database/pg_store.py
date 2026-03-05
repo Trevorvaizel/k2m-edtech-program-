@@ -147,6 +147,45 @@ class PgCursorWrapper:
 # Connection wrapper — makes psycopg2 connection look like sqlite3.Connection
 # ---------------------------------------------------------------------------
 
+class PgCursorCompat:
+    """
+    sqlite-like cursor object for legacy callsites that do:
+      cursor = conn.cursor()
+      cursor.execute(...)
+      cursor.fetchone()
+    """
+
+    def __init__(self, conn_wrapper: "PgConnectionWrapper") -> None:
+        self._conn_wrapper = conn_wrapper
+        self._last_result: Any = _NullCursor()
+
+    def execute(self, sql: str, params=()):
+        self._last_result = self._conn_wrapper.execute(sql, params)
+        return self
+
+    def executemany(self, sql: str, params_list):
+        self._conn_wrapper.executemany(sql, params_list)
+        self._last_result = _NullCursor()
+        return self
+
+    def fetchone(self):
+        return self._last_result.fetchone()
+
+    def fetchall(self) -> list:
+        return self._last_result.fetchall()
+
+    def __iter__(self) -> Iterator:
+        return iter(self._last_result)
+
+    @property
+    def rowcount(self) -> int:
+        return getattr(self._last_result, "rowcount", 0)
+
+    @property
+    def lastrowid(self) -> Optional[int]:
+        return getattr(self._last_result, "lastrowid", None)
+
+
 class PgConnectionWrapper:
     """
     Adapts a psycopg2 connection to the sqlite3.Connection interface used
@@ -168,6 +207,12 @@ class PgConnectionWrapper:
         cursor = self._conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cursor.execute(translated, params if params else None)
         return PgCursorWrapper(cursor)
+
+    def cursor(self) -> PgCursorCompat:
+        """
+        Compatibility cursor for sqlite-style usage patterns in legacy modules.
+        """
+        return PgCursorCompat(self)
 
     def executemany(self, sql: str, params_list) -> None:
         translated = _translate_sql(sql)
@@ -411,6 +456,26 @@ class PgStudentStateStore(StudentStateStore):
             (discord_id, invite_code),
         ).fetchone()
         return updated is not None
+
+    def get_recent_unlinked_student(self, hours: int = 24):
+        """
+        Task 7.2 temporal fallback for !recover_member.
+        Returns the most recently created student who has no real discord_id
+        (still has the __pending__ placeholder) enrolled within the last N hours.
+        Decision B-01 + GAP FIX #8.
+        """
+        return self.conn.execute(
+            """
+            SELECT * FROM students
+             WHERE (discord_id IS NULL
+                    OR discord_id = ''
+                    OR discord_id LIKE '__pending__%')
+               AND created_at >= NOW() - (? * INTERVAL '1 hour')
+             ORDER BY created_at DESC
+             LIMIT 1
+            """,
+            (hours,),
+        ).fetchone()
 
     def update_onboarding_stop(self, discord_id: str, stop: int) -> None:
         """Advance student through KIRA onboarding stops 0-4 (Decision H-05)."""

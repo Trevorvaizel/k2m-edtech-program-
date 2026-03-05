@@ -24,11 +24,13 @@ class ParentUnsubscribeServer:
     def __init__(
         self,
         store: Optional[StudentStateStore] = None,
+        interest_api_server: Optional[object] = None,
         host: str = "0.0.0.0",
         port: int = 8080,
         path: str = "/parent/unsubscribe",
     ):
         self.store = store or get_store()
+        self.interest_api_server = interest_api_server
         self.host = host
         self.port = port
         self.path = path
@@ -68,6 +70,10 @@ class ParentUnsubscribeServer:
 
         app = web.Application()
         app.router.add_get(self.path, self._handle_unsubscribe)
+        if self.interest_api_server is not None:
+            app.router.add_options("/api/interest", self.interest_api_server._handle_cors)
+            app.router.add_post("/api/interest", self.interest_api_server._handle_interest)
+            logger.info("Interest API mounted on parent unsubscribe server at /api/interest")
         self._runner = web.AppRunner(app)
         await self._runner.setup()
 
