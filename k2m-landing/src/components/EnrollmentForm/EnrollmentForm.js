@@ -4,7 +4,7 @@
  * Handles form submission, validation, success/error states
  */
 
-const INTEREST_API_URL = import.meta.env.VITE_INTEREST_API_URL || 'http://localhost:8081/api/interest';
+const INTEREST_API_URL = import.meta.env.VITE_INTEREST_API_URL || 'https://kira-bot-production.up.railway.app/api/interest';
 
 export function initEnrollmentForm() {
   const modal = document.getElementById('enrollmentModal');

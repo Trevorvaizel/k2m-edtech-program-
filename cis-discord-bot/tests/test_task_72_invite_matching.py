@@ -173,6 +173,34 @@ def test_link_student_by_invite_already_claimed():
     assert result is False
 
 
+def test_link_student_by_invite_allows_pending_placeholder():
+    """UPDATE query allows replacing __pending__ placeholder discord_id values."""
+    from database.pg_store import PgStudentStateStore
+
+    store = object.__new__(PgStudentStateStore)
+    conn = MagicMock()
+    executed_sql = []
+    call_count = [0]
+
+    def _execute(sql, params=()):
+        executed_sql.append(sql)
+        cursor = MagicMock()
+        call_count[0] += 1
+        if call_count[0] == 2:
+            cursor.fetchone.return_value = {"discord_id": "111", "invite_code": "ABC123"}
+        else:
+            cursor.fetchone.return_value = None
+        return cursor
+
+    conn.execute = _execute
+    conn.commit = MagicMock()
+    store.conn = conn
+
+    result = store.link_student_by_invite("ABC123", "111", "alice#0001")
+    assert result is True
+    assert "__pending__%" in executed_sql[0]
+
+
 # ============================================================
 # 3. invite diff logic — unit test the pattern
 # ============================================================
@@ -306,3 +334,62 @@ async def test_handle_interest_falls_back_on_invite_failure(monkeypatch):
     assert body["success"] is True
     # Placeholder code is a k2m-prefixed string (not REALCODE)
     assert "REALCODE" not in captured.get("invite_code", "")
+
+
+@pytest.mark.asyncio
+async def test_find_row_by_invite_code_returns_matching_row(monkeypatch):
+    """Column R lookup returns expected row number + values."""
+    import cis_controller.interest_api_server as api
+
+    async def _fake_read_rows(**_kwargs):
+        return [
+            ["Name", "Email", "Phone", "Discord", "Profession", "", "", "", "", "", "", "", "", "", "", "", "", "Invite"],
+            ["Alice", "alice@k2m.org", "+2547", "", "Teacher", "", "", "", "", "", "", "", "", "", "", "", "", "ABC123"],
+            ["Bob", "bob@k2m.org", "+2547", "", "Founder", "", "", "", "", "", "", "", "", "", "", "", "", "DEF456"],
+        ]
+
+    monkeypatch.setattr(api, "read_roster_rows", _fake_read_rows)
+
+    result = await api.find_row_by_invite_code(
+        invite_code="DEF456",
+        spreadsheet_id="sheet-123",
+        sheet_range="Student Roster!A:Z",
+    )
+
+    assert result is not None
+    row_number, row = result
+    assert row_number == 3
+    assert row[api.COL_EMAIL] == "bob@k2m.org"
+
+
+@pytest.mark.asyncio
+async def test_link_roster_discord_identity_by_invite_code_updates_column_d(monkeypatch):
+    """Sheet bridge writes Column D as `discord_id|discord_username`."""
+    import cis_controller.interest_api_server as api
+
+    async def _fake_find(*args, **kwargs):
+        row = ["Alice", "alice@k2m.org", "+2547", "", "Teacher"] + [""] * 13
+        row[api.COL_INVITE] = "ABC123"
+        return 2, row
+
+    captured = {}
+
+    async def _fake_update(row_number, updates, spreadsheet_id, sheet_range, creds_path):
+        captured["row_number"] = row_number
+        captured["updates"] = updates
+        return True
+
+    monkeypatch.setattr(api, "find_row_by_invite_code", _fake_find)
+    monkeypatch.setattr(api, "update_roster_cells", _fake_update)
+
+    result = await api.link_roster_discord_identity_by_invite_code(
+        invite_code="ABC123",
+        discord_id="123456789",
+        discord_username="alice#0001",
+        spreadsheet_id="sheet-123",
+    )
+
+    assert result is not None
+    assert captured["row_number"] == 2
+    assert captured["updates"][api.COL_DISCORD_ID] == "123456789|alice#0001"
+    assert result["enrollment_email"] == "alice@k2m.org"

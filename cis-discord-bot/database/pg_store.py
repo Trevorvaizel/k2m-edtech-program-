@@ -444,7 +444,11 @@ class PgStudentStateStore(StudentStateStore):
                SET discord_id = ?,
                    discord_username = ?
              WHERE invite_code = ?
-               AND (discord_id IS NULL OR discord_id = '')
+               AND (
+                    discord_id IS NULL
+                    OR discord_id = ''
+                    OR discord_id LIKE '__pending__%'
+               )
             """,
             (discord_id, discord_username, invite_code),
         )

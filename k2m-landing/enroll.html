@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>K2M Enrollment Form</title>
+  </head>
+  <body class="k2m-form-page">
+    <main class="k2m-form-shell">
+      <h1>Step 2 of 4: Enrollment Profile</h1>
+      <p class="lead">
+        Fill this once. After submitting, you will receive your secure M-Pesa payment link.
+      </p>
+
+      <form id="enrollForm" class="k2m-form" novalidate>
+        <div>
+          <label for="email">Email used in step 1 *</label>
+          <input id="email" type="email" autocomplete="email" required />
+        </div>
+
+        <div>
+          <label for="zone">Current zone (1-4) *</label>
+          <select id="zone" required>
+            <option value="">Select your zone</option>
+            <option value="1">Zone 1 - Starting out</option>
+            <option value="2">Zone 2 - Building momentum</option>
+            <option value="3">Zone 3 - Practicing consistently</option>
+            <option value="4">Zone 4 - Confident and leading</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="situation">Your current situation *</label>
+          <textarea id="situation" placeholder="What context are you in right now?" required></textarea>
+        </div>
+
+        <div>
+          <label for="goals">Your goals for this cohort *</label>
+          <textarea id="goals" placeholder="What outcome do you want in 8 weeks?" required></textarea>
+        </div>
+
+        <div>
+          <label for="emotional">Emotional baseline *</label>
+          <select id="emotional" required>
+            <option value="">Select one</option>
+            <option value="Confused">Confused</option>
+            <option value="Curious">Curious</option>
+            <option value="Overwhelmed">Overwhelmed</option>
+            <option value="Motivated">Motivated</option>
+            <option value="Anxious">Anxious</option>
+            <option value="Focused">Focused</option>
+          </select>
+        </div>
+
+        <div>
+          <label for="parentEmail">Parent/guardian email (optional)</label>
+          <input id="parentEmail" type="email" autocomplete="email" />
+        </div>
+
+        <button id="submitEnroll" type="submit">Save And Continue</button>
+      </form>
+
+      <p class="k2m-note">
+        You can complete payment later. Your secure payment link expires after 7 days.
+      </p>
+
+      <div id="enrollStatus" class="k2m-status" hidden></div>
+    </main>
+
+    <script type="module" src="/src/forms/enroll.js"></script>
+  </body>
+</html>

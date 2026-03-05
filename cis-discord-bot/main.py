@@ -125,6 +125,42 @@ def _get_store():
     return get_runtime_store() or get_store()
 
 
+def _is_facilitator_member(member: Optional[discord.Member]) -> bool:
+    """Role gate for facilitator-only slash commands."""
+    if member is None or member.guild is None:
+        return False
+    facilitator_role = discord.utils.get(member.guild.roles, name="Facilitator")
+    if facilitator_role is None:
+        return False
+    return facilitator_role in getattr(member, "roles", [])
+
+
+async def _link_member_identity_to_roster(
+    invite_code: str,
+    member: discord.Member,
+) -> Optional[dict]:
+    """
+    Best-effort Sheets bridge update for Column D (discord_id|discord_username).
+    Returns roster payload when updated, else None.
+    """
+    spreadsheet_id = os.getenv("GOOGLE_SHEETS_ID", "").strip()
+    if not spreadsheet_id:
+        return None
+
+    from cis_controller.interest_api_server import (
+        link_roster_discord_identity_by_invite_code,
+    )
+
+    return await link_roster_discord_identity_by_invite_code(
+        invite_code=invite_code,
+        discord_id=str(member.id),
+        discord_username=str(member.name),
+        spreadsheet_id=spreadsheet_id,
+        sheet_range=os.getenv("GOOGLE_SHEETS_RANGE", "Student Roster!A:Z").strip(),
+        creds_path=os.getenv("GOOGLE_SHEETS_CREDENTIALS_PATH", "").strip() or None,
+    )
+
+
 def build_status_embed() -> discord.Embed:
     """Build a shared status embed for both prefix and slash commands."""
     embed = discord.Embed(
@@ -834,8 +870,23 @@ async def recover_member_slash(
     """
     await interaction.response.defer(ephemeral=True)
 
+    caller = interaction.user if isinstance(interaction.user, discord.Member) else None
+    if not _is_facilitator_member(caller):
+        await interaction.followup.send(
+            "This command requires the @Facilitator role.",
+            ephemeral=True,
+        )
+        return
+
     store = _get_store()
     student = None
+
+    if not hasattr(store, "get_student_by_invite_code") or not hasattr(store, "link_student_by_invite"):
+        await interaction.followup.send(
+            "Invite recovery requires PostgreSQL runtime store methods (`get_student_by_invite_code`, `link_student_by_invite`).",
+            ephemeral=True,
+        )
+        return
 
     if invite_code:
         student = store.get_student_by_invite_code(invite_code.strip())
@@ -868,6 +919,13 @@ async def recover_member_slash(
     )
 
     if linked:
+        roster_payload = None
+        if used_code:
+            try:
+                roster_payload = await _link_member_identity_to_roster(used_code, member)
+            except Exception as roster_exc:
+                logger.warning("recover_member: roster sync failed: %s", roster_exc)
+
         guest_role = discord.utils.get(member.guild.roles, name="Guest")
         if guest_role and guest_role not in member.roles:
             try:
@@ -881,6 +939,12 @@ async def recover_member_slash(
             student.get("enrollment_email", "?"),
             used_code,
         )
+        if roster_payload:
+            logger.info(
+                "recover_member: roster row %s linked for invite=%s",
+                roster_payload.get("row_number"),
+                used_code,
+            )
         await interaction.followup.send(
             f"**Member recovered.**\n"
             f"Linked {member.mention} → `{student.get('enrollment_email', '?')}` "
@@ -946,15 +1010,54 @@ async def on_member_join(member: discord.Member):
             store = _get_store()
             student = None
             student_linked = False
+            has_invite_methods = hasattr(store, "get_student_by_invite_code") and hasattr(
+                store, "link_student_by_invite"
+            )
 
             if used_code:
-                student = store.get_student_by_invite_code(used_code)
-                if student:
-                    student_linked = store.link_student_by_invite(
-                        invite_code=used_code,
-                        discord_id=str(member.id),
-                        discord_username=str(member.name),
-                    )
+                if has_invite_methods:
+                    student = store.get_student_by_invite_code(used_code)
+                    if student:
+                        student_linked = store.link_student_by_invite(
+                            invite_code=used_code,
+                            discord_id=str(member.id),
+                            discord_username=str(member.name),
+                        )
+
+                # Fallback bridge: if DB lookup/link fails, still write Column D in Sheets
+                # and hydrate runtime store from roster data when possible.
+                if not student_linked:
+                    roster_payload = await _link_member_identity_to_roster(used_code, member)
+                    if roster_payload:
+                        student_linked = True
+                        try:
+                            if hasattr(store, "upsert_student_from_sheets"):
+                                store.upsert_student_from_sheets(
+                                    enrollment_email=roster_payload.get("enrollment_email", ""),
+                                    enrollment_name=roster_payload.get("enrollment_name", ""),
+                                    invite_code=used_code,
+                                    enrollment_status="lead",
+                                    payment_status="lead",
+                                )
+                                store.link_student_by_invite(
+                                    invite_code=used_code,
+                                    discord_id=str(member.id),
+                                    discord_username=str(member.name),
+                                )
+                                student = store.get_student_by_invite_code(used_code)
+                        except Exception as hydrate_exc:
+                            logger.warning(
+                                "Could not hydrate runtime store from roster invite %s: %s",
+                                used_code,
+                                hydrate_exc,
+                            )
+
+                        if not student:
+                            student = {
+                                "enrollment_name": roster_payload.get("enrollment_name", ""),
+                                "enrollment_email": roster_payload.get("enrollment_email", ""),
+                                "profession": roster_payload.get("profession", ""),
+                            }
 
             # --- Observability ---
             event_type = "student_linked" if student_linked else "student_unmatched"

@@ -338,6 +338,85 @@ async def find_row_by_submit_token(
     return None
 
 
+async def find_row_by_invite_code(
+    invite_code: str,
+    spreadsheet_id: str,
+    sheet_range: str = "Student Roster!A:Z",
+    creds_path: Optional[str] = None,
+) -> Optional[Tuple[int, List[str]]]:
+    """Find a roster row by invite code (Column R). Returns (row_number, row_values)."""
+    needle = (invite_code or "").strip()
+    if not needle:
+        return None
+
+    rows = await read_roster_rows(
+        spreadsheet_id=spreadsheet_id,
+        sheet_range=sheet_range,
+        creds_path=creds_path,
+    )
+    for row_num, row in enumerate(rows[1:], start=2):
+        if _safe_get(row, COL_INVITE).strip() == needle:
+            return row_num, row
+    return None
+
+
+async def link_roster_discord_identity_by_invite_code(
+    invite_code: str,
+    discord_id: str,
+    discord_username: str,
+    spreadsheet_id: str,
+    sheet_range: str = "Student Roster!A:Z",
+    creds_path: Optional[str] = None,
+) -> Optional[Dict[str, Any]]:
+    """
+    Write Column D identity bridge (`discord_id|discord_username`) for a given invite code.
+
+    Returns a minimal row payload when updated, otherwise None.
+    """
+    match = await find_row_by_invite_code(
+        invite_code=invite_code,
+        spreadsheet_id=spreadsheet_id,
+        sheet_range=sheet_range,
+        creds_path=creds_path,
+    )
+    if not match:
+        return None
+
+    row_number, row = match
+    identity_value = f"{discord_id}|{discord_username}"
+    existing = _safe_get(row, COL_DISCORD_ID).strip()
+
+    # Idempotent update; avoid overwriting a claimed row with a different identity.
+    if existing and existing != identity_value:
+        logger.warning(
+            "Invite %s already linked in roster row %s: existing=%s attempted=%s",
+            invite_code,
+            row_number,
+            existing,
+            identity_value,
+        )
+        return None
+
+    updated = await update_roster_cells(
+        row_number=row_number,
+        updates={COL_DISCORD_ID: identity_value},
+        spreadsheet_id=spreadsheet_id,
+        sheet_range=sheet_range,
+        creds_path=creds_path,
+    )
+    if not updated:
+        return None
+
+    return {
+        "row_number": row_number,
+        "enrollment_name": _safe_get(row, COL_NAME),
+        "enrollment_email": _safe_get(row, COL_EMAIL),
+        "profession": _safe_get(row, COL_PROFESSION),
+        "invite_code": invite_code,
+        "discord_identity": identity_value,
+    }
+
+
 async def update_roster_cells(
     row_number: int,
     updates: Dict[int, Any],
