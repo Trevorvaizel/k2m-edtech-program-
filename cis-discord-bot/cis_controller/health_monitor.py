@@ -200,12 +200,23 @@ class HealthMonitor:
             return False
 
     async def _check_database(self) -> Tuple[bool, str]:
-        """Check database connectivity and schema availability."""
+        """
+        Check database connectivity — PostgreSQL (task 7.6) if DATABASE_URL is set,
+        otherwise SQLite fallback for local/test environments.
+        """
+        import os
+
+        db_url = os.getenv("DATABASE_URL", "").strip()
+
+        # --- PostgreSQL path ---
+        if db_url.startswith("postgresql://") or db_url.startswith("postgres://"):
+            return await self._check_postgresql(db_url)
+
+        # --- SQLite path (local dev / tests) ---
         try:
             db_target = self.db_path_raw
             is_uri = db_target.startswith("file:")
 
-            # Guard against silent sqlite auto-creation on wrong paths.
             if not is_uri and not Path(db_target).exists():
                 return False, f"Database file missing: {db_target}"
 
@@ -222,6 +233,32 @@ class HealthMonitor:
             return True, "SQLite reachable"
         except Exception as exc:
             logger.error("Database health check failed: %s", exc)
+            return False, str(exc)
+
+    async def _check_postgresql(self, database_url: str) -> Tuple[bool, str]:
+        """
+        Check PostgreSQL connectivity via a lightweight SELECT 1.
+        Task 7.6 acceptance criterion: bot logs 'DB: PostgreSQL connected on startup'.
+        """
+        try:
+            from database import get_runtime_store
+
+            store = get_runtime_store()
+            if store is not None and hasattr(store, "check_pg_connectivity"):
+                ok = store.check_pg_connectivity()
+                if ok:
+                    return True, "PostgreSQL connected"
+                return False, "PostgreSQL connectivity check returned False"
+
+            # Fallback: direct psycopg2 check if runtime store unavailable
+            import psycopg2
+            conn = psycopg2.connect(dsn=database_url, connect_timeout=5)
+            cursor = conn.cursor()
+            cursor.execute("SELECT 1")
+            conn.close()
+            return True, "PostgreSQL connected"
+        except Exception as exc:
+            logger.error("PostgreSQL health check failed: %s", exc)
             return False, str(exc)
 
     async def _run_daily_backup(self) -> None:

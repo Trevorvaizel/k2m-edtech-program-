@@ -203,23 +203,32 @@ async def on_ready():
     runtime_participation_tracker = None
     runtime_escalation_system = None
 
-    # Initialize database
+    # Initialize database — PostgreSQL (Railway) if DATABASE_URL set, else SQLite (local/tests)
     try:
-        from database.store import StudentStateStore
+        from database import get_store, set_runtime_store
 
-        runtime_store = StudentStateStore()
+        runtime_store = get_store()
+        set_runtime_store(runtime_store)
         student_count = runtime_store.get_student_count()
+
+        db_url = os.getenv("DATABASE_URL", "")
+        if db_url.startswith("postgresql://") or db_url.startswith("postgres://"):
+            logger.info("DB: PostgreSQL connected on startup")
+        else:
+            logger.info("DB: SQLite connected on startup (set DATABASE_URL for PostgreSQL)")
         logger.info("Tracking %s students", student_count)
     except Exception as exc:
         logger.warning("Database not initialized yet: %s", exc)
         logger.warning("Switching to in-memory backup mode until disk DB is restored.")
         try:
             from database.store import StudentStateStore
+            from database import set_runtime_store
 
             StudentStateStore.activate_in_memory_fallback(
                 reason=f"Startup DB initialization failed: {exc}"
             )
             runtime_store = StudentStateStore()
+            set_runtime_store(runtime_store)
         except Exception as fallback_exc:
             logger.error(
                 "Failed to initialize in-memory backup store: %s",
