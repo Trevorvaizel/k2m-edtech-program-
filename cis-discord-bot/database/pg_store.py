@@ -22,6 +22,9 @@ import re
 from pathlib import Path
 from typing import Any, Iterator, List, Optional
 
+# Static import — no circular risk (store.py has no database package imports)
+from database.store import StudentStateStore
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -234,23 +237,16 @@ def _split_sql_statements(sql: str) -> List[str]:
 # PgStudentStateStore
 # ---------------------------------------------------------------------------
 
-class PgStudentStateStore:
+class PgStudentStateStore(StudentStateStore):
     """
-    PostgreSQL-backed store. Subclasses StudentStateStore for backward compat
+    PostgreSQL-backed store. Inherits StudentStateStore for backward compat
     with all callers, overriding only the connection/schema layer.
 
     Pool: ThreadedConnectionPool(minconn=2, maxconn=10) per spec (task 7.6).
+    __init__ does NOT call super().__init__() — we skip SQLite setup entirely.
     """
 
     _pg_pool: Optional[Any] = None  # Class-level shared pool
-
-    def __new__(cls, *args, **kwargs):
-        # Lazy import StudentStateStore to avoid circular import at module level
-        from database.store import StudentStateStore
-        if not issubclass(cls, StudentStateStore):
-            # Dynamically inject StudentStateStore as a base class
-            cls.__bases__ = (StudentStateStore,)
-        return object.__new__(cls)
 
     def __init__(self, database_url: str = None) -> None:
         if not PSYCOPG2_AVAILABLE:
@@ -270,6 +266,8 @@ class PgStudentStateStore:
         self.conn = None
         self._using_uri = False
         self._pg_mode = True
+        # Register with parent class instance tracker (bypasses super().__init__)
+        StudentStateStore._instances.add(self)
 
         # Build shared pool (min=2, max=10 per spec)
         if PgStudentStateStore._pg_pool is None:
