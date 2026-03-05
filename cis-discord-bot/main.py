@@ -9,6 +9,7 @@ Bot Name: KIRA (K2M Interactive Reasoning Agent)
 import logging
 import os
 from pathlib import Path
+from typing import Optional
 
 import discord
 from discord import app_commands
@@ -46,7 +47,7 @@ SYNC_GLOBAL_COMMANDS = os.getenv(
 ).strip().lower() in {"1", "true", "yes", "on"}
 AI_PROVIDER = get_active_provider()
 LLM_MODEL = get_active_model(AI_PROVIDER)
-COHORT_START_DATE = os.getenv("COHORT_START_DATE", "2026-02-01")
+COHORT_1_START_DATE = os.getenv("COHORT_1_START_DATE", "2026-02-01")
 _slash_synced = False
 
 # Weekly channel mapping for daily prompt scheduler (Story 2.1)
@@ -71,6 +72,14 @@ if not DISCORD_TOKEN:
     raise ValueError(
         "DISCORD_TOKEN environment variable is required. "
         "Copy .env.template to .env and add your token."
+    )
+
+if not os.environ.get("COHORT_1_START_DATE"):
+    raise EnvironmentError("COHORT_1_START_DATE not set — bot refusing to start")
+
+if not os.environ.get("COHORT_1_FIRST_SESSION_DATE"):
+    logger.warning(
+        "COHORT_1_FIRST_SESSION_DATE not set — using COHORT_1_START_DATE as fallback"
     )
 
 provider_ok, provider_details = validate_provider_configuration()
@@ -103,7 +112,7 @@ def build_status_embed() -> discord.Embed:
 
     embed.add_field(name="Connected Servers", value=str(len(bot.guilds)), inline=True)
     embed.add_field(name="Latency", value=f"{round(bot.latency * 1000)}ms", inline=True)
-    embed.add_field(name="Cohort Start", value=COHORT_START_DATE, inline=True)
+    embed.add_field(name="Cohort Start", value=COHORT_1_START_DATE, inline=True)
     embed.add_field(
         name="Provider / Model",
         value=f"{AI_PROVIDER} / {LLM_MODEL}",
@@ -229,7 +238,7 @@ async def on_ready():
                     bot=bot,
                     store=runtime_store,
                     weekly_channel_ids=weekly_channel_ids,
-                    cohort_start_date=COHORT_START_DATE,
+                    cohort_start_date=COHORT_1_START_DATE,
                 )
             else:
                 logger.warning("Participation tracker not started: no weekly channels configured")
@@ -243,20 +252,20 @@ async def on_ready():
 
             dashboard_channel_id = int(os.getenv("CHANNEL_FACILITATOR_DASHBOARD", "0"))
             moderation_logs_id = int(os.getenv("CHANNEL_MODERATION_LOGS", "0"))
-            trevor_discord_id = os.getenv("TREVOR_DISCORD_ID", "").strip()
+            facilitator_discord_id = os.getenv("FACILITATOR_DISCORD_ID", "").strip()
 
-            if dashboard_channel_id and moderation_logs_id and trevor_discord_id:
+            if dashboard_channel_id and moderation_logs_id and facilitator_discord_id:
                 runtime_escalation_system = EscalationSystem(
                     bot=bot,
                     store=runtime_store,
                     facilitator_dashboard_id=dashboard_channel_id,
                     moderation_logs_id=moderation_logs_id,
-                    trevor_discord_id=trevor_discord_id,
+                    trevor_discord_id=facilitator_discord_id,
                 )
             else:
                 logger.warning(
                     "Escalation system not started: set CHANNEL_FACILITATOR_DASHBOARD, "
-                    "CHANNEL_MODERATION_LOGS, and TREVOR_DISCORD_ID"
+                    "CHANNEL_MODERATION_LOGS, and FACILITATOR_DISCORD_ID"
                 )
     except Exception as exc:
         logger.error("Failed to initialize escalation system: %s", exc, exc_info=True)
@@ -273,15 +282,15 @@ async def on_ready():
 
         db_path = os.getenv("DATABASE_PATH", "cohort-1.db")
         dashboard_channel_id = int(os.getenv("CHANNEL_FACILITATOR_DASHBOARD", "0"))
-        trevor_discord_id = os.getenv("TREVOR_DISCORD_ID", "").strip()
+        facilitator_discord_id = os.getenv("FACILITATOR_DISCORD_ID", "").strip()
 
-        if dashboard_channel_id and trevor_discord_id:
+        if dashboard_channel_id and facilitator_discord_id:
             if health_monitor is None:
                 health_monitor = HealthMonitor(
                     bot=bot,
                     db_path=db_path,
                     facilitator_dashboard_id=dashboard_channel_id,
-                    trevor_discord_id=trevor_discord_id,
+                    trevor_discord_id=facilitator_discord_id,
                     check_interval_seconds=300,  # 5 minutes
                 )
 
@@ -293,7 +302,7 @@ async def on_ready():
         else:
             set_runtime_failure_notifier(None)
             logger.warning(
-                "Health monitor not started: set CHANNEL_FACILITATOR_DASHBOARD and TREVOR_DISCORD_ID"
+                "Health monitor not started: set CHANNEL_FACILITATOR_DASHBOARD and FACILITATOR_DISCORD_ID"
             )
     except Exception as exc:
         set_runtime_failure_notifier(None)
@@ -309,7 +318,7 @@ async def on_ready():
                 bot=bot,
                 guild_id=guild_id_int,
                 channel_mapping=WEEKLY_CHANNEL_MAPPING,
-                cohort_start_date=COHORT_START_DATE,
+                cohort_start_date=COHORT_1_START_DATE,
                 escalation_system=runtime_escalation_system,
                 participation_tracker=runtime_participation_tracker,
                 store=runtime_store,
@@ -618,7 +627,7 @@ async def show_aggregate_patterns_slash(interaction: discord.Interaction, days: 
 
 @bot.tree.command(name="inspect-journey", description="Inspect student journey (Trevor only, requires consent).")
 @app_commands.describe(student="Student to inspect (@mention)")
-async def inspect_journey_slash(interaction: discord.Interaction, student: discord.Member | None = None):
+async def inspect_journey_slash(interaction: discord.Interaction, student: Optional[discord.Member] = None):
     """Inspect individual student journey - REQUIRES student consent (Guardrail #8)."""
     from database.store import StudentStateStore
     from commands.admin import inspect_journey
@@ -791,7 +800,7 @@ async def on_member_join(member: discord.Member):
             store=store,
             guild_id=member.guild.id,
             channel_mapping=WEEKLY_CHANNEL_MAPPING,
-            cohort_start_date=COHORT_START_DATE,
+            cohort_start_date=COHORT_1_START_DATE,
         )
         schedule_text = schedule_helper.get_cluster_schedule_text(cluster_id)
 

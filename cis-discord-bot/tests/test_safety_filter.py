@@ -291,7 +291,7 @@ class TestTrevorSafetyAlerts:
 
     @pytest.mark.asyncio
     async def test_crisis_alert_includes_context_payload(self, monkeypatch):
-        monkeypatch.setenv("TREVOR_DISCORD_ID", "999888777")
+        monkeypatch.setenv("FACILITATOR_DISCORD_ID", "999888777")
 
         trevor_user = Mock()
         trevor_user.send = AsyncMock()
@@ -329,7 +329,7 @@ class TestTrevorSafetyAlerts:
 
     @pytest.mark.asyncio
     async def test_comparison_alert_logs_to_moderation(self, monkeypatch):
-        monkeypatch.setenv("TREVOR_DISCORD_ID", "999888777")
+        monkeypatch.setenv("FACILITATOR_DISCORD_ID", "999888777")
 
         trevor_user = Mock()
         trevor_user.send = AsyncMock()
@@ -350,3 +350,64 @@ class TestTrevorSafetyAlerts:
 
         trevor_user.send.assert_awaited_once()
         mock_log.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_crisis_falls_back_to_db_logging_when_escalation_system_fails(
+        self,
+        monkeypatch,
+        tmp_path,
+    ):
+        from database.store import StudentStateStore
+
+        db_path = tmp_path / "safety_crisis_fallback.db"
+        bootstrap_store = StudentStateStore(str(db_path))
+        bootstrap_store.create_student("123456")
+        bootstrap_store.close()
+
+        monkeypatch.setenv("DATABASE_PATH", str(db_path))
+        monkeypatch.setenv("FACILITATOR_DISCORD_ID", "999888777")
+
+        trevor_user = Mock()
+        trevor_user.send = AsyncMock()
+
+        bot = Mock()
+        bot.fetch_user = AsyncMock(return_value=trevor_user)
+        bot.guilds = []
+
+        escalation_system = Mock()
+        escalation_system.escalate_level_4_crisis = AsyncMock(
+            side_effect=RuntimeError("forced escalation failure")
+        )
+
+        with patch(
+            "cis_controller.safety_filter._load_crisis_context",
+            return_value={
+                "emotional_state": "stuck",
+                "last_messages": ["user: I can't go on"],
+            },
+        ), patch(
+            "cis_controller.safety_filter._log_to_moderation_logs",
+            new_callable=AsyncMock,
+        ):
+            await notify_trevor_safety_violation(
+                bot=bot,
+                violation_type="crisis",
+                message="I can't go on",
+                student_discord_id=123456,
+                escalation_system=escalation_system,
+            )
+
+        escalation_system.escalate_level_4_crisis.assert_awaited_once()
+
+        verify_store = StudentStateStore(str(db_path))
+        level4_count = verify_store.conn.execute(
+            """
+            SELECT COUNT(*) AS c
+            FROM escalations
+            WHERE discord_id = ? AND escalation_level = 4
+            """,
+            ("123456",),
+        ).fetchone()["c"]
+        verify_store.close()
+
+        assert level4_count >= 1

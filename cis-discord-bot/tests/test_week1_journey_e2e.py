@@ -14,6 +14,7 @@ This test validates the sprint flow end-to-end against Playbook-v2 behavior:
 """
 
 import importlib
+from typing import List
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -56,7 +57,7 @@ def _build_mock_channel(channel_id: int, name: str):
     return channel
 
 
-def _messages_from(channel) -> list[str]:
+def _messages_from(channel) -> List[str]:
     return [call.args[0] for call in channel.send.await_args_list]
 
 
@@ -68,6 +69,7 @@ async def test_week1_student_journey_end_to_end(monkeypatch, store):
     monkeypatch.setenv("DISCORD_TOKEN", "test-token")
     monkeypatch.setenv("DISCORD_GUILD_ID", "777")
     monkeypatch.setenv("CHANNEL_FACILITATOR_DASHBOARD", "303")
+    monkeypatch.setenv("COHORT_1_START_DATE", "2026-03-16")
 
     # Import main after env vars are set to safely access on_member_join.
     main_module = importlib.import_module("main")

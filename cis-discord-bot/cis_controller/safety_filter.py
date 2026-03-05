@@ -331,16 +331,16 @@ async def notify_trevor_safety_violation(
         )
         return
 
-    # Get Trevor's Discord ID from environment
-    trevor_discord_id = os.getenv('TREVOR_DISCORD_ID')
+    # Get Facilitator's Discord ID from environment
+    facilitator_discord_id = os.getenv('FACILITATOR_DISCORD_ID')
 
-    if not trevor_discord_id:
-        logger.error("TREVOR_DISCORD_ID not set in environment variables")
+    if not facilitator_discord_id:
+        logger.error("FACILITATOR_DISCORD_ID not set in environment variables")
         return
 
     try:
-        # Get Trevor user object
-        trevor_user = await bot.fetch_user(int(trevor_discord_id))
+        # Get Facilitator user object
+        trevor_user = await bot.fetch_user(int(facilitator_discord_id))
 
         if violation_type == "crisis":
             if last_messages is None or emotional_state is None:
@@ -384,14 +384,24 @@ async def notify_trevor_safety_violation(
                 emotional_state=emotional_state,
             )
 
-            # Task 2.4: Log to escalations table via EscalationSystem
+            # Task 2.4: Log to escalations table via EscalationSystem.
+            crisis_logged = False
+
             if escalation_system and student_discord_id:
+                db = None
                 try:
-                    # Get student username for escalation log
+                    # Current schema has no students.username; use last_name when present,
+                    # otherwise mention fallback to keep escalation payload readable.
+                    username = f"<@{student_discord_id}>"
+                    zone = "unknown"
+
                     db = store.StudentStateStore()
                     student = db.get_student(str(student_discord_id))
-                    username = student["username"] if student else f"<@{student_discord_id}>"
-                    zone = student["zone"] if student else "unknown"
+                    if student:
+                        last_name = student["last_name"] if "last_name" in student.keys() else None
+                        if last_name and str(last_name).strip():
+                            username = str(last_name).strip()
+                        zone = student["zone"] if student["zone"] else "unknown"
 
                     await escalation_system.escalate_level_4_crisis(
                         discord_id=str(student_discord_id),
@@ -401,11 +411,20 @@ async def notify_trevor_safety_violation(
                         zone=zone,
                         emotional_state=emotional_state or "unknown",
                     )
-                    logger.info(f"Level 4 crisis logged to escalations table for student {student_discord_id}")
+                    crisis_logged = True
+                    logger.info(
+                        "Level 4 crisis logged to escalations table for student %s",
+                        student_discord_id,
+                    )
                 except Exception as e:
-                    logger.error(f"Failed to log crisis to escalations table: {e}", exc_info=True)
-            elif student_discord_id:
-                # Fallback DB logging when escalation system is not injected.
+                    logger.error("Failed to log crisis to escalations table: %s", e, exc_info=True)
+                finally:
+                    if db:
+                        db.close()
+
+            if student_discord_id and not crisis_logged:
+                # Fallback DB logging when escalation system is unavailable or fails.
+                db = None
                 try:
                     db = store.StudentStateStore()
                     db.conn.execute(
@@ -420,13 +439,15 @@ async def notify_trevor_safety_violation(
                         ),
                     )
                     db.conn.commit()
-                    db.close()
                     logger.info(
                         "Level 4 crisis logged via fallback path for student %s",
                         student_discord_id,
                     )
                 except Exception as e:
                     logger.error("Fallback Level 4 escalation logging failed: %s", e, exc_info=True)
+                finally:
+                    if db:
+                        db.close()
 
         elif violation_type == "comparison":
             # Level 3: Comparison violation (less urgent)

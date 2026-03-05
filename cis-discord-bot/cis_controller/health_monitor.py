@@ -13,16 +13,15 @@ Monitors:
 
 import asyncio
 import logging
-import os
 import sqlite3
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 import discord
 from discord.ext import commands
 
-from cis_controller.llm_integration import validate_provider_configuration
+from cis_controller.llm_integration import check_provider_api_health
 from database.backup import DatabaseBackup
 
 # Configure logging
@@ -55,6 +54,7 @@ class HealthMonitor:
             check_interval_seconds: Health check interval (default: 300s = 5 min)
         """
         self.bot = bot
+        self.db_path_raw = str(db_path)
         self.db_path = Path(db_path)
         self.facilitator_dashboard_id = facilitator_dashboard_id
         self.trevor_discord_id = trevor_discord_id
@@ -99,6 +99,20 @@ class HealthMonitor:
 
         logger.info("Health monitor stopped")
 
+    def stop_sync(self) -> None:
+        """
+        Best-effort synchronous stop for shutdown paths without an event loop.
+        """
+        self._running = False
+        if self._task and not self._task.done():
+            self._task.cancel()
+        self._task = None
+
+    @property
+    def is_running(self) -> bool:
+        """Return True when monitor loop is active."""
+        return self._running and self._task is not None and not self._task.done()
+
     async def _monitor_loop(self) -> None:
         """Continuous health monitoring loop."""
         while self._running:
@@ -133,22 +147,26 @@ class HealthMonitor:
         }
 
         # Check LLM provider
-        llm_ok, llm_details = validate_provider_configuration()
+        llm_ok, llm_details = await check_provider_api_health(timeout_seconds=10)
         results["checks"]["llm_provider"] = {
             "status": "ok" if llm_ok else "failed",
             "details": llm_details,
         }
 
         # Check database
-        db_ok = await self._check_database()
+        db_ok, db_details = await self._check_database()
         results["checks"]["database"] = {
             "status": "ok" if db_ok else "failed",
+            "details": db_details,
         }
 
         # Update status tracking
         self.health_status["discord"] = discord_ok
         self.health_status["llm_provider"] = llm_ok
         self.health_status["database"] = db_ok
+
+        if not db_ok:
+            await self._activate_database_backup_mode(db_details)
 
         # Check for status changes (failures)
         failures = []
@@ -181,19 +199,30 @@ class HealthMonitor:
             logger.error("Discord health check failed: %s", exc)
             return False
 
-    async def _check_database(self) -> bool:
-        """Check database connectivity."""
+    async def _check_database(self) -> Tuple[bool, str]:
+        """Check database connectivity and schema availability."""
         try:
-            # Attempt simple query
-            conn = sqlite3.connect(str(self.db_path))
+            db_target = self.db_path_raw
+            is_uri = db_target.startswith("file:")
+
+            # Guard against silent sqlite auto-creation on wrong paths.
+            if not is_uri and not Path(db_target).exists():
+                return False, f"Database file missing: {db_target}"
+
+            conn = sqlite3.connect(db_target, uri=is_uri)
             cursor = conn.cursor()
-            cursor.execute("SELECT 1")
-            cursor.fetchone()
+            cursor.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='students'"
+            )
+            table = cursor.fetchone()
             conn.close()
-            return True
+            if not table:
+                return False, "Missing required table: students"
+
+            return True, "SQLite reachable"
         except Exception as exc:
             logger.error("Database health check failed: %s", exc)
-            return False
+            return False, str(exc)
 
     async def _run_daily_backup(self) -> None:
         """Run daily database backup if needed."""
@@ -226,16 +255,107 @@ class HealthMonitor:
             logger.error("Daily backup failed: %s", exc, exc_info=True)
             await self._notify_backup_failure(str(exc))
 
+    async def _activate_database_backup_mode(self, reason: str) -> None:
+        """
+        Switch process stores to shared in-memory mode on database failure.
+        """
+        try:
+            from database.store import StudentStateStore
+
+            if StudentStateStore.is_in_memory_fallback_active():
+                return
+
+            StudentStateStore.activate_in_memory_fallback(reason=reason)
+            await self._notify_database_backup_mode(reason)
+        except Exception as exc:
+            logger.error("Failed to activate in-memory backup mode: %s", exc, exc_info=True)
+
+    async def notify_llm_runtime_failure(self, provider: str, agent: str, error: str) -> None:
+        """
+        Send immediate Trevor alert when runtime LLM calls fail.
+        """
+        embed = discord.Embed(
+            title=f"🚨 CIS Agents Offline - {provider} API issue",
+            description=f"Runtime failure while handling `/{agent}`",
+            color=discord.Color.red(),
+            timestamp=datetime.now(),
+        )
+        embed.add_field(name="Provider", value=provider, inline=True)
+        embed.add_field(name="Agent", value=agent, inline=True)
+        embed.add_field(name="Error", value=(error or "Unknown error")[:300], inline=False)
+        embed.add_field(
+            name="Student Experience",
+            value="Students receive a fallback Habit-practice response while recovery retries continue.",
+            inline=False,
+        )
+        await self._send_trevor_alert(
+            embed=embed,
+            fallback_text=f"🚨 CIS Agents Offline - {provider} API issue ({agent}): {error}",
+        )
+
+    async def _notify_database_backup_mode(self, reason: str) -> None:
+        """Alert Trevor that DB fallback mode has been activated."""
+        embed = discord.Embed(
+            title="🚨 Database Error - Switching to backup mode",
+            description="Disk database failed health checks. In-memory backup mode is active.",
+            color=discord.Color.red(),
+            timestamp=datetime.now(),
+        )
+        embed.add_field(name="Failure Details", value=(reason or "Unknown error")[:300], inline=False)
+        embed.add_field(
+            name="Recovery",
+            value="Restore the SQLite DB from the latest backup and restart bot services.",
+            inline=False,
+        )
+        await self._send_trevor_alert(
+            embed=embed,
+            fallback_text=f"🚨 Database Error - Switching to backup mode: {reason}",
+        )
+
+    async def _send_trevor_alert(self, embed: discord.Embed, fallback_text: str) -> None:
+        """
+        Send alert to facilitator dashboard, with DM fallback to Trevor.
+        """
+        async def _call_maybe_await(func, *args, **kwargs):
+            result = func(*args, **kwargs)
+            if asyncio.iscoroutine(result):
+                return await result
+            return result
+
+        channel = self.bot.get_channel(self.facilitator_dashboard_id)
+        if channel:
+            await _call_maybe_await(channel.send, embed=embed)
+            return
+
+        logger.error(
+            "Facilitator dashboard channel not found: %s; attempting Trevor DM fallback",
+            self.facilitator_dashboard_id,
+        )
+
+        try:
+            trevor_id = int(self.trevor_discord_id)
+        except (TypeError, ValueError):
+            logger.error("Invalid Trevor Discord ID: %s", self.trevor_discord_id)
+            return
+
+        user = self.bot.get_user(trevor_id)
+        if user is None:
+            try:
+                user = await self.bot.fetch_user(trevor_id)
+            except Exception as exc:
+                logger.error("Failed to fetch Trevor user for DM fallback: %s", exc)
+                return
+
+        try:
+            await _call_maybe_await(user.send, fallback_text)
+        except Exception as exc:
+            logger.error("Failed to DM Trevor fallback alert: %s", exc, exc_info=True)
+
     async def _notify_trevor_of_failure(
         self, failed_systems: list, health_results: Dict[str, Any]
     ) -> None:
         """Send Trevor notification about system failures."""
         try:
-            channel = self.bot.get_channel(self.facilitator_dashboard_id)
-            if not channel:
-                logger.error("Facilitator dashboard channel not found: %s", self.facilitator_dashboard_id)
-                return
-
             failed_list = ", ".join(failed_systems)
 
             embed = discord.Embed(
@@ -263,7 +383,10 @@ class HealthMonitor:
                 inline=False,
             )
 
-            await channel.send(embed=embed)
+            await self._send_trevor_alert(
+                embed=embed,
+                fallback_text=f"🚨 CIS Bot Health Check Failed: {failed_list}",
+            )
             logger.warning("Notified Trevor of health check failures: %s", failed_list)
 
         except Exception as exc:
@@ -272,10 +395,6 @@ class HealthMonitor:
     async def _notify_backup_success(self, backup_path: Path, cleaned_count: int) -> None:
         """Notify Trevor of successful backup."""
         try:
-            channel = self.bot.get_channel(self.facilitator_dashboard_id)
-            if not channel:
-                return
-
             status = self.backup_manager.get_backup_status()
 
             embed = discord.Embed(
@@ -293,7 +412,10 @@ class HealthMonitor:
                 name="Total Size", value=f"{status['total_size_mb']} MB", inline=True
             )
 
-            await channel.send(embed=embed)
+            await self._send_trevor_alert(
+                embed=embed,
+                fallback_text=f"✅ Daily DB backup complete: {backup_path.name}",
+            )
             logger.info("Notified Trevor of successful backup")
 
         except Exception as exc:
@@ -302,10 +424,6 @@ class HealthMonitor:
     async def _notify_backup_failure(self, error: str) -> None:
         """Notify Trevor of backup failure."""
         try:
-            channel = self.bot.get_channel(self.facilitator_dashboard_id)
-            if not channel:
-                return
-
             embed = discord.Embed(
                 title="❌ Daily Database Backup Failed",
                 description=f"**Error:** {error}",
@@ -319,7 +437,10 @@ class HealthMonitor:
                 inline=False,
             )
 
-            await channel.send(embed=embed)
+            await self._send_trevor_alert(
+                embed=embed,
+                fallback_text=f"❌ Daily DB backup failed: {error}",
+            )
             logger.warning("Notified Trevor of backup failure")
 
         except Exception as exc:

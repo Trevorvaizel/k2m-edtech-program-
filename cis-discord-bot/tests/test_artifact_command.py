@@ -367,7 +367,7 @@ async def test_private_confirm_delivers_to_trevor():
         status="completed",
     )
 
-    with patch.dict(os.environ, {"TREVOR_DISCORD_ID": "99999"}, clear=False), patch(
+    with patch.dict(os.environ, {"FACILITATOR_DISCORD_ID": "99999"}, clear=False), patch(
         "database.models._load_artifact_progress",
         return_value=progress,
     ), patch.object(

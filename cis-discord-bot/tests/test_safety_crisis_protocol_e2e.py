@@ -72,7 +72,7 @@ def store():
 
 @pytest.mark.asyncio
 async def test_safety_and_crisis_protocol_end_to_end(monkeypatch, store):
-    monkeypatch.setenv("TREVOR_DISCORD_ID", "999888777")
+    monkeypatch.setenv("FACILITATOR_DISCORD_ID", "999888777")
     monkeypatch.setenv("CHANNEL_MODERATION_LOGS", "902")
 
     dashboard_channel = Mock()

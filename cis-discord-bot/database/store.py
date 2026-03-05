@@ -13,6 +13,7 @@ import os
 import inspect
 import weakref
 from datetime import datetime, timedelta
+from typing import Tuple
 from typing import Optional, List, Dict
 from pathlib import Path
 import logging
@@ -74,8 +75,26 @@ class StudentStateStore:
             uri=self._using_uri,
         )
         self.conn.row_factory = sqlite3.Row  # Enable column access by name
+        self._apply_connection_pragmas(self.conn, db_target=db_target)
+
+    def _apply_connection_pragmas(self, conn: sqlite3.Connection, db_target: str) -> None:
+        """
+        Apply SQLite pragmas for integrity and write-contention resilience.
+        """
         # SQLite does not enforce foreign keys unless explicitly enabled per connection.
-        self.conn.execute("PRAGMA foreign_keys = ON")
+        conn.execute("PRAGMA foreign_keys = ON")
+        # Let writers wait briefly instead of instantly failing under burst writes.
+        conn.execute("PRAGMA busy_timeout = 10000")
+        # Lower fsync pressure while keeping crash consistency suitable for this workload.
+        conn.execute("PRAGMA synchronous = NORMAL")
+
+        # WAL is best for concurrent readers/writers on file-backed DBs.
+        is_in_memory_uri = db_target.startswith("file:") and "mode=memory" in db_target
+        if not is_in_memory_uri and db_target != ":memory:":
+            try:
+                conn.execute("PRAGMA journal_mode = WAL")
+            except sqlite3.DatabaseError as exc:
+                logger.warning("Could not enable WAL mode for %s: %s", db_target, exc)
 
     @classmethod
     def is_in_memory_fallback_active(cls) -> bool:
@@ -102,6 +121,7 @@ class StudentStateStore:
             )
             cls._fallback_anchor_conn.row_factory = sqlite3.Row
             cls._fallback_anchor_conn.execute("PRAGMA foreign_keys = ON")
+            cls._fallback_anchor_conn.execute("PRAGMA busy_timeout = 10000")
 
         for instance in list(cls._instances):
             instance._switch_to_in_memory_fallback()
@@ -1960,7 +1980,7 @@ class StudentStateStore:
         guild,
         cluster_id: int,
         bot=None,
-        trevor_role=None
+        facilitator_role=None
     ):
         """
         Create a temporary voice channel for a cluster live session.
@@ -2020,10 +2040,10 @@ class StudentStateStore:
                         cluster_role = role
                         break
 
-                if trevor_role is None:
+                if facilitator_role is None:
                     for role in guild_roles:
-                        if str(getattr(role, "name", "")) == "Trevor":
-                            trevor_role = role
+                        if str(getattr(role, "name", "")) == "Facilitator":
+                            facilitator_role = role
                             break
 
             default_role = getattr(guild, "default_role", None)
@@ -2045,10 +2065,10 @@ class StudentStateStore:
                     view_channel=True,
                 )
 
-            if trevor_role is not None:
+            if facilitator_role is not None:
                 await self._call_maybe_async(
                     set_permissions,
-                    trevor_role,
+                    facilitator_role,
                     connect=True,
                     speak=True,
                     view_channel=True,
@@ -2421,7 +2441,7 @@ class StudentStateStore:
 
         return [dict(row) for row in cursor.fetchall()]
 
-    def _get_week_time_window(self, week_number: int) -> tuple[str, str]:
+    def _get_week_time_window(self, week_number: int) -> Tuple[str, str]:
         """
         Build ISO date window for a cohort week.
 

@@ -11,14 +11,14 @@ Test coverage:
 import pytest
 import sqlite3
 from datetime import datetime, timedelta
-from cis_controller.rate_limiter import RateLimiter, rate_limiter
-from database.store import StudentStateStore
+from cis_controller.rate_limiter import RateLimiter
 
 
 @pytest.fixture
 def db():
     """Create in-memory test database."""
     db = sqlite3.connect(":memory:")
+    db.row_factory = sqlite3.Row
     # Create schema
     db.execute("""
         CREATE TABLE students (
@@ -224,7 +224,7 @@ class TestCostTracking:
         ).fetchone()
 
         assert result["total_tokens"] == 3000  # 1000 + 800 + 1200
-        assert result["total_cost_usd"] == 0.0150  # 0.005 + 0.004 + 0.006
+        assert result["total_cost_usd"] == pytest.approx(0.0150)  # 0.005 + 0.004 + 0.006
         assert result["total_interactions"] == 3
 
     def test_daily_budget_threshold_alert(self, db):

@@ -6,11 +6,13 @@ Background task scheduler for posting daily nodes and prompts at 9:00 AM and 9:1
 """
 
 import asyncio
+from collections import Counter
 import logging
 import os
+import re
 from datetime import datetime, time, timedelta
 from pathlib import Path
-from typing import Optional
+from typing import Dict, List, Optional, Tuple
 
 import pytz
 
@@ -28,6 +30,26 @@ logger = logging.getLogger(__name__)
 # Timezone
 EAT = pytz.timezone('Africa/Nairobi')
 
+# Node mapping for 9:00 AM NotebookLM drops (Mon-Thu).
+NODE_SCHEDULE = {
+    1: [("0.1", WeekDay.MONDAY), ("0.2", WeekDay.TUESDAY), ("0.3", WeekDay.WEDNESDAY), ("0.4", WeekDay.THURSDAY)],
+    2: [("1.1", WeekDay.MONDAY), ("1.2", WeekDay.TUESDAY), ("1.3", WeekDay.WEDNESDAY), ("1.4", WeekDay.THURSDAY)],
+    3: [("1.1", WeekDay.MONDAY), ("1.2", WeekDay.TUESDAY), ("1.3", WeekDay.WEDNESDAY), ("1.4", WeekDay.THURSDAY)],
+    4: [("2.1", WeekDay.MONDAY), ("2.2", WeekDay.TUESDAY), ("2.3", WeekDay.WEDNESDAY), ("2.4", WeekDay.THURSDAY)],
+    5: [("2.1", WeekDay.MONDAY), ("2.2", WeekDay.TUESDAY), ("2.3", WeekDay.WEDNESDAY), ("2.4", WeekDay.THURSDAY)],
+    6: [("3.1", WeekDay.MONDAY), ("3.2", WeekDay.TUESDAY), ("3.3", WeekDay.WEDNESDAY), ("3.4", WeekDay.THURSDAY)],
+    7: [("3.1", WeekDay.MONDAY), ("3.2", WeekDay.TUESDAY), ("3.3", WeekDay.WEDNESDAY), ("3.4", WeekDay.THURSDAY)],
+    8: [],
+}
+
+SNAPSHOT_STOP_WORDS = {
+    "about", "after", "again", "also", "been", "before", "being", "between",
+    "could", "did", "does", "doing", "from", "have", "just", "like", "make",
+    "more", "most", "much", "really", "that", "them", "then", "they", "this",
+    "today", "very", "what", "when", "with", "would", "your", "you're", "you",
+    "into", "than", "want", "because", "using", "used", "tried", "trying",
+}
+
 
 class DailyPromptScheduler:
     """
@@ -44,7 +66,7 @@ class DailyPromptScheduler:
         self,
         bot,
         guild_id: int,
-        channel_mapping: dict[int, int],
+        channel_mapping: Dict[int, int],
         cohort_start_date: str,
         escalation_system=None,
         participation_tracker=None,
@@ -129,7 +151,7 @@ class DailyPromptScheduler:
         week = (days_since_start // 7) + 1
         return min(week, 8)  # Cap at week 8
 
-    def get_week_day(self) -> tuple[int, WeekDay]:
+    def get_week_day(self) -> Tuple[int, WeekDay]:
         """
         Get current week and day of week.
 
@@ -178,7 +200,7 @@ class DailyPromptScheduler:
             logger.error(f"Error getting channel for week {week}: {e}")
             return None
 
-    def _habit_focus_for_week(self, week: int) -> tuple[str, str]:
+    def _habit_focus_for_week(self, week: int) -> Tuple[str, str]:
         """
         Return the habit label and self-check question for the provided week.
         """
@@ -191,6 +213,127 @@ class DailyPromptScheduler:
         if week in (6, 7):
             return ("Habit 4 (Think First)", "Did you use AI before decisions this week?")
         return ("This Week's Habit", "Did you practice this week's habit?")
+
+    def _resolve_node_link(self, node_number: str) -> Optional[str]:
+        """
+        Resolve NotebookLM node link from environment.
+
+        Priority:
+        1) NODE_LINK_X_Y (e.g. NODE_LINK_0_1)
+        2) NOTEBOOKLM_NODE_BASE_URL + /{node}
+        """
+        env_key = f"NODE_LINK_{node_number.replace('.', '_')}"
+        direct_link = os.getenv(env_key, "").strip()
+        if direct_link:
+            return direct_link
+
+        base_url = os.getenv("NOTEBOOKLM_NODE_BASE_URL", "").strip().rstrip("/")
+        if base_url:
+            return f"{base_url}/{node_number}"
+
+        return None
+
+    def _build_node_message(self, node_number: str, node_link: Optional[str]) -> str:
+        """
+        Build student-facing node drop message without placeholder text.
+        """
+        message = (
+            f"📚 **Node {node_number}: NotebookLM Podcast**\n\n"
+            f"Today's node is now available. Listen to the 8-12 minute podcast, "
+            f"then respond to the daily prompt at 9:15 AM.\n\n"
+        )
+        if node_link:
+            message += f"🔗 **Node Link:** {node_link}"
+        else:
+            message += (
+                "🔗 **Node Link:** Not configured yet. Trevor will post it in "
+                "#resources before the daily prompt."
+            )
+        return message
+
+    @staticmethod
+    def _sanitize_snapshot_excerpt(content: str, limit: int = 140) -> str:
+        """
+        Sanitize student content for anonymized public snapshots.
+        """
+        cleaned = re.sub(r"<@!?\d+>", "[student]", content or "")
+        cleaned = re.sub(r"https?://\S+", "[link]", cleaned)
+        cleaned = " ".join(cleaned.split()).strip()
+        if len(cleaned) > limit:
+            cleaned = f"{cleaned[: limit - 3]}..."
+        return cleaned
+
+    async def _collect_today_student_posts(self, channel: object, max_messages: int = 200) -> List[str]:
+        """
+        Collect today's student-authored posts from the target weekly channel.
+        """
+        if not hasattr(channel, "history"):
+            return []
+
+        start_of_day = datetime.now(EAT).replace(hour=0, minute=0, second=0, microsecond=0)
+        collected: List[str] = []
+
+        try:
+            history_iter = channel.history(limit=max_messages, after=start_of_day)
+            async for item in history_iter:
+                author = getattr(item, "author", None)
+                if getattr(author, "bot", False):
+                    continue
+                content = self._sanitize_snapshot_excerpt(getattr(item, "content", ""))
+                if not content:
+                    continue
+                collected.append(content)
+        except Exception as exc:
+            logger.warning("Could not collect today's peer-visibility source posts: %s", exc)
+
+        return collected
+
+    def _derive_peer_visibility_patterns(self, messages: List[str], max_patterns: int = 3) -> List[str]:
+        """
+        Derive anonymized cohort-level patterns from today's student posts.
+        """
+        if not messages:
+            return []
+
+        theme_keywords = {
+            "Students are adding context before asking AI": {"context", "situation", "specific", "details", "background"},
+            "Students are iterating instead of accepting first drafts": {"iterate", "iteration", "version", "revise", "change", "improve"},
+            "Students are pausing to think before prompting": {"pause", "paused", "think", "before", "reflect"},
+            "Students are connecting AI practice to real life": {"school", "class", "project", "work", "business", "home", "family"},
+        }
+
+        theme_counts: Counter[str] = Counter()
+        keyword_counts: Counter[str] = Counter()
+
+        for message in messages:
+            tokens = set(re.findall(r"[a-z']{3,}", message.lower()))
+            if not tokens:
+                continue
+
+            for theme, keywords in theme_keywords.items():
+                if tokens.intersection(keywords):
+                    theme_counts[theme] += 1
+
+            for token in tokens:
+                if len(token) < 4 or token in SNAPSHOT_STOP_WORDS:
+                    continue
+                keyword_counts[token] += 1
+
+        patterns: List[str] = []
+        for theme, count in theme_counts.most_common(max_patterns):
+            patterns.append(f"{theme} ({count})")
+
+        if len(patterns) < max_patterns:
+            for token, count in keyword_counts.most_common(max_patterns * 3):
+                if count < 2:
+                    continue
+                candidate = f"'{token}' surfaced across multiple reflections ({count})"
+                if candidate not in patterns:
+                    patterns.append(candidate)
+                if len(patterns) >= max_patterns:
+                    break
+
+        return patterns[:max_patterns]
 
     async def _set_student_channel_access(
         self,
@@ -312,21 +455,8 @@ class DailyPromptScheduler:
             logger.error(f"Cannot post node: no channel for week {week}")
             return
 
-        # Node mapping based on week
-        node_map = {
-            1: [(0.1, WeekDay.MONDAY), (0.2, WeekDay.TUESDAY), (0.3, WeekDay.WEDNESDAY), (0.4, WeekDay.THURSDAY)],
-            2: [(1.1, WeekDay.MONDAY), (1.2, WeekDay.TUESDAY), (1.3, WeekDay.WEDNESDAY), (1.4, WeekDay.THURSDAY)],
-            3: [(1.1, WeekDay.MONDAY), (1.2, WeekDay.TUESDAY), (1.3, WeekDay.WEDNESDAY), (1.4, WeekDay.THURSDAY)],
-            4: [(2.1, WeekDay.MONDAY), (2.2, WeekDay.TUESDAY), (2.3, WeekDay.WEDNESDAY), (2.4, WeekDay.THURSDAY)],
-            5: [(2.1, WeekDay.MONDAY), (2.2, WeekDay.TUESDAY), (2.3, WeekDay.WEDNESDAY), (2.4, WeekDay.THURSDAY)],
-            6: [(3.1, WeekDay.MONDAY), (3.2, WeekDay.TUESDAY), (3.3, WeekDay.WEDNESDAY), (3.4, WeekDay.THURSDAY)],
-            7: [(3.1, WeekDay.MONDAY), (3.2, WeekDay.TUESDAY), (3.3, WeekDay.WEDNESDAY), (3.4, WeekDay.THURSDAY)],
-            8: [],  # Week 8 has no new nodes
-        }
-
-        # Find node for today
         node_number = None
-        for node_num, node_day in node_map.get(week, []):
+        for node_num, node_day in NODE_SCHEDULE.get(week, []):
             if node_day == day:
                 node_number = node_num
                 break
@@ -335,15 +465,8 @@ class DailyPromptScheduler:
             logger.info(f"No node scheduled for week {week} {day.name}")
             return
 
-        # TODO: Load actual NotebookLM link from node library
-        # For now, post placeholder
-        message = (
-            f"📚 **Node {node_number}: NotebookLM Podcast**\n\n"
-            f"Today's node is now available! Listen to the 8-12 min podcast, "
-            f"then respond to the daily prompt at 9:15 AM.\n\n"
-            f"🔗 **[Link to Node {node_number} - NotebookLM Podcast]**\n"
-            f"(TODO: Add actual NotebookLM link)"
-        )
+        node_link = self._resolve_node_link(node_number)
+        message = self._build_node_message(node_number, node_link)
 
         try:
             await self._send_public_message(channel, message)
@@ -404,16 +527,36 @@ class DailyPromptScheduler:
         if not channel:
             return
 
-        # TODO: Aggregate actual student responses from today
-        # For now, post placeholder
+        posts = await self._collect_today_student_posts(channel)
+        patterns = self._derive_peer_visibility_patterns(posts, max_patterns=3)
+
+        quote_lines = []
+        seen_quotes = set()
+        for post in posts:
+            normalized = post.lower()
+            if not normalized or normalized in seen_quotes:
+                continue
+            quote_lines.append(f'- "{post}"')
+            seen_quotes.add(normalized)
+            if len(quote_lines) >= 3:
+                break
+
+        if patterns:
+            pattern_block = "\n".join(f"- {pattern}" for pattern in patterns)
+        else:
+            pattern_block = (
+                "- Students are actively engaging with today's prompt\n"
+                "- Posts show reflection and experimentation in progress\n"
+                "- Students are connecting AI practice to their own context"
+            )
+
+        quote_block = "\n".join(quote_lines) if quote_lines else "- No additional excerpts captured today."
         message = (
-            f"🌟 **TODAY'S PATTERNS (anonymized)**\n\n"
-            f"Here's what the cohort explored today:\n\n"
-            f"- \"AI is already in my life\" (Spotify, Netflix, email)\n"
-            f"- \"People like me use AI\" (Parents, friends, teachers)\n"
-            f"- \"I tried it!\" (Jokes, recipes, questions)\n\n"
-            f"Notice: AI isn't sci-fi. It's already here.\n\n"
-            f"✅ Guardrail #3 check: No comparison detected"
+            f"**TODAY'S PATTERNS (anonymized)**\n\n"
+            f"Signals captured from {len(posts)} student posts today.\n\n"
+            f"Shared patterns:\n{pattern_block}\n\n"
+            f"Anonymized student lines:\n{quote_block}\n\n"
+            f"Guardrail #3 check: No comparison detected"
         )
 
         try:

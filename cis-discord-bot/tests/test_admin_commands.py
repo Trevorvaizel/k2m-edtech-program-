@@ -20,25 +20,25 @@ def _ctx(user_id: int):
 
 @pytest.fixture(autouse=True)
 def _auth_defaults():
-    original_id = admin.TREVOR_DISCORD_ID
+    original_id = admin.FACILITATOR_DISCORD_ID
     original_insecure = admin.ALLOW_INSECURE_ADMIN
-    admin.TREVOR_DISCORD_ID = "42"
+    admin.FACILITATOR_DISCORD_ID = "42"
     admin.ALLOW_INSECURE_ADMIN = False
     yield
-    admin.TREVOR_DISCORD_ID = original_id
+    admin.FACILITATOR_DISCORD_ID = original_id
     admin.ALLOW_INSECURE_ADMIN = original_insecure
 
 
 class TestAdminAuth:
     def test_is_trevor_fails_closed_when_unconfigured(self):
-        admin.TREVOR_DISCORD_ID = None
+        admin.FACILITATOR_DISCORD_ID = None
         admin.ALLOW_INSECURE_ADMIN = False
-        assert admin.is_trevor(SimpleNamespace(id=42)) is False
+        assert admin.is_facilitator(SimpleNamespace(id=42)) is False
 
     def test_is_trevor_can_be_relaxed_in_dev(self):
-        admin.TREVOR_DISCORD_ID = None
+        admin.FACILITATOR_DISCORD_ID = None
         admin.ALLOW_INSECURE_ADMIN = True
-        assert admin.is_trevor(SimpleNamespace(id=999)) is True
+        assert admin.is_facilitator(SimpleNamespace(id=999)) is True
 
 
 class TestInspectJourney:

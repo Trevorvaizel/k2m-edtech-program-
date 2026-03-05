@@ -298,19 +298,19 @@ See you there!
                 return
 
             # Create voice channel
-            trevor_role = None
+            facilitator_role = None
             roles = getattr(guild, "roles", []) or []
             if isinstance(roles, (list, tuple, set)):
                 for role in roles:
-                    if str(getattr(role, "name", "")) == "Trevor":
-                        trevor_role = role
+                    if str(getattr(role, "name", "")) == "Facilitator":
+                        facilitator_role = role
                         break
 
             voice_channel = await self.store.create_cluster_voice_channel(
                 guild=guild,
                 cluster_id=cluster_id,
                 bot=self.bot,
-                trevor_role=trevor_role,
+                facilitator_role=facilitator_role,
             )
 
             if voice_channel:

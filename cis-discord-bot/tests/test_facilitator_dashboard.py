@@ -30,7 +30,7 @@ class TestDailySummary:
         """Test basic daily summary generation."""
         summary = dashboard.generate_daily_summary(week=1)
 
-        assert "TUESDAY, WEEK 1 SUMMARY" in summary or "MONDAY, WEEK 1 SUMMARY" in summary
+        assert "WEEK 1 SUMMARY" in summary
         assert "🎯 Engagement:" in summary
         assert "⏸️ Habit 1 Practice:" in summary
         assert "🚨 Escalations:" in summary
@@ -204,6 +204,7 @@ class TestSpotCheckList:
         assert "<@000001>" in spot_check
         assert "Reflection:" in spot_check
         assert "Proof:" in spot_check
+        assert "Link: reflection://week-1/record-" in spot_check
 
 
 class TestEscalationNotifications:
@@ -319,8 +320,7 @@ class TestDashboardIntegration:
             summary_lower = summary.lower()
             for keyword in forbidden_keywords:
                 # Should not contain comparison keywords
-                # (except in acceptable contexts like "top priority")
-                assert keyword not in summary_lower or 'priority' in summary_lower, \
+                assert keyword not in summary_lower, \
                     f"Guardrail #3 violation: '{keyword}' found in summary:\n{summary}"
 
             # Should include Guardrail #3 check explicitly

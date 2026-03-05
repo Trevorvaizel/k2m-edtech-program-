@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from enum import Enum
 import os
 from pathlib import Path
-from typing import List, Optional
+from typing import Dict, List, Optional, Tuple
 import re
 
 
@@ -92,7 +92,7 @@ class DailyPromptLibrary:
                 )
 
         self.library_path = Path(library_path)
-        self.prompts: dict[tuple[int, WeekDay], DailyPrompt] = {}
+        self.prompts: Dict[Tuple[int, WeekDay], DailyPrompt] = {}
         self._load_library()
 
     def _load_library(self):

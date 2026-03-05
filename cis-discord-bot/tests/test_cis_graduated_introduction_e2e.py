@@ -68,6 +68,17 @@ async def test_cis_graduated_introduction_end_to_end(monkeypatch, store):
     week1_student = store.get_student("111111")
 
     with patch("cis_controller.router.store", store):
+        # Week 1 positive path: /frame is available and routes correctly.
+        week1_message.reply.reset_mock()
+        with patch(
+            "commands.frame.handle_frame", new_callable=AsyncMock
+        ) as mocked_frame:
+            await handle_command(week1_message, week1_student, "frame")
+            mocked_frame.assert_awaited_once_with(week1_message, week1_student)
+
+        # Locked-agent guidance should not appear for /frame in Week 1.
+        assert week1_message.reply.await_count == 0
+
         lockout_cases = [
             ("diverge", "Week 4", "commands.diverge.handle_diverge"),
             ("challenge", "Week 4", "commands.challenge.handle_challenge"),

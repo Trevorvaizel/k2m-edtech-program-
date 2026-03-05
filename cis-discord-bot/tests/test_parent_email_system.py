@@ -8,6 +8,7 @@ import sys
 from pathlib import Path
 
 import pytest
+from typing import List, Optional
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -22,7 +23,7 @@ from scheduler.parent_email_scheduler import ParentEmailScheduler
 class StubEmailService:
     """Deterministic async email stub."""
 
-    def __init__(self, success: bool = True, error: str | None = None):
+    def __init__(self, success: bool = True, error: Optional[str] = None):
         self.success = success
         self.error = error
         self.calls = []

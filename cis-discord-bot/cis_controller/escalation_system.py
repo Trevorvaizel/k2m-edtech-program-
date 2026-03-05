@@ -148,8 +148,9 @@ class EscalationSystem:
 
             cursor.execute(
                 """
-                SELECT MAX(date) as last_post_date,
-                       SUM(CASE WHEN has_posted = 1 THEN 1 ELSE 0 END) as total_posts
+                SELECT
+                    MAX(CASE WHEN has_posted = 1 THEN date END) as last_post_date,
+                    SUM(CASE WHEN has_posted = 1 THEN 1 ELSE 0 END) as total_posts
                 FROM daily_participation
                 WHERE discord_id = ?
                 """,
@@ -157,19 +158,38 @@ class EscalationSystem:
             )
             result = cursor.fetchone()
             last_post_date = result[0] if result and result[0] else None
-            total_posts = result[1] if result and result[1] else 0
 
             # Calculate days since last post
             now = datetime.now(EAT)
             if last_post_date:
-                last_post = datetime.strptime(last_post_date, "%Y-%m-%d").replace(tzinfo=EAT)
-                days_since_post = (now - last_post).days
+                last_post = EAT.localize(datetime.strptime(last_post_date, "%Y-%m-%d"))
+                days_since_post = max((now - last_post).days, 0)
             else:
-                # Student has never posted
-                days_since_post = None  # Don't escalate brand-new students
+                # Student has never posted. Use join date instead of nudge-only
+                # activity rows, which are not real posts.
+                cursor.execute(
+                    "SELECT created_at FROM students WHERE discord_id = ?",
+                    (discord_id,),
+                )
+                student_row = cursor.fetchone()
+                created_at_raw = student_row[0] if student_row and student_row[0] else None
+                if not created_at_raw:
+                    return
+
+                try:
+                    joined_at = datetime.fromisoformat(str(created_at_raw).replace("Z", "+00:00"))
+                except ValueError:
+                    joined_at = datetime.strptime(str(created_at_raw)[:10], "%Y-%m-%d")
+
+                if joined_at.tzinfo is None:
+                    joined_at = EAT.localize(joined_at)
+                else:
+                    joined_at = joined_at.astimezone(EAT)
+
+                days_since_post = max((now - joined_at).days, 0)
 
             # Skip brand-new students (joined today, hasn't had chance to post yet)
-            if days_since_post is None:
+            if days_since_post <= 0:
                 return
 
             # Check escalation triggers

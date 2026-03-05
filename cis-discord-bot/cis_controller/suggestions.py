@@ -160,7 +160,7 @@ async def suggest_explicit_command(message: discord.Message, student) -> None:
         {
             "suggested_command": suggested_command,
             "week": current_week,
-            "original_message": message_text[:100]
+            "message_length": len(message_text),
         }
     )
 

@@ -216,7 +216,7 @@ railway up
 
 ## Sprint Progress
 
-See [discord-implementation-sprint.yaml](../_bmad-output/cohort-design-artifacts/discord-implementation-sprint.yaml) for complete implementation status.
+See [discord-implementation-sprint.yaml](../_bmad-output/cohort-design-artifacts/operations/sprint/discord-implementation-sprint.yaml) for complete implementation status.
 
 **Sprint 0:** ✅ COMPLETE (Discord server + bot setup)
 **Sprint 1:** 🔄 IN PROGRESS (Bot Core Engine)

@@ -118,7 +118,11 @@ def celebrate_habit(student, habit_id: int) -> Optional[str]:
         store.log_observability_event(
             discord_id,
             "milestone_reached",
-            {"habit_id": habit_id, "practice_count": practice_count}
+            {
+                "habit_id": habit_id,
+                "milestone": practice_count,
+                "practiced_count": practice_count,
+            }
         )
 
         return message

@@ -283,7 +283,10 @@ class ParticipationTracker:
             # Find students who haven't posted today
             cursor.execute(
                 """
-                SELECT s.discord_id, s.username, s.cluster_id
+                SELECT
+                    s.discord_id,
+                    COALESCE(NULLIF(TRIM(s.last_name), ''), '<@' || s.discord_id || '>') AS student_label,
+                    s.cluster_id
                 FROM students s
                 LEFT JOIN daily_participation dp ON s.discord_id = dp.discord_id AND dp.date = ?
                 WHERE s.current_week = ?
@@ -304,7 +307,7 @@ class ParticipationTracker:
             logger.info(f"Found {len(inactive_students)} inactive students")
 
             # Send nudges
-            for discord_id, username, cluster_id in inactive_students:
+            for discord_id, student_label, cluster_id in inactive_students:
                 try:
                     await self._send_nudge_dm(discord_id, week)
 
@@ -323,10 +326,10 @@ class ParticipationTracker:
                         (discord_id, date_str, week, day_name, now.isoformat())
                     )
 
-                    logger.info(f"Sent nudge to {username}")
+                    logger.info(f"Sent nudge to {student_label}")
 
                 except Exception as e:
-                    logger.error(f"Error sending nudge to {username}: {e}")
+                    logger.error(f"Error sending nudge to {student_label}: {e}")
 
             conn.commit()
 

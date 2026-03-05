@@ -14,6 +14,7 @@ Three-Layer Architecture:
 """
 
 import os
+from typing import List, Optional
 import discord
 from discord.ext import commands
 from database.store import StudentStateStore
@@ -167,7 +168,7 @@ def normalize_command_name(raw_command: str, remainder: str = "") -> str:
 
 
 async def _send_interaction_feedback(
-    interaction: discord.Interaction, content: str, ephemeral: bool | None = None
+    interaction: discord.Interaction, content: str, ephemeral: Optional[bool] = None
 ):
     """
     Send an interaction-safe response, regardless of response state.
@@ -658,7 +659,7 @@ def set_runtime_services(escalation_system=None, participation_tracker=None):
 
 async def _collect_recent_public_messages(
     message: discord.Message, limit: int = 3
-) -> list[str]:
+) -> List[str]:
     """
     Collect the author's most recent public channel messages for Level 4 context.
     """

@@ -9,7 +9,7 @@ Guardrail focus:
 import logging
 import os
 import re
-from typing import Optional
+from typing import Dict, List, Optional, Union
 
 import discord
 from discord.ext import commands
@@ -19,18 +19,18 @@ from database.store import StudentStateStore
 logger = logging.getLogger(__name__)
 
 # Only this user can run admin commands in production.
-TREVOR_DISCORD_ID = os.getenv("TREVOR_DISCORD_ID")
+FACILITATOR_DISCORD_ID = os.getenv("FACILITATOR_DISCORD_ID")
 ALLOW_INSECURE_ADMIN = os.getenv("ALLOW_INSECURE_ADMIN", "false").strip().lower() == "true"
 
 
-def is_trevor(user: discord.User | discord.Member) -> bool:
+def is_facilitator(user: Union[discord.User, discord.Member]) -> bool:
     """Check if the caller is authorized for admin commands."""
-    if TREVOR_DISCORD_ID is None:
+    if FACILITATOR_DISCORD_ID is None:
         if ALLOW_INSECURE_ADMIN:
             return True
-        logger.warning("Admin command denied: TREVOR_DISCORD_ID is not configured.")
+        logger.warning("Admin command denied: FACILITATOR_DISCORD_ID is not configured.")
         return False
-    return str(user.id) == str(TREVOR_DISCORD_ID)
+    return str(user.id) == str(FACILITATOR_DISCORD_ID)
 
 
 def extract_discord_id(student_mention: Optional[object]) -> Optional[str]:
@@ -60,7 +60,7 @@ def _env_int(name: str) -> int:
         return 0
 
 
-def get_weekly_channel_mapping() -> dict[int, int]:
+def get_weekly_channel_mapping() -> Dict[int, int]:
     """
     Resolve week->channel ids from environment variables.
     """
@@ -78,7 +78,7 @@ def get_weekly_channel_mapping() -> dict[int, int]:
 
 
 async def _apply_manual_unlock_permissions(
-    ctx: commands.Context | discord.Interaction,
+    ctx: Union[commands.Context, discord.Interaction],
     discord_id: str,
     week_number: int,
 ) -> None:
@@ -160,14 +160,14 @@ async def send_response(ctx_or_interaction, content: str, ephemeral: bool = True
 
 
 async def show_aggregate_patterns(
-    ctx: commands.Context | discord.Interaction,
+    ctx: Union[commands.Context, discord.Interaction],
     store: StudentStateStore,
     days: int = 7,
 ):
     """Show aggregate cohort patterns (Guardrail #3 compliant)."""
     author = ctx.author if isinstance(ctx, commands.Context) else ctx.user
 
-    if not is_trevor(author):
+    if not is_facilitator(author):
         await send_response(ctx, "This command is for Trevor only.", ephemeral=True)
         return
 
@@ -207,14 +207,14 @@ async def show_aggregate_patterns(
 
 
 async def inspect_journey(
-    ctx: commands.Context | discord.Interaction,
+    ctx: Union[commands.Context, discord.Interaction],
     store: StudentStateStore,
     student_mention: Optional[object] = None,
 ):
     """Inspect individual student journey with explicit consent gate (Guardrail #8)."""
     author = ctx.author if isinstance(ctx, commands.Context) else ctx.user
 
-    if not is_trevor(author):
+    if not is_facilitator(author):
         await send_response(ctx, "This command is for Trevor only.", ephemeral=True)
         return
 
@@ -298,14 +298,14 @@ async def inspect_journey(
 
 
 async def show_stuck_students(
-    ctx: commands.Context | discord.Interaction,
+    ctx: Union[commands.Context, discord.Interaction],
     store: StudentStateStore,
     inactive_days: int = 3,
 ):
     """Show students with no recent agent activity."""
     author = ctx.author if isinstance(ctx, commands.Context) else ctx.user
 
-    if not is_trevor(author):
+    if not is_facilitator(author):
         await send_response(ctx, "This command is for Trevor only.", ephemeral=True)
         return
 
@@ -340,14 +340,14 @@ async def show_stuck_students(
 
 
 async def show_zone_shifts(
-    ctx: commands.Context | discord.Interaction,
+    ctx: Union[commands.Context, discord.Interaction],
     store: StudentStateStore,
     days: int = 30,
 ):
     """Show zone shift events for identity transformation tracking."""
     author = ctx.author if isinstance(ctx, commands.Context) else ctx.user
 
-    if not is_trevor(author):
+    if not is_facilitator(author):
         await send_response(ctx, "This command is for Trevor only.", ephemeral=True)
         return
 
@@ -381,14 +381,14 @@ async def show_zone_shifts(
 
 
 async def show_milestones(
-    ctx: commands.Context | discord.Interaction,
+    ctx: Union[commands.Context, discord.Interaction],
     store: StudentStateStore,
     days: int = 7,
 ):
     """Show habit milestone celebrations."""
     author = ctx.author if isinstance(ctx, commands.Context) else ctx.user
 
-    if not is_trevor(author):
+    if not is_facilitator(author):
         await send_response(ctx, "This command is for Trevor only.", ephemeral=True)
         return
 
@@ -399,11 +399,11 @@ async def show_milestones(
             await send_response(ctx, f"No milestone celebrations in the last {days} days.", ephemeral=True)
             return
 
-        by_milestone: dict[int | str, list] = {}
+        by_milestone: Dict[Union[int, str], List] = {}
         for milestone in milestones:
             milestone_num = milestone.get("milestone")
             if milestone_num is None:
-                key: int | str = "unknown"
+                key: Union[int, str] = "unknown"
             else:
                 try:
                     key = int(milestone_num)
@@ -416,7 +416,7 @@ async def show_milestones(
             f"Total celebrations: {len(milestones)}\n"
         )
 
-        def _milestone_sort_key(value: int | str):
+        def _milestone_sort_key(value: Union[int, str]):
             if isinstance(value, int):
                 return (0, value)
             return (1, str(value))
@@ -447,7 +447,7 @@ async def show_milestones(
 
 
 async def unlock_week(
-    ctx: commands.Context | discord.Interaction,
+    ctx: Union[commands.Context, discord.Interaction],
     store: StudentStateStore,
     student_mention: object,
     week_number: int,
@@ -467,7 +467,7 @@ async def unlock_week(
     """
     author = ctx.author if isinstance(ctx, commands.Context) else ctx.user
 
-    if not is_trevor(author):
+    if not is_facilitator(author):
         await send_response(ctx, "This command is for Trevor only.", ephemeral=True)
         return
 

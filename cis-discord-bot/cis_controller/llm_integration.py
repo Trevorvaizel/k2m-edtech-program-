@@ -14,7 +14,7 @@ import logging
 import os
 import urllib.error
 import urllib.request
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
 
 try:
     import anthropic
@@ -35,6 +35,8 @@ ENABLE_PROMPT_CACHING = os.getenv("ENABLE_PROMPT_CACHING", "true").lower() in {
     "yes",
     "on",
 }
+LLM_MAX_RETRIES = max(int(os.getenv("LLM_MAX_RETRIES", "3")), 1)
+LLM_RETRY_BASE_DELAY_SECONDS = max(float(os.getenv("LLM_RETRY_BASE_DELAY_SECONDS", "0.25")), 0.0)
 
 # Cached system prompts - loaded once at startup, reused for all calls
 CACHED_SYSTEM_PROMPTS: Dict[str, Optional[str]] = {
@@ -46,6 +48,9 @@ CACHED_SYSTEM_PROMPTS: Dict[str, Optional[str]] = {
 
 # Global Anthropic client (initialized on first use)
 _anthropic_client: Optional[Any] = None
+
+# Runtime notifier for instant Trevor alerts on provider failures.
+_runtime_failure_notifier: Optional[Callable[[str, str, str], Awaitable[None]]] = None
 
 
 def get_active_provider() -> str:
@@ -146,6 +151,70 @@ def validate_provider_configuration() -> Tuple[bool, str]:
     return False, f"Unsupported AI_PROVIDER: {provider}"
 
 
+async def check_provider_api_health(timeout_seconds: int = 10) -> Tuple[bool, str]:
+    """
+    Validate active provider configuration and perform a lightweight API probe.
+
+    Returns:
+        (is_healthy, details)
+    """
+    config_ok, config_details = validate_provider_configuration()
+    if not config_ok:
+        return False, config_details
+
+    provider = get_active_provider()
+
+    def _ping_openai_compatible() -> Tuple[bool, str]:
+        api_key = _get_openai_compatible_key(provider)
+        base_url = _get_openai_compatible_base_url(provider)
+        endpoint = f"{base_url}/models"
+        req = urllib.request.Request(
+            endpoint,
+            method="GET",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=timeout_seconds) as resp:
+            status = getattr(resp, "status", 200)
+            if status >= 400:
+                return False, f"{provider} health probe HTTP {status}"
+        return True, f"{provider} API reachable"
+
+    def _ping_anthropic() -> Tuple[bool, str]:
+        api_key = os.getenv("ANTHROPIC_API_KEY", "")
+        req = urllib.request.Request(
+            "https://api.anthropic.com/v1/models",
+            method="GET",
+            headers={
+                "x-api-key": api_key,
+                "anthropic-version": "2023-06-01",
+                "content-type": "application/json",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=timeout_seconds) as resp:
+            status = getattr(resp, "status", 200)
+            if status >= 400:
+                return False, f"anthropic health probe HTTP {status}"
+        return True, "anthropic API reachable"
+
+    try:
+        if provider == "anthropic":
+            return await asyncio.to_thread(_ping_anthropic)
+
+        if provider in {"zhipu", "openai", "openai-compatible"}:
+            return await asyncio.to_thread(_ping_openai_compatible)
+
+        return False, f"Unsupported AI_PROVIDER: {provider}"
+    except urllib.error.HTTPError as exc:
+        return False, f"{provider} API HTTP {exc.code}"
+    except urllib.error.URLError as exc:
+        return False, f"{provider} API connection error: {exc}"
+    except Exception as exc:
+        return False, f"{provider} API health probe failed: {exc}"
+
+
 def get_anthropic_client() -> Any:
     """Get or create Anthropic client singleton."""
     if anthropic is None:
@@ -158,6 +227,20 @@ def get_anthropic_client() -> Any:
             raise ValueError("ANTHROPIC_API_KEY environment variable not set")
         _anthropic_client = anthropic.Anthropic(api_key=api_key)
     return _anthropic_client
+
+
+def set_runtime_failure_notifier(
+    notifier: Optional[Callable[[str, str, str], Awaitable[None]]]
+) -> None:
+    """
+    Register callback used for immediate Trevor alerts on runtime LLM failures.
+
+    Args:
+        notifier: Coroutine function receiving (provider, agent, error_message),
+            or None to clear notifier.
+    """
+    global _runtime_failure_notifier
+    _runtime_failure_notifier = notifier
 
 
 def load_system_prompts() -> None:
@@ -426,6 +509,65 @@ async def _call_openai_compatible(
     return response_text, cost_data
 
 
+def _is_retryable_llm_error(exc: Exception) -> bool:
+    """Best-effort classifier for transient provider failures."""
+    message = str(exc).lower()
+    retryable_markers = (
+        "rate limit",
+        "429",
+        "timeout",
+        "timed out",
+        "connection error",
+        "connection reset",
+        "temporarily unavailable",
+        "service unavailable",
+        "500",
+        "502",
+        "503",
+        "504",
+        "internal server error",
+    )
+    return any(marker in message for marker in retryable_markers)
+
+
+async def _call_with_exponential_backoff(
+    provider: str,
+    agent: str,
+    op: Callable[[], Awaitable[Tuple[str, Dict[str, Any]]]],
+) -> Tuple[str, Dict[str, Any]]:
+    """
+    Execute provider call with exponential backoff for transient failures.
+    """
+    attempt = 1
+    last_exc: Optional[Exception] = None
+    while attempt <= LLM_MAX_RETRIES:
+        try:
+            return await op()
+        except Exception as exc:
+            last_exc = exc
+            should_retry = attempt < LLM_MAX_RETRIES and _is_retryable_llm_error(exc)
+            if not should_retry:
+                raise
+
+            delay_seconds = LLM_RETRY_BASE_DELAY_SECONDS * (2 ** (attempt - 1))
+            logger.warning(
+                "LLM call transient failure (%s/%s) attempt %s/%s: %s. Retrying in %.2fs",
+                provider,
+                agent,
+                attempt,
+                LLM_MAX_RETRIES,
+                exc,
+                delay_seconds,
+            )
+            await asyncio.sleep(delay_seconds)
+            attempt += 1
+
+    # Defensive fallback (loop should always return/raise before here).
+    if last_exc is not None:
+        raise last_exc
+    raise RuntimeError("LLM retry loop ended without result")
+
+
 async def call_agent_with_context(
     agent: str,
     student_context,
@@ -466,15 +608,23 @@ async def call_agent_with_context(
 
     try:
         if provider == "anthropic":
-            return await _call_anthropic(agent, model, system_prompt, messages)
-
-        if provider in {"zhipu", "openai", "openai-compatible"}:
-            return await _call_openai_compatible(
+            return await _call_with_exponential_backoff(
                 provider=provider,
                 agent=agent,
-                model=model,
-                system_prompt=system_prompt,
-                messages=messages,
+                op=lambda: _call_anthropic(agent, model, system_prompt, messages),
+            )
+
+        if provider in {"zhipu", "openai", "openai-compatible"}:
+            return await _call_with_exponential_backoff(
+                provider=provider,
+                agent=agent,
+                op=lambda: _call_openai_compatible(
+                    provider=provider,
+                    agent=agent,
+                    model=model,
+                    system_prompt=system_prompt,
+                    messages=messages,
+                ),
             )
 
         raise ValueError(f"Unsupported AI_PROVIDER: {provider}")
@@ -483,6 +633,17 @@ async def call_agent_with_context(
         # LLM Provider Failure Handling (Task 4.5)
         # Return fallback message encouraging Habit 1 practice independently
         logger.error("LLM provider failure (%s/%s): %s", provider, agent, exc)
+
+        if _runtime_failure_notifier is not None:
+            try:
+                await _runtime_failure_notifier(provider, agent, str(exc))
+            except Exception as notify_exc:
+                logger.error(
+                    "Runtime failure notifier failed (%s/%s): %s",
+                    provider,
+                    agent,
+                    notify_exc,
+                )
 
         from cis_controller.health_monitor import get_llm_fallback_message
 

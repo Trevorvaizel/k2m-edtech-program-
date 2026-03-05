@@ -1,4 +1,4 @@
-"""
+﻿"""
 Tests for /diverge command + private DM showcase workflow.
 Story 4.3 + Task 3.1 implementation.
 """
@@ -176,7 +176,13 @@ class TestDivergeCommandFlow:
         self, mock_message, mock_student
     ):
         """Test handling when user has DMs disabled."""
-        mock_message.author.create_dm.side_effect = discord.Forbidden()
+        response = Mock()
+        response.status = 403
+        response.reason = "Forbidden"
+        mock_message.author.create_dm.side_effect = discord.Forbidden(
+            response=response,
+            message="Forbidden",
+        )
 
         with patch("commands.diverge.store") as mock_store, patch(
             "commands.diverge.rate_limiter.check_rate_limit", return_value=(True, None)
@@ -205,6 +211,9 @@ class TestDivergeCommandFlow:
                 "Let's explore possibilities together.",
                 {"total_tokens": 150, "total_cost_usd": 0.0031},
             ),
+        ) as mock_call, patch(
+            "commands.diverge.safety_filter.validate_no_comparison",
+            return_value=True,
         ), patch(
             "commands.diverge.celebrate_habit", return_value=None
         ), patch(
@@ -224,7 +233,7 @@ class TestDivergeCommandFlow:
             await handle_diverge(mock_message, mock_student)
 
             # Verify default message was used
-            call_args = mock_store.call_agent_with_context.call_args
+            call_args = mock_call.call_args
             assert call_args[1]["user_message"] == "I want to explore possibilities."
 
 
@@ -267,10 +276,11 @@ class TestShowcaseShareDecision:
         assert kwargs["channel"] is showcase_channel
         assert kwargs["is_showcase"] is True
 
-        # Verify Habit 3 shown in showcase post
-        post_text = mock_safe_send.await_args.args[0]
-        assert "🔄 Explored:" in post_text
+        # Verify showcase post is celebration-only and keeps DM details private.
+        post_text = kwargs["message_text"]
+        assert "Explored multiple possibilities in a private session." in post_text
         assert "Pause + Context + Iterate" in post_text
+        assert "Exploring three different university options" not in post_text
 
         showcase_channel.send.assert_not_called()
         message.reply.assert_awaited_once()
@@ -308,9 +318,10 @@ class TestShowcaseShareDecision:
             handled = await handle_showcase_share_response(message)
 
         assert handled is True
-        post_text = mock_safe_send.await_args.args[0]
+        post_text = mock_safe_send.await_args.kwargs["message_text"]
         assert "A student" in post_text  # Anonymous
         assert "Trevor" not in post_text
+        assert "Exploring career paths" not in post_text
         assert has_pending_showcase_share(discord_id) is False
 
     @pytest.mark.asyncio
@@ -491,3 +502,4 @@ class TestDivergeWeekUnlock:
 
         week_6_agents = get_unlocked_agents(6)
         assert "diverge" in week_6_agents
+

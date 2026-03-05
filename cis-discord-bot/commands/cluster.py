@@ -4,13 +4,14 @@ Trevor-admin commands for cluster assignment and switching
 """
 
 import os
+from typing import Dict
 
 import discord
 from discord import app_commands
 from database.store import StudentStateStore
 
 
-def _load_weekly_channel_mapping() -> dict[int, int]:
+def _load_weekly_channel_mapping() -> Dict[int, int]:
     """Load week channel IDs from environment variables."""
     return {
         1: int(os.getenv("CHANNEL_WEEK_1", "0")),
@@ -24,7 +25,7 @@ def _load_weekly_channel_mapping() -> dict[int, int]:
     }
 
 
-def _resolve_channel_mapping_with_fallback(interaction: discord.Interaction) -> dict[int, int]:
+def _resolve_channel_mapping_with_fallback(interaction: discord.Interaction) -> Dict[int, int]:
     """Ensure there is always at least one usable target channel."""
     channel_mapping = _load_weekly_channel_mapping()
     if all(not value for value in channel_mapping.values()) and interaction.channel_id:
@@ -49,11 +50,11 @@ async def switch_cluster(
         new_cluster_id: Target cluster ID (1-8)
         reason: Optional reason for the switch
     """
-    # Verify Trevor permissions
-    trevor_role = discord.utils.get(interaction.guild.roles, name="Trevor")
-    if not trevor_role or trevor_role not in interaction.user.roles:
+    # Verify Facilitator role
+    facilitator_role = discord.utils.get(interaction.guild.roles, name="Facilitator")
+    if not facilitator_role or facilitator_role not in interaction.user.roles:
         await interaction.response.send_message(
-            "❌ This command is reserved for Trevor (@Trevor role required).",
+            "❌ This command requires the @Facilitator role.",
             ephemeral=True
         )
         return
@@ -158,11 +159,11 @@ async def show_cluster_roster(
         store: Database store
         cluster_id: Cluster ID to show (1-8)
     """
-    # Verify Trevor permissions
-    trevor_role = discord.utils.get(interaction.guild.roles, name="Trevor")
-    if not trevor_role or trevor_role not in interaction.user.roles:
+    # Verify Facilitator role
+    facilitator_role = discord.utils.get(interaction.guild.roles, name="Facilitator")
+    if not facilitator_role or facilitator_role not in interaction.user.roles:
         await interaction.response.send_message(
-            "❌ This command is reserved for Trevor (@Trevor role required).",
+            "❌ This command requires the @Facilitator role.",
             ephemeral=True
         )
         return
@@ -228,11 +229,11 @@ async def show_all_cluster_rosters(
         interaction: Discord interaction
         store: Database store
     """
-    # Verify Trevor permissions
-    trevor_role = discord.utils.get(interaction.guild.roles, name="Trevor")
-    if not trevor_role or trevor_role not in interaction.user.roles:
+    # Verify Facilitator role
+    facilitator_role = discord.utils.get(interaction.guild.roles, name="Facilitator")
+    if not facilitator_role or facilitator_role not in interaction.user.roles:
         await interaction.response.send_message(
-            "❌ This command is reserved for Trevor (@Trevor role required).",
+            "❌ This command requires the @Facilitator role.",
             ephemeral=True
         )
         return
@@ -284,11 +285,11 @@ async def post_session_summary(
         session_notes: Session summary from Trevor
         attendance_count: Optional number of attendees
     """
-    # Verify Trevor permissions
-    trevor_role = discord.utils.get(interaction.guild.roles, name="Trevor")
-    if not trevor_role or trevor_role not in interaction.user.roles:
+    # Verify Facilitator role
+    facilitator_role = discord.utils.get(interaction.guild.roles, name="Facilitator")
+    if not facilitator_role or facilitator_role not in interaction.user.roles:
         await interaction.response.send_message(
-            "❌ This command is reserved for Trevor (@Trevor role required).",
+            "❌ This command requires the @Facilitator role.",
             ephemeral=True
         )
         return

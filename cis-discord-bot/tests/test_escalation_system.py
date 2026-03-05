@@ -17,7 +17,14 @@ from unittest.mock import Mock, AsyncMock, MagicMock, patch
 from datetime import datetime, timedelta
 import pytz
 
-from cis_controller.escalation_system import EscalationSystem, LEVEL_1_YELLOW, LEVEL_2_ORANGE, LEVEL_3_RED, LEVEL_4_CRISIS
+from cis_controller.escalation_system import (
+    EAT,
+    EscalationSystem,
+    LEVEL_1_YELLOW,
+    LEVEL_2_ORANGE,
+    LEVEL_3_RED,
+    LEVEL_4_CRISIS,
+)
 from database.store import StudentStateStore
 
 
@@ -403,3 +410,71 @@ class TestEscalationConstants:
         assert LEVEL_2_ORANGE == 2
         assert LEVEL_3_RED == 3
         assert LEVEL_4_CRISIS == 4
+
+
+class TestEscalationRegression:
+    """Regression coverage for inactivity date logic."""
+
+    @pytest.mark.asyncio
+    async def test_never_posted_student_uses_join_date_for_inactivity(self, tmp_path):
+        db_path = tmp_path / "escalation_regression.db"
+        store = StudentStateStore(str(db_path))
+        store.create_student("424242")
+
+        now = datetime.now(EAT)
+        joined_at = (now - timedelta(days=4)).isoformat()
+        yesterday = (now - timedelta(days=1)).strftime("%Y-%m-%d")
+
+        # Simulate nudge-only activity row (has_posted=0), which should NOT reset
+        # escalation inactivity counters.
+        store.conn.execute(
+            """
+            INSERT INTO daily_participation
+                (discord_id, date, week_number, day_of_week, has_posted, post_count, engagement_score, nudge_sent)
+            VALUES (?, ?, 1, 'Monday', 0, 0, 0, 1)
+            """,
+            ("424242", yesterday),
+        )
+        store.conn.execute(
+            "UPDATE students SET created_at = ?, current_week = 1 WHERE discord_id = ?",
+            (joined_at, "424242"),
+        )
+        store.conn.commit()
+
+        bot = Mock()
+        bot.fetch_user = AsyncMock()
+        bot.get_channel = Mock(return_value=Mock(send=AsyncMock()))
+
+        escalation_system = EscalationSystem(
+            bot=bot,
+            store=store,
+            facilitator_dashboard_id=123,
+            moderation_logs_id=456,
+            trevor_discord_id="999888777",
+        )
+
+        with patch.object(
+            escalation_system,
+            "_was_recently_escalated",
+            new_callable=AsyncMock,
+            return_value=False,
+        ), patch.object(
+            escalation_system,
+            "_escalate_level_2",
+            new_callable=AsyncMock,
+        ) as mock_l2, patch.object(
+            escalation_system,
+            "_escalate_level_3",
+            new_callable=AsyncMock,
+        ) as mock_l3:
+            await escalation_system._check_student_escalation(
+                discord_id="424242",
+                username="<@424242>",
+                zone="zone_1",
+                emotional_state="curious",
+                current_week=1,
+            )
+
+        mock_l2.assert_awaited_once()
+        mock_l3.assert_not_awaited()
+        store.close()

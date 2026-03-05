@@ -1221,8 +1221,8 @@ async def handle_confirm_publish(
 
     # Handle private publications (Trevor-only)
     if visibility == "private":
-        trevor_discord_id = os.getenv("TREVOR_DISCORD_ID", "").strip()
-        if not trevor_discord_id:
+        facilitator_discord_id = os.getenv("FACILITATOR_DISCORD_ID", "").strip()
+        if not facilitator_discord_id:
             await message.reply(
                 "**Private publish unavailable right now.** Trevor contact is not configured."
             )
@@ -1240,7 +1240,7 @@ async def handle_confirm_publish(
         )
 
         try:
-            trevor_user = await bot.fetch_user(int(trevor_discord_id))
+            trevor_user = await bot.fetch_user(int(facilitator_discord_id))
             await trevor_user.send(private_payload)
         except Exception as exc:
             logger.error("Failed private artifact handoff to Trevor: %s", exc, exc_info=True)

@@ -206,18 +206,18 @@ class TestVoiceChannelManagement:
         mock_guild = Mock()
         mock_role_cluster1 = Mock(id=101)
         mock_role_cluster1.name = "Cluster-1"
-        mock_role_trevor = Mock(id=999)
-        mock_role_trevor.name = "Trevor"
+        mock_role_facilitator = Mock(id=999)
+        mock_role_facilitator.name = "Facilitator"
         mock_default_role = Mock(id=0)
         mock_default_role.name = "@everyone"
-        mock_guild.roles = [mock_role_cluster1, mock_role_trevor]
+        mock_guild.roles = [mock_role_cluster1, mock_role_facilitator]
         mock_guild.default_role = mock_default_role
 
         # Create channel with role restrictions
         channel = await store.create_cluster_voice_channel(
             guild=mock_guild,
             cluster_id=1,
-            trevor_role=mock_role_trevor
+            facilitator_role=mock_role_facilitator
         )
 
         # Verify permissions were set
@@ -225,7 +225,7 @@ class TestVoiceChannelManagement:
         configured_roles = [call.args[0] for call in channel.set_permissions.call_args_list]
         assert mock_default_role in configured_roles
         assert mock_role_cluster1 in configured_roles
-        assert mock_role_trevor in configured_roles
+        assert mock_role_facilitator in configured_roles
 
     @pytest.mark.asyncio
     async def test_delete_voice_channel_after_session(self, store):

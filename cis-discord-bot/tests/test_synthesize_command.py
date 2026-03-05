@@ -20,6 +20,7 @@ from commands.synthesize import (  # noqa: E402
     handle_synthesize,
     handle_showcase_share_response,
     has_pending_showcase_share,
+    summarize_cis_interactions,
 )
 
 
@@ -133,6 +134,50 @@ class TestSynthesizeCommandFlow:
 
             # Verify Habit 4 practice tracked
             mock_store.update_habit_practice.assert_called_once_with("123456789", habit_id=4)
+
+    @pytest.mark.asyncio
+    async def test_handle_synthesize_includes_cis_summary_when_available(
+        self, mock_message, mock_student, mock_student_context, mock_dm_channel
+    ):
+        """Test synth prompt includes summary of prior frame/diverge/challenge inputs."""
+        mock_message.author.create_dm.return_value = mock_dm_channel
+
+        def _history_for_agent(discord_id, agent, limit=10):
+            if agent == "frame":
+                return [{"role": "user", "content": "choosing university pathways"}]
+            if agent == "diverge":
+                return [{"role": "user", "content": "multiple options that fit my goals"}]
+            if agent == "challenge":
+                return [{"role": "user", "content": "prestige assumptions"}]
+            return []
+
+        with patch("commands.synthesize.store") as mock_store, patch(
+            "commands.synthesize.call_agent_with_context",
+            new_callable=AsyncMock,
+            return_value=("Let's synthesize this clearly.", {"total_tokens": 120, "total_cost_usd": 0.0025}),
+        ) as mock_call, patch(
+            "commands.synthesize.celebrate_habit", return_value=None
+        ), patch(
+            "commands.synthesize.transition_state", return_value="synthesizing"
+        ), patch(
+            "commands.synthesize.rate_limiter.check_rate_limit", return_value=(True, None)
+        ), patch(
+            "commands.synthesize.rate_limiter.track_interaction",
+            return_value={"daily_total": 1.0, "weekly_total": 3.0},
+        ), patch(
+            "commands.synthesize._notify_budget_alerts", new_callable=AsyncMock
+        ):
+            mock_store.build_student_context.return_value = mock_student_context
+            mock_store.get_conversation_history.side_effect = _history_for_agent
+            mock_store.get_student.return_value = {"discord_id": "123456789"}
+
+            await handle_synthesize(mock_message, mock_student)
+
+            llm_message = mock_call.call_args.kwargs["user_message"]
+            assert "Recent CIS context:" in llm_message
+            assert "framed your question about choosing university pathways" in llm_message
+            assert "explored multiple options that fit my goals" in llm_message
+            assert "challenged prestige assumptions" in llm_message
 
     @pytest.mark.asyncio
     async def test_handle_synthesize_blocks_when_rate_limited(self, mock_message, mock_student):
@@ -329,6 +374,24 @@ class TestSynthesizeWeekUnlock:
 
         week_8_agents = get_unlocked_agents(8)
         assert "synthesize" in week_8_agents
+
+
+class TestSummarizeCISInteractions:
+    def test_summarize_cis_interactions_builds_ordered_summary(self):
+        summary = summarize_cis_interactions(
+            [
+                {"agent": "frame", "content": "career direction"},
+                {"agent": "diverge", "content": "possible pathways"},
+                {"agent": "challenge", "content": "my default assumptions"},
+            ]
+        )
+
+        assert summary.startswith("You framed your question about")
+        assert "explored possible pathways" in summary
+        assert "challenged my default assumptions" in summary
+
+    def test_summarize_cis_interactions_handles_empty_input(self):
+        assert summarize_cis_interactions([]) == ""
 
 
 class TestShowcaseShareDecision:

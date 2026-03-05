@@ -12,6 +12,7 @@ Focus:
 
 import asyncio
 import os
+import sqlite3
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -26,6 +27,14 @@ from cis_controller.health_monitor import (  # noqa: E402
     HealthMonitor,
     get_llm_fallback_message,
 )
+
+
+def _create_sqlite_test_db(db_path: Path) -> None:
+    """Create a minimal DB schema expected by health checks."""
+    conn = sqlite3.connect(str(db_path))
+    conn.execute("CREATE TABLE IF NOT EXISTS students (discord_id TEXT PRIMARY KEY)")
+    conn.commit()
+    conn.close()
 
 
 class TestHealthMonitorInitialization:
@@ -131,18 +140,37 @@ class TestDiscordHealthCheck:
 
 class TestDatabaseHealthCheck:
     @pytest.mark.asyncio
-    async def test_database_healthy_when_connected(self):
+    async def test_database_healthy_when_connected(self, tmp_path):
         bot = MagicMock()
+        db_path = tmp_path / "health.db"
+        _create_sqlite_test_db(db_path)
 
         monitor = HealthMonitor(
             bot=bot,
-            db_path="/tmp/test.db",
+            db_path=str(db_path),
             facilitator_dashboard_id=12345,
             trevor_discord_id="987654321",
         )
 
-        result = await monitor._check_database()
+        result, details = await monitor._check_database()
         assert result is True
+        assert "reachable" in details
+
+    @pytest.mark.asyncio
+    async def test_database_unhealthy_when_file_missing(self, tmp_path):
+        bot = MagicMock()
+        db_path = tmp_path / "missing.db"
+
+        monitor = HealthMonitor(
+            bot=bot,
+            db_path=str(db_path),
+            facilitator_dashboard_id=12345,
+            trevor_discord_id="987654321",
+        )
+
+        result, details = await monitor._check_database()
+        assert result is False
+        assert "missing" in details.lower()
 
     @pytest.mark.asyncio
     async def test_database_unhealthy_on_connection_error(self):
@@ -157,7 +185,7 @@ class TestDatabaseHealthCheck:
                 trevor_discord_id="987654321",
             )
 
-            result = await monitor._check_database()
+            result, _details = await monitor._check_database()
             assert result is False
 
 
@@ -175,7 +203,13 @@ class TestHealthCheckExecution:
             trevor_discord_id="987654321",
         )
 
-        results = await monitor._run_health_checks()
+        with patch(
+            "cis_controller.health_monitor.check_provider_api_health",
+            new=AsyncMock(return_value=(True, "ok")),
+        ), patch.object(
+            monitor, "_check_database", new=AsyncMock(return_value=(True, "ok"))
+        ):
+            results = await monitor._run_health_checks()
 
         assert "timestamp" in results
         assert "checks" in results
@@ -200,7 +234,13 @@ class TestHealthCheckExecution:
         # Mock Trevor notification
         monitor._notify_trevor_of_failure = AsyncMock()
 
-        results = await monitor._run_health_checks()
+        with patch(
+            "cis_controller.health_monitor.check_provider_api_health",
+            new=AsyncMock(return_value=(True, "ok")),
+        ), patch.object(
+            monitor, "_check_database", new=AsyncMock(return_value=(True, "ok"))
+        ):
+            results = await monitor._run_health_checks()
 
         # Should detect Discord failure
         assert results["checks"]["discord"]["status"] == "failed"
@@ -264,6 +304,8 @@ class TestTrevorNotifications:
     async def test_notification_failure_is_logged_gracefully(self):
         bot = MagicMock()
         bot.get_channel.return_value = None  # Channel not found
+        bot.get_user.return_value = None
+        bot.fetch_user = AsyncMock(side_effect=Exception("user not found"))
 
         monitor = HealthMonitor(
             bot=bot,
@@ -277,6 +319,52 @@ class TestTrevorNotifications:
             ["Discord API"],
             {"checks": {"discord": {"status": "failed"}}},
         )
+
+
+class TestFailureFallbackControls:
+    @pytest.mark.asyncio
+    async def test_runtime_llm_failure_alerts_trevor(self):
+        bot = MagicMock()
+        channel = MagicMock()
+        bot.get_channel.return_value = channel
+
+        monitor = HealthMonitor(
+            bot=bot,
+            db_path="/tmp/test.db",
+            facilitator_dashboard_id=12345,
+            trevor_discord_id="987654321",
+        )
+
+        await monitor.notify_llm_runtime_failure(
+            provider="openai",
+            agent="frame",
+            error="API timeout",
+        )
+
+        channel.send.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_database_failure_activates_in_memory_mode(self):
+        from database.store import StudentStateStore
+
+        bot = MagicMock()
+        monitor = HealthMonitor(
+            bot=bot,
+            db_path="/tmp/test.db",
+            facilitator_dashboard_id=12345,
+            trevor_discord_id="987654321",
+        )
+        monitor._notify_database_backup_mode = AsyncMock()
+
+        with patch.object(
+            StudentStateStore,
+            "is_in_memory_fallback_active",
+            return_value=False,
+        ), patch.object(StudentStateStore, "activate_in_memory_fallback") as activate:
+            await monitor._activate_database_backup_mode("disk IO error")
+
+        activate.assert_called_once_with(reason="disk IO error")
+        monitor._notify_database_backup_mode.assert_awaited_once()
 
 
 class TestDailyBackups:
