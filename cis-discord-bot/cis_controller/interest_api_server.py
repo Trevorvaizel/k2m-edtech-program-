@@ -11,10 +11,11 @@ import asyncio
 import json
 import logging
 import os
+import secrets
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import httpx
 from aiohttp import web
@@ -32,14 +33,59 @@ COL_EMAIL = 1       # B
 COL_PHONE = 2       # C
 COL_DISCORD_ID = 3  # D
 COL_PROFESSION = 4  # E
+COL_ZONE = 5        # F
+COL_SITUATION = 6   # G
+COL_GOALS = 7       # H
+COL_EMOTIONAL = 8   # I
+COL_PARENT_EMAIL = 9  # J
+COL_MPESA_CODE = 10   # K
 COL_PAYMENT = 11    # L
+COL_NOTES = 12      # M
+COL_CREATED_AT = 13  # N
+COL_ACTIVATED_AT = 14  # O
+COL_SUBMIT_TOKEN = 15  # P
+COL_TOKEN_EXPIRY = 16  # Q
 COL_INVITE = 17     # R
 
 ENROLLMENT_CAP = int(os.getenv("ENROLLMENT_CAP", "30").strip())
+TOKEN_TTL_DAYS = int(os.getenv("MPESA_SUBMIT_TOKEN_TTL_DAYS", "7").strip())
 
 
 def _cors_headers() -> Dict[str, str]:
     return {"Access-Control-Allow-Origin": "*"}
+
+
+def _sheet_name_from_range(sheet_range: str) -> str:
+    return sheet_range.split("!", 1)[0] if "!" in sheet_range else "Student Roster"
+
+
+def _column_letter(col_idx: int) -> str:
+    if col_idx < 0:
+        raise ValueError("Column index must be >= 0")
+    letters = ""
+    value = col_idx + 1
+    while value > 0:
+        value, remainder = divmod(value - 1, 26)
+        letters = chr(65 + remainder) + letters
+    return letters
+
+
+def _iso_utc(dt: datetime) -> str:
+    return dt.astimezone(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+
+
+def _parse_iso_utc(raw: str) -> Optional[datetime]:
+    text = (raw or "").strip()
+    if not text:
+        return None
+    try:
+        return datetime.fromisoformat(text.replace("Z", "+00:00")).astimezone(timezone.utc)
+    except ValueError:
+        return None
+
+
+def _generate_submit_token() -> str:
+    return secrets.token_urlsafe(12)
 
 
 def _generate_placeholder_invite_code(email: str) -> str:
@@ -239,6 +285,123 @@ async def append_to_student_roster(
         return False
 
 
+async def read_roster_rows(
+    spreadsheet_id: str,
+    sheet_range: str = "Student Roster!A:Z",
+    creds_path: Optional[str] = None,
+) -> List[List[str]]:
+    """Read roster rows from Google Sheets."""
+    service = _build_sheets_service(creds_path=creds_path, read_only=True)
+    values_api = service.spreadsheets().values()
+    result = values_api.get(
+        spreadsheetId=spreadsheet_id,
+        range=sheet_range,
+    ).execute()
+    return result.get("values", [])
+
+
+async def find_row_by_email(
+    email: str,
+    spreadsheet_id: str,
+    sheet_range: str = "Student Roster!A:Z",
+    creds_path: Optional[str] = None,
+) -> Optional[Tuple[int, List[str]]]:
+    """Find a roster row by email (Column B). Returns (row_number, row_values)."""
+    rows = await read_roster_rows(
+        spreadsheet_id=spreadsheet_id,
+        sheet_range=sheet_range,
+        creds_path=creds_path,
+    )
+    email_lower = email.strip().lower()
+    for row_num, row in enumerate(rows[1:], start=2):
+        if _safe_get(row, COL_EMAIL).lower() == email_lower:
+            return row_num, row
+    return None
+
+
+async def find_row_by_submit_token(
+    token: str,
+    spreadsheet_id: str,
+    sheet_range: str = "Student Roster!A:Z",
+    creds_path: Optional[str] = None,
+) -> Optional[Tuple[int, List[str]]]:
+    """Find a roster row by submit token (Column P). Returns (row_number, row_values)."""
+    rows = await read_roster_rows(
+        spreadsheet_id=spreadsheet_id,
+        sheet_range=sheet_range,
+        creds_path=creds_path,
+    )
+    needle = token.strip()
+    for row_num, row in enumerate(rows[1:], start=2):
+        if _safe_get(row, COL_SUBMIT_TOKEN) == needle:
+            return row_num, row
+    return None
+
+
+async def update_roster_cells(
+    row_number: int,
+    updates: Dict[int, Any],
+    spreadsheet_id: str,
+    sheet_range: str = "Student Roster!A:Z",
+    creds_path: Optional[str] = None,
+) -> bool:
+    """
+    Update specific roster cells for one row.
+
+    updates maps `column_index` (0-based) -> `value`.
+    """
+    if not updates:
+        return True
+
+    try:
+        service = _build_sheets_service(creds_path=creds_path, read_only=False)
+        values_api = service.spreadsheets().values()
+        sheet_name = _sheet_name_from_range(sheet_range)
+
+        data = []
+        for col_idx, value in sorted(updates.items(), key=lambda item: item[0]):
+            cell_ref = f"{sheet_name}!{_column_letter(col_idx)}{row_number}"
+            data.append({"range": cell_ref, "values": [["" if value is None else str(value)]]})
+
+        values_api.batchUpdate(
+            spreadsheetId=spreadsheet_id,
+            body={
+                "valueInputOption": "RAW",
+                "data": data,
+            },
+        ).execute()
+        return True
+    except Exception as exc:
+        logger.error("Failed to update roster row %s: %s", row_number, exc)
+        return False
+
+
+def build_mpesa_submit_url(token: str) -> str:
+    """
+    Build public payment submission URL from env base + token.
+    """
+    base = os.getenv(
+        "MPESA_SUBMIT_FORM_URL",
+        "https://kira-bot-production.up.railway.app/mpesa-submit",
+    ).strip().rstrip("/")
+    return f"{base}?token={token}"
+
+
+def _mask_email(email: str) -> str:
+    """
+    Return lightly-masked email for UI/status responses.
+    """
+    text = (email or "").strip()
+    if "@" not in text:
+        return ""
+    local, domain = text.split("@", 1)
+    if len(local) <= 2:
+        local_masked = local[0] + "*"
+    else:
+        local_masked = local[0] + ("*" * (len(local) - 2)) + local[-1]
+    return f"{local_masked}@{domain}"
+
+
 async def send_brevo_email(
     to_email: str,
     first_name: str,
@@ -300,6 +463,71 @@ async def send_brevo_email(
         return False
 
 
+async def send_enrollment_payment_email(
+    to_email: str,
+    first_name: str,
+    submit_url: str,
+) -> bool:
+    """Send Email #2 after /api/enroll with payment instructions."""
+    try:
+        from cis_controller.email_service import EmailService
+
+        email_service = EmailService()
+        first_name_only = first_name.strip().split()[0] if first_name else "there"
+        subject = "Step 3 of 4: Complete your M-Pesa payment"
+        html_content = f"""
+        <!DOCTYPE html>
+        <html><body style="font-family:Arial,sans-serif;line-height:1.6;">
+          <h2>Enrollment received</h2>
+          <p>Hey {first_name_only},</p>
+          <p>Your enrollment form is complete.</p>
+          <p><strong>Next step (Step 3 of 4):</strong> pay via M-Pesa, then submit your code using this secure link:</p>
+          <p><a href="{submit_url}">{submit_url}</a></p>
+          <p>This link expires in {TOKEN_TTL_DAYS} days.</p>
+        </body></html>
+        """
+        result = await email_service.send_email(
+            to_email=to_email,
+            subject=subject,
+            html_content=html_content,
+        )
+        return result.success
+    except Exception as exc:
+        logger.error("Failed to send enrollment payment email: %s", exc)
+        return False
+
+
+async def send_mpesa_received_email(
+    to_email: str,
+    first_name: str,
+) -> bool:
+    """Send Email #3 confirmation after M-Pesa code submission."""
+    try:
+        from cis_controller.email_service import EmailService
+
+        email_service = EmailService()
+        first_name_only = first_name.strip().split()[0] if first_name else "there"
+        subject = "Step 4 of 4: M-Pesa code received"
+        html_content = f"""
+        <!DOCTYPE html>
+        <html><body style="font-family:Arial,sans-serif;line-height:1.6;">
+          <h2>M-Pesa code received</h2>
+          <p>Hey {first_name_only},</p>
+          <p>We've received your M-Pesa code and queued it for verification.</p>
+          <p>Trevor reviews payments within 24 hours. You'll get your activation email once confirmed.</p>
+        </body></html>
+        """
+        result = await email_service.send_email(
+            to_email=to_email,
+            subject=subject,
+            html_content=html_content,
+        )
+        return result.success
+    except Exception as exc:
+        logger.error("Failed to send M-Pesa received email: %s", exc)
+        return False
+
+
 class InterestAPIServer:
     """HTTP server hosting /api/interest."""
 
@@ -323,7 +551,7 @@ class InterestAPIServer:
             status=200,
             headers={
                 "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Methods": "POST, OPTIONS",
+                "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
                 "Access-Control-Allow-Headers": "Content-Type",
             },
         )
@@ -459,6 +687,316 @@ class InterestAPIServer:
                 headers=_cors_headers(),
             )
 
+    async def _handle_enroll(self, request: web.Request) -> web.Response:
+        """
+        Handle /api/enroll submissions.
+
+        Writes profile data (F-J), generates payment submit token (P/Q),
+        and sends Email #2 with payment URL.
+        """
+        try:
+            data = await request.json()
+        except json.JSONDecodeError:
+            return web.json_response(
+                {"success": False, "error": "Invalid JSON"},
+                status=400,
+                headers=_cors_headers(),
+            )
+
+        try:
+            if not self.spreadsheet_id:
+                return web.json_response(
+                    {"success": False, "error": "Enrollment backend is not configured"},
+                    status=503,
+                    headers=_cors_headers(),
+                )
+
+            email = str(data.get("email", "")).strip().lower()
+            zone = str(data.get("zone", "")).strip()
+            situation = str(data.get("situation", "")).strip()
+            goals = str(data.get("goals", "")).strip()
+            emotional_baseline = str(data.get("emotional_baseline", "")).strip()
+            parent_email = str(data.get("parent_email", "")).strip().lower()
+            name_override = str(data.get("name", "")).strip()
+
+            if not email or not zone or not situation or not goals or not emotional_baseline:
+                return web.json_response(
+                    {
+                        "success": False,
+                        "error": "Email, zone, situation, goals, and emotional_baseline are required",
+                    },
+                    status=400,
+                    headers=_cors_headers(),
+                )
+
+            row_match = await find_row_by_email(
+                email=email,
+                spreadsheet_id=self.spreadsheet_id,
+                sheet_range=self.sheet_range,
+                creds_path=self.creds_path,
+            )
+            if not row_match:
+                return web.json_response(
+                    {"success": False, "error": "No interest submission found for this email"},
+                    status=404,
+                    headers=_cors_headers(),
+                )
+
+            row_number, row = row_match
+            token = _generate_submit_token()
+            token_expiry = _iso_utc(datetime.now(timezone.utc) + timedelta(days=TOKEN_TTL_DAYS))
+            submit_url = build_mpesa_submit_url(token)
+
+            current_payment = _safe_get(row, COL_PAYMENT)
+            current_payment_lc = current_payment.lower()
+            next_payment_status = current_payment
+            if current_payment_lc in {"", "lead", "waitlisted"}:
+                next_payment_status = "Enrolled"
+
+            updated = await update_roster_cells(
+                row_number=row_number,
+                updates={
+                    COL_ZONE: zone,
+                    COL_SITUATION: situation,
+                    COL_GOALS: goals,
+                    COL_EMOTIONAL: emotional_baseline,
+                    COL_PARENT_EMAIL: parent_email,
+                    COL_PAYMENT: next_payment_status,
+                    COL_SUBMIT_TOKEN: token,
+                    COL_TOKEN_EXPIRY: token_expiry,
+                },
+                spreadsheet_id=self.spreadsheet_id,
+                sheet_range=self.sheet_range,
+                creds_path=self.creds_path,
+            )
+            if not updated:
+                return web.json_response(
+                    {"success": False, "error": "Could not save your enrollment details"},
+                    status=500,
+                    headers=_cors_headers(),
+                )
+
+            student_name = _safe_get(row, COL_NAME) or name_override or email.split("@")[0]
+            email_sent = await send_enrollment_payment_email(
+                to_email=email,
+                first_name=student_name,
+                submit_url=submit_url,
+            )
+            if not email_sent:
+                return web.json_response(
+                    {
+                        "success": False,
+                        "error": "Enrollment saved, but payment email could not be delivered.",
+                    },
+                    status=502,
+                    headers=_cors_headers(),
+                )
+
+            return web.json_response(
+                {
+                    "success": True,
+                    "message": "Enrollment complete. Check your email for payment instructions.",
+                    "submit_url": submit_url,
+                    "expires_at": token_expiry,
+                },
+                status=200,
+                headers=_cors_headers(),
+            )
+        except Exception as exc:
+            logger.error("Error handling enroll request: %s", exc, exc_info=True)
+            return web.json_response(
+                {"success": False, "error": "Internal server error"},
+                status=500,
+                headers=_cors_headers(),
+            )
+
+    async def _handle_mpesa_status(self, request: web.Request) -> web.Response:
+        """
+        Validate M-Pesa token status for frontend preflight checks.
+        """
+        try:
+            if not self.spreadsheet_id:
+                return web.json_response(
+                    {"success": False, "error": "Enrollment backend is not configured"},
+                    status=503,
+                    headers=_cors_headers(),
+                )
+
+            token = (request.query.get("token") or "").strip()
+            if not token:
+                return web.json_response(
+                    {"success": False, "error": "Missing token"},
+                    status=400,
+                    headers=_cors_headers(),
+                )
+
+            row_match = await find_row_by_submit_token(
+                token=token,
+                spreadsheet_id=self.spreadsheet_id,
+                sheet_range=self.sheet_range,
+                creds_path=self.creds_path,
+            )
+            if not row_match:
+                return web.json_response(
+                    {"success": False, "valid": False, "error": "Invalid token"},
+                    status=404,
+                    headers=_cors_headers(),
+                )
+
+            _, row = row_match
+            expiry_text = _safe_get(row, COL_TOKEN_EXPIRY)
+            expiry_dt = _parse_iso_utc(expiry_text)
+            if expiry_dt and expiry_dt < datetime.now(timezone.utc):
+                return web.json_response(
+                    {
+                        "success": False,
+                        "valid": False,
+                        "expired": True,
+                        "error": "Token expired",
+                    },
+                    status=410,
+                    headers=_cors_headers(),
+                )
+
+            return web.json_response(
+                {
+                    "success": True,
+                    "valid": True,
+                    "email_hint": _mask_email(_safe_get(row, COL_EMAIL)),
+                    "expires_at": expiry_text,
+                },
+                status=200,
+                headers=_cors_headers(),
+            )
+        except Exception as exc:
+            logger.error("Error handling mpesa status request: %s", exc, exc_info=True)
+            return web.json_response(
+                {"success": False, "error": "Internal server error"},
+                status=500,
+                headers=_cors_headers(),
+            )
+
+    async def _handle_mpesa_submit(self, request: web.Request) -> web.Response:
+        """
+        Handle /api/mpesa-submit submissions.
+
+        Matches token (P), validates expiry (Q), stores M-Pesa code (K),
+        and marks payment status as Pending (L).
+        """
+        try:
+            data = await request.json()
+        except json.JSONDecodeError:
+            return web.json_response(
+                {"success": False, "error": "Invalid JSON"},
+                status=400,
+                headers=_cors_headers(),
+            )
+
+        try:
+            if not self.spreadsheet_id:
+                return web.json_response(
+                    {"success": False, "error": "Enrollment backend is not configured"},
+                    status=503,
+                    headers=_cors_headers(),
+                )
+
+            token = str(data.get("token", "")).strip() or (request.query.get("token") or "").strip()
+            mpesa_code = str(data.get("mpesa_code", "")).strip().upper()
+            if not token or not mpesa_code:
+                return web.json_response(
+                    {"success": False, "error": "Token and mpesa_code are required"},
+                    status=400,
+                    headers=_cors_headers(),
+                )
+
+            row_match = await find_row_by_submit_token(
+                token=token,
+                spreadsheet_id=self.spreadsheet_id,
+                sheet_range=self.sheet_range,
+                creds_path=self.creds_path,
+            )
+            if not row_match:
+                return web.json_response(
+                    {"success": False, "error": "Invalid or unknown token"},
+                    status=404,
+                    headers=_cors_headers(),
+                )
+
+            row_number, row = row_match
+            expiry_text = _safe_get(row, COL_TOKEN_EXPIRY)
+            expiry_dt = _parse_iso_utc(expiry_text)
+            if expiry_dt and expiry_dt < datetime.now(timezone.utc):
+                return web.json_response(
+                    {
+                        "success": False,
+                        "expired": True,
+                        "error": "Your payment link has expired. Request a fresh link in Discord.",
+                    },
+                    status=410,
+                    headers=_cors_headers(),
+                )
+
+            updated = await update_roster_cells(
+                row_number=row_number,
+                updates={
+                    COL_MPESA_CODE: mpesa_code,
+                    COL_PAYMENT: "Pending",
+                },
+                spreadsheet_id=self.spreadsheet_id,
+                sheet_range=self.sheet_range,
+                creds_path=self.creds_path,
+            )
+            if not updated:
+                return web.json_response(
+                    {"success": False, "error": "Could not record your M-Pesa code"},
+                    status=500,
+                    headers=_cors_headers(),
+                )
+
+            student_email = _safe_get(row, COL_EMAIL)
+            student_name = _safe_get(row, COL_NAME) or student_email.split("@")[0]
+            email_sent = await send_mpesa_received_email(
+                to_email=student_email,
+                first_name=student_name,
+            )
+            if not email_sent:
+                return web.json_response(
+                    {
+                        "success": False,
+                        "error": "M-Pesa code recorded, but confirmation email failed.",
+                    },
+                    status=502,
+                    headers=_cors_headers(),
+                )
+
+            return web.json_response(
+                {
+                    "success": True,
+                    "message": "M-Pesa code received. Verification usually takes up to 24 hours.",
+                },
+                status=200,
+                headers=_cors_headers(),
+            )
+        except Exception as exc:
+            logger.error("Error handling mpesa submit request: %s", exc, exc_info=True)
+            return web.json_response(
+                {"success": False, "error": "Internal server error"},
+                status=500,
+                headers=_cors_headers(),
+            )
+
+    def register_routes(self, app: web.Application) -> None:
+        """Register all enrollment-related API routes on an aiohttp app."""
+        app.router.add_options("/api/interest", self._handle_cors)
+        app.router.add_post("/api/interest", self._handle_interest)
+
+        app.router.add_options("/api/enroll", self._handle_cors)
+        app.router.add_post("/api/enroll", self._handle_enroll)
+
+        app.router.add_options("/api/mpesa-submit", self._handle_cors)
+        app.router.add_get("/api/mpesa-submit", self._handle_mpesa_status)
+        app.router.add_post("/api/mpesa-submit", self._handle_mpesa_submit)
+
     async def start(self) -> None:
         if self._runner is not None:
             return
@@ -468,8 +1006,7 @@ class InterestAPIServer:
             return
 
         app = web.Application()
-        app.router.add_options("/api/interest", self._handle_cors)
-        app.router.add_post("/api/interest", self._handle_interest)
+        self.register_routes(app)
 
         self._runner = web.AppRunner(app)
         await self._runner.setup()
@@ -477,7 +1014,7 @@ class InterestAPIServer:
         self._site = web.TCPSite(self._runner, host=self.host, port=self.port)
         await self._site.start()
         logger.info(
-            "Interest API server listening on http://%s:%s/api/interest",
+            "Enrollment API server listening on http://%s:%s (interest/enroll/mpesa)",
             self.host,
             self.port,
         )

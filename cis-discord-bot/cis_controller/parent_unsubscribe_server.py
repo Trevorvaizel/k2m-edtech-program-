@@ -71,9 +71,16 @@ class ParentUnsubscribeServer:
         app = web.Application()
         app.router.add_get(self.path, self._handle_unsubscribe)
         if self.interest_api_server is not None:
-            app.router.add_options("/api/interest", self.interest_api_server._handle_cors)
-            app.router.add_post("/api/interest", self.interest_api_server._handle_interest)
-            logger.info("Interest API mounted on parent unsubscribe server at /api/interest")
+            if hasattr(self.interest_api_server, "register_routes"):
+                self.interest_api_server.register_routes(app)
+                logger.info(
+                    "Enrollment API mounted on parent unsubscribe server "
+                    "at /api/interest, /api/enroll, /api/mpesa-submit"
+                )
+            else:
+                app.router.add_options("/api/interest", self.interest_api_server._handle_cors)
+                app.router.add_post("/api/interest", self.interest_api_server._handle_interest)
+                logger.info("Interest API mounted on parent unsubscribe server at /api/interest")
         self._runner = web.AppRunner(app)
         await self._runner.setup()
 
