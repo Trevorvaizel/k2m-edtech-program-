@@ -1,4 +1,4 @@
-"""
+﻿"""
 Showcase workflow helpers.
 
 Task 3.5 (Decision 12):
@@ -17,10 +17,10 @@ from discord.ext import commands
 
 from cis_controller.celebration_generator import generate_celebration_message
 from cis_controller.safety_filter import ComparisonViolationError, SafetyFilter
-from database.store import StudentStateStore
+from database import get_store
 
 logger = logging.getLogger(__name__)
-store = StudentStateStore()
+store = get_store()
 safety_filter = SafetyFilter()
 
 VALID_PREFERENCES = {"always_ask", "always_yes", "always_no", "week8_only"}
@@ -283,3 +283,4 @@ async def set_showcase_preference(message: discord.Message, preference: str):
         f"What this means: {descriptions[preference]}"
     )
     logger.info("Student %s set showcase preference to %s", message.author.id, preference)
+

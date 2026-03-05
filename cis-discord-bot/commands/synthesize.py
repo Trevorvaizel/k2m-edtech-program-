@@ -1,4 +1,4 @@
-"""
+﻿"""
 Synthesize Command Handler
 Story 4.5 + Task 3.3 implementation: /synthesize agent (The Synthesizer)
 
@@ -22,12 +22,12 @@ from cis_controller.safety_filter import (
     safety_filter,
 )
 from cis_controller.state_machine import celebrate_habit, transition_state
-from database.store import StudentStateStore
+from database import get_store
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-store = StudentStateStore()
+store = get_store()
 
 CHANNEL_THINKING_SHOWCASE = os.getenv("CHANNEL_THINKING_SHOWCASE", "").strip()
 CHANNEL_FACILITATOR_DASHBOARD = os.getenv(
@@ -291,7 +291,7 @@ async def _notify_budget_alerts(message: discord.Message, budget_state: Dict[str
     lines = []
     if budget_state.get("daily_alert_triggered"):
         lines.append(
-            "💰 **Daily Budget Alert**\n"
+            "ðŸ’° **Daily Budget Alert**\n"
             f"Current daily spend: ${budget_state.get('daily_total', 0.0):.2f} "
             f"(threshold: ${rate_limiter.DAILY_BUDGET_ALERT:.2f})"
         )
@@ -300,7 +300,7 @@ async def _notify_budget_alerts(message: discord.Message, budget_state: Dict[str
         "weekly_cap_exceeded"
     ):
         lines.append(
-            "🚨 **Weekly Budget Cap Reached**\n"
+            "ðŸš¨ **Weekly Budget Cap Reached**\n"
             f"Current weekly spend: ${budget_state.get('weekly_total', 0.0):.2f} "
             f"(cap: ${rate_limiter.WEEKLY_BUDGET_CAP:.2f})"
         )
@@ -402,7 +402,7 @@ async def handle_synthesize(message: discord.Message, student):
 
     student_context = store.build_student_context(discord_id)
     if not student_context:
-        await message.reply("❌ Error loading your profile. Please try again.")
+        await message.reply("âŒ Error loading your profile. Please try again.")
         logger.error("Failed to build StudentContext for %s", discord_id)
         return
 
@@ -410,7 +410,7 @@ async def handle_synthesize(message: discord.Message, student):
     current_week = getattr(student_context, "current_week", 0)
     if current_week < 6:
         await message.reply(
-            f"🧠 **The Synthesizer unlocks in Week 6** (artifact creation phase).\n\n"
+            f"ðŸ§  **The Synthesizer unlocks in Week 6** (artifact creation phase).\n\n"
             f"Current week: {current_week}\n\n"
             f"You're still building foundational habits with /frame, /diverge, and /challenge. "
             f"The Synthesizer helps you articulate conclusions for your Thinking Artifact, "
@@ -425,7 +425,7 @@ async def handle_synthesize(message: discord.Message, student):
         dm_channel = await message.author.create_dm()
     except discord.Forbidden:
         await message.reply(
-            "🚫 **Cannot start DM** - I need permission to send you private messages. "
+            "ðŸš« **Cannot start DM** - I need permission to send you private messages. "
             "Please enable DMs in your privacy settings, then try /synthesize again."
         )
         return
@@ -549,7 +549,7 @@ async def handle_synthesize(message: discord.Message, student):
         _register_pending_share(discord_id, user_message, student_context)
         await dm_channel.send(
             "\n---\n"
-            "💡 **Want to share this to #thinking-showcase?**\n\n"
+            "ðŸ’¡ **Want to share this to #thinking-showcase?**\n\n"
             "Choose one:\n"
             "- **Yes** (share with your name)\n"
             "- **Anonymous** (share without your name)\n"
@@ -567,12 +567,13 @@ async def handle_synthesize(message: discord.Message, student):
     except Exception as exc:
         logger.error("Error in handle_synthesize for %s: %s", discord_id, exc)
         await dm_channel.send(
-            "**🧠 The Synthesizer is taking a short break.**\n\n"
+            "**ðŸ§  The Synthesizer is taking a short break.**\n\n"
             "Try this on your own:\n"
             "1. **GATHER**: What did you explore? What did you challenge?\n"
             "2. **LOOK FOR PATTERNS**: What connects these insights?\n"
             "3. **ARTICULATE**: 'I now understand that...'\n\n"
             f"Your insights: _{user_message}_\n\n"
-            "**You're practicing Habit 4 (🧠 THINK FIRST) - articulate your thinking clearly!**\n\n"
+            "**You're practicing Habit 4 (ðŸ§  THINK FIRST) - articulate your thinking clearly!**\n\n"
             "Try /synthesize again in a moment."
         )
+

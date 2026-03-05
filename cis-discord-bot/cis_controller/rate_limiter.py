@@ -1,4 +1,4 @@
-"""
+﻿"""
 Rate Limiting Module
 Story 1.6 Implementation: rate limiting + cost controls
 """
@@ -9,12 +9,12 @@ import sqlite3
 from datetime import datetime, timedelta
 from typing import Dict, Optional, Tuple
 
-from database.store import StudentStateStore
+from database import get_store
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-store = StudentStateStore()
+store = get_store()
 
 
 class RateLimiter:
@@ -73,7 +73,7 @@ class RateLimiter:
         if self._is_weekly_budget_exceeded(today):
             weekly_total = self._get_weekly_total_cost(today)
             return False, (
-                "💰 **CIS interactions are temporarily paused.**\n\n"
+                "ðŸ’° **CIS interactions are temporarily paused.**\n\n"
                 f"The weekly cohort budget cap (${self.WEEKLY_BUDGET_CAP:.2f}) has been reached "
                 f"(current: ${weekly_total:.2f}).\n\n"
                 "Trevor has been notified. Please continue practicing the 4 Habits manually for now."
@@ -88,7 +88,7 @@ class RateLimiter:
                 self.MAX_INTERACTIONS_PER_DAY,
             )
             return False, (
-                f"⏸️ **You've used {self.MAX_INTERACTIONS_PER_DAY} CIS agent interactions today.**\n\n"
+                f"â¸ï¸ **You've used {self.MAX_INTERACTIONS_PER_DAY} CIS agent interactions today.**\n\n"
                 "That's a lot of practice! Great work building your habits.\n\n"
                 "You can practice again tomorrow when the counter resets.\n\n"
                 "**Remember:** Quality over quantity. The habits you build today will be here tomorrow."
@@ -254,4 +254,5 @@ class RateLimiter:
 
 
 rate_limiter = RateLimiter()
+
 

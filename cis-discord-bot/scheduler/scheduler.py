@@ -1,4 +1,4 @@
-"""
+﻿"""
 Daily Prompt Scheduler
 Story 2.1 Implementation: Automated Content Delivery
 
@@ -23,7 +23,7 @@ from cis_controller.facilitator_dashboard import FacilitatorDashboard
 from scheduler.daily_prompts import DailyPromptLibrary, WeekDay
 from scheduler.cluster_sessions import ClusterSessionScheduler
 from scheduler.parent_email_scheduler import get_parent_email_scheduler
-from database.store import StudentStateStore
+from database import get_store
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +78,7 @@ class DailyPromptScheduler:
         Args:
             bot: Discord bot instance
             guild_id: Discord server ID
-            channel_mapping: Week number → Discord channel ID mapping
+            channel_mapping: Week number â†’ Discord channel ID mapping
             cohort_start_date: Cohort start date (YYYY-MM-DD format)
             escalation_system: Optional EscalationSystem instance (Task 2.4)
             participation_tracker: Optional ParticipationTracker instance (Task 2.2/2.4)
@@ -91,7 +91,7 @@ class DailyPromptScheduler:
         self.cohort_start_date = EAT.localize(datetime.strptime(cohort_start_date, "%Y-%m-%d"))
         self.escalation_system = escalation_system
         self.participation_tracker = participation_tracker
-        self.store = store or StudentStateStore()  # Task 2.5: Database access
+        self.store = store or get_store()  # Task 2.5: Database access
         self.dashboard = FacilitatorDashboard(self.store)  # Task 2.6: Dashboard automation
         self.parent_email_scheduler = get_parent_email_scheduler(store=self.store)
 
@@ -123,6 +123,7 @@ class DailyPromptScheduler:
         self._weekly_artifact_celebration_today = False  # Task 4.2
         self._weekly_parent_emails_today = False  # Task 4.6: Monday weekly parent updates
         self._week8_parent_reports_today = False  # Task 4.6: Week 8 Friday parent report batch
+        self._sheets_sync_today = False  # Task 7.6: nightly PostgreSQL -> Sheets sync
 
         logger.info(f"Scheduler initialized for guild {guild_id}")
         logger.info(f"Cohort start date: {cohort_start_date}")
@@ -238,15 +239,15 @@ class DailyPromptScheduler:
         Build student-facing node drop message without placeholder text.
         """
         message = (
-            f"📚 **Node {node_number}: NotebookLM Podcast**\n\n"
+            f"ðŸ“š **Node {node_number}: NotebookLM Podcast**\n\n"
             f"Today's node is now available. Listen to the 8-12 minute podcast, "
             f"then respond to the daily prompt at 9:15 AM.\n\n"
         )
         if node_link:
-            message += f"🔗 **Node Link:** {node_link}"
+            message += f"ðŸ”— **Node Link:** {node_link}"
         else:
             message += (
-                "🔗 **Node Link:** Not configured yet. Trevor will post it in "
+                "ðŸ”— **Node Link:** Not configured yet. Trevor will post it in "
                 "#resources before the daily prompt."
             )
         return message
@@ -502,7 +503,7 @@ class DailyPromptScheduler:
         if not prompt:
             logger.warning(f"No prompt found for week {week} {day.name}")
             # Fallback message
-            message = f"🎯 **Today's Practice**\n\nCheck #resources for today's prompt!"
+            message = f"ðŸŽ¯ **Today's Practice**\n\nCheck #resources for today's prompt!"
         else:
             message = prompt.format_for_discord()
 
@@ -654,16 +655,16 @@ class DailyPromptScheduler:
         # Create unlock announcement
         if summary['submitted_count'] > 0:
             message = (
-                f"🔓 **Week {week + 1} UNLOCKED!**\n\n"
+                f"ðŸ”“ **Week {week + 1} UNLOCKED!**\n\n"
                 f"Congratulations! {summary['submitted_count']} students completed their Week {week} reflection.\n\n"
-                f"✅ **Week {week + 1} is now open** for those who submitted.\n\n"
+                f"âœ… **Week {week + 1} is now open** for those who submitted.\n\n"
                 f"Still working on your reflection? No problem! Week {week} stays open.\n"
                 f"Complete your reflection to unlock Week {week + 1}.\n\n"
                 f"Continue your journey in the next week channel!"
             )
         else:
             message = (
-                f"🔓 **Week {week + 1} Status**\n\n"
+                f"ðŸ”“ **Week {week + 1} Status**\n\n"
                 f"Saturday 12 PM has passed. Week {week + 1} unlocks as you complete your Week {week} reflection.\n\n"
                 f"No rush! Work at your own pace. Week {week} stays open."
             )
@@ -722,7 +723,7 @@ class DailyPromptScheduler:
             student_list += f"\n- ... and {len(incomplete_students) - 20} more"
 
         message = (
-            f"📊 **FRIDAY REFLECTIONS (Week {week})**\n\n"
+            f"ðŸ“Š **FRIDAY REFLECTIONS (Week {week})**\n\n"
             f"**Completion Status:**\n"
             f"Pending: {len(incomplete_students)}\n\n"
             f"**Students who haven't completed:**\n"
@@ -1015,7 +1016,7 @@ class DailyPromptScheduler:
                 "_Example: /challenge Is university really the only path to success?_\n\n"
                 "**Why now?**\n"
                 "You've built confidence with Habit 1 ⏸️ Pause (Week 1) and Habit 2 🎯 Context (Weeks 2-3).\n"
-                "Now it's time to practice Habit 3 🔄 Iterate—exploring options and testing assumptions.\n\n"
+                "Now it's time to practice Habit 3 🔄 Iterate - exploring options and testing assumptions.\n\n"
                 "**Remember:** Use all three agents:\n"
                 "- /frame to clarify what you want\n"
                 "- /diverge to explore different angles\n"
@@ -1100,6 +1101,7 @@ class DailyPromptScheduler:
             self._weekly_artifact_celebration_today = False  # Task 4.2
             self._weekly_parent_emails_today = False  # Task 4.6
             self._week8_parent_reports_today = False  # Task 4.6
+            self._sheets_sync_today = False  # Task 7.6
 
         week, day = self.get_week_day()
 
@@ -1194,6 +1196,70 @@ class DailyPromptScheduler:
             logger.info("Scheduled: 8:00 PM cluster voice channel cleanup")
             await self._cleanup_cluster_voice_channels()
 
+        # 00:10 AM EAT - Nightly PostgreSQL -> Sheets engagement sync (Task 7.6)
+        if current_time.hour == 0 and current_time.minute == 10 and not self._sheets_sync_today:
+            logger.info("Scheduled: 00:10 AM nightly PostgreSQL -> Sheets sync")
+            await self.run_nightly_sheets_sync()
+            self._sheets_sync_today = True
+
+    async def run_nightly_sheets_sync(self) -> None:
+        """Run nightly engagement sync with dashboard alerting on failure."""
+        enabled = os.getenv("SHEETS_SYNC_ENABLED", "false").strip().lower() in {
+            "1", "true", "yes", "on"
+        }
+        if not enabled:
+            logger.info("Nightly sheets sync disabled (SHEETS_SYNC_ENABLED=false)")
+            return
+
+        database_url = os.getenv("DATABASE_URL", "").strip()
+        spreadsheet_id = os.getenv("GOOGLE_SHEETS_ID", "").strip()
+        sheet_range = os.getenv("GOOGLE_SHEETS_RANGE", "Student Roster!A:Z").strip()
+        creds_path = os.getenv("GOOGLE_SHEETS_CREDS", "").strip()
+
+        if not database_url or not spreadsheet_id:
+            message = (
+                "Nightly sheets sync skipped: missing DATABASE_URL or GOOGLE_SHEETS_ID."
+            )
+            logger.error(message)
+            await self._notify_dashboard_error(message)
+            return
+
+        try:
+            from preload_students import sync_engagement_back_to_sheets
+
+            result = await asyncio.to_thread(
+                sync_engagement_back_to_sheets,
+                database_url,
+                spreadsheet_id,
+                sheet_range,
+                creds_path,
+                False,
+            )
+            logger.info("Nightly sheets sync result: %s", result)
+        except Exception as exc:
+            logger.error("Nightly sheets sync failed: %s", exc, exc_info=True)
+            await self._notify_dashboard_error(
+                f"Nightly sheets sync failed: {exc}"
+            )
+
+    async def _notify_dashboard_error(self, message: str) -> None:
+        """Best-effort dashboard alert for scheduler-level operational failures."""
+        try:
+            channel_id = int(os.getenv("CHANNEL_FACILITATOR_DASHBOARD", "0"))
+        except ValueError:
+            channel_id = 0
+
+        if not channel_id:
+            return
+
+        guild = self.bot.get_guild(self.guild_id)
+        if not guild:
+            return
+
+        channel = guild.get_channel(channel_id)
+        if channel and hasattr(channel, "send"):
+            await channel.send(f"⚠️ {message}")
+
     def start(self):
         """Start the scheduler background task."""
         self.scheduler_task.start()
@@ -1270,3 +1336,4 @@ class DailyPromptScheduler:
                 await self.cluster_scheduler.cleanup_voice_channel(cluster_id)
             except Exception as e:
                 logger.error(f"Failed to cleanup voice channel for cluster {cluster_id}: {e}")
+

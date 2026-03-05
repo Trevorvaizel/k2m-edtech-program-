@@ -16,6 +16,9 @@ pytz==2024.1
 psycopg2-binary==2.9.9
 # asyncpg reserved for future full-async migration
 asyncpg==0.29.0
+# Google Sheets sync (Task 7.6 nightly PostgreSQL -> Sheets)
+google-auth==2.29.0
+google-api-python-client==2.127.0
 # sqlite3 is stdlib (Python 3.10+) — retained for local test environment only
 
 # Testing (optional, for development)

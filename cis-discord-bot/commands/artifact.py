@@ -1,4 +1,4 @@
-"""
+﻿"""
 Artifact Command Handler
 Story 4.6 Implementation: /create-artifact command
 
@@ -11,12 +11,12 @@ import logging
 import os
 
 import discord
-from database.store import StudentStateStore
+from database import get_store
 from database.models import ArtifactProgress
 from datetime import datetime
 from typing import Dict, Optional
 
-store = StudentStateStore()
+store = get_store()
 logger = logging.getLogger(__name__)
 
 # Student-level pending edit state for artifact section rewrites.
@@ -29,9 +29,9 @@ _PENDING_SECTION_EDITS: Dict[str, int] = {}
 # ============================================================
 
 ARTIFACT_INTRODUCTION = """
-**Thinking Artifact Creation** 🎯
+**Thinking Artifact Creation** ðŸŽ¯
 
-Your Thinking Artifact shows your thinking journey — where you started, what you explored, and how you think differently now.
+Your Thinking Artifact shows your thinking journey â€” where you started, what you explored, and how you think differently now.
 
 **What it is:**
 - A 6-section document showing your thinking process
@@ -43,9 +43,9 @@ Your Thinking Artifact shows your thinking journey — where you started, what y
 - AI-generated content (this must be YOUR voice)
 - A test or assessment (there's no grading, no "wrong answers")
 
-**Feeling nervous? That's normal.** 🌟
+**Feeling nervous? That's normal.** ðŸŒŸ
 
-Many students feel anxious about sharing their thinking. That's okay. This artifact isn't about being impressive — it's about being real. Honest thinking beats polished perfection every time.
+Many students feel anxious about sharing their thinking. That's okay. This artifact isn't about being impressive â€” it's about being real. Honest thinking beats polished perfection every time.
 
 **You'll create this over Weeks 6-8:**
 - **Week 6:** Choose your question and start working through it
@@ -70,25 +70,25 @@ ARTIFACT_EXAMPLE = """
 
 **HOW I REFRAMED IT:**
 
-Using /frame, I realized my question wasn't "What should I study?" but "What do I value?" I discovered I care about: solving real problems, creative work, and having options — not just "helping people" (medicine) or "being good at tech" (CS).
+Using /frame, I realized my question wasn't "What should I study?" but "What do I value?" I discovered I care about: solving real problems, creative work, and having options â€” not just "helping people" (medicine) or "being good at tech" (CS).
 
 **WHAT I EXPLORED:**
 
 Using /diverge, I explored 3 angles:
 1. **What if I combined them?** (Medical technology, health tech startups)
-2. **What if I questioned the binary?** (Maybe neither medicine nor CS — what about data science for public health?)
+2. **What if I questioned the binary?** (Maybe neither medicine nor CS â€” what about data science for public health?)
 3. **What if I tried before committing?** (Volunteer at hospital, build a health app, see what I actually enjoy)
 
 **WHAT I CHALLENGED:**
 
 Using /challenge, I tested my assumptions:
-- "My parents will be disappointed if I don't do medicine" → *Challenge:* What if they want me to be happy, not just be a doctor?
-- "I need to decide now" → *Challenge:* What if the first year is FOR exploration? I don't have to commit forever.
-- "Computer science isn't helping people" → *Challenge:* What if health tech helps more people than one doctor ever could?
+- "My parents will be disappointed if I don't do medicine" â†’ *Challenge:* What if they want me to be happy, not just be a doctor?
+- "I need to decide now" â†’ *Challenge:* What if the first year is FOR exploration? I don't have to commit forever.
+- "Computer science isn't helping people" â†’ *Challenge:* What if health tech helps more people than one doctor ever could?
 
 **WHAT I CONCLUDED:**
 
-Using /synthesize, I crystalized my insight: The real question isn't medicine vs CS — it's "How do I want to help people?" I'm going to:
+Using /synthesize, I crystalized my insight: The real question isn't medicine vs CS â€” it's "How do I want to help people?" I'm going to:
 1. **Try both:** Volunteer at a hospital AND build a small health project this year
 2. **Keep options open:** Apply to both, but look for programs that combine tech + health
 3. **Decide later:** I don't need to know now. The first year is for exploration.
@@ -116,7 +116,7 @@ I'm not someone who "made the right choice." I'm someone who learned HOW to thin
 # ============================================================
 
 SECTION_1_PROMPT = """
-**Section 1 of 6: THE QUESTION I WRESTLED WITH** ⏸️
+**Section 1 of 6: THE QUESTION I WRESTLED WITH** â¸ï¸
 
 Your artifact starts with a real question you're facing. It could be about:
 - University/career decisions
@@ -126,10 +126,10 @@ Your artifact starts with a real question you're facing. It could be about:
 - Anything you're genuinely wrestling with
 
 **What makes a good artifact question:**
-✅ It's REAL (you're actually facing this)
-✅ It's COMPLEX (no easy answers)
-✅ It matters TO YOU (you genuinely want clarity)
-✅ You haven't fully solved it yet (room to explore)
+âœ… It's REAL (you're actually facing this)
+âœ… It's COMPLEX (no easy answers)
+âœ… It matters TO YOU (you genuinely want clarity)
+âœ… You haven't fully solved it yet (room to explore)
 
 **Examples:**
 - "I need to choose between [two universities/programs/careers]"
@@ -147,21 +147,21 @@ Type your question when ready:
 """
 
 SECTION_2_INTRO = """
-✅ **Got it!** Your question is saved.
+âœ… **Got it!** Your question is saved.
 
 **Your Question:**
 "{question}"
 
 **Next Step: Refine Your Question**
 
-Now we'll use /frame to clarify what you're really asking. Sometimes our first question isn't the TRUE question — it's just the surface.
+Now we'll use /frame to clarify what you're really asking. Sometimes our first question isn't the TRUE question â€” it's just the surface.
 
 Type: **/frame [your question]** to work with The Framer on refining your question.
 
 Example: /frame I need to choose between medicine and computer science but I feel stuck
 
 **If you're new to /frame:**
-The Framer helps you see what you're REALLY asking — not just the surface question. Just type your question and see what happens. The Framer will ask clarifying questions that help you dig deeper.
+The Framer helps you see what you're REALLY asking â€” not just the surface question. Just type your question and see what happens. The Framer will ask clarifying questions that help you dig deeper.
 
 **No pressure** - this conversation helps you clarify. There's no "wrong" answer.
 
@@ -169,7 +169,7 @@ This will open a conversation with The Framer to help you clarify what you're re
 """
 
 SECTION_2_PROMPT = """
-**Section 2 of 6: HOW I REFRAMED IT** 🎯
+**Section 2 of 6: HOW I REFRAMED IT** ðŸŽ¯
 
 Great work using /frame! Now let's capture what you discovered.
 
@@ -181,7 +181,7 @@ Great work using /frame! Now let's capture what you discovered.
 
 **Example:**
 
-"I originally thought I was choosing between medicine and computer science. But using /frame, I realized I'm actually asking 'What do I value?' I care about solving real problems, creative work, and having options — not just 'helping people' vs 'being good at tech.'"
+"I originally thought I was choosing between medicine and computer science. But using /frame, I realized I'm actually asking 'What do I value?' I care about solving real problems, creative work, and having options â€” not just 'helping people' vs 'being good at tech.'"
 
 **Your turn:**
 
@@ -194,7 +194,7 @@ Type your response when ready, or type **/frame** again if you want to keep refi
 """
 
 SECTION_3_INTRO = """
-**Section 3 of 6: WHAT I EXPLORED** 🔄
+**Section 3 of 6: WHAT I EXPLORED** ðŸ”„
 
 Now let's explore! Using /diverge, you'll examine multiple angles on your question.
 
@@ -206,7 +206,7 @@ The Explorer will help you:
 - Discover what you didn't know you were looking for
 
 **If you're new to /diverge:**
-The Explorer helps you see options you haven't considered. Think of it like brainstorming — no idea is too crazy. Share your question and see what angles emerge. You might be surprised what you discover.
+The Explorer helps you see options you haven't considered. Think of it like brainstorming â€” no idea is too crazy. Share your question and see what angles emerge. You might be surprised what you discover.
 
 **If you feel stuck:** Try "What are 3 angles I haven't considered?" as a starting prompt.
 
@@ -214,7 +214,7 @@ After your /diverge conversation, come back here and we'll capture what you expl
 """
 
 SECTION_3_PROMPT = """
-**Section 3: WHAT I EXPLORED** 🔄
+**Section 3: WHAT I EXPLORED** ðŸ”„
 
 Great exploration! Now let's document it.
 
@@ -226,8 +226,8 @@ Great exploration! Now let's document it.
 **Example:**
 
 "Using /diverge, I explored 3 angles:
-1. **What if I combined them?** Medical technology, health tech startups — fields that blend medicine and CS
-2. **What if I questioned the binary?** Maybe neither medicine nor CS — what about data science for public health?
+1. **What if I combined them?** Medical technology, health tech startups â€” fields that blend medicine and CS
+2. **What if I questioned the binary?** Maybe neither medicine nor CS â€” what about data science for public health?
 3. **What if I tried before committing?** Volunteer at hospital, build a health app, see what I actually enjoy
 
 The big surprise: I don't have to choose forever. I can explore both before committing."
@@ -240,7 +240,7 @@ Type your response when ready, or type **/diverge** again to explore more angles
 """
 
 SECTION_4_INTRO = """
-**Section 4 of 6: WHAT I CHALLENGED** 🧠
+**Section 4 of 6: WHAT I CHALLENGED** ðŸ§ 
 
 Now let's stress-test your thinking! Using /challenge, you'll examine your assumptions.
 
@@ -252,15 +252,15 @@ The Challenger will help you:
 - Test your assumptions before committing
 
 **If you're new to /challenge:**
-The Challenger helps you question what you assume is true. Challenging your own thinking feels uncomfortable — that's normal! Start with "What if I'm wrong about..." and see what happens. You don't have to change your mind — just test your thinking.
+The Challenger helps you question what you assume is true. Challenging your own thinking feels uncomfortable â€” that's normal! Start with "What if I'm wrong about..." and see what happens. You don't have to change your mind â€” just test your thinking.
 
-**If challenging feels scary:** Start SMALL. Challenge something minor, not your core belief. Remember: Challenging ≠ changing your mind. It just means testing.
+**If challenging feels scary:** Start SMALL. Challenge something minor, not your core belief. Remember: Challenging â‰  changing your mind. It just means testing.
 
 After your /challenge conversation, come back here and we'll capture what you challenged.
 """
 
 SECTION_4_PROMPT = """
-**Section 4: WHAT I CHALLENGED** 🧠
+**Section 4: WHAT I CHALLENGED** ðŸ§ 
 
 Great critical thinking! Now let's document it.
 
@@ -272,9 +272,9 @@ Great critical thinking! Now let's document it.
 **Example:**
 
 "Using /challenge, I tested my assumptions:
-1. **'My parents will be disappointed if I don't do medicine'** → *Challenge:* What if they want me to be happy, not just be a doctor? I realized I haven't actually talked to them about what they want FOR me (not what they want FROM me).
-2. **'I need to decide now'** → *Challenge:* What if the first year is FOR exploration? I'm 17 - how could I be certain about a 40-year career?
-3. **'Computer science isn't helping people'** → *Challenge:* What if health tech helps more people than one doctor ever could?
+1. **'My parents will be disappointed if I don't do medicine'** â†’ *Challenge:* What if they want me to be happy, not just be a doctor? I realized I haven't actually talked to them about what they want FOR me (not what they want FROM me).
+2. **'I need to decide now'** â†’ *Challenge:* What if the first year is FOR exploration? I'm 17 - how could I be certain about a 40-year career?
+3. **'Computer science isn't helping people'** â†’ *Challenge:* What if health tech helps more people than one doctor ever could?
 
 Challenging these assumptions made me realize I'm operating on fear and pressure, not my own values."
 
@@ -286,7 +286,7 @@ Type your response when ready, or type **/challenge** again to test more assumpt
 """
 
 SECTION_5_INTRO = """
-**Section 5 of 6: WHAT I CONCLUDED** ✨
+**Section 5 of 6: WHAT I CONCLUDED** âœ¨
 
 Now let's bring it all together! Using /synthesize, you'll crystalize your insights into clear conclusions.
 
@@ -301,11 +301,11 @@ After your /synthesize conversation, come back here and we'll capture your concl
 """
 
 SECTION_5_PROMPT = """
-**Section 5: WHAT I CONCLUDED** ✨
+**Section 5: WHAT I CONCLUDED** âœ¨
 
 Beautiful synthesis! Now let's document your conclusion.
 
-🔗 **Node 3.1 Connection:** Remember - "First draft is raw material" (from Week 6)
+ðŸ”— **Node 3.1 Connection:** Remember - "First draft is raw material" (from Week 6)
 Your conclusion isn't final! It's your current best thinking. You can always iterate later. Think of this as a snapshot, not a permanent decision.
 
 **What to include:**
@@ -315,7 +315,7 @@ Your conclusion isn't final! It's your current best thinking. You can always ite
 
 **Example:**
 
-"Using /synthesize, I crystalized my insight: The real question isn't medicine vs CS — it's 'How do I want to help people?'
+"Using /synthesize, I crystalized my insight: The real question isn't medicine vs CS â€” it's 'How do I want to help people?'
 
 **My conclusion:**
 I'm going to:
@@ -323,7 +323,7 @@ I'm going to:
 2. **Keep options open:** Apply to both, but look for programs that combine tech + health
 3. **Decide later:** I don't need to know now. The first year is for exploration.
 
-The big shift: I'm not looking for 'the right choice' anymore. I'm looking for 'the right next step' — and that's much less pressure."
+The big shift: I'm not looking for 'the right choice' anymore. I'm looking for 'the right next step' â€” and that's much less pressure."
 
 **Your turn:**
 
@@ -333,17 +333,17 @@ Type your response when ready, or type **/synthesize** again to refine your conc
 """
 
 SECTION_6_PROMPT = """
-**Section 6 of 6: WHAT THIS TAUGHT ME** 🌟
+**Section 6 of 6: WHAT THIS TAUGHT ME** ðŸŒŸ
 
 This is the most important section! It's where you show how you've grown as a thinker.
 
-🔗 **Node 3.2 Connection:** Remember - "I have opinions about quality" (from Week 6)
+ðŸ”— **Node 3.2 Connection:** Remember - "I have opinions about quality" (from Week 6)
 What standards do you now hold for your own thinking? What do you consider "good thinking"?
 
 **What to include:**
 - How you thought BEFORE this process (your "before" self)
 - How you think NOW (your "after" self)
-- Which 4 Habits you used (⏸️ 🎯 🔄 🧠) and how
+- Which 4 Habits you used (â¸ï¸ ðŸŽ¯ ðŸ”„ ðŸ§ ) and how
 - **How you'll use these thinking habits in university, your career, or your life** (Future Application)
 
 **Example:**
@@ -356,8 +356,8 @@ Now I realize:
 - **Habit 3 (Iterate):** I explored multiple angles instead of picking the first 'good enough' answer. I discovered options I didn't know existed.
 - **Habit 4 (Think First):** I questioned my assumptions instead of accepting them as true. I realized I was operating on fear, not my own values.
 
-🚀 **Future Application:**
-When I get to university, I'll use Habit 2 (Context) when I'm confused about assignments — I'll explain my full situation instead of staying stuck. I'll use Habit 4 (Think First) before choosing my courses. These habits aren't just for AI — they're how I'll approach decisions in my life.
+ðŸš€ **Future Application:**
+When I get to university, I'll use Habit 2 (Context) when I'm confused about assignments â€” I'll explain my full situation instead of staying stuck. I'll use Habit 4 (Think First) before choosing my courses. These habits aren't just for AI â€” they're how I'll approach decisions in my life.
 
 I'm not someone who 'made the right choice.' I'm someone who learned HOW to think through choices. That skill will follow me forever, even if I change my mind later."
 
@@ -367,24 +367,24 @@ Write 5-7 sentences reflecting on:
 1. How you thought before (your "before" self)
 2. How you think now (your "after" self)
 3. Which 4 Habits you used and how
-4. **How you'll apply these thinking habits in university, your career, or your life** (be specific — which habits will you use when?)
+4. **How you'll apply these thinking habits in university, your career, or your life** (be specific â€” which habits will you use when?)
 
 Type your reflection when ready. This is the final section!
 """
 
 COMPLETION_MESSAGE = """
-🎉 **Congratulations! Your Thinking Artifact is Complete!** 🎉
+ðŸŽ‰ **Congratulations! Your Thinking Artifact is Complete!** ðŸŽ‰
 
 **What you've created:**
-✅ Section 1: THE QUESTION I WRESTLED WITH
-✅ Section 2: HOW I REFRAMED IT (🎯 Habit 2: Context)
-✅ Section 3: WHAT I EXPLORED (🔄 Habit 3: Iterate)
-✅ Section 4: WHAT I CHALLENGED (🧠 Habit 4: Think First)
-✅ Section 5: WHAT I CONCLUDED
-✅ Section 6: WHAT THIS TAUGHT ME (⏸️ Habit 1: Pause)
+âœ… Section 1: THE QUESTION I WRESTLED WITH
+âœ… Section 2: HOW I REFRAMED IT (ðŸŽ¯ Habit 2: Context)
+âœ… Section 3: WHAT I EXPLORED (ðŸ”„ Habit 3: Iterate)
+âœ… Section 4: WHAT I CHALLENGED (ðŸ§  Habit 4: Think First)
+âœ… Section 5: WHAT I CONCLUDED
+âœ… Section 6: WHAT THIS TAUGHT ME (â¸ï¸ Habit 1: Pause)
 
 **What this proves:**
-You've become someone who can think clearly with AI. You didn't just "use tools" — you transformed how you approach problems.
+You've become someone who can think clearly with AI. You didn't just "use tools" â€” you transformed how you approach problems.
 
 **Next Steps:**
 
@@ -402,7 +402,7 @@ This week, you'll:
 
 ---
 
-**You should be proud of this.** This artifact proves real growth. 🌟
+**You should be proud of this.** This artifact proves real growth. ðŸŒŸ
 """
 
 
@@ -537,7 +537,7 @@ async def handle_create_artifact(message: discord.Message, student) -> None:
     # Check week (only available Week 6+)
     if student['current_week'] < 6:
         await message.reply(
-            "**Thinking Artifact** 🎯\n\n"
+            "**Thinking Artifact** ðŸŽ¯\n\n"
             "Your Thinking Artifact is a Week 6-8 project. "
             "You'll get access when Week 6 begins!\n\n"
             "This is where you'll prove how you've grown as a thinker by showing a real problem you worked through using the CIS agents."
@@ -629,7 +629,7 @@ async def handle_section_1_input(message: discord.Message, content: str) -> None
     response = SECTION_2_INTRO.format(question=content)
     await message.reply(response)
     await message.reply(
-        "**Voice Check:** 🎤\n\n"
+        "**Voice Check:** ðŸŽ¤\n\n"
         "Does your Section 1 question sound like YOUR real concern? "
         "If not, rewrite it in your own words before moving on."
     )
@@ -644,7 +644,7 @@ async def handle_section_2_input(message: discord.Message, content: str) -> None
 
     # Voice check prompt
     voice_check = """
-**Voice Check:** 🎤
+**Voice Check:** ðŸŽ¤
 
 Quick check before we continue: Does this sound like YOUR voice, or did it start sounding like AI wrote it?
 
@@ -668,7 +668,7 @@ async def handle_section_3_input(message: discord.Message, content: str) -> None
     store.update_artifact_section(discord_id, 3, content)
 
     # Voice check
-    await message.reply(content + "\n\n**Voice Check:** 🎤\n\nDoes this sound like your authentic voice? If yes, continue. If it sounds generic or AI-written, try adding more specifics from your actual /diverge conversation.")
+    await message.reply(content + "\n\n**Voice Check:** ðŸŽ¤\n\nDoes this sound like your authentic voice? If yes, continue. If it sounds generic or AI-written, try adding more specifics from your actual /diverge conversation.")
 
     # Guide to Section 4
     await message.reply(SECTION_4_INTRO)
@@ -682,7 +682,7 @@ async def handle_section_4_input(message: discord.Message, content: str) -> None
     store.update_artifact_section(discord_id, 4, content)
 
     # Voice check
-    await message.reply(content + "\n\n**Voice Check:** 🎤\n\nAuthentic thinking includes uncertainty. Did you share your real doubts and questions, or did it sound too polished? Keep it real.")
+    await message.reply(content + "\n\n**Voice Check:** ðŸŽ¤\n\nAuthentic thinking includes uncertainty. Did you share your real doubts and questions, or did it sound too polished? Keep it real.")
 
     # Guide to Section 5
     await message.reply(SECTION_5_INTRO)
@@ -698,7 +698,7 @@ async def handle_section_5_input(message: discord.Message, content: str) -> None
     # Voice check
     await message.reply(
         content
-        + "\n\n**Voice Check:** 🎤\n\n"
+        + "\n\n**Voice Check:** ðŸŽ¤\n\n"
         "Does this conclusion feel authentic to YOUR thinking process? "
         "It's okay to say \"I'm not sure yet\" or \"I'm still figuring this out.\""
     )
@@ -716,7 +716,7 @@ async def handle_section_6_input(message: discord.Message, content: str) -> None
 
     # Final voice check
     await message.reply(
-        "**Voice Check:** 🎤\n\n"
+        "**Voice Check:** ðŸŽ¤\n\n"
         "Final check: does this reflection sound unmistakably like YOU?"
     )
 
@@ -742,7 +742,7 @@ async def resume_artifact_creation(message: discord.Message, student, artifact_r
     completed_count = len(artifact_progress.completed_sections)
 
     message_content = f"""
-**Welcome back to your Thinking Artifact!** 📝
+**Welcome back to your Thinking Artifact!** ðŸ“
 
 **Progress: {completed_count}/6 sections complete**
 
@@ -765,17 +765,17 @@ def get_progress_summary(artifact_progress: ArtifactProgress) -> str:
     summaries = []
 
     if artifact_progress.section_1_question:
-        summaries.append("✅ Section 1: Question defined")
+        summaries.append("âœ… Section 1: Question defined")
     if artifact_progress.section_2_reframed:
-        summaries.append("✅ Section 2: Reframed with /frame")
+        summaries.append("âœ… Section 2: Reframed with /frame")
     if artifact_progress.section_3_explored:
-        summaries.append("✅ Section 3: Explored with /diverge")
+        summaries.append("âœ… Section 3: Explored with /diverge")
     if artifact_progress.section_4_challenged:
-        summaries.append("✅ Section 4: Challenged with /challenge")
+        summaries.append("âœ… Section 4: Challenged with /challenge")
     if artifact_progress.section_5_concluded:
-        summaries.append("✅ Section 5: Concluded with /synthesize")
+        summaries.append("âœ… Section 5: Concluded with /synthesize")
     if artifact_progress.section_6_reflection:
-        summaries.append("✅ Section 6: Reflection complete")
+        summaries.append("âœ… Section 6: Reflection complete")
 
     return "\n".join(summaries) if summaries else "No sections completed yet"
 
@@ -816,7 +816,7 @@ async def show_artifact_review(message: discord.Message, artifact_row) -> None:
 
     # Display formatted artifact
     formatted = f"""
-**Your Complete Thinking Artifact** 📝
+**Your Complete Thinking Artifact** ðŸ“
 
 ---
 
@@ -824,29 +824,29 @@ async def show_artifact_review(message: discord.Message, artifact_row) -> None:
 
 {artifact_progress.section_1_question}
 
-**HOW I REFRAMED IT:** 🎯
+**HOW I REFRAMED IT:** ðŸŽ¯
 
 {artifact_progress.section_2_reframed}
 
-**WHAT I EXPLORED:** 🔄
+**WHAT I EXPLORED:** ðŸ”„
 
 {artifact_progress.section_3_explored}
 
-**WHAT I CHALLENGED:** 🧠
+**WHAT I CHALLENGED:** ðŸ§ 
 
 {artifact_progress.section_4_challenged}
 
-**WHAT I CONCLUDED:** ✨
+**WHAT I CONCLUDED:** âœ¨
 
 {artifact_progress.section_5_concluded}
 
-**WHAT THIS TAUGHT ME:** ⏸️
+**WHAT THIS TAUGHT ME:** â¸ï¸
 
 {artifact_progress.section_6_reflection}
 
 ---
 
-**Polish Checklist:** ✅
+**Polish Checklist:** âœ…
 
 Before publishing, review your artifact:
 - [ ] **Clarity:** Does each section make sense to someone who doesn't know your story?
@@ -893,7 +893,7 @@ async def handle_artifact_commands(
         store.save_artifact_progress(discord_id, artifact_progress)
 
         await message.reply(
-            "✅ **Artifact saved!** Type `/create-artifact` anytime to continue."
+            "âœ… **Artifact saved!** Type `/create-artifact` anytime to continue."
         )
 
     elif command == 'review':
@@ -934,7 +934,7 @@ async def handle_artifact_commands(
     elif command == 'publish':
         if student['current_week'] < 8:
             await message.reply(
-                "**Publish to #thinking-showcase** 🚀\n\n"
+                "**Publish to #thinking-showcase** ðŸš€\n\n"
                 "Publishing opens in **Week 8**. Keep refining with **review** for now."
             )
             return
@@ -973,7 +973,7 @@ async def publish_artifact_to_showcase(
     """
     # Step 1: Prompt for publication preference (Public/Anonymous/Private)
     preference_prompt = (
-        "**Publish Your Thinking Artifact** 🚀\n\n"
+        "**Publish Your Thinking Artifact** ðŸš€\n\n"
         "Choose one publication option:\n\n"
         "- **confirm public**: Publish with your name to #thinking-showcase\n"
         "- **confirm anonymous**: Publish anonymously to #thinking-showcase\n"
@@ -1029,7 +1029,7 @@ async def generate_weekly_artifact_celebration(
 
     # Generate Guardrail #3 compliant celebration message
     celebration = (
-        f"**Weekly Artifact Celebration** 🎉\n\n"
+        f"**Weekly Artifact Celebration** ðŸŽ‰\n\n"
         f"{published_count} student{'s' if published_count > 1 else ''} "
         f"published their Thinking Artifacts to #thinking-showcase this week!\n\n"
         "Each artifact shows a unique thinking journey. "
@@ -1039,7 +1039,7 @@ async def generate_weekly_artifact_celebration(
         "become someone who can think clearly with AI.\n\n"
         "**Check out #thinking-showcase** to celebrate your peers' thinking growth!\n\n"
         "**Want to publish yours?** Type `/publish` to complete your artifact.\n\n"
-        "Tools change. Habits transfer forever. ⏸️ 🎯 🔄 🧠"
+        "Tools change. Habits transfer forever. â¸ï¸ ðŸŽ¯ ðŸ”„ ðŸ§ "
     )
 
     return celebration
@@ -1144,7 +1144,7 @@ def format_artifact_for_showcase(
     display_name = student_name if visibility == "public" else "Anonymous"
 
     formatted = f"""
-**Thinking Artifact: {display_name}** 🌟
+**Thinking Artifact: {display_name}** ðŸŒŸ
 
 *Completed: Week 8*
 
@@ -1154,31 +1154,31 @@ def format_artifact_for_showcase(
 
 {artifact_progress.section_1_question}
 
-**HOW I REFRAMED IT:** 🎯
+**HOW I REFRAMED IT:** ðŸŽ¯
 
 {artifact_progress.section_2_reframed}
 
-**WHAT I EXPLORED:** 🔄
+**WHAT I EXPLORED:** ðŸ”„
 
 {artifact_progress.section_3_explored}
 
-**WHAT I CHALLENGED:** 🧠
+**WHAT I CHALLENGED:** ðŸ§ 
 
 {artifact_progress.section_4_challenged}
 
-**WHAT I CONCLUDED:** ✨
+**WHAT I CONCLUDED:** âœ¨
 
 {artifact_progress.section_5_concluded}
 
-**WHAT THIS TAUGHT ME:** ⏸️
+**WHAT THIS TAUGHT ME:** â¸ï¸
 
 {artifact_progress.section_6_reflection}
 
 ---
 
-**4 Habits Earned:** ⏸️ 🎯 🔄 🧠
+**4 Habits Earned:** â¸ï¸ ðŸŽ¯ ðŸ”„ ðŸ§ 
 
-*Celebrate with reactions below! 👇*
+*Celebrate with reactions below! ðŸ‘‡*
 """
     return formatted.strip()
 
@@ -1255,7 +1255,7 @@ async def handle_confirm_publish(
             publication_type="artifact_completion",
             visibility_level="private",
             celebration_message=private_payload,
-            habits_demonstrated=["⏸️", "🎯", "🔄", "🧠"],
+            habits_demonstrated=["â¸ï¸", "ðŸŽ¯", "ðŸ”„", "ðŸ§ "],
             nodes_mastered=[],
             parent_email_included=False,
         )
@@ -1303,7 +1303,7 @@ async def handle_confirm_publish(
             publication_type="artifact_completion",
             visibility_level=visibility,
             celebration_message=formatted_artifact,
-            habits_demonstrated=["⏸️", "🎯", "🔄", "🧠"],
+            habits_demonstrated=["â¸ï¸", "ðŸŽ¯", "ðŸ”„", "ðŸ§ "],
             nodes_mastered=[],
             parent_email_included=False,
         )
@@ -1314,33 +1314,33 @@ async def handle_confirm_publish(
 
         if visibility == "public":
             confirm = (
-                "**Posted to #thinking-showcase!** 🎉\n\n"
+                "**Posted to #thinking-showcase!** ðŸŽ‰\n\n"
                 "Your artifact is now live. Your peers can see your thinking growth "
                 "and celebrate with you.\n\n"
                 "**You've officially earned:**\n"
-                "⏸️ **PAUSE** - Habit 1 Badge\n"
-                "🎯 **CONTEXT** - Habit 2 Badge\n"
-                "🔄 **ITERATE** - Habit 3 Badge\n"
-                "🧠 **THINK FIRST** - Habit 4 Badge\n\n"
-                "🔗 **Node 3.4: \"I Made This\"**\n\n"
+                "â¸ï¸ **PAUSE** - Habit 1 Badge\n"
+                "ðŸŽ¯ **CONTEXT** - Habit 2 Badge\n"
+                "ðŸ”„ **ITERATE** - Habit 3 Badge\n"
+                "ðŸ§  **THINK FIRST** - Habit 4 Badge\n\n"
+                "ðŸ”— **Node 3.4: \"I Made This\"**\n\n"
                 "You're not just someone who \"used AI.\" "
                 "You're someone who directed AI to create something meaningful.\n\n"
                 "That's the Zone 4 director identity - you own your thinking and your outcomes. "
                 "You didn't just use tools - you learned to THINK WITH AI.\n\n"
                 "That skill will follow you forever. Tools change - thinking lasts.\n\n"
-                "**Congratulations!** 🎉🌟"
+                "**Congratulations!** ðŸŽ‰ðŸŒŸ"
             )
         else:
             confirm = (
-                "**Posted anonymously to #thinking-showcase!** 🎉\n\n"
+                "**Posted anonymously to #thinking-showcase!** ðŸŽ‰\n\n"
                 "Your artifact is now live. Peers can see your thinking growth "
                 "and celebrate with you, but your name is hidden.\n\n"
                 "**You've officially earned:**\n"
-                "⏸️ **PAUSE** - Habit 1 Badge\n"
-                "🎯 **CONTEXT** - Habit 2 Badge\n"
-                "🔄 **ITERATE** - Habit 3 Badge\n"
-                "🧠 **THINK FIRST** - Habit 4 Badge\n\n"
-                "**Congratulations!** 🎉🌟"
+                "â¸ï¸ **PAUSE** - Habit 1 Badge\n"
+                "ðŸŽ¯ **CONTEXT** - Habit 2 Badge\n"
+                "ðŸ”„ **ITERATE** - Habit 3 Badge\n"
+                "ðŸ§  **THINK FIRST** - Habit 4 Badge\n\n"
+                "**Congratulations!** ðŸŽ‰ðŸŒŸ"
             )
         await message.reply(confirm)
 
@@ -1397,7 +1397,7 @@ async def handle_artifact_text_input(message: discord.Message, student, bot=None
         store.update_artifact_section(discord_id, pending_section, content)
         _PENDING_SECTION_EDITS.pop(discord_id, None)
         await message.reply(
-            f"✅ **Section {pending_section} updated!** Type **review** to inspect your artifact."
+            f"âœ… **Section {pending_section} updated!** Type **review** to inspect your artifact."
         )
         return True
 
@@ -1558,7 +1558,7 @@ async def send_artifact_inactivity_nudges(bot, inactive_days: int = 3) -> int:
         targeted_nudge = _build_stuck_pattern_nudge(artifact_progress, force=True) or ""
 
         reminder_text = (
-            "📝 **Thinking Artifact Reminder**\n\n"
+            "ðŸ“ **Thinking Artifact Reminder**\n\n"
             f"You've completed **{completed_count}/6** sections.\n"
             f"It's been **{days_inactive} day(s)** since your last artifact update.\n\n"
             "No pressure. Small progress counts.\n"
@@ -1586,3 +1586,4 @@ async def send_artifact_inactivity_nudges(bot, inactive_days: int = 3) -> int:
             logger.warning("Failed artifact inactivity nudge for %s: %s", discord_id, exc)
 
     return sent_count
+

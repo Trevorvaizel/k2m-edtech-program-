@@ -1,4 +1,4 @@
-"""
+﻿"""
 K2M CIS Discord Bot - Main Entry Point
 Story 4.7 Implementation: Discord Bot Technical Specification
 
@@ -48,6 +48,8 @@ SYNC_GLOBAL_COMMANDS = os.getenv(
 AI_PROVIDER = get_active_provider()
 LLM_MODEL = get_active_model(AI_PROVIDER)
 COHORT_1_START_DATE = os.getenv("COHORT_1_START_DATE", "2026-02-01")
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development").strip().lower()
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 _slash_synced = False
 
 # Weekly channel mapping for daily prompt scheduler (Story 2.1)
@@ -75,11 +77,18 @@ if not DISCORD_TOKEN:
     )
 
 if not os.environ.get("COHORT_1_START_DATE"):
-    raise EnvironmentError("COHORT_1_START_DATE not set — bot refusing to start")
+    raise EnvironmentError("COHORT_1_START_DATE not set â€” bot refusing to start")
 
 if not os.environ.get("COHORT_1_FIRST_SESSION_DATE"):
     logger.warning(
-        "COHORT_1_FIRST_SESSION_DATE not set — using COHORT_1_START_DATE as fallback"
+        "COHORT_1_FIRST_SESSION_DATE not set â€” using COHORT_1_START_DATE as fallback"
+    )
+
+if ENVIRONMENT in {"production", "prod"} and not (
+    DATABASE_URL.startswith("postgresql://") or DATABASE_URL.startswith("postgres://")
+):
+    raise EnvironmentError(
+        "DATABASE_URL must be set to a PostgreSQL DSN in production mode."
     )
 
 provider_ok, provider_details = validate_provider_configuration()
@@ -100,6 +109,13 @@ bot = commands.Bot(
     intents=intents,
     help_command=None,  # Custom help in #thinking-lab
 )
+
+
+def _get_store():
+    """Resolve runtime store (preferred) or factory store fallback."""
+    from database import get_runtime_store, get_store
+
+    return get_runtime_store() or get_store()
 
 
 def build_status_embed() -> discord.Embed:
@@ -203,7 +219,7 @@ async def on_ready():
     runtime_participation_tracker = None
     runtime_escalation_system = None
 
-    # Initialize database — PostgreSQL (Railway) if DATABASE_URL set, else SQLite (local/tests)
+    # Initialize database â€” PostgreSQL (Railway) if DATABASE_URL set, else SQLite (local/tests)
     try:
         from database import get_store, set_runtime_store
 
@@ -222,12 +238,12 @@ async def on_ready():
         logger.warning("Switching to in-memory backup mode until disk DB is restored.")
         try:
             from database.store import StudentStateStore
-            from database import set_runtime_store
+            from database import get_store, set_runtime_store
 
             StudentStateStore.activate_in_memory_fallback(
                 reason=f"Startup DB initialization failed: {exc}"
             )
-            runtime_store = StudentStateStore()
+            runtime_store = get_store(database_url="")
             set_runtime_store(runtime_store)
         except Exception as fallback_exc:
             logger.error(
@@ -521,10 +537,9 @@ async def submit_reflection_slash(
     identity_shift: str,
     proof_of_work: str,
 ):
-    from database.store import StudentStateStore
     from commands.reflection import submit_reflection_handler
 
-    store = StudentStateStore()
+    store = _get_store()
     await submit_reflection_handler(
         interaction=interaction,
         store=store,
@@ -550,10 +565,9 @@ async def parent_consent_slash(
     parent_email: str,
     consent_preference: app_commands.Choice[str],
 ):
-    from database.store import StudentStateStore
     from commands.parent_consent import set_parent_consent_handler
 
-    store = StudentStateStore()
+    store = _get_store()
     await set_parent_consent_handler(
         interaction=interaction,
         store=store,
@@ -576,10 +590,9 @@ async def update_parent_consent_slash(
     interaction: discord.Interaction,
     consent_preference: app_commands.Choice[str],
 ):
-    from database.store import StudentStateStore
     from commands.parent_consent import update_parent_consent_handler
 
-    store = StudentStateStore()
+    store = _get_store()
     await update_parent_consent_handler(
         interaction=interaction,
         store=store,
@@ -589,10 +602,9 @@ async def update_parent_consent_slash(
 
 @bot.tree.command(name="view-parent-consent", description="View your current parent consent settings.")
 async def view_parent_consent_slash(interaction: discord.Interaction):
-    from database.store import StudentStateStore
     from commands.parent_consent import view_parent_consent_handler
 
-    store = StudentStateStore()
+    store = _get_store()
     await view_parent_consent_handler(
         interaction=interaction,
         store=store,
@@ -611,10 +623,9 @@ async def unlock_week_slash(
     week_number: int,
     reason: str = "Manual override by Trevor",
 ):
-    from database.store import StudentStateStore
     from commands.admin import unlock_week
 
-    store = StudentStateStore()
+    store = _get_store()
     await unlock_week(interaction, store, student, week_number, reason)
 
 
@@ -627,10 +638,9 @@ async def unlock_week_slash(
 @app_commands.describe(days="Number of days to look back (default: 7)")
 async def show_aggregate_patterns_slash(interaction: discord.Interaction, days: int = 7):
     """Show aggregate patterns - Guardrail #3 compliant (no comparison/ranking)."""
-    from database.store import StudentStateStore
     from commands.admin import show_aggregate_patterns
 
-    store = StudentStateStore()
+    store = _get_store()
     await show_aggregate_patterns(interaction, store, days)
 
 
@@ -638,10 +648,9 @@ async def show_aggregate_patterns_slash(interaction: discord.Interaction, days: 
 @app_commands.describe(student="Student to inspect (@mention)")
 async def inspect_journey_slash(interaction: discord.Interaction, student: Optional[discord.Member] = None):
     """Inspect individual student journey - REQUIRES student consent (Guardrail #8)."""
-    from database.store import StudentStateStore
     from commands.admin import inspect_journey
 
-    store = StudentStateStore()
+    store = _get_store()
     await inspect_journey(interaction, store, student)
 
 
@@ -649,10 +658,9 @@ async def inspect_journey_slash(interaction: discord.Interaction, student: Optio
 @app_commands.describe(inactive_days="Days since last interaction (default: 3)")
 async def show_stuck_students_slash(interaction: discord.Interaction, inactive_days: int = 3):
     """Show students who may be stuck (intervention opportunities)."""
-    from database.store import StudentStateStore
     from commands.admin import show_stuck_students
 
-    store = StudentStateStore()
+    store = _get_store()
     await show_stuck_students(interaction, store, inactive_days)
 
 
@@ -660,10 +668,9 @@ async def show_stuck_students_slash(interaction: discord.Interaction, inactive_d
 @app_commands.describe(days="Number of days to look back (default: 30)")
 async def show_zone_shifts_slash(interaction: discord.Interaction, days: int = 30):
     """Show zone shift events (identity transformation tracking)."""
-    from database.store import StudentStateStore
     from commands.admin import show_zone_shifts
 
-    store = StudentStateStore()
+    store = _get_store()
     await show_zone_shifts(interaction, store, days)
 
 
@@ -671,10 +678,9 @@ async def show_zone_shifts_slash(interaction: discord.Interaction, days: int = 3
 @app_commands.describe(days="Number of days to look back (default: 7)")
 async def show_milestones_slash(interaction: discord.Interaction, days: int = 7):
     """Show habit milestone celebrations."""
-    from database.store import StudentStateStore
     from commands.admin import show_milestones
 
-    store = StudentStateStore()
+    store = _get_store()
     await show_milestones(interaction, store, days)
 
 
@@ -696,10 +702,9 @@ async def switch_cluster_slash(
     reason: str = None
 ):
     """Switch a student to a different cluster."""
-    from database.store import StudentStateStore
     from commands.cluster import switch_cluster
 
-    store = StudentStateStore()
+    store = _get_store()
     await switch_cluster(interaction, store, student, cluster_id, reason)
 
 
@@ -707,20 +712,18 @@ async def switch_cluster_slash(
 @app_commands.describe(cluster_id="Cluster ID to show (1-8)")
 async def cluster_roster_slash(interaction: discord.Interaction, cluster_id: int):
     """Show roster for a specific cluster."""
-    from database.store import StudentStateStore
     from commands.cluster import show_cluster_roster
 
-    store = StudentStateStore()
+    store = _get_store()
     await show_cluster_roster(interaction, store, cluster_id)
 
 
 @bot.tree.command(name="all-cluster-rosters", description="Show all cluster summaries (Trevor only).")
 async def all_cluster_rosters_slash(interaction: discord.Interaction):
     """Show summary of all clusters."""
-    from database.store import StudentStateStore
     from commands.cluster import show_all_cluster_rosters
 
-    store = StudentStateStore()
+    store = _get_store()
     await show_all_cluster_rosters(interaction, store)
 
 
@@ -737,10 +740,9 @@ async def post_session_summary_slash(
     attendance_count: int = None
 ):
     """Post session summary after completing a cluster session (Task 4.4)."""
-    from database.store import StudentStateStore
     from commands.cluster import post_session_summary
 
-    store = StudentStateStore()
+    store = _get_store()
     await post_session_summary(interaction, store, cluster_id, session_notes, attendance_count)
 
 
@@ -756,15 +758,13 @@ async def on_member_join(member: discord.Member):
     4. Assign @Cluster-X role
     5. Send welcome DM with cluster info
     """
-    from database.store import StudentStateStore
-
     # Skip bots
     if member.bot:
         return
 
     try:
         # Initialize store
-        store = StudentStateStore()
+        store = _get_store()
 
         # Extract last name from display_name
         # Format: "John Anderson" or "Anderson" or "John"
@@ -819,21 +819,21 @@ async def on_member_join(member: discord.Member):
             5: "A-F (overflow)", 6: "G-L (overflow)", 7: "M-R (overflow)", 8: "S-Z (overflow)"
         }
 
-        welcome_message = f"""👋 Welcome to K2M Cohort #1, **{member.display_name}**!
+        welcome_message = f"""ðŸ‘‹ Welcome to K2M Cohort #1, **{member.display_name}**!
 
 You're in **Cluster {cluster_id}** (Last names: {cluster_names.get(cluster_id, 'Unknown')})
 
-📅 **Cluster Session Schedule:**
+ðŸ“… **Cluster Session Schedule:**
 Cluster {cluster_id} meets **{schedule_text}**
 
-🎯 **What to do now:**
+ðŸŽ¯ **What to do now:**
 1. Introduce yourself in #week-1-wonder
 2. Check your daily prompts at 9:15 AM EAT
 3. Use `/frame` when you have a question to think through
 
-See you Monday! Let's build some thinking skills together 🚀
+See you Monday! Let's build some thinking skills together ðŸš€
 
-— KIRA (K2M Interactive Reasoning Agent)
+â€” KIRA (K2M Interactive Reasoning Agent)
 """
 
         await member.send(welcome_message)
@@ -923,3 +923,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

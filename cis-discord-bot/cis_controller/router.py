@@ -1,4 +1,4 @@
-"""
+﻿"""
 CIS Controller - Router Module
 Story 4.7 Implementation: CIS Controller routing logic
 
@@ -17,7 +17,7 @@ import os
 from typing import List, Optional
 import discord
 from discord.ext import commands
-from database.store import StudentStateStore
+from database import get_store
 from cis_controller.state_machine import (
     transition_state,
     celebrate_habit,
@@ -33,7 +33,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # Initialize state store
-store = StudentStateStore()
+store = get_store()
 _escalation_system = None
 _participation_tracker = None
 
@@ -338,7 +338,7 @@ async def route_student_interaction(message: discord.Message, bot=None):
                     source="student_dm_phrase",
                 )
                 await message.reply(
-                    "✅ Consent recorded for journey inspection (valid for 24 hours). "
+                    "âœ… Consent recorded for journey inspection (valid for 24 hours). "
                     "You can revoke anytime by sending: `revoke journey inspection consent`."
                 )
                 return
@@ -348,7 +348,7 @@ async def route_student_interaction(message: discord.Message, bot=None):
                     discord_id=discord_id,
                     consent_type="journey_inspection",
                 )
-                await message.reply("✅ Journey inspection consent revoked.")
+                await message.reply("âœ… Journey inspection consent revoked.")
                 return
 
             from commands.frame import (
@@ -479,7 +479,7 @@ async def handle_command(
     except Exception as e:
         logger.error(f"Error handling command {command}: {e}")
         await message.reply(
-            "**⚠️ Something went wrong.**\n\n"
+            "**âš ï¸ Something went wrong.**\n\n"
             "The bot encountered an error. Try again in a moment."
         )
 
@@ -533,7 +533,7 @@ async def friendly_lockout_message(message: discord.Message, student, agent: str
     available = get_unlocked_agents(current_week)
     available_cmds = ", ".join([f"/{cmd}" for cmd in available])
 
-    response = f"""🔒 **{agent.capitalize()} unlocks Week {unlock_week}!**
+    response = f"""ðŸ”’ **{agent.capitalize()} unlocks Week {unlock_week}!**
 
 You're currently in Week {current_week} - exactly where you should be.
 
@@ -542,14 +542,14 @@ You're currently in Week {current_week} - exactly where you should be.
 
 **Why the sequence matters:**
 Each agent builds on the 4 Habits you're learning:
-- ⏸️ **Pause** (Week 1): Know what you want
-- 🎯 **Context** (Week 2): AI responds to YOUR situation
-- 🔄 **Iterate** (Week 4): Explore one thing at a time
-- 🧠 **Think First** (Week 6): Use AI before decisions
+- â¸ï¸ **Pause** (Week 1): Know what you want
+- ðŸŽ¯ **Context** (Week 2): AI responds to YOUR situation
+- ðŸ”„ **Iterate** (Week 4): Explore one thing at a time
+- ðŸ§  **Think First** (Week 6): Use AI before decisions
 
 The {agent.capitalize()} will make more sense after practicing the earlier ones.
 
-**You're on track. Keep going!** ✨"""
+**You're on track. Keep going!** âœ¨"""
 
     await message.reply(response)
 
@@ -685,3 +685,4 @@ async def _collect_recent_public_messages(
         logger.warning("Could not collect recent public messages: %s", exc)
 
     return collected[:limit]
+

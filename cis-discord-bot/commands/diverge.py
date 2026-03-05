@@ -22,12 +22,12 @@ from cis_controller.safety_filter import (
     safety_filter,
 )
 from cis_controller.state_machine import celebrate_habit, transition_state
-from database.store import StudentStateStore
+from database import get_store
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-store = StudentStateStore()
+store = get_store()
 
 CHANNEL_THINKING_SHOWCASE = os.getenv("CHANNEL_THINKING_SHOWCASE", "").strip()
 CHANNEL_FACILITATOR_DASHBOARD = os.getenv(
@@ -506,4 +506,5 @@ async def handle_diverge(message: discord.Message, student):
             "**You're practicing Habit 3 (ðŸ”„ ITERATE) - explore one direction at a time!**\n\n"
             "Try /diverge again in a moment."
         )
+
 

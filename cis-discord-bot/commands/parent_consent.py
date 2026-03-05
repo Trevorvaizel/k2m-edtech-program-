@@ -4,13 +4,15 @@ Parent consent management (Task 4.6).
 Handles student parent email consent preferences.
 """
 
+from __future__ import annotations
+
 import logging
 
 from discord import Interaction
 from discord.app_commands import command, describe
 from discord.ext import commands
 
-from database.store import StudentStateStore
+from database import get_store
 
 logger = logging.getLogger(__name__)
 
@@ -203,7 +205,7 @@ class ParentConsentCog(commands.Cog):
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
-        self.store = StudentStateStore()
+        self.store = get_store()
 
     @command(name="parent-consent", description="Set parent email consent preferences")
     @describe(
@@ -253,3 +255,4 @@ async def setup(bot: commands.Bot):
     """Register the parent consent cog."""
     await bot.add_cog(ParentConsentCog(bot))
     logger.info("Parent consent commands registered")
+

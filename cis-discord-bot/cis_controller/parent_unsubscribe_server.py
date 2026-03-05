@@ -1,9 +1,11 @@
-"""
+﻿"""
 Lightweight HTTP endpoint for parent unsubscribe links.
 
 This provides GET /parent/unsubscribe?token=... so links sent in parent emails
 can be processed immediately without manual database intervention.
 """
+
+from __future__ import annotations
 
 import asyncio
 import logging
@@ -11,7 +13,7 @@ from typing import Optional
 
 from aiohttp import web
 
-from database.store import StudentStateStore
+from database import get_store
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +28,7 @@ class ParentUnsubscribeServer:
         port: int = 8080,
         path: str = "/parent/unsubscribe",
     ):
-        self.store = store or StudentStateStore()
+        self.store = store or get_store()
         self.host = host
         self.port = port
         self.path = path
@@ -100,3 +102,4 @@ class ParentUnsubscribeServer:
         except Exception:
             # Last-resort shutdown path should never crash process exit.
             pass
+

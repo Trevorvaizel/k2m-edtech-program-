@@ -15,7 +15,7 @@ import os
 from typing import List, Optional, Dict, Any
 import discord
 
-from database import store
+from database import get_store
 
 logger = logging.getLogger(__name__)
 
@@ -234,7 +234,7 @@ def _load_crisis_context(student_discord_id: Optional[int]) -> Dict[str, Any]:
     student_id = str(student_discord_id)
     db = None
     try:
-        db = store.StudentStateStore()
+        db = get_store()
         student = db.get_student(student_id)
         emotional_state = (
             student["emotional_state"] if student and student["emotional_state"] else "unknown"
@@ -395,7 +395,7 @@ async def notify_trevor_safety_violation(
                     username = f"<@{student_discord_id}>"
                     zone = "unknown"
 
-                    db = store.StudentStateStore()
+                    db = get_store()
                     student = db.get_student(str(student_discord_id))
                     if student:
                         last_name = student["last_name"] if "last_name" in student.keys() else None
@@ -426,7 +426,7 @@ async def notify_trevor_safety_violation(
                 # Fallback DB logging when escalation system is unavailable or fails.
                 db = None
                 try:
-                    db = store.StudentStateStore()
+                    db = get_store()
                     db.conn.execute(
                         """
                         INSERT INTO escalations (discord_id, escalation_level, notes, escalated_at)

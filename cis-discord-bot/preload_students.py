@@ -1,6 +1,6 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 """
-preload_students.py — Sheets → PostgreSQL student sync
+preload_students.py â€” Sheets â†’ PostgreSQL student sync
 Task 7.6 / Decision H-06: Google Sheets is the enrollment source of truth.
                             PostgreSQL is the runtime source of truth.
 
@@ -21,26 +21,26 @@ WHAT IT DOES:
 NIGHTLY ENGAGEMENT SYNC (Decision H-06 / GAP FIX #3):
     After cohort launch, a nightly job should call sync_engagement_back_to_sheets()
     which writes bot-generated runtime fields (zone, interaction_count, onboarding_stop)
-    BACK to Sheets — but only for rows where student.last_active is NEWER than
+    BACK to Sheets â€” but only for rows where student.last_active is NEWER than
     Sheets.manual_override_timestamp.
 
 ENVIRONMENT VARIABLES REQUIRED:
-    DATABASE_URL          — PostgreSQL URL (from Railway)
-    GOOGLE_SHEETS_CREDS   — path to service account JSON (or inline JSON)
-    GOOGLE_SHEETS_ID      — Spreadsheet ID (from URL)
-    GOOGLE_SHEETS_RANGE   — Sheet range, e.g. "Student Roster!A:Z" (default used if not set)
-    COHORT_ID             — default "cohort-1"
-    COHORT_START_DATE     — ISO date, e.g. "2026-04-01"
+    DATABASE_URL          â€” PostgreSQL URL (from Railway)
+    GOOGLE_SHEETS_CREDS   â€” path to service account JSON (or inline JSON)
+    GOOGLE_SHEETS_ID      â€” Spreadsheet ID (from URL)
+    GOOGLE_SHEETS_RANGE   â€” Sheet range, e.g. "Student Roster!A:Z" (default used if not set)
+    COHORT_ID             â€” default "cohort-1"
+    COHORT_START_DATE     â€” ISO date, e.g. "2026-04-01"
 
 SHEETS COLUMN MAPPING (canonical, from 5-5-sheets-templates.md):
-    A  — Name (first + last)
-    B  — Email
-    C  — Phone
-    D  — Discord ID (written by bot after join)
-    E  — Profession
-    R  — invite_code (written by /api/interest)
-    L  — Payment status (Pending / Confirmed / Unverifiable)
-    T  — manual_override_timestamp (Trevor sets this when manually editing a row)
+    A  â€” Name (first + last)
+    B  â€” Email
+    C  â€” Phone
+    D  â€” Discord ID (written by bot after join)
+    E  â€” Profession
+    R  â€” invite_code (written by /api/interest)
+    L  â€” Payment status (Pending / Confirmed / Unverifiable)
+    T  â€” manual_override_timestamp (Trevor sets this when manually editing a row)
 """
 
 import argparse
@@ -80,6 +80,118 @@ COL_INVITE = 17     # R  (invite_code)
 COL_MANUAL_TS = 19  # T  (manual_override_timestamp)
 
 
+def _load_json_source(source: str) -> Dict[str, Any]:
+    """Load JSON from inline payload or filesystem path."""
+    if source.strip().startswith("{"):
+        return json.loads(source)
+    with open(source, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _load_sheets_credentials_config(creds_path: Optional[str] = None) -> Dict[str, Any]:
+    """Load Google credentials config from env or explicit path."""
+    creds_source = creds_path or os.getenv("GOOGLE_SHEETS_CREDS", "")
+    if not creds_source:
+        raise ValueError("GOOGLE_SHEETS_CREDS env var not set (path or inline JSON)")
+    return _load_json_source(creds_source)
+
+
+def _build_sheets_service(
+    creds_path: Optional[str] = None,
+    read_only: bool = True,
+):
+    """Create an authenticated Google Sheets API client."""
+    try:
+        from google.oauth2.service_account import Credentials
+        from googleapiclient.discovery import build
+    except ImportError as exc:
+        raise RuntimeError(
+            "Google Sheets libraries not installed. "
+            "Run: pip install google-auth google-api-python-client"
+        ) from exc
+
+    scopes = (
+        ["https://www.googleapis.com/auth/spreadsheets.readonly"]
+        if read_only
+        else ["https://www.googleapis.com/auth/spreadsheets"]
+    )
+    cred_info = _load_sheets_credentials_config(creds_path=creds_path)
+
+    if cred_info.get("type") == "service_account":
+        credentials = Credentials.from_service_account_info(cred_info, scopes=scopes)
+    elif "installed" in cred_info:
+        # OAuth desktop credentials + refresh token payload fallback.
+        from google.auth.transport.requests import Request
+        from google.oauth2.credentials import Credentials as UserCredentials
+
+        token_source = os.getenv("GOOGLE_SHEETS_TOKEN", "").strip()
+        if not token_source:
+            raise ValueError(
+                "GOOGLE_SHEETS_TOKEN is required when GOOGLE_SHEETS_CREDS is OAuth client JSON"
+            )
+        token_info = _load_json_source(token_source)
+        installed = cred_info["installed"]
+        token_scopes = token_info.get("scopes")
+        if isinstance(token_scopes, str):
+            token_scopes = [token_scopes]
+        effective_scopes = token_scopes or scopes
+        credentials = UserCredentials(
+            token=token_info.get("token"),
+            refresh_token=token_info.get("refresh_token"),
+            token_uri=token_info.get("token_uri") or installed.get("token_uri"),
+            client_id=token_info.get("client_id") or installed.get("client_id"),
+            client_secret=token_info.get("client_secret") or installed.get("client_secret"),
+            scopes=effective_scopes,
+        )
+        if not credentials.valid and credentials.refresh_token:
+            credentials.refresh(Request())
+    else:
+        raise ValueError(
+            "Unsupported GOOGLE_SHEETS_CREDS format. Provide service-account JSON or OAuth client JSON."
+        )
+
+    return build("sheets", "v4", credentials=credentials, cache_discovery=False)
+
+
+def _parse_timestamp(value: Any) -> Optional[datetime]:
+    """Parse a timestamp from DB/Sheets string values."""
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value
+
+    text = str(value).strip()
+    if not text:
+        return None
+
+    normalized = text.replace("Z", "+00:00")
+    try:
+        return datetime.fromisoformat(normalized)
+    except ValueError:
+        pass
+
+    for fmt in (
+        "%Y-%m-%d %H:%M:%S",
+        "%Y-%m-%d %H:%M:%S.%f",
+        "%m/%d/%Y %H:%M:%S",
+        "%m/%d/%Y %H:%M",
+    ):
+        try:
+            return datetime.strptime(text, fmt)
+        except ValueError:
+            continue
+
+    return None
+
+
+def _format_timestamp_for_sheet(value: Any) -> str:
+    """Format DB timestamps for deterministic sheet writes."""
+    ts = _parse_timestamp(value)
+    if ts is None:
+        return ""
+    return ts.isoformat(sep=" ", timespec="seconds")
+
+
 # ---------------------------------------------------------------------------
 # Sheets reader
 # ---------------------------------------------------------------------------
@@ -94,30 +206,7 @@ def read_roster_from_sheets(
     Requires google-auth + google-api-python-client in environment.
     Returns list of rows (each row is a list of cell values).
     """
-    try:
-        from google.oauth2.service_account import Credentials
-        from googleapiclient.discovery import build
-    except ImportError:
-        logger.error(
-            "Google Sheets libraries not installed. "
-            "Run: pip install google-auth google-api-python-client"
-        )
-        sys.exit(1)
-
-    creds_source = creds_path or os.getenv("GOOGLE_SHEETS_CREDS", "")
-    if not creds_source:
-        logger.error("GOOGLE_SHEETS_CREDS env var not set (path to service account JSON)")
-        sys.exit(1)
-
-    if creds_source.strip().startswith("{"):
-        cred_info = json.loads(creds_source)
-    else:
-        with open(creds_source, "r") as f:
-            cred_info = json.load(f)
-
-    scopes = ["https://www.googleapis.com/auth/spreadsheets.readonly"]
-    credentials = Credentials.from_service_account_info(cred_info, scopes=scopes)
-    service = build("sheets", "v4", credentials=credentials, cache_discovery=False)
+    service = _build_sheets_service(creds_path=creds_path, read_only=True)
     sheet = service.spreadsheets()
 
     result = sheet.values().get(
@@ -177,7 +266,7 @@ def parse_student_rows(
             logger.debug("Row %s: skipping (no email)", i)
             continue
 
-        if payment not in ("confirmed", "yes", "paid", "✓"):
+        if payment not in ("confirmed", "yes", "paid", "âœ“"):
             logger.debug("Row %s: skipping %s (payment=%s)", i, email, payment)
             continue
 
@@ -221,7 +310,7 @@ def upsert_students_to_pg(
         sys.exit(1)
 
     if dry_run:
-        logger.info("[DRY RUN] Would upsert %s students — no changes written", len(students))
+        logger.info("[DRY RUN] Would upsert %s students â€” no changes written", len(students))
         for s in students:
             logger.info("  [DRY RUN] %s <%s> invite=%s", s["enrollment_name"], s["enrollment_email"], s["invite_code"])
         return 0
@@ -281,12 +370,12 @@ def upsert_students_to_pg(
     cursor.close()
     conn.close()
 
-    logger.info("✅ Upserted %s students into PostgreSQL", upserted)
+    logger.info("âœ… Upserted %s students into PostgreSQL", upserted)
     return upserted
 
 
 # ---------------------------------------------------------------------------
-# Nightly engagement sync: PostgreSQL → Sheets (Decision H-06 / GAP FIX #3)
+# Nightly engagement sync: PostgreSQL â†’ Sheets (Decision H-06 / GAP FIX #3)
 # ---------------------------------------------------------------------------
 
 def sync_engagement_back_to_sheets(
@@ -295,10 +384,10 @@ def sync_engagement_back_to_sheets(
     sheet_range: str = "Student Roster!A:Z",
     creds_path: Optional[str] = None,
     dry_run: bool = False,
-) -> None:
+) -> Dict[str, int]:
     """
     Nightly sync: write bot engagement data (zone, onboarding_stop, interaction_count)
-    back to Google Sheets — but ONLY for rows where:
+    back to Google Sheets - but ONLY for rows where:
 
         student.last_active > sheet_row.manual_override_timestamp
 
@@ -306,13 +395,18 @@ def sync_engagement_back_to_sheets(
     newer than the student's last bot interaction. This prevents the nightly
     sync from overwriting Trevor's manual cluster/zone adjustments.
 
-    Called nightly by the scheduler (not yet wired — add to DailyPromptScheduler).
+    Called nightly by the scheduler.
     """
     try:
         import psycopg2
     except ImportError:
         logger.error("psycopg2 not installed")
-        return
+        return {"synced": 0, "skipped_manual": 0, "missing_sheet_row": 0}
+
+    col_onboarding_stop = os.getenv("SHEETS_SYNC_ONBOARDING_STOP_COL", "AB").strip().upper() or "AB"
+    col_last_active = os.getenv("SHEETS_SYNC_LAST_ACTIVE_COL", "AC").strip().upper() or "AC"
+    col_frame_sessions = os.getenv("SHEETS_SYNC_FRAME_SESSIONS_COL", "AD").strip().upper() or "AD"
+    sheet_name = sheet_range.split("!", 1)[0] if "!" in sheet_range else "Student Roster"
 
     conn = psycopg2.connect(dsn=database_url)
     cursor = conn.cursor()
@@ -322,61 +416,126 @@ def sync_engagement_back_to_sheets(
                enrollment_email,
                onboarding_stop,
                last_interaction,
-               interaction_count,
-               manual_override_timestamp,
+               COALESCE(frame_sessions_count, interaction_count, 0) AS frame_sessions_count,
                zone
           FROM students
          WHERE discord_id IS NOT NULL
            AND discord_id NOT LIKE '__pending__%'
         """
     )
-    rows = cursor.fetchall()
+    db_rows = cursor.fetchall()
     conn.close()
+
+    try:
+        sheet_rows = read_roster_from_sheets(
+            spreadsheet_id=spreadsheet_id,
+            sheet_range=sheet_range,
+            creds_path=creds_path,
+        )
+    except Exception as exc:
+        logger.error("Failed to read roster for sync-back: %s", exc)
+        return {"synced": 0, "skipped_manual": 0, "missing_sheet_row": 0}
+
+    email_to_sheet_row: Dict[str, tuple[int, List[str]]] = {}
+    for idx, row in enumerate(sheet_rows[1:], start=2):
+        email = _safe_get(row, COL_EMAIL).lower()
+        if email and email not in email_to_sheet_row:
+            email_to_sheet_row[email] = (idx, row)
 
     synced = 0
     skipped_manual = 0
+    missing_sheet_row = 0
+    updates: List[Dict[str, Any]] = []
 
-    for row in rows:
+    for row in db_rows:
         (
             discord_id, email, onboarding_stop, last_active,
-            interaction_count, manual_override_ts, zone,
+            frame_sessions_count, zone,
         ) = row
 
+        email_key = (email or "").strip().lower()
+        if not email_key:
+            continue
+
+        sheet_lookup = email_to_sheet_row.get(email_key)
+        if not sheet_lookup:
+            logger.warning("Skipping %s: no matching row in sheet", email_key)
+            missing_sheet_row += 1
+            continue
+
+        sheet_row_num, sheet_row = sheet_lookup
+        manual_override_raw = _safe_get(sheet_row, COL_MANUAL_TS)
+        ts_manual = _parse_timestamp(manual_override_raw)
+        ts_active = _parse_timestamp(last_active)
+
         # GAP FIX #3: skip if Trevor manually edited this row more recently
-        if manual_override_ts and last_active:
-            try:
-                ts_manual = datetime.fromisoformat(str(manual_override_ts))
-                ts_active = datetime.fromisoformat(str(last_active))
-                if ts_manual > ts_active:
-                    logger.debug(
-                        "Skipping %s — manual override (%s) newer than last_active (%s)",
-                        email, ts_manual, ts_active,
-                    )
-                    skipped_manual += 1
-                    continue
-            except (ValueError, TypeError):
-                pass
+        if ts_manual and ts_active and ts_manual > ts_active:
+            logger.debug(
+                "Skipping %s - manual override (%s) newer than last_active (%s)",
+                email_key, ts_manual, ts_active,
+            )
+            skipped_manual += 1
+            continue
 
         if dry_run:
             logger.info(
-                "[DRY RUN] Would sync %s: zone=%s onboarding_stop=%s interactions=%s",
-                email, zone, onboarding_stop, interaction_count,
+                "[DRY RUN] Would sync %s: zone=%s onboarding_stop=%s last_active=%s frame_sessions_count=%s",
+                email_key,
+                zone,
+                onboarding_stop,
+                _format_timestamp_for_sheet(last_active),
+                frame_sessions_count,
             )
             synced += 1
             continue
 
-        # TODO: implement Sheets write-back via Apps Script webhook or direct Sheets API
-        # For now, log the data that would be written. Full implementation in task 7.6 followup.
-        logger.info(
-            "SYNC (stub): %s → zone=%s onboarding_stop=%s interactions=%s",
-            email, zone, onboarding_stop, interaction_count,
+        updates.extend(
+            [
+                {
+                    "range": f"{sheet_name}!{col_onboarding_stop}{sheet_row_num}",
+                    "values": [[str(onboarding_stop or 0)]],
+                },
+                {
+                    "range": f"{sheet_name}!{col_last_active}{sheet_row_num}",
+                    "values": [[_format_timestamp_for_sheet(last_active)]],
+                },
+                {
+                    "range": f"{sheet_name}!{col_frame_sessions}{sheet_row_num}",
+                    "values": [[str(frame_sessions_count or 0)]],
+                },
+            ]
         )
         synced += 1
 
-    logger.info(
-        "Engagement sync complete: %s synced, %s skipped (manual override)", synced, skipped_manual
-    )
+    if updates:
+        try:
+            write_service = _build_sheets_service(creds_path=creds_path, read_only=False)
+            write_service.spreadsheets().values().batchUpdate(
+                spreadsheetId=spreadsheet_id,
+                body={
+                    "valueInputOption": "RAW",
+                    "data": updates,
+                },
+            ).execute()
+        except Exception as exc:
+            logger.error("Sheets write-back failed: %s", exc)
+            return {
+                "synced": 0,
+                "skipped_manual": skipped_manual,
+                "missing_sheet_row": missing_sheet_row,
+            }
 
+    logger.info(
+        "Engagement sync complete: %s synced, %s skipped (manual override), %s missing rows",
+        synced,
+        skipped_manual,
+        missing_sheet_row,
+    )
+    return {
+        "synced": synced,
+        "skipped_manual": skipped_manual,
+        "missing_sheet_row": missing_sheet_row,
+    }
 
 # ---------------------------------------------------------------------------
 # CLI entry point
@@ -389,7 +548,7 @@ def main() -> None:
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Parse and show what would be upserted — no DB writes",
+        help="Parse and show what would be upserted â€” no DB writes",
     )
     parser.add_argument(
         "--csv",
@@ -399,7 +558,7 @@ def main() -> None:
     parser.add_argument(
         "--sync-back",
         action="store_true",
-        help="Run nightly engagement sync (PostgreSQL → Sheets) instead of preload",
+        help="Run nightly engagement sync (PostgreSQL â†’ Sheets) instead of preload",
     )
     args = parser.parse_args()
 
@@ -414,12 +573,16 @@ def main() -> None:
 
     if args.sync_back:
         spreadsheet_id = os.getenv("GOOGLE_SHEETS_ID", "")
+        sheet_range = os.getenv("GOOGLE_SHEETS_RANGE", "Student Roster!A:Z")
+        creds_path = os.getenv("GOOGLE_SHEETS_CREDS", "")
         if not spreadsheet_id:
             logger.error("GOOGLE_SHEETS_ID env var required for --sync-back")
             sys.exit(1)
         sync_engagement_back_to_sheets(
             database_url=database_url,
             spreadsheet_id=spreadsheet_id,
+            sheet_range=sheet_range,
+            creds_path=creds_path,
             dry_run=args.dry_run,
         )
         return
@@ -457,10 +620,12 @@ def main() -> None:
 
     if not args.dry_run:
         logger.info("")
-        logger.info("✅ preload_students.py complete.")
+        logger.info("âœ… preload_students.py complete.")
         logger.info("   Next step: ensure each student has received their unique invite link")
         logger.info("   (invite_code in Column R maps to the Discord invite KIRA generates)")
 
 
 if __name__ == "__main__":
     main()
+
+

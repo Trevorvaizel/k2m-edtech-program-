@@ -10,13 +10,16 @@ import asyncio
 import logging
 import os
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, TYPE_CHECKING
 
 import pytz
 
 from cis_controller.email_service import EmailResult, EmailService, get_email_service
 from cis_controller.email_templates import ParentEmailTemplates
-from database.store import StudentStateStore
+from database import get_store
+
+if TYPE_CHECKING:
+    from database.store import StudentStateStore
 
 logger = logging.getLogger(__name__)
 
@@ -33,12 +36,12 @@ class ParentEmailScheduler:
 
     def __init__(
         self,
-        store: Optional[StudentStateStore] = None,
+        store: Optional["StudentStateStore"] = None,
         email_service: Optional[EmailService] = None,
         templates: Optional[ParentEmailTemplates] = None,
         retry_delays_seconds: Optional[List[int]] = None,
     ):
-        self.store = store or StudentStateStore()
+        self.store = store or get_store()
         self.email_service = email_service or get_email_service()
         self.templates = templates or ParentEmailTemplates()
         self.retry_delays_seconds = retry_delays_seconds or self._load_retry_delays()
@@ -439,7 +442,7 @@ _parent_email_scheduler_instance: Optional[ParentEmailScheduler] = None
 
 
 def get_parent_email_scheduler(
-    store: Optional[StudentStateStore] = None,
+    store: Optional["StudentStateStore"] = None,
     retry_delays_seconds: Optional[List[int]] = None,
 ) -> ParentEmailScheduler:
     """Get or create parent email scheduler singleton instance."""
@@ -452,3 +455,4 @@ def get_parent_email_scheduler(
     elif store is not None:
         _parent_email_scheduler_instance.store = store
     return _parent_email_scheduler_instance
+

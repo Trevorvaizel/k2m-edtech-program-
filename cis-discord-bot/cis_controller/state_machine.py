@@ -1,4 +1,4 @@
-"""
+﻿"""
 CIS Controller - State Machine
 Story 4.7 Implementation: Student state management
 
@@ -18,8 +18,10 @@ Key Features:
 - State persistence: Track progress in database
 """
 
+from __future__ import annotations
+
 from typing import Optional
-from database.store import StudentStateStore
+from database import get_store
 import logging
 
 logger = logging.getLogger(__name__)
@@ -45,7 +47,7 @@ HABIT_NAMES = {
     4: ("THINK FIRST", "🧠"),
 }
 
-# Command → State mapping
+# Command â†’ State mapping
 COMMAND_STATES = {
     'frame': STATE_FRAMING,
     'diverge': STATE_EXPLORING,
@@ -57,7 +59,7 @@ COMMAND_STATES = {
 MILESTONES = [3, 7, 14, 21, 30]
 
 # Initialize store
-store = StudentStateStore()
+store = get_store()
 
 
 def celebrate_habit(student, habit_id: int) -> Optional[str]:
@@ -189,7 +191,7 @@ def transition_state(
             )
             db_store.conn.commit()
 
-            logger.info(f"Student {discord_id}: {current_state} → {new_state} (/{command})")
+            logger.info(f"Student {discord_id}: {current_state} â†’ {new_state} (/{command})")
         except Exception as e:
             logger.warning(f"Failed to persist state transition for /{command}: {e}")
 
@@ -215,3 +217,4 @@ def get_unlocked_agents(current_week: int) -> list:
     """
     from cis_controller.router import AGENTS_BY_WEEK
     return AGENTS_BY_WEEK.get(current_week, ["frame"])
+

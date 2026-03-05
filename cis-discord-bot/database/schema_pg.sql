@@ -38,7 +38,28 @@ CREATE TABLE IF NOT EXISTS students (
     enrollment_name TEXT,
     discord_username TEXT,
     enrollment_status TEXT DEFAULT 'pending',
-    payment_status TEXT DEFAULT 'pending'
+    payment_status TEXT DEFAULT 'pending',
+
+    -- Sprint 7.6 / Context-engine required columns
+    profession TEXT,
+    barrier_type TEXT,
+    barrier_confidence REAL DEFAULT 0.0,
+    situation TEXT,
+    goals TEXT,
+    emotional_baseline TEXT,
+    real_last_name TEXT,
+    preloaded BOOLEAN DEFAULT FALSE,
+    engagement_level TEXT DEFAULT 'quiet',
+    zone_shift_count INTEGER DEFAULT 0,
+    frame_sessions_count INTEGER DEFAULT 0,
+    showcase_posts_count INTEGER DEFAULT 0,
+    last_frame_topic TEXT,
+    cis_journey_summary TEXT,
+    initial_zone INTEGER,
+    artifact_title TEXT,
+    profile_complete BOOLEAN DEFAULT FALSE,
+    primary_device_context VARCHAR(50),
+    family_obligations_hint VARCHAR(200)
 );
 
 CREATE INDEX IF NOT EXISTS idx_students_cohort ON students(cohort_id);
@@ -365,3 +386,30 @@ CREATE TABLE IF NOT EXISTS parent_email_log (
 CREATE INDEX IF NOT EXISTS idx_email_log_student ON parent_email_log(student_id);
 CREATE INDEX IF NOT EXISTS idx_email_log_date ON parent_email_log(sent_at);
 CREATE INDEX IF NOT EXISTS idx_email_log_status ON parent_email_log(status);
+
+-- ============================================================
+-- IDEMPOTENT ADDITIVE MIGRATIONS FOR EXISTING PG DEPLOYMENTS
+-- ============================================================
+ALTER TABLE students ADD COLUMN IF NOT EXISTS cohort_id TEXT NOT NULL DEFAULT 'cohort-1';
+ALTER TABLE students ADD COLUMN IF NOT EXISTS invite_code VARCHAR(20);
+ALTER TABLE students ADD COLUMN IF NOT EXISTS onboarding_stop_0_complete BOOLEAN DEFAULT FALSE;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS manual_override_timestamp TIMESTAMP;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS profession TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS barrier_type TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS barrier_confidence REAL DEFAULT 0.0;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS situation TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS goals TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS emotional_baseline TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS real_last_name TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS preloaded BOOLEAN DEFAULT FALSE;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS engagement_level TEXT DEFAULT 'quiet';
+ALTER TABLE students ADD COLUMN IF NOT EXISTS zone_shift_count INTEGER DEFAULT 0;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS frame_sessions_count INTEGER DEFAULT 0;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS showcase_posts_count INTEGER DEFAULT 0;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS last_frame_topic TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS cis_journey_summary TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS initial_zone INTEGER;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS artifact_title TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS profile_complete BOOLEAN DEFAULT FALSE;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS primary_device_context VARCHAR(50);
+ALTER TABLE students ADD COLUMN IF NOT EXISTS family_obligations_hint VARCHAR(200);

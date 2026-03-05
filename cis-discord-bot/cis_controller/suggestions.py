@@ -1,4 +1,4 @@
-"""
+﻿"""
 CIS Controller - Natural Language Suggestions
 Story 4.7 Implementation: "Did you mean...?" system
 
@@ -20,12 +20,12 @@ Examples:
 import discord
 from typing import Optional
 from cis_controller.router import is_agent_unlocked, get_unlocked_agents
-from database.store import StudentStateStore
+from database import get_store
 import logging
 
 logger = logging.getLogger(__name__)
 
-store = StudentStateStore()
+store = get_store()
 
 # Keyword hints for natural language classification
 INTENT_KEYWORDS = {
@@ -195,3 +195,4 @@ def get_suggestion_template(week: int, command: str) -> Optional[str]:
 
     templates = SUGGESTION_TEMPLATES.get(level, {})
     return templates.get(command)
+

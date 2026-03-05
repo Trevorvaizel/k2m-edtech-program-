@@ -1,5 +1,5 @@
-"""
-SQLite → PostgreSQL migration script for cohort-1.db
+﻿"""
+SQLite â†’ PostgreSQL migration script for cohort-1.db
 Fixes: case-insensitive column matching, correct FK dependency order,
        reserved-word quoting, sqlite_sequence skip.
 
@@ -7,7 +7,7 @@ Usage:
     PYTHONIOENCODING=utf-8 python migrate_to_pg.py [--dry-run]
 
 ENV:
-    DATABASE_URL  — PostgreSQL connection string (public proxy URL)
+    DATABASE_URL  â€” PostgreSQL connection string (public proxy URL)
 """
 
 import os
@@ -15,22 +15,20 @@ import sys
 import sqlite3
 import psycopg2
 from psycopg2.extras import execute_values
+from urllib.parse import urlparse, urlunparse
 
-# ── Config ────────────────────────────────────────────────────────────────────
+# â”€â”€ Config â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 SQLITE_DB = "cohort-1.db"
 SCHEMA_SQL = "database/schema_pg.sql"
 DRY_RUN = "--dry-run" in sys.argv
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    "postgresql://postgres:BdegWUlsgkLRYwgysRLjicFmaWveydUx@shinkansen.proxy.rlwy.net:19981/railway",
-)
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
 
 # Tables to skip entirely (internal SQLite tables with no PG equivalent)
 SKIP_TABLES = {"sqlite_sequence"}
 
-# Migration order — FK parents before children.
+# Migration order â€” FK parents before children.
 # Tables not listed here will be migrated last (0-row tables, order irrelevant).
 MIGRATION_ORDER = [
     "students",                      # root: no FK deps
@@ -38,11 +36,11 @@ MIGRATION_ORDER = [
     "agent_unlock_announcements",    # no FK deps
     "cluster_assignments",           # discord_id (no strict FK in PG schema)
     "voice_channels",                # cluster_id
-    "conversations",                 # student_id → students
-    "habit_practice",                # student_id → students
+    "conversations",                 # student_id â†’ students
+    "habit_practice",                # student_id â†’ students
     "daily_participation",           # discord_id
     "weekly_reflections",            # discord_id
-    "showcase_publications",         # student_id → students
+    "showcase_publications",         # student_id â†’ students
     "observability_events",          # student_id_hash (no strict FK)
     "artifact_progress",
     "cluster_session_attendance",
@@ -52,6 +50,27 @@ MIGRATION_ORDER = [
     "student_consents",
     "student_publication_preferences",
 ]
+
+
+def redact_dsn(dsn: str) -> str:
+    """Redact password in DSN before logging."""
+    if not dsn:
+        return "<missing>"
+    try:
+        parsed = urlparse(dsn)
+    except Exception:
+        return "<redacted>"
+
+    host = parsed.hostname or ""
+    if parsed.port:
+        host = f"{host}:{parsed.port}"
+
+    if parsed.username:
+        netloc = f"{parsed.username}:***@{host}"
+    else:
+        netloc = host
+
+    return urlunparse((parsed.scheme, netloc, parsed.path or "", "", "", ""))
 
 
 def pg_cols_for_table(pg_cur, table_name: str) -> set[str]:
@@ -75,7 +94,7 @@ def quote_col(col: str) -> str:
 
 def migrate_table(sqlite_conn, pg_conn, table_name: str) -> int:
     """
-    Migrate all rows from SQLite table → PostgreSQL table.
+    Migrate all rows from SQLite table â†’ PostgreSQL table.
     Returns number of rows inserted.
     """
     sqlite_cur = sqlite_conn.cursor()
@@ -88,7 +107,7 @@ def migrate_table(sqlite_conn, pg_conn, table_name: str) -> int:
     sqlite_cur.execute(f'SELECT COUNT(*) FROM "{table_name}"')
     total = sqlite_cur.fetchone()[0]
     if total == 0:
-        print(f"  {table_name}: 0 rows — skip")
+        print(f"  {table_name}: 0 rows â€” skip")
         return 0
 
     sqlite_cur.execute(f'SELECT * FROM "{table_name}"')
@@ -101,17 +120,17 @@ def migrate_table(sqlite_conn, pg_conn, table_name: str) -> int:
     pg_available = pg_cols_for_table(pg_cur, table_name)
 
     if not pg_available:
-        print(f"  {table_name}: WARNING — table not found in PostgreSQL, skipping")
+        print(f"  {table_name}: WARNING â€” table not found in PostgreSQL, skipping")
         return 0
 
     # Intersection: only columns that exist in both SQLite and PostgreSQL
     shared_cols = [c for c in sqlite_col_names if c in pg_available]
 
     if not shared_cols:
-        print(f"  {table_name}: WARNING — no shared columns (sqlite={sqlite_col_names}, pg={sorted(pg_available)})")
+        print(f"  {table_name}: WARNING â€” no shared columns (sqlite={sqlite_col_names}, pg={sorted(pg_available)})")
         return 0
 
-    # Build column index map: shared_col → position in sqlite row
+    # Build column index map: shared_col â†’ position in sqlite row
     col_indices = {c: sqlite_col_names.index(c) for c in shared_cols}
 
     quoted_cols = ", ".join(quote_col(c) for c in shared_cols)
@@ -137,7 +156,7 @@ def migrate_table(sqlite_conn, pg_conn, table_name: str) -> int:
         print(f"  {table_name}: {inserted}/{total} rows migrated | cols={shared_cols}")
     except Exception as e:
         pg_conn.rollback()
-        print(f"  {table_name}: ERROR — {e}")
+        print(f"  {table_name}: ERROR â€” {e}")
         # Try row-by-row to isolate bad data
         for values in batch:
             try:
@@ -155,7 +174,7 @@ def migrate_table(sqlite_conn, pg_conn, table_name: str) -> int:
 
 
 def apply_schema(pg_conn):
-    """Apply schema_pg.sql — create tables/indexes if not exist."""
+    """Apply schema_pg.sql â€” create tables/indexes if not exist."""
     print("\n[1/3] Applying schema_pg.sql ...")
     with open(SCHEMA_SQL, "r", encoding="utf-8") as f:
         schema = f.read()
@@ -199,9 +218,11 @@ def verify_pg_tables(pg_conn):
 
 
 def main():
-    print(f"SQLite → PostgreSQL migration {'[DRY RUN] ' if DRY_RUN else ''}starting...")
+    print(f"SQLite â†’ PostgreSQL migration {'[DRY RUN] ' if DRY_RUN else ''}starting...")
     print(f"  Source: {SQLITE_DB}")
-    print(f"  Target: {DATABASE_URL[:40]}...")
+    if not DATABASE_URL:
+        raise RuntimeError("DATABASE_URL is required (no default DSN is embedded)")
+    print(f"  Target: {redact_dsn(DATABASE_URL)}")
 
     # Connect
     sqlite_conn = sqlite3.connect(SQLITE_DB)
@@ -255,3 +276,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
