@@ -108,6 +108,59 @@ canonical_merge_v3:
     - "6.7"
     - "6.5"
 
+execution_clarity_2026_03_05:
+  intent: "Single view of what must be done now vs parked legacy backlog."
+  active_now:
+    launch_blocking: "Sprint 7 only (7.0-7.16)."
+    task_ids:
+      - "7.0"
+      - "7.6"
+      - "7.1"
+      - "7.2"
+      - "7.3"
+      - "7.11"
+      - "7.4"
+      - "7.5"
+      - "7.7"
+      - "7.8"
+      - "7.10"
+      - "7.12"
+      - "7.13"
+      - "7.14"
+      - "7.9"
+      - "7.15"
+      - "7.16"
+  next_after_sprint_7:
+    task_ids:
+      - "6.1"
+      - "6.2"
+      - "6.3"
+      - "6.4"
+      - "6.7"
+      - "6.5"
+    note: "Rebase 6.x implementation details to PostgreSQL/runtime architecture before coding."
+  parked_legacy_backlog:
+    - group: "sprint_0_addendum"
+      task_ids: ["0.7a", "0.7b", "0.7c", "0.7d"]
+      rule: "Do not execute directly. Requirements are split into Sprint 7 + Sprint 6 tasks."
+    - group: "sprint_0_7_patch"
+      task_ids: ["0.7.1", "0.7.2", "0.7.3", "0.7.4", "0.7.5", "0.7.6", "0.7.7", "0.7.8"]
+      rule: "Legacy patch bucket. Use only as historical rationale; execute mapped Sprint 7 tasks."
+    - group: "sprint_5_addendum"
+      task_ids: ["5.8a", "5.8b", "5.8c"]
+      rule: "Deferred post-launch UX hardening. Not launch-blocking."
+    - group: "sprint_4"
+      task_ids: ["4.3"]
+      rule: "Needs rebase update (SQLite-era references) before execution."
+    - group: "sprint_6"
+      task_ids: ["6.6"]
+      rule: "Superseded by 7.6."
+  summary_counts:
+    active_now_tasks: 17
+    next_after_sprint_7_tasks: 6
+    parked_legacy_tasks: 16
+  first_action: "Start with 7.0, then continue in canonical_merge_v3.sprint_execution_order."
+
 # ============================================================
 # PLAYBOOK TRACEABILITY (AUDIT CROSSWALK)
 # ============================================================
@@ -1020,6 +1073,7 @@ sprint_5:
 # SPRINT 0 ADDENDUM: STUDENT ONBOARDING AUTOMATION
 # Apps Script + Brevo + M-Pesa gate
 # Decision 7 revised: building for Cohort 1
+# NOTE (2026-03-05): Legacy bucket parked in execution_clarity_2026_03_05.
 # ============================================================
 sprint_0_addendum:
   name: "Student Onboarding Automation"
@@ -1158,6 +1212,7 @@ sprint_0_addendum:
 # Address 4 critical blockers found in adversarial pre-mortem (2026-03-04)
 # Estimated: ~25 hours (3-4 days for 1 dev)
 # BLOCKER: Must complete before cohort launch
+# NOTE (2026-03-05): Legacy patch bucket parked in execution_clarity_2026_03_05.
 # ============================================================
 sprint_0_7_patch:
   name: "Pre-Mortem Critical Fixes"
@@ -1614,6 +1669,7 @@ sprint_0_7_patch:
 # ============================================================
 # SPRINT 5 ADDENDUM: DISCORD UX HARDENING
 # /register command, upgraded welcome DM, juncture coaching DMs
+# NOTE (2026-03-05): Deferred post-launch backlog unless manually promoted.
 # ============================================================
 sprint_5_addendum:
   name: "Discord UX Hardening + KIRA Contextual Coaching"
@@ -2465,14 +2521,15 @@ sprint_7:
 agent_instructions: |
   WHEN LOADING THIS FILE:
   1. Check progress section for overall status
-  2. If canonical_merge_v3.active = true, follow canonical_merge_v3.sprint_execution_order
-  3. If canonical_merge_v3.active = false, find the first sprint with status != "done"
-  4. Within that sprint, find first task with status "pending" or "in_progress"
-  5. Read execution_contract.mandatory_read_order in sequence
-  6. Load the task-level agent_context files specified for that task
-  7. Execute the task per its description and precedence rules
-  8. When done, update task status to "done", add a short summary, and store full details in task-notes/
-  9. Update progress section totals
+  2. Read execution_clarity_2026_03_05 and treat parked_legacy_backlog as non-executable unless manually promoted
+  3. If canonical_merge_v3.active = true, follow canonical_merge_v3.sprint_execution_order
+  4. If canonical_merge_v3.active = false, find the first sprint with status != "done"
+  5. Within that sprint, find first task with status "pending" or "in_progress"
+  6. Read execution_contract.mandatory_read_order in sequence
+  7. Load the task-level agent_context files specified for that task
+  8. Execute the task per its description and precedence rules
+  9. When done, update task status to "done", add a short summary, and store full details in task-notes/
+  10. Update progress section totals
 
   CRITICAL RULES:
   - NEVER skip a task's dependencies
@@ -2484,6 +2541,6 @@ agent_instructions: |
   - Keep each task auditable: link notes_ref and reference changed files in the summary
 
 # Last Updated
-last_updated: "2026-03-04"
-updated_by: "Maya (Design Thinking Coach) + adversarial pre-mortem panel session 4 (Sally+Winston+Amelia+DrQuinn+John+Mary+Murat). Session 4 added 25 new decisions (N-01 to N-25) addressing: UX experience gaps, context switch reduction, undesigned waiting periods, emotional design of activation moment. New tasks: 7.0 (launch date config), 7.9 (drop-off recovery emails), 7.10 (KIRA DM redesigns), 7.11 (webhook auth), 7.12 (#welcome-lounge), 7.13-7.15 (Brevo setup + deliverability), 7.16 (smoke test), 6.7 (other profession inference). Total tasks: 84. Sprint 7 now 17 tasks (7.0-7.16). Decisions: pre-mortem-session-4-decisions.md"
+last_updated: "2026-03-05"
+updated_by: "Codex cleanup patch: added execution_clarity_2026_03_05, explicit active/next/parked queues, and agent-instruction guardrails so legacy pending tasks do not obscure current execution path."
 
