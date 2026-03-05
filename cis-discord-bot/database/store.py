@@ -330,7 +330,7 @@ class StudentStateStore:
         discord_id = str(discord_id)  # Normalize: discord.py passes int IDs
         cohort_id = cohort_id or os.getenv('COHORT_ID', 'cohort-1')
         # Use cohort start date from env (not student join time)
-        start_date = os.getenv('COHORT_START_DATE', datetime.now().strftime('%Y-%m-%d'))
+        start_date = os.getenv('COHORT_1_START_DATE', datetime.now().strftime('%Y-%m-%d'))
 
         self.conn.execute(
             """
@@ -1796,7 +1796,7 @@ class StudentStateStore:
         """
         discord_id = str(discord_id)  # Normalize: discord.py passes int IDs
         cohort_id = cohort_id or os.getenv('COHORT_ID', 'cohort-1')
-        start_date = os.getenv('COHORT_START_DATE', datetime.now().strftime('%Y-%m-%d'))
+        start_date = os.getenv('COHORT_1_START_DATE', datetime.now().strftime('%Y-%m-%d'))
 
         # Determine cluster from last name
         cluster_id = self.assign_cluster_by_last_name(last_name) if last_name else 1
@@ -2451,7 +2451,7 @@ class StudentStateStore:
         Returns:
             Tuple of (week_start_iso, week_end_iso) for SQL filtering.
         """
-        start_date_str = os.getenv('COHORT_START_DATE', datetime.now().strftime('%Y-%m-%d'))
+        start_date_str = os.getenv('COHORT_1_START_DATE', datetime.now().strftime('%Y-%m-%d'))
         cohort_start = datetime.strptime(start_date_str, '%Y-%m-%d')
         week_index = max(week_number - 1, 0)
         week_start = cohort_start + timedelta(days=week_index * 7)

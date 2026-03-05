@@ -54,13 +54,13 @@ class ParticipationTracker:
             bot: Discord bot instance
             store: StudentStateStore instance
             weekly_channel_ids: List of weekly channel IDs to monitor
-            cohort_start_date: Cohort start date in YYYY-MM-DD (defaults to env COHORT_START_DATE)
+            cohort_start_date: Cohort start date in YYYY-MM-DD (defaults to env COHORT_1_START_DATE)
         """
         self.bot = bot
         self.store = store
         self.weekly_channel_ids = set(weekly_channel_ids)
         self._reaction_queue = []  # Queue of (message_id, channel_id) to react to
-        cohort_start_raw = cohort_start_date or os.getenv("COHORT_START_DATE", "2026-02-01")
+        cohort_start_raw = cohort_start_date or os.getenv("COHORT_1_START_DATE", "2026-02-01")
         self.cohort_start = EAT.localize(datetime.strptime(cohort_start_raw, "%Y-%m-%d"))
 
         logger.info(f"Participation tracker initialized for {len(weekly_channel_ids)} channels")

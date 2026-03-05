@@ -79,7 +79,7 @@ class ClusterSessionScheduler:
         self.guild_id = guild_id
         self.channel_mapping = channel_mapping
         self.cohort_start_date = self._parse_cohort_start_date(
-            cohort_start_date or os.getenv("COHORT_START_DATE", "")
+            cohort_start_date or os.getenv("COHORT_1_START_DATE", "")
         )
         self.CLUSTER_SCHEDULE = self._load_cluster_schedule()
 
@@ -96,7 +96,7 @@ class ClusterSessionScheduler:
         try:
             return EAT.localize(datetime.strptime(value, "%Y-%m-%d"))
         except ValueError:
-            logger.warning("Invalid COHORT_START_DATE '%s'; defaulting current week to 1", value)
+            logger.warning("Invalid COHORT_1_START_DATE '%s'; defaulting current week to 1", value)
             return None
 
     def _load_cluster_schedule(self):

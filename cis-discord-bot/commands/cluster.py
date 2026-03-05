@@ -114,7 +114,7 @@ async def switch_cluster(
             store=store,
             guild_id=interaction.guild.id,
             channel_mapping=_resolve_channel_mapping_with_fallback(interaction),
-            cohort_start_date=os.getenv("COHORT_START_DATE", ""),
+            cohort_start_date=os.getenv("COHORT_1_START_DATE", ""),
         )
         schedule_text = schedule_helper.get_cluster_schedule_text(new_cluster_id)
 
@@ -313,7 +313,7 @@ async def post_session_summary(
         store=store,
         guild_id=interaction.guild.id,
         channel_mapping=channel_mapping,
-        cohort_start_date=os.getenv("COHORT_START_DATE", ""),
+        cohort_start_date=os.getenv("COHORT_1_START_DATE", ""),
     )
 
     # Post session summary

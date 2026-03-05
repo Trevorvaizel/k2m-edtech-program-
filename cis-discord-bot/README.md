@@ -54,7 +54,7 @@ cp .env.template .env
 # - SYNC_GLOBAL_COMMANDS=false (avoid duplicate global+guild command listings)
 # - CHANNEL_FACILITATOR_DASHBOARD (budget + escalation alerts)
 # Required for admin observability commands:
-# - TREVOR_DISCORD_ID (only this user can run admin commands)
+# - FACILITATOR_DISCORD_ID (only this user can run admin commands)
 # Development only:
 # - ALLOW_INSECURE_ADMIN=true (do not enable in production)
 # Parent email system (Task 4.6):
