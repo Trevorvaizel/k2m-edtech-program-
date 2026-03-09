@@ -197,12 +197,12 @@ playbook_traceability:
 # ============================================================
 progress:
   total_tasks: 92
-  done: 39
+  done: 40
   in_progress: 0
   blocked: 0
-  pending: 53
-  percent_complete: 42
-  last_updated: "2026-03-05 - Task 7.2 RECONCILED COMPLETE after gap audit. Invite linkage now includes Sheets Column D fallback by invite_code, __pending__ placeholder-safe PG linking, @Facilitator guard for /recover-member, targeted regressions (24 tests), and verified production happy-path /api/interest -> /api/enroll -> /api/mpesa-submit with Sheets row update."
+  pending: 52
+  percent_complete: 43
+  last_updated: "2026-03-09 - Task 7.3 COMPLETE. /api/enroll now gates Email #2 on linked Discord identity with 1s/2s/4s backoff, queues deferred sends when linkage is missing, scheduler drains queued Email #2 hourly, and 48h enroll nudges now DM only linked Discord members. Targeted regressions passed (83 tests across enrollment + scheduler + invite matching + participation tracking)."
   decision_7_revised: "2026-02-20 â€” Context engine building NOW for Cohort 1 (not deferred)"
   adversarial_review_2: "2026-03-04 â€” Pre-mortem on enrollment flow. 5 P0 bugs fixed, 5 P1 issues resolved. Task 0.7 split into 0.7a-d. Payment amount standardized to KES 5,000. Source-of-truth set via execution_contract."
   adversarial_review_3: "2026-03-04 â€” Pre-mortem party mode (Sally+John+Winston+Amelia+DrQuinn+Murat+Mary+Maya). North star: zero Discord experience. Found 3 critical blockers, 6 high issues, 8 medium issues. Added Sprint 7. Migrated to PostgreSQL immediately (promoted from 6.6 prep). Full decisions log: pre-mortem-2026-03-04-decisions.md"
@@ -2086,7 +2086,8 @@ sprint_7:
 
     - id: "7.3"
       title: "KIRA DM architecture audit: Brevo-only pre-join, KIRA post-join"
-      status: "pending"
+      status: "done"
+      completed: "2026-03-09"
       description: |
         DECISION B-03 + GAP FIX #2. Audit and fix all DM trigger points.
         Rules:
@@ -2116,6 +2117,15 @@ sprint_7:
         Zero KIRA DMs fire before on_member_join match (grep guard verified).
         /api/enroll gates Email #2 on discord_id with retry logic (1s, 2s, 4s backoff).
         Queued emails delivered when discord_id becomes available. 48h enroll nudge DM works.
+      notes_ref: "task-notes/7.3.md"
+      summary: |
+        2026-03-09 - COMPLETE after implementation + test audit.
+        /api/enroll now requires linked Column D identity before sending Brevo Email #2; added 1s/2s/4s retry polling and warning log (`discord_id not found after 3 retries for {email}`).
+        Added persistent deferred Email #2 queue (`logs/pending_enroll_email_queue.json`) and scheduler drain at :12 each hour once linkage appears.
+        Added 48h enroll reminder DM scheduler pass (18:05 EAT) that only targets linked Discord users missing enroll profile fields.
+        Added explicit DM guard in participation tracker to skip unlinked/non-numeric discord_id rows.
+        Added and passed targeted tests covering gating/retry/queue/nudge behavior.
+        Full suite smoke run: 568 passed, 0 failed (Week 1 e2e fixture updated for async `guild.invites()`).
 
     - id: "7.4"
       title: "M-Pesa token lifecycle: day-5 warning + /renew command + expiry page"
@@ -2370,7 +2380,7 @@ sprint_7:
 
     - id: "7.11"
       title: "Webhook authentication: HMAC-SHA256 on all Apps Script â†’ bot endpoints"
-      status: "pending"
+      status: "done"
       description: |
         DECISION N-03 (Session 4). Apps Script â†’ Railway webhooks are currently unauthenticated.
         An attacker who discovers the URL can trigger role upgrades for arbitrary discord_ids.
@@ -2579,6 +2589,6 @@ agent_instructions: |
   - Keep each task auditable: link notes_ref and reference changed files in the summary
 
 # Last Updated
-last_updated: "2026-03-05"
-updated_by: "Codex cleanup patch: added execution_clarity_2026_03_05, explicit active/next/parked queues, and agent-instruction guardrails so legacy pending tasks do not obscure current execution path."
+last_updated: "2026-03-09"
+updated_by: "Task 7.3 completion patch: enforced Brevo-only pre-join DM architecture (Email #2 gate + retry/backoff + deferred queue), added scheduler queue drain + 48h enroll nudges, updated progress counts, and linked task-notes/7.3.md."
 

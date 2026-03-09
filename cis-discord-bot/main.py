@@ -70,6 +70,7 @@ daily_prompt_scheduler = None
 health_monitor = None
 parent_unsubscribe_server = None
 interest_api_server = None
+internal_webhook_server = None  # Task 7.11: HMAC-authenticated Apps Script → bot endpoints
 
 # Task 7.2 — Decision N-07: asyncio.Lock + invite snapshot for on_member_join diff
 # Dict shape: { guild_id: { invite_code: uses_count } }
@@ -249,7 +250,7 @@ async def sync_slash_commands() -> None:
 @bot.event
 async def on_ready():
     """Bot startup initialization."""
-    global _slash_synced, daily_prompt_scheduler, health_monitor, parent_unsubscribe_server, interest_api_server
+    global _slash_synced, daily_prompt_scheduler, health_monitor, parent_unsubscribe_server, interest_api_server, internal_webhook_server
 
     logger.info("%s has connected to Discord!", bot.user)
     logger.info("Serving %s guilds", len(bot.guilds))
@@ -471,6 +472,25 @@ async def on_ready():
             logger.info("Interest API server disabled by ENABLE_INTEREST_API=false")
     except Exception as exc:
         logger.error("Failed to start interest API server: %s", exc, exc_info=True)
+
+    # Task 7.11 — Decision N-03: HMAC-authenticated internal webhook endpoints for Apps Script
+    try:
+        if internal_webhook_server is None:
+            from cis_controller.internal_api_server import InternalWebhookServer
+
+            internal_host = os.getenv("INTERNAL_WEBHOOK_HOST", "0.0.0.0")
+            internal_port = int(os.getenv("INTERNAL_WEBHOOK_PORT", "8082"))
+            internal_webhook_server = InternalWebhookServer(
+                host=internal_host,
+                port=internal_port,
+                bot=bot,
+            )
+        else:
+            internal_webhook_server.set_bot(bot)
+
+        await internal_webhook_server.start()
+    except Exception as exc:
+        logger.error("Failed to start internal webhook server: %s", exc, exc_info=True)
 
     # Task 7.2 — Decision B-01: snapshot guild invites for on_member_join diff matching
     for guild in bot.guilds:
@@ -1193,6 +1213,11 @@ def main():
         if interest_api_server:
             interest_api_server.stop_sync()
             interest_api_server = None
+
+        # Stop internal webhook server when bot shuts down (Task 7.11)
+        if internal_webhook_server:
+            internal_webhook_server.stop_sync()
+            internal_webhook_server = None
 
         set_runtime_failure_notifier(None)
 

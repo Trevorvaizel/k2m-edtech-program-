@@ -1,0 +1,399 @@
+"""
+test_webhook_auth.py — Task 7.11: HMAC-SHA256 webhook authentication tests.
+
+Coverage:
+  - validate_signature: valid, missing header, wrong prefix, tampered payload
+  - /api/internal/role-upgrade: valid sig → 200, invalid sig → 401, bad discord_id → 400
+  - /api/internal/preload-student: valid sig → 200, invalid sig → 401, bad body → 400
+  - 401 dashboard logging
+  - get_client_ip: forwarded header + direct
+  - _grant_student_role: success 204, non-204, missing env vars
+"""
+
+from __future__ import annotations
+
+import hashlib
+import hmac
+import json
+from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
+
+# Secret used by all tests — plain string, matches how WEBHOOK_SECRET env var is set.
+SECRET_STR = "test-webhook-secret-string"
+SECRET_BYTES = SECRET_STR.encode()  # what _get_secret() returns for this env value
+
+
+def _sign(payload: bytes, key: bytes = SECRET_BYTES) -> str:
+    """Produce 'sha256=<hex>' signature matching the server's validation logic."""
+    sig = hmac.new(key, payload, hashlib.sha256).hexdigest()
+    return f"sha256={sig}"
+
+
+def _make_request(
+    body: bytes,
+    headers: dict | None = None,
+    remote: str = "1.2.3.4",
+) -> MagicMock:
+    """Build a mock aiohttp web.Request that supports read() and headers."""
+    req = MagicMock()
+    req.remote = remote
+    req.headers = headers or {}
+
+    async def _read():
+        return body
+
+    req.read = _read
+    return req
+
+
+# ── webhook_auth.validate_signature ───────────────────────────────────────
+
+class TestValidateSignature:
+    def _call(self, body: bytes, header: str | None, secret: str = SECRET_STR):
+        from cis_controller.webhook_auth import validate_signature
+        with patch.dict("os.environ", {"WEBHOOK_SECRET": secret}):
+            return validate_signature(body, header)
+
+    def test_valid_signature_passes(self):
+        body = b'{"discord_id":"123456"}'
+        header = _sign(body)
+        ok, reason = self._call(body, header)
+        assert ok is True
+        assert reason == ""
+
+    def test_missing_header_rejected(self):
+        body = b'{"discord_id":"123456"}'
+        ok, reason = self._call(body, None)
+        assert ok is False
+        assert "Missing" in reason
+
+    def test_empty_header_rejected(self):
+        body = b'{"discord_id":"123456"}'
+        ok, reason = self._call(body, "")
+        assert ok is False
+
+    def test_wrong_prefix_rejected(self):
+        body = b'{"discord_id":"123456"}'
+        raw_hex = hmac.new(SECRET_BYTES, body, hashlib.sha256).hexdigest()
+        ok, reason = self._call(body, f"md5={raw_hex}")
+        assert ok is False
+        assert "sha256=" in reason
+
+    def test_tampered_payload_rejected(self):
+        original = b'{"discord_id":"123456"}'
+        tampered = b'{"discord_id":"999999"}'
+        header = _sign(original)
+        ok, reason = self._call(tampered, header)
+        assert ok is False
+        assert "mismatch" in reason.lower()
+
+    def test_missing_secret_env_rejected(self):
+        from cis_controller.webhook_auth import validate_signature
+        with patch.dict("os.environ", {"WEBHOOK_SECRET": ""}):
+            ok, reason = validate_signature(b"payload", "sha256=abc")
+        assert ok is False
+        assert "WEBHOOK_SECRET" in reason
+
+    def test_different_secret_rejected(self):
+        body = b'{"test": true}'
+        header = _sign(body, key=b"wrong-secret")
+        ok, reason = self._call(body, header)
+        assert ok is False
+
+
+# ── get_client_ip ──────────────────────────────────────────────────────────
+
+class TestGetClientIp:
+    def test_forwarded_header_used_first(self):
+        from cis_controller.webhook_auth import get_client_ip
+        req = MagicMock()
+        req.headers = {"X-Forwarded-For": "1.2.3.4, 5.6.7.8"}
+        req.remote = "10.0.0.1"
+        assert get_client_ip(req) == "1.2.3.4"
+
+    def test_falls_back_to_remote(self):
+        from cis_controller.webhook_auth import get_client_ip
+        req = MagicMock()
+        req.headers = {}
+        req.remote = "10.0.0.1"
+        assert get_client_ip(req) == "10.0.0.1"
+
+    def test_unknown_when_no_ip(self):
+        from cis_controller.webhook_auth import get_client_ip
+        req = MagicMock()
+        req.headers = {}
+        req.remote = None
+        assert get_client_ip(req) == "unknown"
+
+
+# ── /api/internal/role-upgrade ────────────────────────────────────────────
+
+class TestRoleUpgradeEndpoint:
+    def _server(self):
+        from cis_controller.internal_api_server import InternalWebhookServer
+        return InternalWebhookServer(bot=MagicMock())
+
+    @pytest.mark.asyncio
+    async def test_valid_signature_calls_discord(self, monkeypatch):
+        monkeypatch.setenv("WEBHOOK_SECRET", SECRET_STR)
+        body = json.dumps({"discord_id": "123456789012345678"}).encode()
+        req = _make_request(body, {"X-K2M-Signature": _sign(body)})
+
+        with patch(
+            "cis_controller.internal_api_server._grant_student_role",
+            new_callable=AsyncMock,
+            return_value=(True, ""),
+        ) as mock_grant:
+            resp = await self._server()._handle_role_upgrade(req)
+
+        assert resp.status == 200
+        payload = json.loads(resp.body)
+        assert payload["success"] is True
+        mock_grant.assert_awaited_once_with("123456789012345678")
+
+    @pytest.mark.asyncio
+    async def test_missing_signature_returns_401(self, monkeypatch):
+        monkeypatch.setenv("WEBHOOK_SECRET", SECRET_STR)
+        body = json.dumps({"discord_id": "123456789012345678"}).encode()
+        req = _make_request(body, {})
+
+        with patch("cis_controller.internal_api_server._log_401_to_dashboard", new_callable=AsyncMock):
+            resp = await self._server()._handle_role_upgrade(req)
+
+        assert resp.status == 401
+        assert json.loads(resp.body)["success"] is False
+
+    @pytest.mark.asyncio
+    async def test_tampered_payload_returns_401(self, monkeypatch):
+        monkeypatch.setenv("WEBHOOK_SECRET", SECRET_STR)
+        original = json.dumps({"discord_id": "123456789012345678"}).encode()
+        tampered = json.dumps({"discord_id": "999999999999999999"}).encode()
+        req = _make_request(tampered, {"X-K2M-Signature": _sign(original)})
+
+        with patch("cis_controller.internal_api_server._log_401_to_dashboard", new_callable=AsyncMock):
+            resp = await self._server()._handle_role_upgrade(req)
+
+        assert resp.status == 401
+
+    @pytest.mark.asyncio
+    async def test_non_numeric_discord_id_returns_400(self, monkeypatch):
+        monkeypatch.setenv("WEBHOOK_SECRET", SECRET_STR)
+        body = json.dumps({"discord_id": "not-a-number"}).encode()
+        req = _make_request(body, {"X-K2M-Signature": _sign(body)})
+
+        resp = await self._server()._handle_role_upgrade(req)
+
+        assert resp.status == 400
+        assert "numeric" in json.loads(resp.body)["error"]
+
+    @pytest.mark.asyncio
+    async def test_missing_discord_id_returns_400(self, monkeypatch):
+        monkeypatch.setenv("WEBHOOK_SECRET", SECRET_STR)
+        body = json.dumps({"wrong_key": "value"}).encode()
+        req = _make_request(body, {"X-K2M-Signature": _sign(body)})
+
+        resp = await self._server()._handle_role_upgrade(req)
+
+        assert resp.status == 400
+
+    @pytest.mark.asyncio
+    async def test_discord_api_failure_returns_500(self, monkeypatch):
+        monkeypatch.setenv("WEBHOOK_SECRET", SECRET_STR)
+        body = json.dumps({"discord_id": "123456789012345678"}).encode()
+        req = _make_request(body, {"X-K2M-Signature": _sign(body)})
+
+        with patch(
+            "cis_controller.internal_api_server._grant_student_role",
+            new_callable=AsyncMock,
+            return_value=(False, "Discord returned 404"),
+        ):
+            resp = await self._server()._handle_role_upgrade(req)
+
+        assert resp.status == 500
+        assert json.loads(resp.body)["success"] is False
+
+    @pytest.mark.asyncio
+    async def test_401_logs_dashboard_with_endpoint_name(self, monkeypatch):
+        monkeypatch.setenv("WEBHOOK_SECRET", SECRET_STR)
+        body = json.dumps({"discord_id": "123456789012345678"}).encode()
+        req = _make_request(body, {}, remote="9.8.7.6")
+
+        with patch(
+            "cis_controller.internal_api_server._log_401_to_dashboard",
+            new_callable=AsyncMock,
+        ) as mock_log:
+            await self._server()._handle_role_upgrade(req)
+
+        mock_log.assert_awaited_once()
+        call_args = mock_log.call_args_list[0].args
+        assert any("/api/internal/role-upgrade" in str(a) for a in call_args)
+
+
+# ── /api/internal/preload-student ─────────────────────────────────────────
+
+class TestPreloadStudentEndpoint:
+    def _server(self):
+        from cis_controller.internal_api_server import InternalWebhookServer
+        return InternalWebhookServer(bot=MagicMock())
+
+    def _row(self) -> dict:
+        return {
+            "enrollment_email": "test@example.com",
+            "enrollment_name": "Test Student",
+            "last_name": "Student",
+            "invite_code": "abc123",
+            "discord_id": "__pending__test@example.com",
+            "cohort_id": "cohort-1",
+            "start_date": "2026-04-01",
+            "enrollment_status": "enrolled",
+            "payment_status": "Confirmed",
+        }
+
+    @pytest.mark.asyncio
+    async def test_valid_signature_upserts_student(self, monkeypatch):
+        monkeypatch.setenv("WEBHOOK_SECRET", SECRET_STR)
+        row = self._row()
+        body = json.dumps(row).encode()
+        req = _make_request(body, {"X-K2M-Signature": _sign(body)})
+
+        with patch(
+            "cis_controller.internal_api_server._upsert_single_student",
+            return_value=(True, ""),
+        ) as mock_upsert:
+            resp = await self._server()._handle_preload_student(req)
+
+        assert resp.status == 200
+        assert json.loads(resp.body)["success"] is True
+        mock_upsert.assert_called_once_with(row)
+
+    @pytest.mark.asyncio
+    async def test_missing_signature_returns_401(self, monkeypatch):
+        monkeypatch.setenv("WEBHOOK_SECRET", SECRET_STR)
+        body = json.dumps(self._row()).encode()
+        req = _make_request(body, {})
+
+        with patch("cis_controller.internal_api_server._log_401_to_dashboard", new_callable=AsyncMock):
+            resp = await self._server()._handle_preload_student(req)
+
+        assert resp.status == 401
+
+    @pytest.mark.asyncio
+    async def test_tampered_payload_returns_401(self, monkeypatch):
+        monkeypatch.setenv("WEBHOOK_SECRET", SECRET_STR)
+        original = json.dumps(self._row()).encode()
+        tampered = json.dumps({"enrollment_email": "hacker@evil.com"}).encode()
+        req = _make_request(tampered, {"X-K2M-Signature": _sign(original)})
+
+        with patch("cis_controller.internal_api_server._log_401_to_dashboard", new_callable=AsyncMock):
+            resp = await self._server()._handle_preload_student(req)
+
+        assert resp.status == 401
+
+    @pytest.mark.asyncio
+    async def test_non_dict_body_returns_400(self, monkeypatch):
+        monkeypatch.setenv("WEBHOOK_SECRET", SECRET_STR)
+        body = json.dumps(["list", "not", "dict"]).encode()
+        req = _make_request(body, {"X-K2M-Signature": _sign(body)})
+
+        resp = await self._server()._handle_preload_student(req)
+
+        assert resp.status == 400
+
+    @pytest.mark.asyncio
+    async def test_invalid_json_returns_400(self, monkeypatch):
+        monkeypatch.setenv("WEBHOOK_SECRET", SECRET_STR)
+        body = b"not valid json {"
+        req = _make_request(body, {"X-K2M-Signature": _sign(body)})
+
+        resp = await self._server()._handle_preload_student(req)
+
+        assert resp.status == 400
+
+    @pytest.mark.asyncio
+    async def test_db_failure_returns_500(self, monkeypatch):
+        monkeypatch.setenv("WEBHOOK_SECRET", SECRET_STR)
+        body = json.dumps(self._row()).encode()
+        req = _make_request(body, {"X-K2M-Signature": _sign(body)})
+
+        with patch(
+            "cis_controller.internal_api_server._upsert_single_student",
+            return_value=(False, "DB connection error"),
+        ):
+            resp = await self._server()._handle_preload_student(req)
+
+        assert resp.status == 500
+
+    @pytest.mark.asyncio
+    async def test_401_logs_dashboard_with_endpoint_name(self, monkeypatch):
+        monkeypatch.setenv("WEBHOOK_SECRET", SECRET_STR)
+        body = json.dumps(self._row()).encode()
+        req = _make_request(body, {}, remote="9.8.7.6")
+
+        with patch(
+            "cis_controller.internal_api_server._log_401_to_dashboard",
+            new_callable=AsyncMock,
+        ) as mock_log:
+            await self._server()._handle_preload_student(req)
+
+        mock_log.assert_awaited_once()
+        call_args = mock_log.call_args_list[0].args
+        assert any("/api/internal/preload-student" in str(a) for a in call_args)
+
+
+# ── _grant_student_role unit ───────────────────────────────────────────────
+
+class TestGrantStudentRole:
+    @pytest.mark.asyncio
+    async def test_success_on_204(self, monkeypatch):
+        monkeypatch.setenv("DISCORD_GUILD_ID", "111222333")
+        monkeypatch.setenv("STUDENT_ROLE_ID", "999888777")
+        monkeypatch.setenv("DISCORD_TOKEN", "fake-token")
+
+        from cis_controller.internal_api_server import _grant_student_role
+
+        mock_resp = MagicMock()
+        mock_resp.status_code = 204
+
+        mock_client = AsyncMock()
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=False)
+        mock_client.put = AsyncMock(return_value=mock_resp)
+
+        with patch("cis_controller.internal_api_server.httpx.AsyncClient", return_value=mock_client):
+            ok, error = await _grant_student_role("123456789")
+
+        assert ok is True
+        assert error == ""
+
+    @pytest.mark.asyncio
+    async def test_discord_returns_non_204_is_error(self, monkeypatch):
+        monkeypatch.setenv("DISCORD_GUILD_ID", "111222333")
+        monkeypatch.setenv("STUDENT_ROLE_ID", "999888777")
+        monkeypatch.setenv("DISCORD_TOKEN", "fake-token")
+
+        from cis_controller.internal_api_server import _grant_student_role
+
+        mock_resp = MagicMock()
+        mock_resp.status_code = 404
+        mock_resp.text = "Unknown Member"
+
+        mock_client = AsyncMock()
+        mock_client.__aenter__ = AsyncMock(return_value=mock_client)
+        mock_client.__aexit__ = AsyncMock(return_value=False)
+        mock_client.put = AsyncMock(return_value=mock_resp)
+
+        with patch("cis_controller.internal_api_server.httpx.AsyncClient", return_value=mock_client):
+            ok, error = await _grant_student_role("123456789")
+
+        assert ok is False
+        assert "404" in error
+
+    @pytest.mark.asyncio
+    async def test_missing_env_vars_returns_error(self, monkeypatch):
+        monkeypatch.setenv("DISCORD_GUILD_ID", "")
+        monkeypatch.setenv("STUDENT_ROLE_ID", "")
+        from cis_controller.internal_api_server import _grant_student_role
+        ok, error = await _grant_student_role("123456789")
+        assert ok is False
+        assert "not configured" in error
