@@ -11,17 +11,41 @@ import logging
 import os
 
 import discord
-from database import get_store
+from database import get_runtime_store, get_store
 from database.models import ArtifactProgress
 from datetime import datetime
 from typing import Dict, Optional
 
-store = get_store()
 logger = logging.getLogger(__name__)
 
 # Student-level pending edit state for artifact section rewrites.
 # Key: discord_id, Value: section number (1-6).
 _PENDING_SECTION_EDITS: Dict[str, int] = {}
+
+_fallback_store = None
+
+
+def _resolve_store():
+    """
+    Resolve store lazily to avoid blocking DB initialization during module import.
+    Prefer the runtime store initialized in main.py.
+    """
+    runtime_store = get_runtime_store()
+    if runtime_store is not None:
+        return runtime_store
+
+    global _fallback_store
+    if _fallback_store is None:
+        _fallback_store = get_store()
+    return _fallback_store
+
+
+class _StoreProxy:
+    def __getattr__(self, item):
+        return getattr(_resolve_store(), item)
+
+
+store = _StoreProxy()
 
 
 # ============================================================
