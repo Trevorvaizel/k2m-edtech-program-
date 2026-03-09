@@ -423,6 +423,18 @@ async def on_ready():
 
         interest_api_server = InterestAPIServer()
 
+    # Task 7.11 — Decision N-03: create InternalWebhookServer early so it can be
+    # mounted on the shared port-8080 server alongside interest/enroll routes.
+    if internal_webhook_server is None:
+        try:
+            from cis_controller.internal_api_server import InternalWebhookServer
+
+            internal_webhook_server = InternalWebhookServer(bot=bot)
+        except Exception as exc:
+            logger.error("Failed to create internal webhook server: %s", exc, exc_info=True)
+    else:
+        internal_webhook_server.set_bot(bot)
+
     try:
         enable_unsubscribe_server = os.getenv(
             "ENABLE_PARENT_UNSUBSCRIBE_SERVER",
@@ -445,6 +457,7 @@ async def on_ready():
                 parent_unsubscribe_server = ParentUnsubscribeServer(
                     store=runtime_store,
                     interest_api_server=mountable_interest_api,
+                    internal_webhook_server=internal_webhook_server,
                     host=host,
                     port=port,
                     path=path,
@@ -472,25 +485,6 @@ async def on_ready():
             logger.info("Interest API server disabled by ENABLE_INTEREST_API=false")
     except Exception as exc:
         logger.error("Failed to start interest API server: %s", exc, exc_info=True)
-
-    # Task 7.11 — Decision N-03: HMAC-authenticated internal webhook endpoints for Apps Script
-    try:
-        if internal_webhook_server is None:
-            from cis_controller.internal_api_server import InternalWebhookServer
-
-            internal_host = os.getenv("INTERNAL_WEBHOOK_HOST", "0.0.0.0")
-            internal_port = int(os.getenv("INTERNAL_WEBHOOK_PORT", "8082"))
-            internal_webhook_server = InternalWebhookServer(
-                host=internal_host,
-                port=internal_port,
-                bot=bot,
-            )
-        else:
-            internal_webhook_server.set_bot(bot)
-
-        await internal_webhook_server.start()
-    except Exception as exc:
-        logger.error("Failed to start internal webhook server: %s", exc, exc_info=True)
 
     # Task 7.2 — Decision B-01: snapshot guild invites for on_member_join diff matching
     for guild in bot.guilds:

@@ -25,12 +25,14 @@ class ParentUnsubscribeServer:
         self,
         store: Optional[StudentStateStore] = None,
         interest_api_server: Optional[object] = None,
+        internal_webhook_server: Optional[object] = None,
         host: str = "0.0.0.0",
         port: int = 8080,
         path: str = "/parent/unsubscribe",
     ):
         self.store = store or get_store()
         self.interest_api_server = interest_api_server
+        self.internal_webhook_server = internal_webhook_server  # Task 7.11
         self.host = host
         self.port = port
         self.path = path
@@ -81,6 +83,15 @@ class ParentUnsubscribeServer:
                 app.router.add_options("/api/interest", self.interest_api_server._handle_cors)
                 app.router.add_post("/api/interest", self.interest_api_server._handle_interest)
                 logger.info("Interest API mounted on parent unsubscribe server at /api/interest")
+
+        # Task 7.11: mount HMAC-authenticated internal webhook routes on the same port
+        if self.internal_webhook_server is not None:
+            if hasattr(self.internal_webhook_server, "register_routes"):
+                self.internal_webhook_server.register_routes(app)
+                logger.info(
+                    "Internal webhook API mounted on parent unsubscribe server "
+                    "at /api/internal/role-upgrade, /api/internal/preload-student"
+                )
         self._runner = web.AppRunner(app)
         await self._runner.setup()
 
