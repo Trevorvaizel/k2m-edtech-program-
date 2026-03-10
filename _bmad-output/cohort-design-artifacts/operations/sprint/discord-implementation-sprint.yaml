@@ -202,7 +202,7 @@ progress:
   blocked: 0
   pending: 50
   percent_complete: 46
-  last_updated: "2026-03-10 - Task 7.8 completed. Added shared /health endpoint on the parent unsubscribe server with DB + Discord connectivity probes and healthy/degraded JSON payloads, plus signed /api/internal/apps-script-error webhook ingestion with dashboard alert posting. Regression validation: py -m pytest tests/test_webhook_auth.py tests/test_task_78_reliability.py (37/37 passed)."
+  last_updated: "2026-03-10 - Task 7.8 hardening rollout completed: source-controlled Railway health checks via railway.toml, production deploy success (kira-bot) with /health path and ON_FAILURE restart policy, liveness-safe health response (HTTP 200 with payload-level healthy/degraded state), and a fresh Apps Script v2 project scaffolded with signed role-upgrade/preload/error webhooks. Regression validation remains green: py -m pytest tests/test_webhook_auth.py tests/test_task_78_reliability.py (37/37 passed). Live production Sheets integration check also passed via real read/write/restore using read_roster_rows + update_roster_cells."
   decision_7_revised: "2026-02-20 â€” Context engine building NOW for Cohort 1 (not deferred)"
   adversarial_review_2: "2026-03-04 â€” Pre-mortem on enrollment flow. 5 P0 bugs fixed, 5 P1 issues resolved. Task 0.7 split into 0.7a-d. Payment amount standardized to KES 5,000. Source-of-truth set via execution_contract."
   adversarial_review_3: "2026-03-04 â€” Pre-mortem party mode (Sally+John+Winston+Amelia+DrQuinn+Murat+Mary+Maya). North star: zero Discord experience. Found 3 critical blockers, 6 high issues, 8 medium issues. Added Sprint 7. Migrated to PostgreSQL immediately (promoted from 6.6 prep). Full decisions log: pre-mortem-2026-03-04-decisions.md"
@@ -2354,7 +2354,7 @@ sprint_7:
       acceptance: |
         GET /health returns 200 JSON. Railway health check configured in project settings.
         Apps Script errors post to dashboard within 60s. Error type and function name visible.
-      summary: "Implemented /health on the shared port-8080 aiohttp server with DB/Discord probes and healthy/degraded status codes; added signed /api/internal/apps-script-error endpoint and dashboard posting for function+error visibility; expanded automated coverage in test_webhook_auth.py plus new test_task_78_reliability.py (37/37 pass)."
+      summary: "Implemented /health on the shared port-8080 aiohttp server with DB/Discord probes and payload-level healthy/degraded reporting; added signed /api/internal/apps-script-error endpoint and dashboard posting for function+error visibility; configured Railway deploy health checks in-code (railway.toml) and verified production deployment success; scaffolded a new Apps Script v2 project + source under cis-discord-bot/scripts/apps-script/live for signed activation webhooks. Automated regression: 37/37 tests passing. Live production Sheets read/write/restore validation passed using read_roster_rows + update_roster_cells."
       notes_ref: "task-notes/7.8.md"
 
     # ============================================================
@@ -2640,5 +2640,5 @@ agent_instructions: |
 
 # Last Updated
 last_updated: "2026-03-10"
-updated_by: "Task 7.8 completion: added shared /health endpoint and signed Apps Script error webhook ingestion, updated sprint progress metrics, and added task-notes/7.8.md with implementation evidence and manual rollout steps."
+updated_by: "Task 7.8 rollout hardening + live Sheets verification: added railway.toml health config, fixed /health liveness semantics for Railway startup probes, verified production deployment success, created Apps Script v2 scaffold (linked + pushed), executed reversible production Sheets read/write/restore test, and expanded task-notes/7.8.md with rollout + validation evidence."
 

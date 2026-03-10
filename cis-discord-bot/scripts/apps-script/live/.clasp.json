@@ -1,0 +1,18 @@
+{
+  "scriptId": "1DhzxAcO3FGZ1wjAsO4cOBHs8uoTFYgPPQPD7oAwrLqaX8c1iwnjHHH1b",
+  "rootDir": "",
+  "projectId": "k2m-labs-487615",
+  "parentId": "1_wHYIdG9kJORl7k0Kmt3muhQ_e1joZWTTlyFPbONT-A",
+  "scriptExtensions": [
+    ".js",
+    ".gs"
+  ],
+  "htmlExtensions": [
+    ".html"
+  ],
+  "jsonExtensions": [
+    ".json"
+  ],
+  "filePushOrder": [],
+  "skipSubdirectories": false
+}
