@@ -435,6 +435,10 @@ async def on_ready():
     else:
         internal_webhook_server.set_bot(bot)
 
+    # Task 7.5: inject bot into InterestAPIServer so KIRA payment DMs can fire.
+    if interest_api_server is not None:
+        interest_api_server.set_bot(bot)
+
     try:
         enable_unsubscribe_server = os.getenv(
             "ENABLE_PARENT_UNSUBSCRIBE_SERVER",

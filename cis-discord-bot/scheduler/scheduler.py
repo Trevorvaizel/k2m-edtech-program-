@@ -127,6 +127,7 @@ class DailyPromptScheduler:
         self._enroll_nudges_today = False  # Task 7.3: 48h enroll reminder DM
         self._enroll_email_queue_last_run = None  # Task 7.3: Email #2 deferred queue drain
         self._token_expiry_check_today = False  # Task 7.4: nightly M-Pesa token expiry warning
+        self._payment_silence_check_last_run = None  # Task 7.5: 6h payment feedback DM pass
 
         logger.info(f"Scheduler initialized for guild {guild_id}")
         logger.info(f"Cohort start date: {cohort_start_date}")
@@ -1049,6 +1050,33 @@ class DailyPromptScheduler:
         except Exception as exc:
             logger.error("Token expiry warning check failed: %s", exc, exc_info=True)
 
+    async def post_payment_silence_check(self) -> None:
+        """
+        6h payment feedback DM pass (Task 7.5, Decisions H-02, M-01, N-23).
+
+        Three scan passes:
+          A) 24h silence DM: Pending > 24h → student KIRA DM (once, guarded by PG flag).
+          B) Unverifiable DM: Column L = 'Unverifiable' → student KIRA DM + dashboard alert.
+          C) N-23 escalation: Pending > 8h during business hours → DM ALL @Facilitator members (once).
+        """
+        spreadsheet_id = os.getenv("GOOGLE_SHEETS_ID", "").strip()
+        if not spreadsheet_id:
+            logger.warning("Task 7.5: payment silence check skipped — GOOGLE_SHEETS_ID missing")
+            return
+
+        try:
+            from cis_controller.interest_api_server import send_payment_feedback_dms
+
+            stats = await send_payment_feedback_dms(
+                bot=self.bot,
+                spreadsheet_id=spreadsheet_id,
+                sheet_range=os.getenv("GOOGLE_SHEETS_RANGE", "Student Roster!A:Z").strip(),
+                creds_path=os.getenv("GOOGLE_SHEETS_CREDENTIALS_PATH", "").strip() or None,
+            )
+            logger.info("Task 7.5: payment feedback DM pass stats: %s", stats)
+        except Exception as exc:
+            logger.error("Task 7.5: payment feedback DM pass failed: %s", exc, exc_info=True)
+
     async def _send_public_message(self, channel, message_text: str):
         """Route student-facing public posts through Guardrail #3 safety checks."""
         await post_to_discord_safe(
@@ -1262,6 +1290,15 @@ class DailyPromptScheduler:
                 logger.info("Scheduled: :12 enrollment email queue drain")
                 await self.process_enrollment_email_queue()
                 self._enroll_email_queue_last_run = run_key
+
+        # Every 6h at :05 — payment feedback DMs (Task 7.5, Decisions H-02, M-01, N-23).
+        # Fires at 00:05, 06:05, 12:05, 18:05 EAT using 6h bucket key.
+        if current_time.minute == 5 and current_time.hour % 6 == 0:
+            run_key_6h = now.strftime("%Y-%m-%d-") + str(current_time.hour // 6)
+            if self._payment_silence_check_last_run != run_key_6h:
+                logger.info("Scheduled: %02d:05 EAT payment feedback DM pass (6h bucket)", current_time.hour)
+                await self.post_payment_silence_check()
+                self._payment_silence_check_last_run = run_key_6h
 
         # 12:00 PM EAT Saturday - Batch unlock next week (Task 2.5)
         if current_time.hour == 12 and current_time.minute == 0 and day == WeekDay.SATURDAY and not self._week_unlock_today:

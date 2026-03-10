@@ -1035,6 +1035,7 @@ async def send_token_expiry_warnings(
 
         discord_id = _extract_discord_id(_safe_get(row, COL_DISCORD_ID))
         sent = False
+        send_channel = "unknown"
 
         if discord_id:
             # Path A: Discord DM
@@ -1042,6 +1043,7 @@ async def send_token_expiry_warnings(
                 user = await bot.fetch_user(int(discord_id))
                 await user.send(dm_text)
                 sent = True
+                send_channel = "discord_dm"
                 warned_dm += 1
                 logger.info("token_expiry_warning_sent discord_id=%s email=%s", discord_id, email)
             except Exception as exc:
@@ -1075,6 +1077,7 @@ async def send_token_expiry_warnings(
                 )
                 if result.success:
                     sent = True
+                    send_channel = "brevo_email"
                     warned_email += 1
                     logger.info("token_expiry_warning_sent email=%s (Brevo fallback)", email)
             except Exception as exc:
@@ -1086,6 +1089,20 @@ async def send_token_expiry_warnings(
             except Exception as exc:
                 logger.warning("Could not set token_warning_sent for %s: %s", email, exc)
 
+            try:
+                if hasattr(store, "log_observability_event"):
+                    store.log_observability_event(
+                        discord_id=str(discord_id or email),
+                        event_type="token_expiry_warning_sent",
+                        metadata={
+                            "email": email,
+                            "channel": send_channel,
+                            "expires_at": _iso_utc(expiry_dt),
+                        },
+                    )
+            except Exception as exc:
+                logger.warning("Could not log token_expiry_warning_sent for %s: %s", email, exc)
+
     return {
         "scanned": scanned,
         "warned_dm": warned_dm,
@@ -1093,6 +1110,167 @@ async def send_token_expiry_warnings(
         "skipped_already_sent": skipped_already_sent,
         "skipped_no_token": skipped_no_token,
     }
+
+
+async def send_payment_feedback_dms(
+    *,
+    bot: Any,
+    spreadsheet_id: str,
+    sheet_range: str = "Student Roster!A:Z",
+    creds_path: Optional[str] = None,
+    silence_after_hours: int = 24,
+    escalation_after_hours: int = 8,
+    business_hours_start_eat: int = 8,
+    business_hours_end_eat: int = 20,
+    max_per_pass: int = 50,
+) -> Dict[str, int]:
+    """
+    6h scheduler worker for Task 7.5 (Decisions H-02, M-01, N-23).
+
+    Three scan passes over the Sheets roster:
+
+    Pass A — 24h silence check:
+        Column L = 'Pending' AND Column N (created_at) age > silence_after_hours.
+        Sends KIRA DM once (guarded by payment_silence_dm_sent PG flag).
+        Message: "Still reviewing your payment. If urgent, post in #help channel."
+
+    Pass B — Unverifiable DM:
+        Column L = 'Unverifiable'.
+        Sends student KIRA DM once (guarded by unverifiable_dm_sent PG flag).
+        Also posts red-X alert to #facilitator-dashboard.
+        Message: "We had trouble verifying your payment. Please send a screenshot
+                  of your M-Pesa confirmation to #help or DM Trevor directly."
+
+    Pass C — N-23 facilitator escalation:
+        Column L = 'Pending' AND age > escalation_after_hours during business hours (EAT).
+        DMs ALL members of the @Facilitator role once per payment submission
+        (guarded by payment_escalation_dm_sent PG flag, reset when payment resolves).
+    """
+    from database import get_store
+    import pytz
+
+    EAT = pytz.timezone("Africa/Nairobi")
+    store = get_store()
+    now_utc = datetime.now(timezone.utc)
+    now_eat = now_utc.astimezone(EAT)
+    eat_hour = now_eat.hour
+
+    rows = await read_roster_rows(
+        spreadsheet_id=spreadsheet_id,
+        sheet_range=sheet_range,
+        creds_path=creds_path,
+    )
+
+    stats: Dict[str, int] = {
+        "scanned": 0,
+        "silence_dm_sent": 0,
+        "unverifiable_dm_sent": 0,
+        "escalation_dm_sent": 0,
+        "dashboard_alerts": 0,
+    }
+
+    # Pre-fetch facilitator role members for Pass C (N-23).
+    facilitator_members: List[Any] = []
+    facilitator_role_id_str = os.getenv("FACILITATOR_ROLE_ID", "").strip()
+    guild_id_str = os.getenv("DISCORD_GUILD_ID", "").strip()
+    if bot and facilitator_role_id_str and guild_id_str:
+        try:
+            guild = bot.get_guild(int(guild_id_str))
+            if guild:
+                role = guild.get_role(int(facilitator_role_id_str))
+                if role:
+                    facilitator_members = list(role.members)
+        except Exception as exc:
+            logger.warning("Task 7.5: could not fetch facilitator role members: %s", exc)
+
+    dashboard_channel_id = int(os.getenv("CHANNEL_FACILITATOR_DASHBOARD", "0") or "0")
+
+    for row_number, row in rows:
+        if stats["scanned"] >= max_per_pass:
+            break
+        stats["scanned"] += 1
+
+        email = _safe_get(row, COL_EMAIL)
+        if not email:
+            continue
+
+        name = (_safe_get(row, COL_NAME) or "there").split(" ")[0]
+        payment_status = (_safe_get(row, COL_PAYMENT) or "").strip()
+        created_at_raw = _safe_get(row, COL_CREATED_AT)
+        created_at_dt = _parse_iso_utc(created_at_raw)
+        discord_id = _extract_discord_id(_safe_get(row, COL_DISCORD_ID))
+
+        age_hours: float = 0.0
+        if created_at_dt:
+            age_hours = (now_utc - created_at_dt).total_seconds() / 3600
+
+        # ── Pass A: 24h silence DM ───────────────────────────────────────
+        if payment_status == "Pending" and age_hours >= silence_after_hours and discord_id and bot:
+            if not store.get_payment_silence_dm_sent(email):
+                try:
+                    user = await bot.fetch_user(int(discord_id))
+                    await user.send(
+                        f"Hey {name} — still reviewing your payment. "
+                        "If it's urgent, post in **#help** and a facilitator will assist."
+                    )
+                    store.set_payment_silence_dm_sent(email, True)
+                    stats["silence_dm_sent"] += 1
+                    logger.info("Task 7.5: silence DM sent to %s (age=%.1fh)", email, age_hours)
+                except Exception as exc:
+                    logger.warning("Task 7.5: silence DM failed for %s: %s", email, exc)
+
+        # ── Pass B: Unverifiable DM + dashboard alert ────────────────────
+        if payment_status == "Unverifiable":
+            if discord_id and bot and not store.get_unverifiable_dm_sent(email):
+                try:
+                    user = await bot.fetch_user(int(discord_id))
+                    await user.send(
+                        f"Hey {name} — we had trouble verifying your payment. "
+                        "Please send a screenshot of your M-Pesa confirmation to **#help** "
+                        "or DM Trevor directly."
+                    )
+                    store.set_unverifiable_dm_sent(email, True)
+                    stats["unverifiable_dm_sent"] += 1
+                    logger.info("Task 7.5: unverifiable DM sent to %s", email)
+                except Exception as exc:
+                    logger.warning("Task 7.5: unverifiable DM failed for %s: %s", email, exc)
+
+            # Dashboard red-X alert (fires every pass so Trevor always sees it)
+            if bot and dashboard_channel_id:
+                try:
+                    ch = bot.get_channel(dashboard_channel_id) or await bot.fetch_channel(dashboard_channel_id)
+                    await ch.send(
+                        f"🔴 **UNVERIFIABLE PAYMENT** — {name} ({email}). "
+                        "Manual action required."
+                    )
+                    stats["dashboard_alerts"] += 1
+                except Exception as exc:
+                    logger.warning("Task 7.5: dashboard unverifiable alert failed: %s", exc)
+
+        # ── Pass C: N-23 facilitator escalation at 8h+ (business hours EAT) ──
+        if (
+            payment_status == "Pending"
+            and age_hours >= escalation_after_hours
+            and business_hours_start_eat <= eat_hour < business_hours_end_eat
+            and facilitator_members
+            and not store.get_payment_escalation_dm_sent(email)
+        ):
+            sent_count = 0
+            for member in facilitator_members:
+                try:
+                    await member.send(
+                        f"⚠️ Payment pending >8h — **{name}** ({email}). "
+                        f"Age: {age_hours:.0f}h. Please verify in Google Sheets."
+                    )
+                    sent_count += 1
+                except Exception as exc:
+                    logger.warning("Task 7.5: escalation DM to facilitator %s failed: %s", member, exc)
+            if sent_count > 0:
+                store.set_payment_escalation_dm_sent(email, True)
+                stats["escalation_dm_sent"] += sent_count
+                logger.info("Task 7.5: N-23 escalation sent to %d facilitators for %s", sent_count, email)
+
+    return stats
 
 
 class InterestAPIServer:
@@ -1104,6 +1282,7 @@ class InterestAPIServer:
         port: int = 8081,
         spreadsheet_id: Optional[str] = None,
         creds_path: Optional[str] = None,
+        bot=None,
     ):
         self.host = host
         self.port = port
@@ -1112,6 +1291,11 @@ class InterestAPIServer:
         self.sheet_range = os.getenv("GOOGLE_SHEETS_RANGE", "Student Roster!A:Z")
         self._runner: Optional[web.AppRunner] = None
         self._site: Optional[web.BaseSite] = None
+        self._bot = bot
+
+    def set_bot(self, bot) -> None:
+        """Inject bot reference after startup (called from main.py on_ready)."""
+        self._bot = bot
 
     async def _handle_cors(self, request: web.Request) -> web.Response:
         return web.Response(
@@ -1592,6 +1776,7 @@ class InterestAPIServer:
 
             student_email = _safe_get(row, COL_EMAIL)
             student_name = _safe_get(row, COL_NAME) or student_email.split("@")[0]
+            first_name = student_name.split(" ")[0]
             email_sent = await send_mpesa_received_email(
                 to_email=student_email,
                 first_name=student_name,
@@ -1605,6 +1790,22 @@ class InterestAPIServer:
                     status=502,
                     headers=_cors_headers(),
                 )
+
+            # Task 7.5 (Decision H-02): Immediate KIRA DM — fire-and-forget, never block 200.
+            student_discord_id = _extract_discord_id(_safe_get(row, COL_DISCORD_ID))
+            if student_discord_id and self._bot:
+                async def _send_immediate_payment_dm(discord_id: str, name: str) -> None:
+                    try:
+                        user = await self._bot.fetch_user(int(discord_id))
+                        await user.send(
+                            f"Hey {name} — got your M-Pesa code! "
+                            "Trevor reviews within 24 hours. I will DM you when you are activated."
+                        )
+                        logger.info("Task 7.5: immediate payment DM sent to discord_id=%s", discord_id)
+                    except Exception as exc:
+                        logger.warning("Task 7.5: immediate payment DM failed for %s: %s", discord_id, exc)
+
+                asyncio.create_task(_send_immediate_payment_dm(student_discord_id, first_name))
 
             return web.json_response(
                 {

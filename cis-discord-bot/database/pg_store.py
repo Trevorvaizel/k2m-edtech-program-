@@ -659,9 +659,19 @@ class PgStudentStateStore(StudentStateStore):
         this student in the current token cycle. Prevents duplicate warnings.
         Lookup by enrollment_email (student may not have a Discord ID yet).
         """
+        email = (enrollment_email or "").strip().lower()
+        if not email:
+            return False
+
         row = self.conn.execute(
-            "SELECT token_warning_sent FROM students WHERE enrollment_email = ?",
-            (enrollment_email,),
+            """
+            SELECT token_warning_sent
+              FROM students
+             WHERE LOWER(enrollment_email) = LOWER(?)
+             ORDER BY created_at DESC
+             LIMIT 1
+            """,
+            (email,),
         ).fetchone()
         if row is None:
             return False
@@ -673,11 +683,101 @@ class PgStudentStateStore(StudentStateStore):
         Set the token_warning_sent flag for a student (by enrollment_email).
         Call with value=True after sending the warning, value=False on /renew.
         """
-        self.conn.execute(
-            "UPDATE students SET token_warning_sent = ? WHERE enrollment_email = ?",
-            (value, enrollment_email),
+        email = (enrollment_email or "").strip().lower()
+        if not email:
+            return
+
+        update_cursor = self.conn.execute(
+            "UPDATE students SET token_warning_sent = ? WHERE LOWER(enrollment_email) = LOWER(?)",
+            (bool(value), email),
         )
+
+        # Pre-Discord students may not yet have a DB row; create a lightweight
+        # placeholder anchor so idempotency persists across nightly runs.
+        if getattr(update_cursor, "rowcount", 0) == 0:
+            self.conn.execute(
+                """
+                INSERT INTO students (discord_id, enrollment_email, token_warning_sent)
+                VALUES (?, ?, ?)
+                ON CONFLICT (discord_id) DO UPDATE SET
+                    enrollment_email = EXCLUDED.enrollment_email,
+                    token_warning_sent = EXCLUDED.token_warning_sent
+                """,
+                (f"__pending__{email}", email, bool(value)),
+            )
+            self.conn.execute(
+                "UPDATE students SET token_warning_sent = ? WHERE LOWER(enrollment_email) = LOWER(?)",
+                (bool(value), email),
+            )
         self.conn.commit()
+
+    # ------------------------------------------------------------------
+    # Task 7.5: Payment feedback DM idempotency flags (Decisions H-02, M-01, N-23)
+    # ------------------------------------------------------------------
+
+    def _get_bool_flag(self, enrollment_email: str, column: str) -> bool:
+        """Generic bool flag getter by enrollment_email."""
+        email = (enrollment_email or "").strip().lower()
+        if not email:
+            return False
+        row = self.conn.execute(
+            f"SELECT {column} FROM students WHERE LOWER(enrollment_email) = LOWER(?) ORDER BY created_at DESC LIMIT 1",
+            (email,),
+        ).fetchone()
+        if row is None:
+            return False
+        val = row[column] if isinstance(row, dict) else row[0]
+        return bool(val)
+
+    def _set_bool_flag(self, enrollment_email: str, column: str, value: bool) -> None:
+        """Generic bool flag setter by enrollment_email with placeholder-anchor upsert."""
+        email = (enrollment_email or "").strip().lower()
+        if not email:
+            return
+        cursor = self.conn.execute(
+            f"UPDATE students SET {column} = ? WHERE LOWER(enrollment_email) = LOWER(?)",
+            (bool(value), email),
+        )
+        if getattr(cursor, "rowcount", 0) == 0:
+            self.conn.execute(
+                f"""
+                INSERT INTO students (discord_id, enrollment_email, {column})
+                VALUES (?, ?, ?)
+                ON CONFLICT (discord_id) DO UPDATE SET
+                    enrollment_email = EXCLUDED.enrollment_email,
+                    {column} = EXCLUDED.{column}
+                """,
+                (f"__pending__{email}", email, bool(value)),
+            )
+            self.conn.execute(
+                f"UPDATE students SET {column} = ? WHERE LOWER(enrollment_email) = LOWER(?)",
+                (bool(value), email),
+            )
+        self.conn.commit()
+
+    def get_payment_silence_dm_sent(self, enrollment_email: str) -> bool:
+        """True if the 24h payment silence DM was already sent for this student."""
+        return self._get_bool_flag(enrollment_email, "payment_silence_dm_sent")
+
+    def set_payment_silence_dm_sent(self, enrollment_email: str, value: bool) -> None:
+        """Set/reset the 24h payment silence DM flag."""
+        self._set_bool_flag(enrollment_email, "payment_silence_dm_sent", value)
+
+    def get_unverifiable_dm_sent(self, enrollment_email: str) -> bool:
+        """True if the 'Unverifiable' KIRA DM was already sent for this student."""
+        return self._get_bool_flag(enrollment_email, "unverifiable_dm_sent")
+
+    def set_unverifiable_dm_sent(self, enrollment_email: str, value: bool) -> None:
+        """Set/reset the unverifiable DM flag."""
+        self._set_bool_flag(enrollment_email, "unverifiable_dm_sent", value)
+
+    def get_payment_escalation_dm_sent(self, enrollment_email: str) -> bool:
+        """True if the 8h @Facilitator escalation DM was already sent for this payment."""
+        return self._get_bool_flag(enrollment_email, "payment_escalation_dm_sent")
+
+    def set_payment_escalation_dm_sent(self, enrollment_email: str, value: bool) -> None:
+        """Set/reset the 8h facilitator escalation DM flag."""
+        self._set_bool_flag(enrollment_email, "payment_escalation_dm_sent", value)
 
     # ------------------------------------------------------------------
     # Health check helper (used by health_monitor.py)

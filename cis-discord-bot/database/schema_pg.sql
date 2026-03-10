@@ -417,3 +417,7 @@ ALTER TABLE students ADD COLUMN IF NOT EXISTS profile_complete BOOLEAN DEFAULT F
 ALTER TABLE students ADD COLUMN IF NOT EXISTS primary_device_context VARCHAR(50);
 ALTER TABLE students ADD COLUMN IF NOT EXISTS family_obligations_hint VARCHAR(200);
 ALTER TABLE students ADD COLUMN IF NOT EXISTS token_warning_sent BOOLEAN DEFAULT FALSE;
+-- Task 7.5: Payment feedback DM idempotency flags (Decisions H-02, M-01, N-23)
+ALTER TABLE students ADD COLUMN IF NOT EXISTS payment_silence_dm_sent BOOLEAN DEFAULT FALSE;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS unverifiable_dm_sent BOOLEAN DEFAULT FALSE;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS payment_escalation_dm_sent BOOLEAN DEFAULT FALSE;
