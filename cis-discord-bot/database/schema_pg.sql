@@ -39,6 +39,7 @@ CREATE TABLE IF NOT EXISTS students (
     discord_username TEXT,
     enrollment_status TEXT DEFAULT 'pending',
     payment_status TEXT DEFAULT 'pending',
+    payment_pending_since TIMESTAMP,
 
     -- Sprint 7.4 / Decision H-01: M-Pesa token warning idempotency flag
     token_warning_sent BOOLEAN DEFAULT FALSE,
@@ -61,7 +62,10 @@ CREATE TABLE IF NOT EXISTS students (
     initial_zone INTEGER,
     artifact_title TEXT,
     profile_complete BOOLEAN DEFAULT FALSE,
+    onboarding_stop_0_started_at TIMESTAMP,
     primary_device_context VARCHAR(50),
+    study_hours_per_week INTEGER,
+    confidence_level INTEGER,
     family_obligations_hint VARCHAR(200)
 );
 
@@ -414,10 +418,14 @@ ALTER TABLE students ADD COLUMN IF NOT EXISTS cis_journey_summary TEXT;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS initial_zone INTEGER;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS artifact_title TEXT;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS profile_complete BOOLEAN DEFAULT FALSE;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS onboarding_stop_0_started_at TIMESTAMP;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS primary_device_context VARCHAR(50);
+ALTER TABLE students ADD COLUMN IF NOT EXISTS study_hours_per_week INTEGER;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS confidence_level INTEGER;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS family_obligations_hint VARCHAR(200);
 ALTER TABLE students ADD COLUMN IF NOT EXISTS token_warning_sent BOOLEAN DEFAULT FALSE;
 -- Task 7.5: Payment feedback DM idempotency flags (Decisions H-02, M-01, N-23)
+ALTER TABLE students ADD COLUMN IF NOT EXISTS payment_pending_since TIMESTAMP;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS payment_silence_dm_sent BOOLEAN DEFAULT FALSE;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS unverifiable_dm_sent BOOLEAN DEFAULT FALSE;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS payment_escalation_dm_sent BOOLEAN DEFAULT FALSE;

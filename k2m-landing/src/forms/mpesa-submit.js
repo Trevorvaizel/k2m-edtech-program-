@@ -3,6 +3,7 @@ import "./forms.css";
 const MPESA_API_URL =
   import.meta.env.VITE_MPESA_SUBMIT_API_URL ||
   "https://kira-bot-production.up.railway.app/api/mpesa-submit";
+const MPESA_CODE_PATTERN = /^[A-Z0-9]{10}$/;
 
 function byId(id) {
   return document.getElementById(id);
@@ -55,6 +56,13 @@ async function onSubmit(event) {
 
   if (!token || !mpesaCode) {
     setStatus("error", "Token and M-Pesa code are required.");
+    return;
+  }
+  if (!MPESA_CODE_PATTERN.test(mpesaCode)) {
+    setStatus(
+      "error",
+      "M-Pesa codes are 10 letters/numbers only (for example QGJ8YOAT3T).",
+    );
     return;
   }
 

@@ -202,7 +202,7 @@ progress:
   blocked: 0
   pending: 51
   percent_complete: 44
-  last_updated: "2026-03-10 - Task 7.5 COMPLETE. Payment feedback DMs: immediate fire-and-forget KIRA DM after mpesa-submit, 24h silence DM (payment_silence_dm_sent PG flag), Unverifiable student DM + dashboard red-X alert, N-23 facilitator escalation (ALL @Facilitator members at 8h+ pending during EAT business hours). 6h scheduler pass (00:05/06:05/12:05/18:05 EAT). Bot injection via set_bot() on InterestAPIServer. 3 new PG columns. 18 new tests. 623/623 passing. Trevor action: confirm FACILITATOR_ROLE_ID set in Railway."
+  last_updated: "2026-03-10 - Task 7.5 audit-corrected + production-validated. Added N-12 M-Pesa code format validation (frontend + backend), payment_pending_since runtime anchor for true Pending-age timing (24h/8h checks), dashboard channel env fallback, and mpesa-submit reset of payment DM flags per payment cycle. Task 7.5 YAML metadata normalized to ASCII quotes. Full suite verification: 628/628 passing. Railway deploy 8ea22565-94bc-428c-8d93-a9efd109c6e9 SUCCESS; /api/mpesa-submit POST now returns 400 for invalid format and 404 for invalid token as expected. Scheduled 6h pass evidence pending next time window."
   decision_7_revised: "2026-02-20 â€” Context engine building NOW for Cohort 1 (not deferred)"
   adversarial_review_2: "2026-03-04 â€” Pre-mortem on enrollment flow. 5 P0 bugs fixed, 5 P1 issues resolved. Task 0.7 split into 0.7a-d. Payment amount standardized to KES 5,000. Source-of-truth set via execution_contract."
   adversarial_review_3: "2026-03-04 â€” Pre-mortem party mode (Sally+John+Winston+Amelia+DrQuinn+Murat+Mary+Maya). North star: zero Discord experience. Found 3 critical blockers, 6 high issues, 8 medium issues. Added Sprint 7. Migrated to PostgreSQL immediately (promoted from 6.6 prep). Full decisions log: pre-mortem-2026-03-04-decisions.md"
@@ -2130,7 +2130,7 @@ sprint_7:
     - id: "7.4"
       title: "M-Pesa token lifecycle: day-5 warning + /renew command + expiry page"
       status: "done"
-      summary: "Token expiry warning nightly job (23:00 EAT), token_warning_sent idempotency flag in PG (with pre-Discord placeholder anchor support), token_expiry_warning_sent observability event logging, KIRA DM + Brevo fallback for pre-Discord students, HTML expiry page for browser hits (content negotiation), /renew Facilitator-only slash command regenerates token + resets flag + sends Email #2. GAP: pre-Discord students now get Brevo fallback email (spec only mentioned DM). 623 tests passing."
+      summary: "Token expiry warning nightly job (23:00 EAT), token_warning_sent idempotency flag in PG (with pre-Discord placeholder anchor support), token_expiry_warning_sent observability event logging, KIRA DM + Brevo fallback for pre-Discord students, HTML expiry page for browser hits (content negotiation), /renew Facilitator-only slash command regenerates token + resets flag + sends Email #2. GAP: pre-Discord students now get Brevo fallback email (spec only mentioned DM). 623 tests passing. Production scheduler evidence at 23:00 EAT pending after next bot deploy (deployment deferred by Trevor)."
       notes_ref: "_bmad-output/cohort-design-artifacts/operations/sprint/task-notes/7.4.md"
       description: |
         DECISION H-01 + GAP FIX #4. Token lifecycle management with idempotency guard.
@@ -2160,40 +2160,49 @@ sprint_7:
         token_warning_sent flag prevents duplicate warnings (verified with test: run scheduler twice).
         /renew resets flag for next cycle. Expired token URL shows friendly expiry page (not 500).
         /renew regenerates token and sends Email #2. Trevor confirmation works.
+        Production verification follow-up: confirm 23:00 EAT scheduler run in Railway logs after bot deploy.
 
-    - id: “7.5”
-      title: “Payment feedback DMs: immediate + 24h silence + unverifiable path”
-      status: “done”
-      completed: “2026-03-10”
-      notes_ref: “_bmad-output/cohort-design-artifacts/operations/sprint/task-notes/7.5.md”
+    - id: "7.5"
+      title: "Payment feedback DMs: immediate + 24h silence + unverifiable path"
+      status: "done"
+      completed: "2026-03-10"
+      notes_ref: "_bmad-output/cohort-design-artifacts/operations/sprint/task-notes/7.5.md"
       summary: |
-        2026-03-10 - COMPLETE. Immediate fire-and-forget KIRA DM after mpesa-submit (if discord_id linked).
-        24h silence DM (guarded by payment_silence_dm_sent PG flag). Unverifiable DM to student + red-X
-        dashboard alert every 6h pass. N-23 escalation: DMs ALL @Facilitator role members at 8h+ pending
-        during business hours (08:00-20:00 EAT), guarded by payment_escalation_dm_sent flag (once per payment).
+        2026-03-10 - COMPLETE + AUDIT CORRECTED.
+        Immediate fire-and-forget KIRA DM after mpesa-submit (linked discord_id only).
+        24h silence + 8h escalation now use payment_pending_since (set at mpesa-submit) instead of lead created_at.
+        Unverifiable DM to student (once) + red dashboard alert each 6h pass.
+        N-23 escalation DMs ALL @Facilitator role members at 8h+ pending during 08:00-20:00 EAT.
         6h scheduler pass at 00:05/06:05/12:05/18:05 EAT. Bot injection via set_bot() on InterestAPIServer.
-        3 PG columns added (idempotent ALTER TABLE). 18 new tests. 623/623 passing.
+        Added N-12 validation: M-Pesa code must be 10 alphanumeric chars (frontend + backend).
+        4 PG columns for 7.5 lifecycle/anchors (idempotent ALTER TABLE). Full suite: 628/628 passing.
+        Production deploy 8ea22565-94bc-428c-8d93-a9efd109c6e9 SUCCESS; /api/mpesa-submit behavior verified live.
         Trevor action required: confirm FACILITATOR_ROLE_ID is set in Railway env vars.
       description: |
-        DECISIONS H-02, M-01. SESSION 4 UPDATE: N-23 â€” KIRA escalation DMs go to ALL THREE facilitators (Trevor + Bruce + Mkunzi) at 8h+ pending threshold, not Trevor alone.
+        DECISIONS H-02, M-01, N-12. SESSION 4 UPDATE: N-23 — KIRA escalation DMs go to ALL THREE facilitators (Trevor + Bruce + Mkunzi) at 8h+ pending threshold, not Trevor alone.
         1. /api/mpesa-submit: after writing Column K, immediately send KIRA DM:
-           “Got your M-Pesa code! Trevor reviews within 24 hours. I will DM you when you are activated.”
+           "Got your M-Pesa code! Trevor reviews within 24 hours. I will DM you when you are activated."
+           Validate mpesa_code format before write: 10-char alphanumeric (example QGJ8YOAT3T).
         2. Scheduler: payment_queue_silence_check() every 6h:
-           Find Column L = Pending AND Column N age > 24h
+           Find Column L = Pending AND payment_pending_since age > 24h
+           (fallback to Column N timestamp only if pending anchor is not yet available on legacy rows)
            Send KIRA DM once (guard: do not re-send):
-           “Still reviewing your payment. If urgent, post in #help channel.”
-        3. Add Column L value “Unverifiable”:
+           "Still reviewing your payment. If urgent, post in #help channel."
+        3. Add Column L value "Unverifiable":
            When Trevor sets Column L = Unverifiable, KIRA DMs:
-           “We had trouble verifying your payment. Please send a screenshot of your
-           M-Pesa confirmation to #help or DM Trevor directly.”
+           "We had trouble verifying your payment. Please send a screenshot of your
+           M-Pesa confirmation to #help or DM Trevor directly."
         4. Dashboard: show Unverifiable rows with red X indicator
+        5. N-23 escalation: Pending age > 8h during EAT business hours and DM all @Facilitator members once per payment cycle.
       agent_context:
-        load: “_bmad-output/cohort-design-artifacts/design-and-architecture/pre-mortem-2026-03-04-decisions.md”
-        section: “DECISION H-02”
-        also_load: “source_documents.enrollment_flow_design”
+        load: "_bmad-output/cohort-design-artifacts/design-and-architecture/pre-mortem-2026-03-04-decisions.md"
+        section: "DECISION H-02"
+        also_load: "source_documents.enrollment_flow_design"
       acceptance: |
         Immediate DM fires < 30s after M-Pesa submit. 24h DM fires once (not repeated).
         Unverifiable DM fires on Column L = Unverifiable. Dashboard shows indicator.
+        M-Pesa code validation rejects non-10-char values with actionable error.
+        Pending-age checks use payment_pending_since anchor (not lead created_at) for accurate timing.
 
     - id: "7.6"
       title: "PostgreSQL full production migration (promoted from 6.6)"
@@ -2255,7 +2264,29 @@ sprint_7:
 
     - id: "7.7"
       title: "Onboarding Stop 0 (profile DM) + is_continue_signal() scope fix + day-8 re-entry"
-      status: "pending"
+      status: "done"
+      summary: "Implemented value-first onboarding flow (Stop 1 -> 2 -> 3 -> Stop 0), strict DM-scoped continue-signal guards, 48h Stop 0 timeout defaults, and daily day-8 re-entry checks with scheduler wiring."
+      completion_notes: |
+        Completed on 2026-03-10 with runtime + storage + scheduler + tests:
+        - Added onboarding helper module for Task 7.7 (`cis_controller/onboarding.py`) with:
+          - 3-layer `is_continue_signal()` guards (DM-only, not bot, recipient bot check)
+          - expected-student ID guard for progression updates
+          - Stop 0 free-text parser with non-blocking fallback defaults
+        - Router wiring updated so onboarding DM handling runs before general routing.
+        - main.py onboarding implementation:
+          - Starts value-first Stop 1 on linked `on_member_join`
+          - Adds `/onboarding` slash command for re-entry/resume
+          - Advances Stops 1-3 only on guarded continue signals
+          - Runs Stop 0 after Stop 3 and logs `profile_parse_flagged` with raw text when parse issues occur
+        - Scheduler (`scheduler.py`) now runs `onboarding_timeout_check()` daily at 19:00 EAT:
+          - Day-8 re-entry DM for students with `onboarding_stop < 4` and >7 days inactivity
+          - 48h Stop 0 timeout defaulting path (non-blocking)
+        - Database schema/store updates:
+          - Added `study_hours_per_week`, `confidence_level`, `onboarding_stop_0_started_at`
+          - Added onboarding query/update methods in shared store layer for SQLite + PG compatibility.
+        - Test evidence:
+          - New test module: `tests/test_task_77_onboarding_flow.py` (5 tests)
+          - Regression subsets passed: task 7.2 invite matching, cluster assignment, week1 journey E2E, task 7.5, task 7.6.
       description: |
         DECISIONS H-05, M-06, M-07 + GAP FIX #5 + GAP FIX #6 + GAP FIX #7.
         PART A - Stop 0 (4-question conversational DM after activation):
@@ -2294,6 +2325,7 @@ sprint_7:
         Free-text failures flagged for manual review (SOP documented). 48h timeout fallback works.
         is_continue_signal() has 3-layer guard (DM-only, not bot, recipient check).
         Day-8 re-entry DM fires for stuck students.
+      notes_ref: "task-notes/7.7.md"
 
     - id: "7.8"
       title: "Bot reliability: health endpoint + !recover_member + Apps Script error alerts"
@@ -2602,5 +2634,5 @@ agent_instructions: |
 
 # Last Updated
 last_updated: "2026-03-10"
-updated_by: "Task 7.11 audit correction: patched 401 dashboard env fallback, added regression test for dashboard env compatibility, updated task-notes/7.11.md (removed hardcoded secret + corrected runtime/test claims), and flagged production rollout evidence gap for internal webhook mount."
+updated_by: "Task 7.5 audit correction: fixed malformed YAML smart quotes for task metadata, added N-12 M-Pesa code validation, switched 24h/8h age logic to payment_pending_since runtime anchor, added dashboard env fallback for 7.5 alerts, extended regression coverage, and revalidated full suite (628/628)."
 

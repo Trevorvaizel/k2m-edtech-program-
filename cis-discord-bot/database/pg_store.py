@@ -19,6 +19,7 @@ import json
 import logging
 import os
 import re
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterator, List, Optional
 
@@ -778,6 +779,98 @@ class PgStudentStateStore(StudentStateStore):
     def set_payment_escalation_dm_sent(self, enrollment_email: str, value: bool) -> None:
         """Set/reset the 8h facilitator escalation DM flag."""
         self._set_bool_flag(enrollment_email, "payment_escalation_dm_sent", value)
+
+    def get_payment_pending_since(self, enrollment_email: str) -> Optional[datetime]:
+        """
+        Return the UTC timestamp when payment entered Pending.
+        Used by Task 7.5 scheduler to calculate 24h/8h age correctly.
+        """
+        email = (enrollment_email or "").strip().lower()
+        if not email:
+            return None
+        row = self.conn.execute(
+            """
+            SELECT payment_pending_since
+              FROM students
+             WHERE LOWER(enrollment_email) = LOWER(?)
+             ORDER BY created_at DESC
+             LIMIT 1
+            """,
+            (email,),
+        ).fetchone()
+        if row is None:
+            return None
+
+        value = row["payment_pending_since"] if isinstance(row, dict) else row[0]
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            if value.tzinfo is None:
+                return value.replace(tzinfo=timezone.utc)
+            return value.astimezone(timezone.utc)
+        if isinstance(value, str):
+            try:
+                return datetime.fromisoformat(value.replace("Z", "+00:00")).astimezone(timezone.utc)
+            except ValueError:
+                return None
+        return None
+
+    def set_payment_pending_since(
+        self,
+        enrollment_email: str,
+        pending_since: Optional[datetime] = None,
+    ) -> None:
+        """Set Pending-age anchor timestamp by enrollment email."""
+        email = (enrollment_email or "").strip().lower()
+        if not email:
+            return
+        ts = pending_since or datetime.now(timezone.utc)
+        if ts.tzinfo is None:
+            ts = ts.replace(tzinfo=timezone.utc)
+
+        cursor = self.conn.execute(
+            """
+            UPDATE students
+               SET payment_pending_since = ?
+             WHERE LOWER(enrollment_email) = LOWER(?)
+            """,
+            (ts.astimezone(timezone.utc), email),
+        )
+        if getattr(cursor, "rowcount", 0) == 0:
+            self.conn.execute(
+                """
+                INSERT INTO students (discord_id, enrollment_email, payment_pending_since)
+                VALUES (?, ?, ?)
+                ON CONFLICT (discord_id) DO UPDATE SET
+                    enrollment_email = EXCLUDED.enrollment_email,
+                    payment_pending_since = EXCLUDED.payment_pending_since
+                """,
+                (f"__pending__{email}", email, ts.astimezone(timezone.utc)),
+            )
+            self.conn.execute(
+                """
+                UPDATE students
+                   SET payment_pending_since = ?
+                 WHERE LOWER(enrollment_email) = LOWER(?)
+                """,
+                (ts.astimezone(timezone.utc), email),
+            )
+        self.conn.commit()
+
+    def clear_payment_pending_since(self, enrollment_email: str) -> None:
+        """Clear Pending-age anchor when payment leaves Pending state."""
+        email = (enrollment_email or "").strip().lower()
+        if not email:
+            return
+        self.conn.execute(
+            """
+            UPDATE students
+               SET payment_pending_since = NULL
+             WHERE LOWER(enrollment_email) = LOWER(?)
+            """,
+            (email,),
+        )
+        self.conn.commit()
 
     # ------------------------------------------------------------------
     # Health check helper (used by health_monitor.py)

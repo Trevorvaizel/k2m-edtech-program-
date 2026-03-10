@@ -61,6 +61,7 @@ def _make_store(**flag_overrides) -> MagicMock:
     store.get_payment_silence_dm_sent.return_value = flag_overrides.get("silence", False)
     store.get_unverifiable_dm_sent.return_value = flag_overrides.get("unverifiable", False)
     store.get_payment_escalation_dm_sent.return_value = flag_overrides.get("escalation", False)
+    store.get_payment_pending_since.return_value = flag_overrides.get("pending_since")
     return store
 
 
@@ -90,7 +91,12 @@ def _make_bot(facilitator_members=None) -> MagicMock:
 def test_schema_pg_contains_task_75_columns():
     schema_path = Path(__file__).resolve().parents[1] / "database" / "schema_pg.sql"
     schema_text = schema_path.read_text(encoding="utf-8").lower()
-    for col in ("payment_silence_dm_sent", "unverifiable_dm_sent", "payment_escalation_dm_sent"):
+    for col in (
+        "payment_pending_since",
+        "payment_silence_dm_sent",
+        "unverifiable_dm_sent",
+        "payment_escalation_dm_sent",
+    ):
         assert col in schema_text, f"schema_pg.sql missing column: {col}"
 
 
@@ -109,6 +115,7 @@ def _fresh_pg_store() -> PgStudentStateStore:
             discord_id TEXT PRIMARY KEY,
             enrollment_email TEXT,
             created_at TEXT DEFAULT (datetime('now')),
+            payment_pending_since TEXT,
             payment_silence_dm_sent INTEGER DEFAULT 0,
             unverifiable_dm_sent INTEGER DEFAULT 0,
             payment_escalation_dm_sent INTEGER DEFAULT 0,
@@ -151,6 +158,21 @@ def test_pg_store_silence_dm_reset_to_false():
     assert store.get_payment_silence_dm_sent("r@k2m.test") is False
 
 
+def test_pg_store_payment_pending_since_round_trip():
+    store = _fresh_pg_store()
+    anchor = _now() - timedelta(hours=3)
+    store.set_payment_pending_since("p@k2m.test", anchor)
+    loaded = store.get_payment_pending_since("p@k2m.test")
+    assert loaded is not None
+
+
+def test_pg_store_payment_pending_since_clear():
+    store = _fresh_pg_store()
+    store.set_payment_pending_since("p2@k2m.test", _now())
+    store.clear_payment_pending_since("p2@k2m.test")
+    assert store.get_payment_pending_since("p2@k2m.test") is None
+
+
 # ---------------------------------------------------------------------------
 # Immediate DM — fired by _handle_mpesa_submit
 # ---------------------------------------------------------------------------
@@ -181,7 +203,7 @@ async def test_mpesa_submit_fires_immediate_kira_dm(monkeypatch):
 
     class _Req:
         async def json(self):
-            return {"token": "tok123", "mpesa_code": "ABC123XYZ"}
+            return {"token": "tok123", "mpesa_code": "QGJ8YOAT3T"}
         query = {}
 
     server.spreadsheet_id = "sheet-id"
@@ -214,7 +236,7 @@ async def test_mpesa_submit_no_dm_when_no_discord_id(monkeypatch):
 
     class _Req:
         async def json(self):
-            return {"token": "tok123", "mpesa_code": "ABC123"}
+            return {"token": "tok123", "mpesa_code": "QGJ8YOAT3T"}
         query = {}
 
     resp = await server._handle_mpesa_submit(_Req())
@@ -229,7 +251,7 @@ async def test_mpesa_submit_no_dm_when_no_discord_id(monkeypatch):
 @pytest.mark.asyncio
 async def test_silence_dm_sent_when_pending_over_24h(monkeypatch):
     row = _make_row(payment_status="Pending", created_offset_hours=25)
-    store = _make_store(silence=False)
+    store = _make_store(silence=False, pending_since=_now() - timedelta(hours=25))
     bot = _make_bot()
 
     monkeypatch.setattr(api, "read_roster_rows", AsyncMock(return_value=[row]))
@@ -249,7 +271,7 @@ async def test_silence_dm_sent_when_pending_over_24h(monkeypatch):
 @pytest.mark.asyncio
 async def test_silence_dm_not_sent_when_pending_under_24h(monkeypatch):
     row = _make_row(payment_status="Pending", created_offset_hours=10)
-    store = _make_store(silence=False)
+    store = _make_store(silence=False, pending_since=_now() - timedelta(hours=10))
     bot = _make_bot()
 
     monkeypatch.setattr(api, "read_roster_rows", AsyncMock(return_value=[row]))
@@ -263,7 +285,7 @@ async def test_silence_dm_not_sent_when_pending_under_24h(monkeypatch):
 async def test_silence_dm_idempotent(monkeypatch):
     """Already-sent flag prevents a second DM on next scheduler pass."""
     row = _make_row(payment_status="Pending", created_offset_hours=30)
-    store = _make_store(silence=True)  # already sent
+    store = _make_store(silence=True, pending_since=_now() - timedelta(hours=30))  # already sent
     bot = _make_bot()
 
     monkeypatch.setattr(api, "read_roster_rows", AsyncMock(return_value=[row]))
@@ -272,6 +294,37 @@ async def test_silence_dm_idempotent(monkeypatch):
 
     assert stats["silence_dm_sent"] == 0
     bot.fetch_user.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_pending_anchor_initialized_when_missing(monkeypatch):
+    """Pending rows without anchor initialize payment_pending_since and skip same-pass DM."""
+    row = _make_row(payment_status="Pending", created_offset_hours=72)
+    store = _make_store(silence=False, pending_since=None)
+    bot = _make_bot()
+
+    monkeypatch.setattr(api, "read_roster_rows", AsyncMock(return_value=[row]))
+    with patch("database.get_store", return_value=store):
+        stats = await api.send_payment_feedback_dms(bot=bot, spreadsheet_id="sheet-id")
+
+    assert stats["silence_dm_sent"] == 0
+    store.set_payment_pending_since.assert_called_once()
+    bot.fetch_user.assert_not_awaited()
+
+
+@pytest.mark.asyncio
+async def test_pending_age_uses_store_anchor_over_created_at(monkeypatch):
+    """Age calculations prioritize payment_pending_since when available."""
+    row = _make_row(payment_status="Pending", created_offset_hours=1)
+    pending_since = _now() - timedelta(hours=26)
+    store = _make_store(silence=False, pending_since=pending_since)
+    bot = _make_bot()
+
+    monkeypatch.setattr(api, "read_roster_rows", AsyncMock(return_value=[row]))
+    with patch("database.get_store", return_value=store):
+        stats = await api.send_payment_feedback_dms(bot=bot, spreadsheet_id="sheet-id")
+
+    assert stats["silence_dm_sent"] == 1
 
 
 # ---------------------------------------------------------------------------
@@ -321,7 +374,7 @@ async def test_unverifiable_dm_idempotent(monkeypatch):
 async def test_n23_escalation_dms_all_facilitators_at_8h(monkeypatch):
     """At 8h+ pending, DMs fire to all @Facilitator role members during business hours."""
     row = _make_row(payment_status="Pending", created_offset_hours=9)
-    store = _make_store(escalation=False)
+    store = _make_store(escalation=False, pending_since=_now() - timedelta(hours=9))
 
     facilitator_a = MagicMock()
     facilitator_a.send = AsyncMock()
@@ -353,7 +406,7 @@ async def test_n23_escalation_dms_all_facilitators_at_8h(monkeypatch):
 async def test_n23_escalation_skips_outside_business_hours(monkeypatch):
     """Escalation does NOT fire when current EAT hour is outside business hours."""
     row = _make_row(payment_status="Pending", created_offset_hours=10)
-    store = _make_store(escalation=False)
+    store = _make_store(escalation=False, pending_since=_now() - timedelta(hours=10))
     facilitator = MagicMock()
     facilitator.send = AsyncMock()
     bot = _make_bot(facilitator_members=[facilitator])
@@ -379,7 +432,7 @@ async def test_n23_escalation_skips_outside_business_hours(monkeypatch):
 async def test_n23_escalation_idempotent(monkeypatch):
     """Once escalation_dm_sent=True, subsequent passes skip facilitator DMs."""
     row = _make_row(payment_status="Pending", created_offset_hours=12)
-    store = _make_store(escalation=True)  # already escalated
+    store = _make_store(escalation=True, pending_since=_now() - timedelta(hours=12))  # already escalated
     facilitator = MagicMock()
     facilitator.send = AsyncMock()
     bot = _make_bot(facilitator_members=[facilitator])

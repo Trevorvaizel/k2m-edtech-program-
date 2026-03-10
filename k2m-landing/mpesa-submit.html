@@ -11,6 +11,9 @@
       <p class="lead">
         Paste the M-Pesa confirmation code from your payment message.
       </p>
+      <p class="k2m-note">
+        Codes are 10 letters/numbers (example: <strong>QGJ8YOAT3T</strong>).
+      </p>
 
       <form id="mpesaForm" class="k2m-form" novalidate>
         <div>
@@ -23,8 +26,9 @@
           <input
             id="mpesaCode"
             type="text"
-            maxlength="20"
-            placeholder="e.g. TESTTEST01"
+            maxlength="10"
+            pattern="[A-Za-z0-9]{10}"
+            placeholder="e.g. QGJ8YOAT3T"
             required
           />
         </div>

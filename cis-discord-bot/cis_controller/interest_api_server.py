@@ -54,6 +54,7 @@ COL_HABITS = 20       # U — habits pre-assessment (comma-joined)
 
 ENROLLMENT_CAP = int(os.getenv("ENROLLMENT_CAP", "30").strip())
 TOKEN_TTL_DAYS = int(os.getenv("MPESA_SUBMIT_TOKEN_TTL_DAYS", "7").strip())
+MPESA_CODE_PATTERN = re.compile(r"^[A-Z0-9]{10}$")
 ENROLL_EMAIL_QUEUE_PATH = Path(
     os.getenv(
         "ENROLL_EMAIL_QUEUE_PATH",
@@ -95,6 +96,11 @@ def _parse_iso_utc(raw: str) -> Optional[datetime]:
         return datetime.fromisoformat(text.replace("Z", "+00:00")).astimezone(timezone.utc)
     except ValueError:
         return None
+
+
+def _is_valid_mpesa_code(raw_code: str) -> bool:
+    """Validate M-Pesa transaction code format (10 alphanumeric chars)."""
+    return bool(MPESA_CODE_PATTERN.fullmatch((raw_code or "").strip().upper()))
 
 
 def _generate_submit_token() -> str:
@@ -1130,7 +1136,9 @@ async def send_payment_feedback_dms(
     Three scan passes over the Sheets roster:
 
     Pass A — 24h silence check:
-        Column L = 'Pending' AND Column N (created_at) age > silence_after_hours.
+        Column L = 'Pending' AND payment pending age > silence_after_hours.
+        Uses PostgreSQL payment_pending_since anchor when available; falls back
+        to Column N (created_at) only for backward compatibility.
         Sends KIRA DM once (guarded by payment_silence_dm_sent PG flag).
         Message: "Still reviewing your payment. If urgent, post in #help channel."
 
@@ -1151,6 +1159,15 @@ async def send_payment_feedback_dms(
 
     EAT = pytz.timezone("Africa/Nairobi")
     store = get_store()
+    get_payment_silence_dm_sent = getattr(store, "get_payment_silence_dm_sent", lambda _email: False)
+    set_payment_silence_dm_sent = getattr(store, "set_payment_silence_dm_sent", lambda _email, _value: None)
+    get_unverifiable_dm_sent = getattr(store, "get_unverifiable_dm_sent", lambda _email: False)
+    set_unverifiable_dm_sent = getattr(store, "set_unverifiable_dm_sent", lambda _email, _value: None)
+    get_payment_escalation_dm_sent = getattr(store, "get_payment_escalation_dm_sent", lambda _email: False)
+    set_payment_escalation_dm_sent = getattr(store, "set_payment_escalation_dm_sent", lambda _email, _value: None)
+    get_payment_pending_since = getattr(store, "get_payment_pending_since", None)
+    set_payment_pending_since = getattr(store, "set_payment_pending_since", None)
+    clear_payment_pending_since = getattr(store, "clear_payment_pending_since", None)
     now_utc = datetime.now(timezone.utc)
     now_eat = now_utc.astimezone(EAT)
     eat_hour = now_eat.hour
@@ -1183,7 +1200,16 @@ async def send_payment_feedback_dms(
         except Exception as exc:
             logger.warning("Task 7.5: could not fetch facilitator role members: %s", exc)
 
-    dashboard_channel_id = int(os.getenv("CHANNEL_FACILITATOR_DASHBOARD", "0") or "0")
+    dashboard_channel_id = 0
+    for env_key in ("CHANNEL_FACILITATOR_DASHBOARD", "FACILITATOR_DASHBOARD_CHANNEL_ID"):
+        value = os.getenv(env_key, "").strip()
+        if not value:
+            continue
+        try:
+            dashboard_channel_id = int(value)
+            break
+        except ValueError:
+            logger.warning("Task 7.5: invalid %s value '%s' (must be int)", env_key, value)
 
     for row_number, row in rows:
         if stats["scanned"] >= max_per_pass:
@@ -1200,20 +1226,53 @@ async def send_payment_feedback_dms(
         created_at_dt = _parse_iso_utc(created_at_raw)
         discord_id = _extract_discord_id(_safe_get(row, COL_DISCORD_ID))
 
+        payment_pending_since: Optional[datetime] = None
+        if callable(get_payment_pending_since):
+            try:
+                payment_pending_since = get_payment_pending_since(email)
+            except Exception as exc:
+                logger.warning("Task 7.5: could not load payment_pending_since for %s: %s", email, exc)
+
+        # If this row is pending but lacks a pending-since anchor, initialize one now
+        # to avoid using stale lead creation timestamps as the payment clock.
+        if (
+            payment_status == "Pending"
+            and payment_pending_since is None
+            and callable(set_payment_pending_since)
+        ):
+            try:
+                payment_pending_since = now_utc
+                set_payment_pending_since(email, payment_pending_since)
+                logger.info("Task 7.5: initialized payment_pending_since for %s", email)
+            except Exception as exc:
+                logger.warning("Task 7.5: failed to initialize payment_pending_since for %s: %s", email, exc)
+
+        # Clear stale anchors once payment leaves Pending state.
+        if (
+            payment_status != "Pending"
+            and payment_pending_since is not None
+            and callable(clear_payment_pending_since)
+        ):
+            try:
+                clear_payment_pending_since(email)
+            except Exception as exc:
+                logger.warning("Task 7.5: could not clear payment_pending_since for %s: %s", email, exc)
+
+        age_anchor = payment_pending_since or created_at_dt
         age_hours: float = 0.0
-        if created_at_dt:
-            age_hours = (now_utc - created_at_dt).total_seconds() / 3600
+        if age_anchor:
+            age_hours = (now_utc - age_anchor).total_seconds() / 3600
 
         # ── Pass A: 24h silence DM ───────────────────────────────────────
         if payment_status == "Pending" and age_hours >= silence_after_hours and discord_id and bot:
-            if not store.get_payment_silence_dm_sent(email):
+            if not get_payment_silence_dm_sent(email):
                 try:
                     user = await bot.fetch_user(int(discord_id))
                     await user.send(
                         f"Hey {name} — still reviewing your payment. "
                         "If it's urgent, post in **#help** and a facilitator will assist."
                     )
-                    store.set_payment_silence_dm_sent(email, True)
+                    set_payment_silence_dm_sent(email, True)
                     stats["silence_dm_sent"] += 1
                     logger.info("Task 7.5: silence DM sent to %s (age=%.1fh)", email, age_hours)
                 except Exception as exc:
@@ -1221,7 +1280,7 @@ async def send_payment_feedback_dms(
 
         # ── Pass B: Unverifiable DM + dashboard alert ────────────────────
         if payment_status == "Unverifiable":
-            if discord_id and bot and not store.get_unverifiable_dm_sent(email):
+            if discord_id and bot and not get_unverifiable_dm_sent(email):
                 try:
                     user = await bot.fetch_user(int(discord_id))
                     await user.send(
@@ -1229,7 +1288,7 @@ async def send_payment_feedback_dms(
                         "Please send a screenshot of your M-Pesa confirmation to **#help** "
                         "or DM Trevor directly."
                     )
-                    store.set_unverifiable_dm_sent(email, True)
+                    set_unverifiable_dm_sent(email, True)
                     stats["unverifiable_dm_sent"] += 1
                     logger.info("Task 7.5: unverifiable DM sent to %s", email)
                 except Exception as exc:
@@ -1253,7 +1312,7 @@ async def send_payment_feedback_dms(
             and age_hours >= escalation_after_hours
             and business_hours_start_eat <= eat_hour < business_hours_end_eat
             and facilitator_members
-            and not store.get_payment_escalation_dm_sent(email)
+            and not get_payment_escalation_dm_sent(email)
         ):
             sent_count = 0
             for member in facilitator_members:
@@ -1266,7 +1325,7 @@ async def send_payment_feedback_dms(
                 except Exception as exc:
                     logger.warning("Task 7.5: escalation DM to facilitator %s failed: %s", member, exc)
             if sent_count > 0:
-                store.set_payment_escalation_dm_sent(email, True)
+                set_payment_escalation_dm_sent(email, True)
                 stats["escalation_dm_sent"] += sent_count
                 logger.info("Task 7.5: N-23 escalation sent to %d facilitators for %s", sent_count, email)
 
@@ -1729,6 +1788,18 @@ class InterestAPIServer:
                     status=400,
                     headers=_cors_headers(),
                 )
+            if not _is_valid_mpesa_code(mpesa_code):
+                return web.json_response(
+                    {
+                        "success": False,
+                        "error": (
+                            "M-Pesa codes are 10 characters (letters and numbers only, "
+                            "for example QGJ8YOAT3T). Check your M-Pesa SMS and try again."
+                        ),
+                    },
+                    status=400,
+                    headers=_cors_headers(),
+                )
 
             row_match = await find_row_by_submit_token(
                 token=token,
@@ -1744,6 +1815,9 @@ class InterestAPIServer:
                 )
 
             row_number, row = row_match
+            student_email = _safe_get(row, COL_EMAIL)
+            student_name = _safe_get(row, COL_NAME) or student_email.split("@")[0]
+            first_name = student_name.split(" ")[0]
             expiry_text = _safe_get(row, COL_TOKEN_EXPIRY)
             expiry_dt = _parse_iso_utc(expiry_text)
             if expiry_dt and expiry_dt < datetime.now(timezone.utc):
@@ -1774,9 +1848,22 @@ class InterestAPIServer:
                     headers=_cors_headers(),
                 )
 
-            student_email = _safe_get(row, COL_EMAIL)
-            student_name = _safe_get(row, COL_NAME) or student_email.split("@")[0]
-            first_name = student_name.split(" ")[0]
+            # Task 7.5 anchor/state reset: start pending timer from M-Pesa submission moment.
+            try:
+                from database import get_store
+
+                store = get_store()
+                if hasattr(store, "set_payment_pending_since"):
+                    store.set_payment_pending_since(student_email, datetime.now(timezone.utc))
+                if hasattr(store, "set_payment_silence_dm_sent"):
+                    store.set_payment_silence_dm_sent(student_email, False)
+                if hasattr(store, "set_payment_escalation_dm_sent"):
+                    store.set_payment_escalation_dm_sent(student_email, False)
+                if hasattr(store, "set_unverifiable_dm_sent"):
+                    store.set_unverifiable_dm_sent(student_email, False)
+            except Exception as exc:
+                logger.warning("Task 7.5: failed to update payment pending anchors for %s: %s", student_email, exc)
+
             email_sent = await send_mpesa_received_email(
                 to_email=student_email,
                 first_name=student_name,
