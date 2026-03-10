@@ -197,12 +197,12 @@ playbook_traceability:
 # ============================================================
 progress:
   total_tasks: 92
-  done: 41
+  done: 42
   in_progress: 0
   blocked: 0
-  pending: 51
-  percent_complete: 44
-  last_updated: "2026-03-10 - Task 7.5 audit-corrected + production-validated. Added N-12 M-Pesa code format validation (frontend + backend), payment_pending_since runtime anchor for true Pending-age timing (24h/8h checks), dashboard channel env fallback, and mpesa-submit reset of payment DM flags per payment cycle. Task 7.5 YAML metadata normalized to ASCII quotes. Full suite verification: 628/628 passing. Railway deploy 8ea22565-94bc-428c-8d93-a9efd109c6e9 SUCCESS; /api/mpesa-submit POST now returns 400 for invalid format and 404 for invalid token as expected. Scheduled 6h pass evidence pending next time window."
+  pending: 50
+  percent_complete: 46
+  last_updated: "2026-03-10 - Task 7.8 completed. Added shared /health endpoint on the parent unsubscribe server with DB + Discord connectivity probes and healthy/degraded JSON payloads, plus signed /api/internal/apps-script-error webhook ingestion with dashboard alert posting. Regression validation: py -m pytest tests/test_webhook_auth.py tests/test_task_78_reliability.py (37/37 passed)."
   decision_7_revised: "2026-02-20 â€” Context engine building NOW for Cohort 1 (not deferred)"
   adversarial_review_2: "2026-03-04 â€” Pre-mortem on enrollment flow. 5 P0 bugs fixed, 5 P1 issues resolved. Task 0.7 split into 0.7a-d. Payment amount standardized to KES 5,000. Source-of-truth set via execution_contract."
   adversarial_review_3: "2026-03-04 â€” Pre-mortem party mode (Sally+John+Winston+Amelia+DrQuinn+Murat+Mary+Maya). North star: zero Discord experience. Found 3 critical blockers, 6 high issues, 8 medium issues. Added Sprint 7. Migrated to PostgreSQL immediately (promoted from 6.6 prep). Full decisions log: pre-mortem-2026-03-04-decisions.md"
@@ -2269,7 +2269,7 @@ sprint_7:
       completion_notes: |
         Completed on 2026-03-10 with runtime + storage + scheduler + tests:
         - Added onboarding helper module for Task 7.7 (`cis_controller/onboarding.py`) with:
-          - 3-layer `is_continue_signal()` guards (DM-only, not bot, recipient bot check)
+          - 3-layer `is_continue_signal()` guards (DM-only, not bot, current-bot DM channel check)
           - expected-student ID guard for progression updates
           - Stop 0 free-text parser with non-blocking fallback defaults
         - Router wiring updated so onboarding DM handling runs before general routing.
@@ -2287,11 +2287,15 @@ sprint_7:
         - Test evidence:
           - New test module: `tests/test_task_77_onboarding_flow.py` (5 tests)
           - Regression subsets passed: task 7.2 invite matching, cluster assignment, week1 journey E2E, task 7.5, task 7.6.
+        - Production validation (2026-03-10):
+          - Deployment `1f3faf8d-fd65-48f6-a869-dfc22177bd69` SUCCESS on `kira-bot` service.
+          - Smoke checks passed: `/health` 200, `/api/enroll` 400 (invalid payload), `/api/mpesa-submit?token=invalid-token` 404, unsigned `/api/internal/role-upgrade` 401.
+          - Bot startup, PostgreSQL connect, scheduler start, and internal webhook mount confirmed in production logs.
       description: |
         DECISIONS H-05, M-06, M-07 + GAP FIX #5 + GAP FIX #6 + GAP FIX #7.
         PART A - Stop 0 (4-question conversational DM after activation):
           GAP FIX #6: RESEQUENCE - Stop 0 happens AFTER Stop 1 (preserves excitement moment)
-          New order: Stop 1 (welcome) â†’ Stop 2 (channels) â†’ Stop 3 (introduce) â†’ Stop 0 (profile) â†’ Stop 4+
+          New order: Stop 1 (welcome) â†’ Stop 2 (channels) â†’ Stop 3 (first /frame) â†’ Stop 0 (profile) â†’ Stop 4+
           Q1: "How do you usually access the internet? Reply: phone data / home wifi / office wifi / mixed"
           Q2: "How many hours per week can you dedicate? (Just a rough guess)"
           Q3: "On a scale of 1-5, how confident are you with tech tools? (1=nervous, 5=comfortable)"
@@ -2303,8 +2307,8 @@ sprint_7:
             - Log profile_parse_flagged event with raw response text
           - Parse and write to PostgreSQL: primary_device_context, study_hours_per_week,
             confidence_level, family_obligations_hint
-          - Skip with: student types "skip" -> mark profile_complete=false -> proceed to Stop 1
-          - Timeout: 48h with no response -> proceed to Stop 1 with defaults
+          - Skip with: student types "skip" -> mark profile_complete=false -> proceed to Stop 4+ (non-blocking)
+          - Timeout: 48h with no response -> proceed to Stop 4+ with defaults
           - Stop 0 never blocks cohort access
         PART B - is_continue_signal() scope fix:
           GAP FIX #7: Three-layer guard to prevent multi-DM bot confusion:
@@ -2321,15 +2325,15 @@ sprint_7:
         section: "DECISION H-05 + M-06 + M-07 + GAP FIX #5 + GAP FIX #6 + GAP FIX #7"
         also_load: "source_documents.context_engine_design"
       acceptance: |
-        Stop 0 fires AFTER Stop 1 (resequence preserves excitement). 4 questions asked.
+        Stop 0 fires after Stops 1-3 (value-first resequence). 4 questions asked.
         Free-text failures flagged for manual review (SOP documented). 48h timeout fallback works.
-        is_continue_signal() has 3-layer guard (DM-only, not bot, recipient check).
+        is_continue_signal() has 3-layer guard (DM-only, not bot, current-bot channel check).
         Day-8 re-entry DM fires for stuck students.
       notes_ref: "task-notes/7.7.md"
 
     - id: "7.8"
       title: "Bot reliability: health endpoint + !recover_member + Apps Script error alerts"
-      status: "pending"
+      status: "done"
       description: |
         DECISIONS H-04, M-02.
         PART A - Railway health endpoint:
@@ -2350,6 +2354,8 @@ sprint_7:
       acceptance: |
         GET /health returns 200 JSON. Railway health check configured in project settings.
         Apps Script errors post to dashboard within 60s. Error type and function name visible.
+      summary: "Implemented /health on the shared port-8080 aiohttp server with DB/Discord probes and healthy/degraded status codes; added signed /api/internal/apps-script-error endpoint and dashboard posting for function+error visibility; expanded automated coverage in test_webhook_auth.py plus new test_task_78_reliability.py (37/37 pass)."
+      notes_ref: "task-notes/7.8.md"
 
     # ============================================================
     # SESSION 4 PRE-MORTEM TASKS (N-01 through N-25)
@@ -2634,5 +2640,5 @@ agent_instructions: |
 
 # Last Updated
 last_updated: "2026-03-10"
-updated_by: "Task 7.5 audit correction: fixed malformed YAML smart quotes for task metadata, added N-12 M-Pesa code validation, switched 24h/8h age logic to payment_pending_since runtime anchor, added dashboard env fallback for 7.5 alerts, extended regression coverage, and revalidated full suite (628/628)."
+updated_by: "Task 7.8 completion: added shared /health endpoint and signed Apps Script error webhook ingestion, updated sprint progress metrics, and added task-notes/7.8.md with implementation evidence and manual rollout steps."
 
