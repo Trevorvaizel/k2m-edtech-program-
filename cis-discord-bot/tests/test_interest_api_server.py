@@ -1,3 +1,4 @@
+import asyncio
 import json
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -184,6 +185,47 @@ async def test_interest_endpoint_waitlists_when_cap_reached(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_interest_endpoint_success_message_includes_step_marker(monkeypatch):
+    async def _not_duplicate(**_kwargs):
+        return False
+
+    async def _cap(**_kwargs):
+        return {"paid_count": 0, "cap": 30, "available": 30}
+
+    async def _invite():
+        return {"code": "abc123", "url": "https://discord.gg/abc123"}
+
+    async def _append(**_kwargs):
+        return True
+
+    async def _email(**_kwargs):
+        return True
+
+    monkeypatch.setattr(api, "check_duplicate_email", _not_duplicate)
+    monkeypatch.setattr(api, "check_enrollment_cap", _cap)
+    monkeypatch.setattr(api, "create_discord_invite_link", _invite)
+    monkeypatch.setattr(api, "append_to_student_roster", _append)
+    monkeypatch.setattr(api, "send_brevo_email", _email)
+
+    server = api.InterestAPIServer(spreadsheet_id="sheet-123", creds_path="creds")
+    request = _Request(
+        {
+            "name": "Test User",
+            "email": "test@example.com",
+            "phone": "+254700000000",
+            "profession": "Professional",
+        }
+    )
+
+    response = await server._handle_interest(request)
+    payload = json.loads(response.text)
+
+    assert response.status == 200
+    assert payload["success"] is True
+    assert "Step 1 of 4 complete" in payload["message"]
+
+
+@pytest.mark.asyncio
 async def test_enroll_endpoint_returns_submit_url_on_success(monkeypatch):
     row = ["Test Student", "test@example.com", "+254700000000"] + [""] * 15
     captured_updates = {}
@@ -220,6 +262,7 @@ async def test_enroll_endpoint_returns_submit_url_on_success(monkeypatch):
 
     assert response.status == 200
     assert payload["success"] is True
+    assert "Step 3 of 4" in payload["message"]
     assert payload["submit_url"] == "https://k2m.edtech/mpesa-submit?token=tok123"
     assert captured_updates[api.COL_SUBMIT_TOKEN] == "tok123"
     assert captured_updates[api.COL_PAYMENT] == "Enrolled"
@@ -371,6 +414,7 @@ async def test_enroll_endpoint_queues_email_when_discord_not_linked(monkeypatch)
 
     assert response.status == 200
     assert payload["success"] is True
+    assert "Step 3 of 4" in payload["message"]
     assert "detected" in payload["message"].lower()
     assert captured_queue["to_email"] == "test@example.com"
 
@@ -419,7 +463,66 @@ async def test_enroll_endpoint_sends_email_when_discord_links_after_retry(monkey
 
     assert response.status == 200
     assert payload["success"] is True
+    assert "Step 3 of 4" in payload["message"]
     assert captured_email["discord_id"] == "123456789"
+
+
+@pytest.mark.asyncio
+async def test_enroll_endpoint_sends_post_enroll_dm_with_inline_submit_url(monkeypatch):
+    row = ["Test Student", "test@example.com", "+254700000000"] + [""] * 18
+    row[api.COL_DISCORD_ID] = "123456789|test_user"
+    dm_user = AsyncMock()
+    dm_user.send = AsyncMock()
+    bot = AsyncMock()
+    bot.fetch_user = AsyncMock(return_value=dm_user)
+
+    async def _find_row(**_kwargs):
+        return 2, row
+
+    async def _update_row(**_kwargs):
+        return True
+
+    async def _send_email(**_kwargs):
+        return True
+
+    monkeypatch.setattr(api, "find_row_by_email", _find_row)
+    monkeypatch.setattr(api, "update_roster_cells", _update_row)
+    monkeypatch.setattr(api, "send_enrollment_payment_email", _send_email)
+    monkeypatch.setattr(api, "_generate_submit_token", lambda: "tok123")
+    monkeypatch.setattr(api, "build_mpesa_submit_url", lambda token: f"https://k2m.edtech/mpesa-submit?token={token}")
+
+    tasks = []
+    original_create_task = asyncio.create_task
+
+    def _capture_task(coro):
+        task = original_create_task(coro)
+        tasks.append(task)
+        return task
+
+    monkeypatch.setattr(asyncio, "create_task", _capture_task)
+
+    server = api.InterestAPIServer(spreadsheet_id="sheet-123", creds_path="creds", bot=bot)
+    request = _Request(
+        {
+            "email": "test@example.com",
+            "zone": "2",
+            "situation": "University student",
+            "goals": "Build AI skills",
+            "emotional_baseline": "Curious",
+        }
+    )
+    response = await server._handle_enroll(request)
+    payload = json.loads(response.text)
+
+    assert response.status == 200
+    assert payload["success"] is True
+    if tasks:
+        await asyncio.gather(*tasks, return_exceptions=True)
+    bot.fetch_user.assert_awaited_once_with(123456789)
+    dm_user.send.assert_awaited_once()
+    dm_text = dm_user.send.call_args.args[0]
+    assert "Step 3 of 4" in dm_text
+    assert "https://k2m.edtech/mpesa-submit?token=tok123" in dm_text
 
 
 @pytest.mark.asyncio

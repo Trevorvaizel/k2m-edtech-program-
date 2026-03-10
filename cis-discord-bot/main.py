@@ -9,8 +9,9 @@ Bot Name: KIRA (K2M Interactive Reasoning Agent)
 import asyncio
 import logging
 import os
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
+from typing import Dict, Optional
 
 import discord
 from discord import app_commands
@@ -23,6 +24,16 @@ from cis_controller.llm_integration import (
     load_system_prompts,
     set_runtime_failure_notifier,
     validate_provider_configuration,
+)
+from cis_controller.onboarding import (
+    DEFAULT_STOP0_PROFILE,
+    build_reentry_dm,
+    build_stop0_intro,
+    build_stop0_question,
+    build_stop_message,
+    is_continue_signal,
+    is_skip_signal,
+    parse_stop0_profile_answers,
 )
 from cis_controller.router import route_slash_command, setup_bot_events, set_runtime_services
 
@@ -77,6 +88,10 @@ internal_webhook_server = None  # Task 7.11: HMAC-authenticated Apps Script → 
 _guild_invite_snapshot: dict = {}
 _member_join_lock = asyncio.Lock()
 
+# Task 7.7 Stop 0 in-memory questionnaire sessions.
+# Key: discord_id, Value: {"answers": [str, ...], "started_at": datetime}
+_stop0_sessions: Dict[str, dict] = {}
+
 # Validate required environment variables
 if not DISCORD_TOKEN:
     raise ValueError(
@@ -130,10 +145,265 @@ def _is_facilitator_member(member: Optional[discord.Member]) -> bool:
     """Role gate for facilitator-only slash commands."""
     if member is None or member.guild is None:
         return False
+    # Allow true Discord admins even if role naming changes over time.
+    if getattr(member.guild_permissions, "administrator", False):
+        return True
     facilitator_role = discord.utils.get(member.guild.roles, name="Facilitator")
     if facilitator_role is None:
         return False
     return facilitator_role in getattr(member, "roles", [])
+
+
+def _row_value(row, key: str, default=None):
+    if row is None:
+        return default
+    if isinstance(row, dict):
+        return row.get(key, default)
+    try:
+        return row[key]
+    except Exception:
+        return default
+
+
+def _row_int(row, key: str, default: int = 0) -> int:
+    try:
+        return int(_row_value(row, key, default))
+    except (TypeError, ValueError):
+        return default
+
+
+def _row_bool(row, key: str, default: bool = False) -> bool:
+    value = _row_value(row, key, default)
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return value != 0
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "on", "t"}
+    return bool(value)
+
+
+def _student_first_name(student, fallback_name: str) -> str:
+    full_name = (
+        _row_value(student, "enrollment_name")
+        or _row_value(student, "discord_username")
+        or fallback_name
+    )
+    full_name = (full_name or "").strip()
+    return full_name.split()[0] if full_name else fallback_name
+
+
+def _touch_last_active(store, discord_id: str) -> None:
+    if hasattr(store, "touch_student_last_active"):
+        store.touch_student_last_active(discord_id)
+
+
+async def _send_onboarding_stop_message(user: discord.abc.User, stop: int) -> None:
+    await user.send(build_stop_message(stop))
+
+
+async def _start_stop0_flow(
+    user: discord.abc.User,
+    store,
+    discord_id: str,
+    send_intro: bool = True,
+) -> None:
+    if hasattr(store, "start_onboarding_stop_0"):
+        store.start_onboarding_stop_0(discord_id)
+    _stop0_sessions[discord_id] = {
+        "answers": [],
+        "started_at": datetime.now(timezone.utc),
+    }
+    if send_intro:
+        await user.send(build_stop0_intro())
+
+
+async def _advance_onboarding_after_continue(
+    user: discord.abc.User,
+    store,
+    student,
+) -> None:
+    discord_id = str(user.id)
+    current_stop = _row_int(student, "onboarding_stop", 1)
+
+    if current_stop <= 1:
+        if hasattr(store, "update_onboarding_stop"):
+            store.update_onboarding_stop(discord_id, 2)
+        _touch_last_active(store, discord_id)
+        await _send_onboarding_stop_message(user, 2)
+        return
+
+    if current_stop == 2:
+        if hasattr(store, "update_onboarding_stop"):
+            store.update_onboarding_stop(discord_id, 3)
+        _touch_last_active(store, discord_id)
+        await _send_onboarding_stop_message(user, 3)
+        return
+
+    if current_stop == 3:
+        if hasattr(store, "update_onboarding_stop"):
+            store.update_onboarding_stop(discord_id, 4)
+        _touch_last_active(store, discord_id)
+        await user.send(
+            "Nice work. Core setup is complete, so now we can do your optional profile step."
+        )
+        await _start_stop0_flow(user, store, discord_id, send_intro=True)
+
+
+async def _finalize_stop0_with_defaults(
+    user: discord.abc.User,
+    store,
+    discord_id: str,
+    reason: str,
+) -> None:
+    defaults = DEFAULT_STOP0_PROFILE
+    if hasattr(store, "save_stop_0_profile"):
+        store.save_stop_0_profile(
+            discord_id=discord_id,
+            primary_device_context=str(defaults["primary_device_context"]),
+            study_hours_per_week=int(defaults["study_hours_per_week"]),
+            confidence_level=int(defaults["confidence_level"]),
+            family_obligations_hint=str(defaults["family_obligations_hint"]),
+            profile_complete=False,
+        )
+    _touch_last_active(store, discord_id)
+    _stop0_sessions.pop(discord_id, None)
+    if hasattr(store, "log_observability_event"):
+        store.log_observability_event(
+            discord_id=discord_id,
+            event_type=reason,
+            metadata={"defaulted": True},
+        )
+    await user.send(
+        "No pressure. I saved default profile values so setup keeps moving. "
+        "You can update this later with `/onboarding`."
+    )
+
+
+async def _handle_stop0_response(message: discord.Message, store) -> bool:
+    discord_id = str(message.author.id)
+    content = (message.content or "").strip()
+    if not content:
+        return False
+    if content.startswith("/"):
+        return False
+
+    if is_skip_signal(content):
+        await _finalize_stop0_with_defaults(
+            user=message.author,
+            store=store,
+            discord_id=discord_id,
+            reason="onboarding_stop_0_skipped",
+        )
+        return True
+
+    session = _stop0_sessions.get(discord_id)
+    if session is None:
+        session = {"answers": [], "started_at": datetime.now(timezone.utc)}
+        _stop0_sessions[discord_id] = session
+        if is_continue_signal(message, bot.user, expected_discord_id=discord_id):
+            await message.author.send(build_stop0_intro())
+            return True
+
+    answers = session.setdefault("answers", [])
+    answers.append(content)
+
+    if len(answers) < 4:
+        _touch_last_active(store, discord_id)
+        await message.author.send(build_stop0_question(len(answers)))
+        return True
+
+    profile, parse_flags = parse_stop0_profile_answers(answers[:4])
+    if hasattr(store, "save_stop_0_profile"):
+        store.save_stop_0_profile(
+            discord_id=discord_id,
+            primary_device_context=str(profile["primary_device_context"]),
+            study_hours_per_week=int(profile["study_hours_per_week"]),
+            confidence_level=int(profile["confidence_level"]),
+            family_obligations_hint=str(profile["family_obligations_hint"]),
+            profile_complete=True,
+        )
+    _touch_last_active(store, discord_id)
+    _stop0_sessions.pop(discord_id, None)
+
+    if parse_flags and hasattr(store, "log_observability_event"):
+        store.log_observability_event(
+            discord_id=discord_id,
+            event_type="profile_parse_flagged",
+            metadata={
+                "parse_flags": parse_flags,
+                "raw_response_text": " | ".join(answers[:4]),
+            },
+        )
+
+    await message.author.send(
+        "Thanks. Your profile context is saved. You are all set for the next cohort steps."
+    )
+    return True
+
+
+async def _resume_onboarding(user: discord.abc.User, store) -> None:
+    discord_id = str(user.id)
+    student = store.get_student(discord_id)
+    if not student:
+        await user.send(
+            "I could not find your onboarding record yet. If you just joined, wait a moment and try again."
+        )
+        return
+
+    stop = _row_int(student, "onboarding_stop", 0)
+    stop0_complete = _row_bool(student, "onboarding_stop_0_complete", False)
+
+    if stop <= 0:
+        if hasattr(store, "update_onboarding_stop"):
+            store.update_onboarding_stop(discord_id, 1)
+        _touch_last_active(store, discord_id)
+        await _send_onboarding_stop_message(user, 1)
+        return
+
+    if stop < 4:
+        _touch_last_active(store, discord_id)
+        await _send_onboarding_stop_message(user, stop)
+        return
+
+    if not stop0_complete:
+        await _start_stop0_flow(user, store, discord_id, send_intro=True)
+        return
+
+    await user.send("Your onboarding is complete. Use `/frame` any time to continue.")
+
+
+async def _handle_onboarding_message(message: discord.Message) -> bool:
+    """
+    Task 7.7 onboarding DM progression gate.
+    Returns True when the message was consumed by onboarding flow.
+    """
+    if not isinstance(message.channel, discord.DMChannel):
+        return False
+    if getattr(message.author, "bot", False):
+        return False
+
+    store = _get_store()
+    student = store.get_student(str(message.author.id))
+    if not student:
+        return False
+
+    discord_id = str(message.author.id)
+    onboarding_stop = _row_int(student, "onboarding_stop", 0)
+    stop0_complete = _row_bool(student, "onboarding_stop_0_complete", False)
+
+    # Stops 1-3 progress only on strict continue signal checks.
+    if 1 <= onboarding_stop < 4:
+        if not is_continue_signal(message, bot.user, expected_discord_id=discord_id):
+            return False
+        await _advance_onboarding_after_continue(message.author, store, student)
+        return True
+
+    # Stop 0 (profile) flow is active after Stop 3 completion.
+    if onboarding_stop >= 4 and not stop0_complete:
+        return await _handle_stop0_response(message, store)
+
+    return False
 
 
 async def _link_member_identity_to_roster(
@@ -344,6 +614,7 @@ async def on_ready():
     set_runtime_services(
         escalation_system=runtime_escalation_system,
         participation_tracker=runtime_participation_tracker,
+        onboarding_message_handler=_handle_onboarding_message,
     )
 
     # Initialize health monitor (Task 4.5: Bot failure handling + health checks)
@@ -581,6 +852,41 @@ async def synthesize_slash(interaction: discord.Interaction):
 @bot.tree.command(name="create-artifact", description="Start artifact workflow (Week 6+).")
 async def create_artifact_slash(interaction: discord.Interaction):
     await route_slash_command(interaction, "create-artifact")
+
+
+@bot.tree.command(
+    name="onboarding",
+    description="Resume your onboarding steps from where you left off.",
+)
+async def onboarding_slash(interaction: discord.Interaction):
+    await interaction.response.defer(ephemeral=interaction.guild is not None)
+
+    store = _get_store()
+    user = interaction.user
+    if not isinstance(user, (discord.Member, discord.User)):
+        await interaction.followup.send(
+            "I could not resolve your account for onboarding.",
+            ephemeral=interaction.guild is not None,
+        )
+        return
+
+    if interaction.guild is not None:
+        try:
+            await user.create_dm()
+            await _resume_onboarding(user, store)
+            await interaction.followup.send(
+                "I sent your onboarding continuation to DM.",
+                ephemeral=True,
+            )
+        except discord.Forbidden:
+            await interaction.followup.send(
+                "I could not DM you. Enable DMs and retry `/onboarding`.",
+                ephemeral=True,
+            )
+        return
+
+    await _resume_onboarding(user, store)
+    await interaction.followup.send("Onboarding status refreshed in this DM.")
 
 
 @bot.tree.command(
@@ -1254,16 +1560,20 @@ async def on_member_join(member: discord.Member):
 
             # --- Welcome DM ---
             if student_linked:
-                enrollment_name = (
-                    student.get("enrollment_name") or member.display_name
-                )
-                first_name = enrollment_name.strip().split()[0] if enrollment_name else member.display_name
+                if not student:
+                    student = store.get_student(str(member.id))
+                first_name = _student_first_name(student, member.display_name)
                 welcome_message = (
-                    f"Hey **{first_name}** — welcome to K2M Cohort #1!\n\n"
-                    "Your enrollment is confirmed. I'm KIRA, your AI guide for this cohort.\n\n"
-                    "Head to **#start-here** to complete your onboarding profile and "
-                    "I'll take it from there.\n\n"
-                    "— KIRA (K2M Interactive Reasoning Agent)"
+                    f"Hey **{first_name}** - welcome to K2M Cohort #1!\n\n"
+                    "Step 2 complete - here's Step 3.\n\n"
+                    "Quick Discord guide on mobile:\n"
+                    "Tap the menu icon (top left) to see channels.\n"
+                    "Tap the inbox icon to see my messages.\n"
+                    "I will guide you through everything step by step.\n\n"
+                    "You are now on value-first onboarding:\n"
+                    "Stop 1 -> Stop 2 -> Stop 3 -> Stop 0 (optional profile)\n\n"
+                    f"{build_stop_message(1)}\n\n"
+                    "- KIRA"
                 )
             else:
                 welcome_message = (
@@ -1277,6 +1587,14 @@ async def on_member_join(member: discord.Member):
             try:
                 await member.send(welcome_message)
                 logger.info("Sent welcome DM to %s (linked=%s)", member.display_name, student_linked)
+                if student_linked:
+                    if hasattr(store, "update_onboarding_stop"):
+                        store.update_onboarding_stop(str(member.id), 1)
+                    _touch_last_active(store, str(member.id))
+                    logger.info(
+                        "Task 7.7: started value-first onboarding stop flow for %s",
+                        member.display_name,
+                    )
             except discord.Forbidden:
                 logger.warning("Could not DM %s — DMs disabled", member.display_name)
 
@@ -1374,5 +1692,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-

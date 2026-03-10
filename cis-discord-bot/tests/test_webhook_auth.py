@@ -341,6 +341,179 @@ class TestPreloadStudentEndpoint:
         assert any("/api/internal/preload-student" in str(a) for a in call_args)
 
 
+# ── /api/internal/apps-script-error ───────────────────────────────────────
+
+class TestAppsScriptErrorEndpoint:
+    def _server(self):
+        from cis_controller.internal_api_server import InternalWebhookServer
+        return InternalWebhookServer(bot=MagicMock())
+
+    def _payload(self) -> dict:
+        return {
+            "type": "apps_script_error",
+            "fn": "activateStudent",
+            "error": "ReferenceError: preloadToDatabase is not defined",
+        }
+
+    @pytest.mark.asyncio
+    async def test_valid_signature_posts_apps_script_error(self, monkeypatch):
+        monkeypatch.setenv("WEBHOOK_SECRET", SECRET_STR)
+        payload = self._payload()
+        body = json.dumps(payload).encode()
+        req = _make_request(body, {"X-K2M-Signature": _sign(body)}, remote="10.20.30.40")
+
+        with patch(
+            "cis_controller.internal_api_server._log_apps_script_error_to_dashboard",
+            new_callable=AsyncMock,
+            return_value=True,
+        ) as mock_log:
+            resp = await self._server()._handle_apps_script_error(req)
+
+        assert resp.status == 200
+        response_payload = json.loads(resp.body)
+        assert response_payload["success"] is True
+        assert response_payload["dashboard_posted"] is True
+
+        mock_log.assert_awaited_once()
+        kwargs = mock_log.call_args.kwargs
+        assert kwargs["function_name"] == "activateStudent"
+        assert "ReferenceError" in kwargs["error_message"]
+        assert kwargs["source_ip"] == "10.20.30.40"
+
+    @pytest.mark.asyncio
+    async def test_missing_signature_returns_401(self, monkeypatch):
+        monkeypatch.setenv("WEBHOOK_SECRET", SECRET_STR)
+        body = json.dumps(self._payload()).encode()
+        req = _make_request(body, {}, remote="9.8.7.6")
+
+        with patch(
+            "cis_controller.internal_api_server._log_401_to_dashboard",
+            new_callable=AsyncMock,
+        ) as mock_log:
+            resp = await self._server()._handle_apps_script_error(req)
+
+        assert resp.status == 401
+        mock_log.assert_awaited_once()
+        call_args = mock_log.call_args_list[0].args
+        assert any("/api/internal/apps-script-error" in str(a) for a in call_args)
+
+    @pytest.mark.asyncio
+    async def test_invalid_type_returns_400(self, monkeypatch):
+        monkeypatch.setenv("WEBHOOK_SECRET", SECRET_STR)
+        payload = self._payload()
+        payload["type"] = "unexpected_type"
+        body = json.dumps(payload).encode()
+        req = _make_request(body, {"X-K2M-Signature": _sign(body)})
+
+        resp = await self._server()._handle_apps_script_error(req)
+        assert resp.status == 400
+
+    @pytest.mark.asyncio
+    async def test_missing_function_name_returns_400(self, monkeypatch):
+        monkeypatch.setenv("WEBHOOK_SECRET", SECRET_STR)
+        payload = self._payload()
+        payload.pop("fn")
+        body = json.dumps(payload).encode()
+        req = _make_request(body, {"X-K2M-Signature": _sign(body)})
+
+        resp = await self._server()._handle_apps_script_error(req)
+        assert resp.status == 400
+
+    @pytest.mark.asyncio
+    async def test_missing_error_message_returns_400(self, monkeypatch):
+        monkeypatch.setenv("WEBHOOK_SECRET", SECRET_STR)
+        payload = self._payload()
+        payload.pop("error")
+        body = json.dumps(payload).encode()
+        req = _make_request(body, {"X-K2M-Signature": _sign(body)})
+
+        resp = await self._server()._handle_apps_script_error(req)
+        assert resp.status == 400
+
+
+# ── /api/internal/activation-dm ───────────────────────────────────────────
+
+class TestActivationDmEndpoint:
+    def _server(self):
+        from cis_controller.internal_api_server import InternalWebhookServer
+        bot = MagicMock()
+        user = MagicMock()
+        user.send = AsyncMock()
+        bot.fetch_user = AsyncMock(return_value=user)
+        return InternalWebhookServer(bot=bot), bot, user
+
+    @pytest.mark.asyncio
+    async def test_valid_signature_sends_two_activation_messages(self, monkeypatch):
+        monkeypatch.setenv("WEBHOOK_SECRET", SECRET_STR)
+        monkeypatch.setenv("COHORT_1_FIRST_SESSION_DATE", "2026-03-18")
+        monkeypatch.setenv("COHORT_1_START_DATE", "2026-03-16")
+        payload = {
+            "discord_id": "123456789012345678",
+            "enrollment_name": "Grace Kamau",
+        }
+        body = json.dumps(payload).encode()
+        req = _make_request(body, {"X-K2M-Signature": _sign(body)})
+        server, bot, user = self._server()
+
+        resp = await server._handle_activation_dm(req)
+
+        assert resp.status == 200
+        response_payload = json.loads(resp.body)
+        assert response_payload["success"] is True
+        bot.fetch_user.assert_awaited_once_with(123456789012345678)
+        assert user.send.await_count == 2
+        msg_1 = user.send.await_args_list[0].args[0]
+        msg_2 = user.send.await_args_list[1].args[0]
+        assert "Step 4 complete - you're in!" in msg_1
+        assert "First live session: 2026-03-18 at 6 PM EAT" in msg_1
+        assert "Stop 1 - Welcome and orientation" in msg_2
+
+    @pytest.mark.asyncio
+    async def test_missing_signature_returns_401(self, monkeypatch):
+        monkeypatch.setenv("WEBHOOK_SECRET", SECRET_STR)
+        body = json.dumps({"discord_id": "123456789012345678"}).encode()
+        req = _make_request(body, {}, remote="9.8.7.6")
+        server, _bot, _user = self._server()
+
+        with patch(
+            "cis_controller.internal_api_server._log_401_to_dashboard",
+            new_callable=AsyncMock,
+        ) as mock_log:
+            resp = await server._handle_activation_dm(req)
+
+        assert resp.status == 401
+        mock_log.assert_awaited_once()
+        call_args = mock_log.call_args_list[0].args
+        assert any("/api/internal/activation-dm" in str(a) for a in call_args)
+
+    @pytest.mark.asyncio
+    async def test_non_numeric_discord_id_returns_400(self, monkeypatch):
+        monkeypatch.setenv("WEBHOOK_SECRET", SECRET_STR)
+        body = json.dumps({"discord_id": "not-a-number"}).encode()
+        req = _make_request(body, {"X-K2M-Signature": _sign(body)})
+        server, _bot, _user = self._server()
+
+        resp = await server._handle_activation_dm(req)
+
+        assert resp.status == 400
+        assert "numeric" in json.loads(resp.body)["error"]
+
+    @pytest.mark.asyncio
+    async def test_returns_503_when_bot_unavailable(self, monkeypatch):
+        monkeypatch.setenv("WEBHOOK_SECRET", SECRET_STR)
+        payload = {"discord_id": "123456789012345678", "enrollment_name": "Grace"}
+        body = json.dumps(payload).encode()
+        req = _make_request(body, {"X-K2M-Signature": _sign(body)})
+
+        from cis_controller.internal_api_server import InternalWebhookServer
+
+        server = InternalWebhookServer(bot=None)
+        resp = await server._handle_activation_dm(req)
+
+        assert resp.status == 503
+        assert json.loads(resp.body)["success"] is False
+
+
 # ── _grant_student_role unit ───────────────────────────────────────────────
 
 class TestGrantStudentRole:
@@ -397,3 +570,36 @@ class TestGrantStudentRole:
         ok, error = await _grant_student_role("123456789")
         assert ok is False
         assert "not configured" in error
+
+
+# ── dashboard logging env compatibility ─────────────────────────────────────
+
+class TestDashboard401Logging:
+    @pytest.mark.asyncio
+    async def test_uses_channel_facilitator_dashboard_when_specific_id_missing(self, monkeypatch):
+        """
+        Task 7.11 acceptance requires visible 401 alerts in #facilitator-dashboard.
+        Runtime config commonly uses CHANNEL_FACILITATOR_DASHBOARD, so fallback
+        must work when FACILITATOR_DASHBOARD_CHANNEL_ID is unset.
+        """
+        monkeypatch.setenv("FACILITATOR_DASHBOARD_CHANNEL_ID", "")
+        monkeypatch.setenv("CHANNEL_FACILITATOR_DASHBOARD", "12345")
+
+        from cis_controller.internal_api_server import _log_401_to_dashboard
+
+        channel = MagicMock()
+        channel.send = AsyncMock()
+
+        bot = MagicMock()
+        bot.get_channel.return_value = channel
+        bot.fetch_channel = AsyncMock(return_value=channel)
+
+        await _log_401_to_dashboard(
+            bot=bot,
+            source_ip="9.8.7.6",
+            endpoint="/api/internal/role-upgrade",
+            reason="Missing X-K2M-Signature header",
+        )
+
+        bot.get_channel.assert_called_once_with(12345)
+        channel.send.assert_awaited_once()

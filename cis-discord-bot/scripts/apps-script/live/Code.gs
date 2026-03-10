@@ -186,6 +186,13 @@ function activateStudentByRow_(sheet, row) {
       errors.push('activation email failed: ' + emailResult.error);
     }
 
+    if (errors.length === 0 && payload.discord_id && payload.discord_id.match(/^\d+$/)) {
+      var dmResult = callActivationDm_(payload.discord_id, payload.enrollment_name);
+      if (!dmResult.success) {
+        errors.push('activation dm failed: ' + dmResult.error);
+      }
+    }
+
     if (errors.length > 0) {
       var note = 'ACTIVATION ERRORS: ' + errors.join(' | ');
       sheet.getRange(row, COL_NOTES).setValue(note);
@@ -259,6 +266,21 @@ function callPreloadStudent_(payload) {
   }
 }
 
+function callActivationDm_(discordId, fullName) {
+  try {
+    var botUrl = normalizeBotUrl_();
+    var resp = signedFetch_(botUrl + '/api/internal/activation-dm', {
+      discord_id: String(discordId || '').trim(),
+      enrollment_name: String(fullName || '').trim(),
+      first_session_date: String(getOptionalProperty_('COHORT_1_FIRST_SESSION_DATE', '')).trim(),
+      week1_start_date: String(getOptionalProperty_('COHORT_1_START_DATE', '')).trim()
+    });
+    return parseWebhookResponse_(resp);
+  } catch (err) {
+    return { success: false, error: String(err) };
+  }
+}
+
 function parseWebhookResponse_(resp) {
   var code = resp.getResponseCode();
   var text = String(resp.getContentText() || '');
@@ -320,7 +342,18 @@ function reportAppsScriptError_(functionName, errOrMessage, extra) {
     if (!dashboardUrl) {
       dashboardUrl = normalizeBotUrl_() + '/api/internal/apps-script-error';
     }
-    signedFetch_(dashboardUrl, payload);
+    var response = signedFetch_(dashboardUrl, payload);
+    var parsed = parseWebhookResponse_(response);
+    if (!parsed.success) {
+      throw new Error('apps-script-error webhook failed: ' + parsed.error);
+    }
+    if (
+      parsed.body &&
+      Object.prototype.hasOwnProperty.call(parsed.body, 'dashboard_posted') &&
+      parsed.body.dashboard_posted === false
+    ) {
+      throw new Error('apps-script-error webhook accepted but dashboard post failed');
+    }
   } catch (webhookErr) {
     var fallbackEmail = getOptionalProperty_('APPS_SCRIPT_ALERT_EMAIL', '');
     if (fallbackEmail) {

@@ -197,12 +197,12 @@ playbook_traceability:
 # ============================================================
 progress:
   total_tasks: 92
-  done: 42
+  done: 43
   in_progress: 0
   blocked: 0
-  pending: 50
-  percent_complete: 46
-  last_updated: "2026-03-10 - Task 7.8 hardening rollout completed: source-controlled Railway health checks via railway.toml, production deploy success (kira-bot) with /health path and ON_FAILURE restart policy, liveness-safe health response (HTTP 200 with payload-level healthy/degraded state), and a fresh Apps Script v2 project scaffolded with signed role-upgrade/preload/error webhooks. Regression validation remains green: py -m pytest tests/test_webhook_auth.py tests/test_task_78_reliability.py (37/37 passed). Live production Sheets integration check also passed via real read/write/restore using read_roster_rows + update_roster_cells."
+  pending: 49
+  percent_complete: 47
+  last_updated: "2026-03-10 - Task 7.10 completed: KIRA DM progress templates updated (welcome/enroll/payment/activation), activation DM webhook path added, API success responses now include step markers, and task notes + tests updated."
   decision_7_revised: "2026-02-20 â€” Context engine building NOW for Cohort 1 (not deferred)"
   adversarial_review_2: "2026-03-04 â€” Pre-mortem on enrollment flow. 5 P0 bugs fixed, 5 P1 issues resolved. Task 0.7 split into 0.7a-d. Payment amount standardized to KES 5,000. Source-of-truth set via execution_contract."
   adversarial_review_3: "2026-03-04 â€” Pre-mortem party mode (Sally+John+Winston+Amelia+DrQuinn+Murat+Mary+Maya). North star: zero Discord experience. Found 3 critical blockers, 6 high issues, 8 medium issues. Added Sprint 7. Migrated to PostgreSQL immediately (promoted from 6.6 prep). Full decisions log: pre-mortem-2026-03-04-decisions.md"
@@ -2332,29 +2332,31 @@ sprint_7:
       notes_ref: "task-notes/7.7.md"
 
     - id: "7.8"
-      title: "Bot reliability: health endpoint + !recover_member + Apps Script error alerts"
+      title: "Bot reliability: health endpoint + /recover-member + Apps Script error alerts"
       status: "done"
       description: |
         DECISIONS H-04, M-02.
         PART A - Railway health endpoint:
           Add HTTP health server thread to main.py (aiohttp or http.server):
           GET /health -> 200 OK {"status": "healthy", "db": "connected", "discord": "connected"}
-          Configure Railway health check: path=/health, interval=30s, timeout=5s
-        PART B - !recover_member already specified in task 7.2 (collocated there).
+          Configure Railway health check: path=/health, timeout=120s (startup-safe liveness window)
+        PART B - /recover-member already specified in task 7.2 (collocated there).
         PART C - Apps Script error surfacing:
           Wrap all Apps Script functions in try/catch:
           On error: UrlFetchApp.fetch(DASHBOARD_WEBHOOK_URL, {type: apps_script_error, fn, error})
           KIRA receives webhook -> posts to #facilitator-dashboard:
           "Apps Script error in [fn]: [message]"
+          If webhook returns non-success or dashboard post is not confirmed, send fallback alert email.
           Trevor adds DASHBOARD_WEBHOOK_URL to Apps Script project settings.
       agent_context:
         load: "_bmad-output/cohort-design-artifacts/design-and-architecture/pre-mortem-2026-03-04-decisions.md"
         section: "DECISION H-04 + M-02"
         also_load: "source_documents.bot_technical_spec"
       acceptance: |
-        GET /health returns 200 JSON. Railway health check configured in project settings.
-        Apps Script errors post to dashboard within 60s. Error type and function name visible.
-      summary: "Implemented /health on the shared port-8080 aiohttp server with DB/Discord probes and payload-level healthy/degraded reporting; added signed /api/internal/apps-script-error endpoint and dashboard posting for function+error visibility; configured Railway deploy health checks in-code (railway.toml) and verified production deployment success; scaffolded a new Apps Script v2 project + source under cis-discord-bot/scripts/apps-script/live for signed activation webhooks. Automated regression: 37/37 tests passing. Live production Sheets read/write/restore validation passed using read_roster_rows + update_roster_cells."
+        GET /health returns 200 JSON. Railway health check is configured via railway.toml.
+        Unsigned /api/internal/apps-script-error requests return 401.
+        Apps Script error payload includes function + message and supports fallback email when dashboard delivery is not confirmed.
+      summary: "Implemented /health on the shared port-8080 aiohttp server with DB/Discord probes and payload-level healthy/degraded reporting; added signed /api/internal/apps-script-error endpoint and dashboard posting; configured Railway health checks via railway.toml; scaffolded Apps Script v2 and added webhook-response-aware fallback email behavior for error alerts; re-audited with local test pass (37/37) plus live production /health and auth-guard probes."
       notes_ref: "task-notes/7.8.md"
 
     # ============================================================
@@ -2391,7 +2393,7 @@ sprint_7:
 
     - id: "7.10"
       title: "KIRA DM templates: progress indicators + M-Pesa URL inline + activation redesign"
-      status: "pending"
+      status: "done"
       description: |
         DECISIONS N-02, N-09, N-24, N-25 (Session 4). Bundle of KIRA DM and UX improvements.
 
@@ -2426,6 +2428,7 @@ sprint_7:
         KIRA enrollment confirmation DM includes M-Pesa token URL inline.
         All KIRA DMs include stage markers. Welcome DM includes Discord navigation tip.
         Activation DM matches N-25 copy. /api/enroll success page shows "Step 3 of 4".
+      summary: "Implemented Task 7.10 end-to-end: on_member_join welcome DM now includes Step 2 marker + first-timer Discord navigation bridge; /api/enroll sends Step 3 response text and a KIRA post-enroll DM with inline token URL; /api/mpesa-submit immediate DM now carries Step 4 marker; internal authenticated endpoint /api/internal/activation-dm added for N-25 two-message activation flow; Apps Script activateStudent now calls activation-dm webhook; /api/interest and /api/enroll success payloads now include step markers; tests and task notes added/updated."
       notes_ref: "task-notes/7.10.md"
 
     - id: "7.11"
@@ -2640,5 +2643,5 @@ agent_instructions: |
 
 # Last Updated
 last_updated: "2026-03-10"
-updated_by: "Task 7.8 rollout hardening + live Sheets verification: added railway.toml health config, fixed /health liveness semantics for Railway startup probes, verified production deployment success, created Apps Script v2 scaffold (linked + pushed), executed reversible production Sheets read/write/restore test, and expanded task-notes/7.8.md with rollout + validation evidence."
+updated_by: "Task 7.8 re-audit: corrected task wording (/recover-member, health timeout), added evidence-backed acceptance notes, and documented fallback alerting hardening plus production probe results."
 

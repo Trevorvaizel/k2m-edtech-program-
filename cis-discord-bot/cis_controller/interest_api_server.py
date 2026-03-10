@@ -1474,7 +1474,7 @@ class InterestAPIServer:
                     "success": True,
                     "waitlisted": waitlisted,
                     "message": (
-                        "Check your email for your Discord invitation!"
+                        "Step 1 of 4 complete - check your email for your Discord invitation."
                         if not waitlisted
                         else "You're on our priority list for the next cohort!"
                     ),
@@ -1626,7 +1626,30 @@ class InterestAPIServer:
                         status=502,
                         headers=_cors_headers(),
                     )
-                message = "Enrollment complete. Check your email for payment instructions."
+                message = "Step 3 of 4 - enrollment complete. Check your email for payment instructions."
+                if self._bot:
+                    async def _send_post_enroll_dm(discord_id_value: str, name: str, token_url: str) -> None:
+                        try:
+                            user = await self._bot.fetch_user(int(discord_id_value))
+                            await user.send(
+                                f"Got your enrollment form, {name}!\n\n"
+                                "Step 3 of 4 - payment next.\n\n"
+                                "Pay via M-Pesa, then submit your code here:\n"
+                                f"{token_url}\n"
+                                f"(Link expires in {TOKEN_TTL_DAYS} days.)\n\n"
+                                "Check your email too for a backup copy.\n\n"
+                                "- KIRA"
+                            )
+                            logger.info("Task 7.10: post-enroll DM sent to discord_id=%s", discord_id_value)
+                        except Exception as exc:
+                            logger.warning(
+                                "Task 7.10: post-enroll DM failed for %s: %s",
+                                discord_id_value,
+                                exc,
+                            )
+
+                    first_name = student_name.strip().split()[0] if student_name.strip() else "there"
+                    asyncio.create_task(_send_post_enroll_dm(discord_id, first_name, submit_url))
             else:
                 logger.warning("discord_id not found after 3 retries for %s", email)
                 queued = queue_enrollment_payment_email(
@@ -1644,7 +1667,7 @@ class InterestAPIServer:
                         headers=_cors_headers(),
                     )
                 message = (
-                    "Enrollment complete. We will send payment instructions as soon as "
+                    "Step 3 of 4 - enrollment complete. We will send payment instructions as soon as "
                     "your Discord join is detected."
                 )
 
@@ -1885,8 +1908,9 @@ class InterestAPIServer:
                     try:
                         user = await self._bot.fetch_user(int(discord_id))
                         await user.send(
-                            f"Hey {name} — got your M-Pesa code! "
-                            "Trevor reviews within 24 hours. I will DM you when you are activated."
+                            f"Hey {name} - payment received! "
+                            "Step 4 of 4: Trevor verifies (usually 24 hours). "
+                            "I will DM you when you are activated."
                         )
                         logger.info("Task 7.5: immediate payment DM sent to discord_id=%s", discord_id)
                     except Exception as exc:

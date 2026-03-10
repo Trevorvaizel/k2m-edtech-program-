@@ -216,7 +216,8 @@ async def test_mpesa_submit_fires_immediate_kira_dm(monkeypatch):
     bot.fetch_user.assert_awaited_once_with(999111222333)
     bot.fetch_user.return_value.send.assert_awaited_once()
     dm_text = bot.fetch_user.return_value.send.call_args[0][0]
-    assert "M-Pesa code" in dm_text
+    assert "Step 4 of 4" in dm_text
+    assert "payment received" in dm_text.lower()
     assert "24 hours" in dm_text
 
 
