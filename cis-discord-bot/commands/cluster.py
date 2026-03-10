@@ -33,6 +33,19 @@ def _resolve_channel_mapping_with_fallback(interaction: discord.Interaction) -> 
     return channel_mapping
 
 
+def _has_facilitator_access(interaction: discord.Interaction) -> bool:
+    """
+    Allow either explicit @Facilitator role OR Discord administrator permission.
+    """
+    user = interaction.user
+    if user is None or interaction.guild is None:
+        return False
+    if getattr(user.guild_permissions, "administrator", False):
+        return True
+    facilitator_role = discord.utils.get(interaction.guild.roles, name="Facilitator")
+    return bool(facilitator_role and facilitator_role in getattr(user, "roles", []))
+
+
 async def switch_cluster(
     interaction: discord.Interaction,
     store: StudentStateStore,
@@ -51,10 +64,9 @@ async def switch_cluster(
         reason: Optional reason for the switch
     """
     # Verify Facilitator role
-    facilitator_role = discord.utils.get(interaction.guild.roles, name="Facilitator")
-    if not facilitator_role or facilitator_role not in interaction.user.roles:
+    if not _has_facilitator_access(interaction):
         await interaction.response.send_message(
-            "❌ This command requires the @Facilitator role.",
+            "❌ This command requires @Facilitator role or Discord Administrator permission.",
             ephemeral=True
         )
         return
@@ -160,10 +172,9 @@ async def show_cluster_roster(
         cluster_id: Cluster ID to show (1-8)
     """
     # Verify Facilitator role
-    facilitator_role = discord.utils.get(interaction.guild.roles, name="Facilitator")
-    if not facilitator_role or facilitator_role not in interaction.user.roles:
+    if not _has_facilitator_access(interaction):
         await interaction.response.send_message(
-            "❌ This command requires the @Facilitator role.",
+            "❌ This command requires @Facilitator role or Discord Administrator permission.",
             ephemeral=True
         )
         return
@@ -230,16 +241,23 @@ async def show_all_cluster_rosters(
         store: Database store
     """
     # Verify Facilitator role
-    facilitator_role = discord.utils.get(interaction.guild.roles, name="Facilitator")
-    if not facilitator_role or facilitator_role not in interaction.user.roles:
+    if not _has_facilitator_access(interaction):
         await interaction.response.send_message(
-            "❌ This command requires the @Facilitator role.",
+            "❌ This command requires @Facilitator role or Discord Administrator permission.",
             ephemeral=True
         )
         return
 
-    # Get all cluster rosters
-    rosters = store.get_all_cluster_rosters()
+    # Build roster summary in command layer so output remains DB-adapter agnostic.
+    rosters = []
+    for cluster_id in range(1, 9):
+        students = store.get_students_by_cluster(cluster_id)
+        rosters.append(
+            {
+                "cluster_id": cluster_id,
+                "student_count": len(students),
+            }
+        )
 
     embed = discord.Embed(
         title="📊 All Cluster Rosters",
@@ -286,10 +304,9 @@ async def post_session_summary(
         attendance_count: Optional number of attendees
     """
     # Verify Facilitator role
-    facilitator_role = discord.utils.get(interaction.guild.roles, name="Facilitator")
-    if not facilitator_role or facilitator_role not in interaction.user.roles:
+    if not _has_facilitator_access(interaction):
         await interaction.response.send_message(
-            "❌ This command requires the @Facilitator role.",
+            "❌ This command requires @Facilitator role or Discord Administrator permission.",
             ephemeral=True
         )
         return

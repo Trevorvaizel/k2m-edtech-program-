@@ -297,6 +297,14 @@ class HealthMonitor:
         Switch process stores to shared in-memory mode on database failure.
         """
         try:
+            import os
+            db_url = os.getenv("DATABASE_URL", "").strip()
+            # PostgreSQL runtime has no SQLite backup-mode switch; alert with
+            # PG-specific recovery guidance instead of false SQLite wording.
+            if db_url.startswith("postgresql://") or db_url.startswith("postgres://"):
+                await self._notify_postgresql_degraded(reason)
+                return
+
             from database.store import StudentStateStore
 
             if StudentStateStore.is_in_memory_fallback_active():
@@ -306,6 +314,28 @@ class HealthMonitor:
             await self._notify_database_backup_mode(reason)
         except Exception as exc:
             logger.error("Failed to activate in-memory backup mode: %s", exc, exc_info=True)
+
+    async def _notify_postgresql_degraded(self, reason: str) -> None:
+        """Alert Trevor of PostgreSQL connectivity degradation."""
+        embed = discord.Embed(
+            title="🚨 PostgreSQL Connectivity Degraded",
+            description="Runtime database checks failed in PostgreSQL mode.",
+            color=discord.Color.red(),
+            timestamp=datetime.now(),
+        )
+        embed.add_field(name="Failure Details", value=(reason or "Unknown error")[:300], inline=False)
+        embed.add_field(
+            name="Recovery",
+            value=(
+                "Check Railway Postgres service health, validate DATABASE_URL, "
+                "and restart/redeploy bot services."
+            ),
+            inline=False,
+        )
+        await self._send_trevor_alert(
+            embed=embed,
+            fallback_text=f"🚨 PostgreSQL connectivity degraded: {reason}",
+        )
 
     async def notify_llm_runtime_failure(self, provider: str, agent: str, error: str) -> None:
         """
