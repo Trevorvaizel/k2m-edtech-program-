@@ -40,6 +40,9 @@ CREATE TABLE IF NOT EXISTS students (
     enrollment_status TEXT DEFAULT 'pending',
     payment_status TEXT DEFAULT 'pending',
 
+    -- Sprint 7.4 / Decision H-01: M-Pesa token warning idempotency flag
+    token_warning_sent BOOLEAN DEFAULT FALSE,
+
     -- Sprint 7.6 / Context-engine required columns
     profession TEXT,
     barrier_type TEXT,
@@ -413,3 +416,4 @@ ALTER TABLE students ADD COLUMN IF NOT EXISTS artifact_title TEXT;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS profile_complete BOOLEAN DEFAULT FALSE;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS primary_device_context VARCHAR(50);
 ALTER TABLE students ADD COLUMN IF NOT EXISTS family_obligations_hint VARCHAR(200);
+ALTER TABLE students ADD COLUMN IF NOT EXISTS token_warning_sent BOOLEAN DEFAULT FALSE;

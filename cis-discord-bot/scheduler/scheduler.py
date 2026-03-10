@@ -124,6 +124,9 @@ class DailyPromptScheduler:
         self._weekly_parent_emails_today = False  # Task 4.6: Monday weekly parent updates
         self._week8_parent_reports_today = False  # Task 4.6: Week 8 Friday parent report batch
         self._sheets_sync_today = False  # Task 7.6: nightly PostgreSQL -> Sheets sync
+        self._enroll_nudges_today = False  # Task 7.3: 48h enroll reminder DM
+        self._enroll_email_queue_last_run = None  # Task 7.3: Email #2 deferred queue drain
+        self._token_expiry_check_today = False  # Task 7.4: nightly M-Pesa token expiry warning
 
         logger.info(f"Scheduler initialized for guild {guild_id}")
         logger.info(f"Cohort start date: {cohort_start_date}")
@@ -951,6 +954,101 @@ class DailyPromptScheduler:
         finally:
             self._artifact_inactivity_nudges_today = True
 
+    async def process_enrollment_email_queue(self) -> None:
+        """
+        Drain deferred Email #2 queue when discord_id linkage arrives (Task 7.3).
+        """
+        enabled = os.getenv("ENROLLMENT_EMAIL_QUEUE_ENABLED", "true").strip().lower() in {
+            "1", "true", "yes", "on"
+        }
+        if not enabled:
+            return
+
+        spreadsheet_id = os.getenv("GOOGLE_SHEETS_ID", "").strip()
+        if not spreadsheet_id:
+            logger.warning("Enrollment email queue drain skipped: GOOGLE_SHEETS_ID missing")
+            return
+
+        try:
+            from cis_controller.interest_api_server import process_pending_enrollment_payment_emails
+
+            stats = await process_pending_enrollment_payment_emails(
+                spreadsheet_id=spreadsheet_id,
+                sheet_range=os.getenv("GOOGLE_SHEETS_RANGE", "Student Roster!A:Z").strip(),
+                creds_path=os.getenv("GOOGLE_SHEETS_CREDENTIALS_PATH", "").strip() or None,
+            )
+            logger.info("Enrollment email queue drain stats: %s", stats)
+        except Exception as exc:
+            logger.error("Enrollment email queue drain failed: %s", exc, exc_info=True)
+
+    async def post_enroll_nudges(self) -> None:
+        """
+        Send 48h KIRA enroll nudges to linked students missing /api/enroll profile (Task 7.3).
+        """
+        enabled = os.getenv("ENROLL_NUDGE_ENABLED", "true").strip().lower() in {
+            "1", "true", "yes", "on"
+        }
+        if not enabled:
+            self._enroll_nudges_today = True
+            return
+
+        spreadsheet_id = os.getenv("GOOGLE_SHEETS_ID", "").strip()
+        if not spreadsheet_id:
+            logger.warning("48h enroll nudge scan skipped: GOOGLE_SHEETS_ID missing")
+            self._enroll_nudges_today = True
+            return
+
+        try:
+            from cis_controller.interest_api_server import send_48h_enroll_nudges
+
+            stats = await send_48h_enroll_nudges(
+                bot=self.bot,
+                spreadsheet_id=spreadsheet_id,
+                sheet_range=os.getenv("GOOGLE_SHEETS_RANGE", "Student Roster!A:Z").strip(),
+                creds_path=os.getenv("GOOGLE_SHEETS_CREDENTIALS_PATH", "").strip() or None,
+                age_hours=48,
+            )
+            logger.info("48h enroll nudge stats: %s", stats)
+        except Exception as exc:
+            logger.error("48h enroll nudge scan failed: %s", exc, exc_info=True)
+        finally:
+            self._enroll_nudges_today = True
+
+    async def post_token_expiry_warnings(self) -> None:
+        """
+        Nightly M-Pesa token expiry warning (Task 7.4, Decision H-01 + GAP FIX #4).
+
+        Scans Google Sheets for students whose payment submit token (Column Q) expires
+        within 48 hours. For each:
+          - If discord_id is linked: sends a KIRA DM and marks token_warning_sent=True in PG.
+          - If not yet on Discord: falls back to a Brevo warning email.
+          - If token_warning_sent is already True: skips (idempotency guard).
+        """
+        enabled = os.getenv("TOKEN_EXPIRY_WARN_ENABLED", "true").strip().lower() in {
+            "1", "true", "yes", "on"
+        }
+        if not enabled:
+            return
+
+        spreadsheet_id = os.getenv("GOOGLE_SHEETS_ID", "").strip()
+        if not spreadsheet_id:
+            logger.warning("Token expiry check skipped: GOOGLE_SHEETS_ID missing")
+            return
+
+        try:
+            from cis_controller.interest_api_server import send_token_expiry_warnings
+
+            stats = await send_token_expiry_warnings(
+                bot=self.bot,
+                spreadsheet_id=spreadsheet_id,
+                sheet_range=os.getenv("GOOGLE_SHEETS_RANGE", "Student Roster!A:Z").strip(),
+                creds_path=os.getenv("GOOGLE_SHEETS_CREDENTIALS_PATH", "").strip() or None,
+                warn_within_hours=48,
+            )
+            logger.info("Token expiry warning stats: %s", stats)
+        except Exception as exc:
+            logger.error("Token expiry warning check failed: %s", exc, exc_info=True)
+
     async def _send_public_message(self, channel, message_text: str):
         """Route student-facing public posts through Guardrail #3 safety checks."""
         await post_to_discord_safe(
@@ -1102,6 +1200,8 @@ class DailyPromptScheduler:
             self._weekly_parent_emails_today = False  # Task 4.6
             self._week8_parent_reports_today = False  # Task 4.6
             self._sheets_sync_today = False  # Task 7.6
+            self._enroll_nudges_today = False  # Task 7.3
+            self._token_expiry_check_today = False  # Task 7.4
 
         week, day = self.get_week_day()
 
@@ -1155,6 +1255,14 @@ class DailyPromptScheduler:
             logger.info("Scheduled: 10:05 AM artifact inactivity nudges")
             await self.post_artifact_inactivity_nudges()
 
+        # :12 every hour - drain deferred /api/enroll Email #2 queue (Task 7.3).
+        if current_time.minute == 12:
+            run_key = now.strftime("%Y-%m-%d-%H")
+            if self._enroll_email_queue_last_run != run_key:
+                logger.info("Scheduled: :12 enrollment email queue drain")
+                await self.process_enrollment_email_queue()
+                self._enroll_email_queue_last_run = run_key
+
         # 12:00 PM EAT Saturday - Batch unlock next week (Task 2.5)
         if current_time.hour == 12 and current_time.minute == 0 and day == WeekDay.SATURDAY and not self._week_unlock_today:
             logger.info(f"Scheduled: 12:00 PM week {week} batch unlock")
@@ -1180,6 +1288,11 @@ class DailyPromptScheduler:
                 logger.info("Scheduled: 6:00 PM peer visibility snapshot to weekly channel")
                 await self.post_peer_visibility_snapshot(week)
 
+        # 6:05 PM EAT - 48h enroll nudge for linked-but-unenrolled students (Task 7.3)
+        if current_time.hour == 18 and current_time.minute == 5 and not self._enroll_nudges_today:
+            logger.info("Scheduled: 6:05 PM 48h enroll nudges")
+            await self.post_enroll_nudges()
+
         # Task 4.4: Cluster session automation
         # 6:00 PM EAT (18:00) - Schedule 24-hour announcements for tomorrow's sessions
         if current_time.hour == 18 and current_time.minute == 0:
@@ -1201,6 +1314,12 @@ class DailyPromptScheduler:
             logger.info("Scheduled: 00:10 AM nightly PostgreSQL -> Sheets sync")
             await self.run_nightly_sheets_sync()
             self._sheets_sync_today = True
+
+        # 23:00 EAT - Nightly M-Pesa token expiry warning (Task 7.4, Decision H-01 + GAP FIX #4)
+        if current_time.hour == 23 and current_time.minute == 0 and not self._token_expiry_check_today:
+            logger.info("Scheduled: 23:00 nightly token expiry warning check")
+            await self.post_token_expiry_warnings()
+            self._token_expiry_check_today = True
 
     async def run_nightly_sheets_sync(self) -> None:
         """Run nightly engagement sync with dashboard alerting on failure."""

@@ -11,11 +11,13 @@ import asyncio
 import json
 import logging
 import os
+import re
 import secrets
 import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
+from urllib.parse import quote_plus
 
 import httpx
 from aiohttp import web
@@ -46,9 +48,20 @@ COL_ACTIVATED_AT = 14  # O
 COL_SUBMIT_TOKEN = 15  # P
 COL_TOKEN_EXPIRY = 16  # Q
 COL_INVITE = 17     # R
+COL_ZONE_VERIFY = 18  # S — scenario cross-check (Trevor review only)
+COL_ANXIETY = 19      # T — anxiety level 1-10 (crisis threshold)
+COL_HABITS = 20       # U — habits pre-assessment (comma-joined)
 
 ENROLLMENT_CAP = int(os.getenv("ENROLLMENT_CAP", "30").strip())
 TOKEN_TTL_DAYS = int(os.getenv("MPESA_SUBMIT_TOKEN_TTL_DAYS", "7").strip())
+ENROLL_EMAIL_QUEUE_PATH = Path(
+    os.getenv(
+        "ENROLL_EMAIL_QUEUE_PATH",
+        str(BOT_DIR / "logs" / "pending_enroll_email_queue.json"),
+    ).strip()
+)
+DISCORD_JOINED_AT_NOTE_KEY = "k2m_discord_joined_at"
+ENROLL_NUDGE_SENT_NOTE_KEY = "k2m_enroll_nudge_sent_at"
 
 
 def _cors_headers() -> Dict[str, str]:
@@ -397,9 +410,20 @@ async def link_roster_discord_identity_by_invite_code(
         )
         return None
 
+    joined_at = _iso_utc(datetime.now(timezone.utc))
+    existing_notes = _safe_get(row, COL_NOTES)
+    notes_with_joined_at = _upsert_note_marker(
+        existing_notes,
+        DISCORD_JOINED_AT_NOTE_KEY,
+        joined_at,
+    )
+
     updated = await update_roster_cells(
         row_number=row_number,
-        updates={COL_DISCORD_ID: identity_value},
+        updates={
+            COL_DISCORD_ID: identity_value,
+            COL_NOTES: notes_with_joined_at,
+        },
         spreadsheet_id=spreadsheet_id,
         sheet_range=sheet_range,
         creds_path=creds_path,
@@ -481,6 +505,57 @@ def _mask_email(email: str) -> str:
     return f"{local_masked}@{domain}"
 
 
+def _extract_discord_id(identity_cell: str) -> str:
+    """
+    Extract a Discord snowflake from Column D identity (`discord_id|discord_username`).
+    Returns empty string for blank/pending/invalid values.
+    """
+    raw = (identity_cell or "").strip()
+    if not raw:
+        return ""
+    discord_id = raw.split("|", 1)[0].strip()
+    if not discord_id or discord_id.startswith("__pending__"):
+        return ""
+    return discord_id if discord_id.isdigit() else ""
+
+
+def _extract_note_marker(notes: str, key: str) -> Optional[str]:
+    """
+    Extract `key=value` markers from free-text notes column.
+    """
+    if not notes:
+        return None
+    pattern = rf"(?:^|\|\s*){re.escape(key)}=([^|]+)"
+    match = re.search(pattern, notes)
+    if not match:
+        return None
+    return match.group(1).strip()
+
+
+def _upsert_note_marker(notes: str, key: str, value: str) -> str:
+    """
+    Add/replace a `key=value` marker in Column M notes text.
+    """
+    existing = (notes or "").strip()
+    marker = f"{key}={value}"
+    pattern = rf"(?:^|\|\s*){re.escape(key)}=([^|]+)"
+    if re.search(pattern, existing):
+        return re.sub(pattern, f" | {marker}", existing).strip(" |")
+    if not existing:
+        return marker
+    return f"{existing} | {marker}"
+
+
+def _is_enrollment_profile_complete(row: List[str]) -> bool:
+    """
+    Enrollment is considered complete when core /api/enroll fields are present.
+    """
+    return all(
+        _safe_get(row, col_idx).strip()
+        for col_idx in (COL_ZONE, COL_SITUATION, COL_GOALS, COL_EMOTIONAL)
+    )
+
+
 async def send_brevo_email(
     to_email: str,
     first_name: str,
@@ -546,6 +621,7 @@ async def send_enrollment_payment_email(
     to_email: str,
     first_name: str,
     submit_url: str,
+    discord_id: Optional[str] = None,
 ) -> bool:
     """Send Email #2 after /api/enroll with payment instructions."""
     try:
@@ -560,6 +636,7 @@ async def send_enrollment_payment_email(
           <h2>Enrollment received</h2>
           <p>Hey {first_name_only},</p>
           <p>Your enrollment form is complete.</p>
+          <p>Discord account linked: <code>{discord_id or "pending-sync"}</code></p>
           <p><strong>Next step (Step 3 of 4):</strong> pay via M-Pesa, then submit your code using this secure link:</p>
           <p><a href="{submit_url}">{submit_url}</a></p>
           <p>This link expires in {TOKEN_TTL_DAYS} days.</p>
@@ -605,6 +682,417 @@ async def send_mpesa_received_email(
     except Exception as exc:
         logger.error("Failed to send M-Pesa received email: %s", exc)
         return False
+
+
+def _load_pending_enroll_email_queue() -> List[Dict[str, Any]]:
+    """
+    Read persisted Email #2 queue entries from local JSON storage.
+    """
+    try:
+        if not ENROLL_EMAIL_QUEUE_PATH.exists():
+            return []
+        payload = json.loads(ENROLL_EMAIL_QUEUE_PATH.read_text(encoding="utf-8"))
+        if isinstance(payload, list):
+            return [item for item in payload if isinstance(item, dict)]
+    except Exception as exc:
+        logger.warning("Could not read enroll email queue: %s", exc)
+    return []
+
+
+def _save_pending_enroll_email_queue(entries: List[Dict[str, Any]]) -> bool:
+    """
+    Persist Email #2 queue entries to local JSON storage.
+    """
+    try:
+        ENROLL_EMAIL_QUEUE_PATH.parent.mkdir(parents=True, exist_ok=True)
+        ENROLL_EMAIL_QUEUE_PATH.write_text(
+            json.dumps(entries, ensure_ascii=True, indent=2),
+            encoding="utf-8",
+        )
+        return True
+    except Exception as exc:
+        logger.error("Could not persist enroll email queue: %s", exc)
+        return False
+
+
+def queue_enrollment_payment_email(
+    *,
+    to_email: str,
+    first_name: str,
+    submit_url: str,
+) -> bool:
+    """
+    Queue Email #2 for later scheduler delivery when Column D is linked.
+    """
+    queue = _load_pending_enroll_email_queue()
+    email_lc = (to_email or "").strip().lower()
+    if not email_lc:
+        return False
+
+    # Deduplicate by recipient while keeping latest token URL.
+    queue = [
+        item for item in queue
+        if str(item.get("to_email", "")).strip().lower() != email_lc
+    ]
+    queue.append(
+        {
+            "to_email": email_lc,
+            "first_name": first_name,
+            "submit_url": submit_url,
+            "queued_at": _iso_utc(datetime.now(timezone.utc)),
+            "attempts": 0,
+        }
+    )
+    return _save_pending_enroll_email_queue(queue)
+
+
+async def _get_linked_discord_id_for_email(
+    email: str,
+    spreadsheet_id: str,
+    sheet_range: str = "Student Roster!A:Z",
+    creds_path: Optional[str] = None,
+) -> str:
+    """
+    Return a linked Discord ID from Column D when available, else empty string.
+    """
+    match = await find_row_by_email(
+        email=email,
+        spreadsheet_id=spreadsheet_id,
+        sheet_range=sheet_range,
+        creds_path=creds_path,
+    )
+    if not match:
+        return ""
+    _, row = match
+    return _extract_discord_id(_safe_get(row, COL_DISCORD_ID))
+
+
+async def wait_for_linked_discord_id(
+    email: str,
+    spreadsheet_id: str,
+    sheet_range: str = "Student Roster!A:Z",
+    creds_path: Optional[str] = None,
+    retry_delays_seconds: Tuple[int, int, int] = (1, 2, 4),
+) -> str:
+    """
+    Poll Column D for linked discord_id with exponential backoff.
+    """
+    discord_id = await _get_linked_discord_id_for_email(
+        email=email,
+        spreadsheet_id=spreadsheet_id,
+        sheet_range=sheet_range,
+        creds_path=creds_path,
+    )
+    if discord_id:
+        return discord_id
+
+    for delay in retry_delays_seconds:
+        if delay > 0 and not os.getenv("PYTEST_CURRENT_TEST"):
+            await asyncio.sleep(delay)
+        discord_id = await _get_linked_discord_id_for_email(
+            email=email,
+            spreadsheet_id=spreadsheet_id,
+            sheet_range=sheet_range,
+            creds_path=creds_path,
+        )
+        if discord_id:
+            return discord_id
+
+    return ""
+
+
+async def process_pending_enrollment_payment_emails(
+    spreadsheet_id: str,
+    sheet_range: str = "Student Roster!A:Z",
+    creds_path: Optional[str] = None,
+    max_batch: int = 50,
+) -> Dict[str, int]:
+    """
+    Process queued Email #2 records once discord_id linkage appears in Column D.
+    """
+    queue = _load_pending_enroll_email_queue()
+    if not queue:
+        return {"queued": 0, "sent": 0, "deferred": 0, "failed": 0}
+
+    sent = 0
+    failed = 0
+    remaining: List[Dict[str, Any]] = []
+
+    for item in queue[:max_batch]:
+        email = str(item.get("to_email", "")).strip().lower()
+        if not email:
+            continue
+
+        discord_id = await _get_linked_discord_id_for_email(
+            email=email,
+            spreadsheet_id=spreadsheet_id,
+            sheet_range=sheet_range,
+            creds_path=creds_path,
+        )
+        if not discord_id:
+            remaining.append(item)
+            continue
+
+        ok = await send_enrollment_payment_email(
+            to_email=email,
+            first_name=str(item.get("first_name", "")).strip() or email.split("@")[0],
+            submit_url=str(item.get("submit_url", "")).strip(),
+            discord_id=discord_id,
+        )
+        if ok:
+            sent += 1
+            continue
+
+        failed += 1
+        item["attempts"] = int(item.get("attempts", 0)) + 1
+        remaining.append(item)
+
+    # Keep untouched tail entries.
+    if len(queue) > max_batch:
+        remaining.extend(queue[max_batch:])
+
+    _save_pending_enroll_email_queue(remaining)
+    return {
+        "queued": len(queue),
+        "sent": sent,
+        "deferred": len(remaining),
+        "failed": failed,
+    }
+
+
+def build_enroll_form_url(email: str) -> str:
+    """
+    Build enroll form link for 48h DM nudges.
+    """
+    base = os.getenv(
+        "ENROLL_FORM_URL",
+        "https://kira-bot-production.up.railway.app/enroll",
+    ).strip().rstrip("/")
+    email_lc = (email or "").strip().lower()
+    if not email_lc:
+        return base
+    return f"{base}?email={quote_plus(email_lc)}"
+
+
+async def send_48h_enroll_nudges(
+    *,
+    bot: Any,
+    spreadsheet_id: str,
+    sheet_range: str = "Student Roster!A:Z",
+    creds_path: Optional[str] = None,
+    age_hours: int = 48,
+    max_nudges: int = 25,
+) -> Dict[str, int]:
+    """
+    Send KIRA DM nudges to linked students who joined but have not enrolled.
+    """
+    rows = await read_roster_rows(
+        spreadsheet_id=spreadsheet_id,
+        sheet_range=sheet_range,
+        creds_path=creds_path,
+    )
+    now = datetime.now(timezone.utc)
+    nudged = 0
+    scanned = 0
+
+    for row_number, row in enumerate(rows[1:], start=2):
+        scanned += 1
+        if nudged >= max_nudges:
+            break
+
+        discord_id = _extract_discord_id(_safe_get(row, COL_DISCORD_ID))
+        if not discord_id:
+            continue
+        if _is_enrollment_profile_complete(row):
+            continue
+
+        notes = _safe_get(row, COL_NOTES)
+        if _extract_note_marker(notes, ENROLL_NUDGE_SENT_NOTE_KEY):
+            continue
+
+        joined_at = _extract_note_marker(notes, DISCORD_JOINED_AT_NOTE_KEY)
+        joined_at_dt = _parse_iso_utc(joined_at or "") or _parse_iso_utc(_safe_get(row, COL_CREATED_AT))
+        if not joined_at_dt:
+            continue
+        if now - joined_at_dt < timedelta(hours=age_hours):
+            continue
+
+        email = _safe_get(row, COL_EMAIL)
+        first_name = (_safe_get(row, COL_NAME) or "there").split(" ")[0]
+        enroll_url = build_enroll_form_url(email)
+        message = (
+            f"Hey {first_name} — ready to enroll?\n\n"
+            f"Here is your enrollment form link:\n{enroll_url}\n\n"
+            "Reply here if anything is unclear and I can help."
+        )
+
+        try:
+            user = await bot.fetch_user(int(discord_id))
+            await user.send(message)
+        except Exception as exc:
+            logger.warning("48h enroll nudge failed for %s: %s", discord_id, exc)
+            continue
+
+        updated_notes = _upsert_note_marker(
+            notes,
+            ENROLL_NUDGE_SENT_NOTE_KEY,
+            _iso_utc(now),
+        )
+        await update_roster_cells(
+            row_number=row_number,
+            updates={COL_NOTES: updated_notes},
+            spreadsheet_id=spreadsheet_id,
+            sheet_range=sheet_range,
+            creds_path=creds_path,
+        )
+        nudged += 1
+
+    return {"scanned": scanned, "nudged": nudged}
+
+
+async def send_token_expiry_warnings(
+    *,
+    bot: Any,
+    spreadsheet_id: str,
+    sheet_range: str = "Student Roster!A:Z",
+    creds_path: Optional[str] = None,
+    warn_within_hours: int = 48,
+    max_warnings: int = 50,
+) -> Dict[str, int]:
+    """
+    Nightly M-Pesa token expiry warning job (Task 7.4, Decision H-01 + GAP FIX #4).
+
+    Scans Google Sheets for students whose Column Q (token_expiry) falls within
+    warn_within_hours from now. For each:
+      - If token_warning_sent flag is already True in PG → skip (idempotency).
+      - If student has a linked Discord ID → send KIRA DM.
+      - If not yet on Discord → fall back to Brevo warning email.
+      - After sending: set token_warning_sent = True in PG and log the event.
+    """
+    from database import get_store
+
+    rows = await read_roster_rows(
+        spreadsheet_id=spreadsheet_id,
+        sheet_range=sheet_range,
+        creds_path=creds_path,
+    )
+    now = datetime.now(timezone.utc)
+    deadline = now + timedelta(hours=warn_within_hours)
+
+    warned_dm = 0
+    warned_email = 0
+    skipped_already_sent = 0
+    skipped_no_token = 0
+    scanned = 0
+
+    store = get_store()
+
+    for _row_number, row in enumerate(rows[1:], start=2):
+        scanned += 1
+        if warned_dm + warned_email >= max_warnings:
+            break
+
+        # Only warn students who have a payment token in Sheets
+        token = _safe_get(row, COL_SUBMIT_TOKEN).strip()
+        expiry_text = _safe_get(row, COL_TOKEN_EXPIRY).strip()
+        if not token or not expiry_text:
+            skipped_no_token += 1
+            continue
+
+        expiry_dt = _parse_iso_utc(expiry_text)
+        if not expiry_dt:
+            skipped_no_token += 1
+            continue
+
+        # Already expired — not our job to warn (show expiry page handles this)
+        if expiry_dt <= now:
+            continue
+
+        # Not expiring within warn window
+        if expiry_dt > deadline:
+            continue
+
+        email = _safe_get(row, COL_EMAIL).strip()
+        if not email:
+            continue
+
+        # Idempotency: skip if warning already sent this cycle
+        try:
+            already_sent = store.get_token_warning_sent(email)
+        except Exception:
+            already_sent = False
+        if already_sent:
+            skipped_already_sent += 1
+            continue
+
+        first_name = (_safe_get(row, COL_NAME) or "there").split()[0]
+        submit_url = build_mpesa_submit_url(token)
+        dm_text = (
+            f"Hey {first_name} — your enrollment payment link expires soon.\n\n"
+            f"Your secure M-Pesa submission link:\n{submit_url}\n\n"
+            "If your link expires, type `/renew` in a DM to KIRA or visit #help."
+        )
+
+        discord_id = _extract_discord_id(_safe_get(row, COL_DISCORD_ID))
+        sent = False
+
+        if discord_id:
+            # Path A: Discord DM
+            try:
+                user = await bot.fetch_user(int(discord_id))
+                await user.send(dm_text)
+                sent = True
+                warned_dm += 1
+                logger.info("token_expiry_warning_sent discord_id=%s email=%s", discord_id, email)
+            except Exception as exc:
+                logger.warning(
+                    "Token expiry DM failed for discord_id=%s: %s — falling back to email",
+                    discord_id,
+                    exc,
+                )
+
+        if not sent:
+            # Path B: Brevo fallback email for pre-Discord or DM-failed students
+            try:
+                from cis_controller.email_service import EmailService
+
+                email_service = EmailService()
+                subject = "Your K2M payment link expires soon"
+                html_content = f"""
+                <!DOCTYPE html>
+                <html><body style="font-family:Arial,sans-serif;line-height:1.6;">
+                  <h2>Action needed: payment link expiring</h2>
+                  <p>Hey {first_name},</p>
+                  <p>Your secure M-Pesa submission link will expire soon. Please use it before it does:</p>
+                  <p><a href="{submit_url}">{submit_url}</a></p>
+                  <p>If your link expires, reply to this email or contact Trevor for a renewal.</p>
+                </body></html>
+                """
+                result = await email_service.send_email(
+                    to_email=email,
+                    subject=subject,
+                    html_content=html_content,
+                )
+                if result.success:
+                    sent = True
+                    warned_email += 1
+                    logger.info("token_expiry_warning_sent email=%s (Brevo fallback)", email)
+            except Exception as exc:
+                logger.warning("Token expiry Brevo fallback failed for %s: %s", email, exc)
+
+        if sent:
+            try:
+                store.set_token_warning_sent(email, True)
+            except Exception as exc:
+                logger.warning("Could not set token_warning_sent for %s: %s", email, exc)
+
+    return {
+        "scanned": scanned,
+        "warned_dm": warned_dm,
+        "warned_email": warned_email,
+        "skipped_already_sent": skipped_already_sent,
+        "skipped_no_token": skipped_no_token,
+    }
 
 
 class InterestAPIServer:
@@ -791,12 +1279,21 @@ class InterestAPIServer:
                 )
 
             email = str(data.get("email", "")).strip().lower()
-            zone = str(data.get("zone", "")).strip()
+            # Normalise zone — accept "Zone 0" or raw "0" from legacy clients
+            zone_raw = str(data.get("zone", "")).strip()
+            zone = zone_raw if zone_raw.startswith("Zone ") else f"Zone {zone_raw}" if zone_raw else ""
+
             situation = str(data.get("situation", "")).strip()
             goals = str(data.get("goals", "")).strip()
             emotional_baseline = str(data.get("emotional_baseline", "")).strip()
             parent_email = str(data.get("parent_email", "")).strip().lower()
             name_override = str(data.get("name", "")).strip()
+
+            # New optional diagnostic fields (additive — no breaking change)
+            zone_verification = str(data.get("zone_verification", "")).strip()
+            anxiety_raw = data.get("anxiety_level", None)
+            anxiety_level = str(int(anxiety_raw)) if anxiety_raw is not None else ""
+            habits_baseline = str(data.get("habits_baseline", "")).strip()
 
             if not email or not zone or not situation or not goals or not emotional_baseline:
                 return web.json_response(
@@ -843,6 +1340,10 @@ class InterestAPIServer:
                     COL_PAYMENT: next_payment_status,
                     COL_SUBMIT_TOKEN: token,
                     COL_TOKEN_EXPIRY: token_expiry,
+                    # Diagnostic fields — written only if provided
+                    **({COL_ZONE_VERIFY: zone_verification} if zone_verification else {}),
+                    **({COL_ANXIETY: anxiety_level} if anxiety_level else {}),
+                    **({COL_HABITS: habits_baseline} if habits_baseline else {}),
                 },
                 spreadsheet_id=self.spreadsheet_id,
                 sheet_range=self.sheet_range,
@@ -856,25 +1357,58 @@ class InterestAPIServer:
                 )
 
             student_name = _safe_get(row, COL_NAME) or name_override or email.split("@")[0]
-            email_sent = await send_enrollment_payment_email(
-                to_email=email,
-                first_name=student_name,
-                submit_url=submit_url,
-            )
-            if not email_sent:
-                return web.json_response(
-                    {
-                        "success": False,
-                        "error": "Enrollment saved, but payment email could not be delivered.",
-                    },
-                    status=502,
-                    headers=_cors_headers(),
+            discord_id = _extract_discord_id(_safe_get(row, COL_DISCORD_ID))
+            if not discord_id:
+                discord_id = await wait_for_linked_discord_id(
+                    email=email,
+                    spreadsheet_id=self.spreadsheet_id,
+                    sheet_range=self.sheet_range,
+                    creds_path=self.creds_path,
+                    retry_delays_seconds=(1, 2, 4),
+                )
+
+            if discord_id:
+                email_sent = await send_enrollment_payment_email(
+                    to_email=email,
+                    first_name=student_name,
+                    submit_url=submit_url,
+                    discord_id=discord_id,
+                )
+                if not email_sent:
+                    return web.json_response(
+                        {
+                            "success": False,
+                            "error": "Enrollment saved, but payment email could not be delivered.",
+                        },
+                        status=502,
+                        headers=_cors_headers(),
+                    )
+                message = "Enrollment complete. Check your email for payment instructions."
+            else:
+                logger.warning("discord_id not found after 3 retries for %s", email)
+                queued = queue_enrollment_payment_email(
+                    to_email=email,
+                    first_name=student_name,
+                    submit_url=submit_url,
+                )
+                if not queued:
+                    return web.json_response(
+                        {
+                            "success": False,
+                            "error": "Enrollment saved, but payment email queueing failed. Contact support.",
+                        },
+                        status=500,
+                        headers=_cors_headers(),
+                    )
+                message = (
+                    "Enrollment complete. We will send payment instructions as soon as "
+                    "your Discord join is detected."
                 )
 
             return web.json_response(
                 {
                     "success": True,
-                    "message": "Enrollment complete. Check your email for payment instructions.",
+                    "message": message,
                     "submit_url": submit_url,
                     "expires_at": token_expiry,
                 },
@@ -926,6 +1460,30 @@ class InterestAPIServer:
             expiry_text = _safe_get(row, COL_TOKEN_EXPIRY)
             expiry_dt = _parse_iso_utc(expiry_text)
             if expiry_dt and expiry_dt < datetime.now(timezone.utc):
+                # Return HTML for browser direct navigation; JSON for JS fetch (form preflight)
+                accept = request.headers.get("Accept", "")
+                if "text/html" in accept:
+                    _expired_html = (
+                        "<!DOCTYPE html>"
+                        "<html><head><meta charset='utf-8'>"
+                        "<title>Link Expired | K2M</title>"
+                        "<style>body{font-family:Arial,sans-serif;max-width:540px;margin:80px auto;"
+                        "padding:20px;text-align:center;color:#333}"
+                        "h2{color:#c0392b}p{line-height:1.6}code{background:#f4f4f4;padding:2px 6px;"
+                        "border-radius:3px}</style></head>"
+                        "<body>"
+                        "<h2>Your payment link has expired</h2>"
+                        "<p>This enrollment payment link is no longer valid.</p>"
+                        "<p>To get a fresh link, open Discord and type "
+                        "<code>/renew</code> in a DM to KIRA, or visit the <strong>#help</strong> channel.</p>"
+                        "<p>If you need further assistance, contact your facilitator directly.</p>"
+                        "</body></html>"
+                    )
+                    return web.Response(
+                        text=_expired_html,
+                        content_type="text/html",
+                        status=410,
+                    )
                 return web.json_response(
                     {
                         "success": False,

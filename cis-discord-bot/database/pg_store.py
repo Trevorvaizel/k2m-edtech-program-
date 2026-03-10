@@ -30,9 +30,11 @@ logger = logging.getLogger(__name__)
 try:
     import psycopg2
     import psycopg2.extras
+    from psycopg2 import sql as psycopg2_sql
     from psycopg2.pool import ThreadedConnectionPool
     PSYCOPG2_AVAILABLE = True
 except ImportError:
+    psycopg2_sql = None
     PSYCOPG2_AVAILABLE = False
     logger.warning("psycopg2 not installed — PostgreSQL store unavailable")
 
@@ -358,8 +360,56 @@ class PgStudentStateStore(StudentStateStore):
         for stmt in _split_sql_statements(schema_sql):
             if stmt:
                 cursor.execute(stmt)
+        sequence_count = self._realign_serial_sequences(cursor)
         pg_conn.commit()
-        logger.info("DB: PostgreSQL schema initialized/verified")
+        logger.info(
+            "DB: PostgreSQL schema initialized/verified (sequences realigned: %s)",
+            sequence_count,
+        )
+
+    def _realign_serial_sequences(self, cursor: Any = None) -> int:
+        """
+        Self-heal serial sequences after bulk imports with explicit IDs.
+        """
+        if not psycopg2_sql:
+            return 0
+
+        local_cursor = cursor or self.conn._conn.cursor()
+        local_cursor.execute(
+            """
+            SELECT table_name, column_name
+              FROM information_schema.columns
+             WHERE table_schema = 'public'
+               AND column_default LIKE 'nextval(%'
+               AND data_type IN ('integer', 'bigint')
+            """
+        )
+        sequence_columns = local_cursor.fetchall() or []
+
+        realigned = 0
+        for row in sequence_columns:
+            if isinstance(row, dict):
+                table_name = row.get("table_name")
+                column_name = row.get("column_name")
+            else:
+                table_name, column_name = row[0], row[1]
+
+            if not table_name or not column_name:
+                continue
+
+            local_cursor.execute(
+                psycopg2_sql.SQL(
+                    "SELECT setval(pg_get_serial_sequence(%s, %s), "
+                    "COALESCE(MAX({col}), 0) + 1, false) FROM {tbl}"
+                ).format(
+                    col=psycopg2_sql.Identifier(column_name),
+                    tbl=psycopg2_sql.Identifier(table_name),
+                ),
+                (table_name, column_name),
+            )
+            realigned += 1
+
+        return realigned
 
     def _table_exists(self, table_name: str) -> bool:
         cursor = self.conn._conn.cursor()
@@ -596,6 +646,36 @@ class PgStudentStateStore(StudentStateStore):
                 fields["payment_status"],
                 fields["last_name"],
             ),
+        )
+        self.conn.commit()
+
+    # ------------------------------------------------------------------
+    # Sprint 7.4 — M-Pesa token warning flag (Decision H-01, GAP FIX #4)
+    # ------------------------------------------------------------------
+
+    def get_token_warning_sent(self, enrollment_email: str) -> bool:
+        """
+        Return True if a token expiry warning DM/email was already sent for
+        this student in the current token cycle. Prevents duplicate warnings.
+        Lookup by enrollment_email (student may not have a Discord ID yet).
+        """
+        row = self.conn.execute(
+            "SELECT token_warning_sent FROM students WHERE enrollment_email = ?",
+            (enrollment_email,),
+        ).fetchone()
+        if row is None:
+            return False
+        val = row["token_warning_sent"] if isinstance(row, dict) else row[0]
+        return bool(val)
+
+    def set_token_warning_sent(self, enrollment_email: str, value: bool) -> None:
+        """
+        Set the token_warning_sent flag for a student (by enrollment_email).
+        Call with value=True after sending the warning, value=False on /renew.
+        """
+        self.conn.execute(
+            "UPDATE students SET token_warning_sent = ? WHERE enrollment_email = ?",
+            (value, enrollment_email),
         )
         self.conn.commit()
 

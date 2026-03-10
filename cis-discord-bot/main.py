@@ -973,6 +973,158 @@ async def recover_member_slash(
         )
 
 
+# ============================================================
+# Task 7.4 — /renew (Decision H-01, GAP FIX #4)
+# Regenerate M-Pesa submit token for a student whose link expired
+# ============================================================
+
+@bot.tree.command(
+    name="renew",
+    description="Regenerate M-Pesa payment link for a student (Facilitator only).",
+)
+@app_commands.describe(
+    email="The student's enrollment email address (Column B in Sheets).",
+)
+async def renew_slash(interaction: discord.Interaction, email: str):
+    """
+    Task 7.4 / Decision H-01 + GAP FIX #4.
+    - Facilitator-only.
+    - Generates a new 7-day submit token for the given student email.
+    - Writes new token (Column P) + expiry (Column Q) to Google Sheets.
+    - Resets token_warning_sent = False in PostgreSQL so the warning cycle resets.
+    - Sends fresh Brevo Email #2 (enrollment payment email) to the student.
+    - Confirms action to the facilitator in Discord.
+    """
+    await interaction.response.defer(ephemeral=True)
+
+    caller = interaction.user if isinstance(interaction.user, discord.Member) else None
+    if not _is_facilitator_member(caller):
+        await interaction.followup.send(
+            "This command requires the @Facilitator role.",
+            ephemeral=True,
+        )
+        return
+
+    email = email.strip().lower()
+    if not email or "@" not in email:
+        await interaction.followup.send("Invalid email address.", ephemeral=True)
+        return
+
+    spreadsheet_id = os.getenv("GOOGLE_SHEETS_ID", "").strip()
+    if not spreadsheet_id:
+        await interaction.followup.send(
+            "Google Sheets is not configured (GOOGLE_SHEETS_ID missing).",
+            ephemeral=True,
+        )
+        return
+
+    try:
+        from cis_controller.interest_api_server import (
+            read_roster_rows,
+            update_roster_cells,
+            send_enrollment_payment_email,
+            build_mpesa_submit_url,
+            _generate_submit_token,
+            _iso_utc,
+            _safe_get,
+            COL_EMAIL,
+            COL_NAME,
+            COL_SUBMIT_TOKEN,
+            COL_TOKEN_EXPIRY,
+            COL_DISCORD_ID,
+            TOKEN_TTL_DAYS,
+            _extract_discord_id,
+        )
+        from datetime import datetime, timezone, timedelta
+        import secrets
+
+        sheet_range = os.getenv("GOOGLE_SHEETS_RANGE", "Student Roster!A:Z").strip()
+        creds_path = os.getenv("GOOGLE_SHEETS_CREDENTIALS_PATH", "").strip() or None
+
+        rows = await read_roster_rows(
+            spreadsheet_id=spreadsheet_id,
+            sheet_range=sheet_range,
+            creds_path=creds_path,
+        )
+
+        target_row_number = None
+        target_row = None
+        for row_number, row in enumerate(rows[1:], start=2):
+            if _safe_get(row, COL_EMAIL).strip().lower() == email:
+                target_row_number = row_number
+                target_row = row
+                break
+
+        if target_row is None:
+            await interaction.followup.send(
+                f"No enrolled student found with email `{email}`.",
+                ephemeral=True,
+            )
+            return
+
+        # Generate new token + expiry
+        new_token = _generate_submit_token()
+        new_expiry = _iso_utc(datetime.now(timezone.utc) + timedelta(days=TOKEN_TTL_DAYS))
+        new_url = build_mpesa_submit_url(new_token)
+
+        # Write to Sheets
+        updated = await update_roster_cells(
+            row_number=target_row_number,
+            updates={
+                COL_SUBMIT_TOKEN: new_token,
+                COL_TOKEN_EXPIRY: new_expiry,
+            },
+            spreadsheet_id=spreadsheet_id,
+            sheet_range=sheet_range,
+            creds_path=creds_path,
+        )
+        if not updated:
+            await interaction.followup.send(
+                "Failed to write new token to Google Sheets. Please retry.",
+                ephemeral=True,
+            )
+            return
+
+        # Reset token_warning_sent in PG so the next nightly check can warn again
+        try:
+            store = _get_store()
+            if hasattr(store, "set_token_warning_sent"):
+                store.set_token_warning_sent(email, False)
+        except Exception as pg_exc:
+            logger.warning("renew: could not reset token_warning_sent for %s: %s", email, pg_exc)
+
+        # Send fresh Email #2
+        student_name = _safe_get(target_row, COL_NAME) or email.split("@")[0]
+        discord_id = _extract_discord_id(_safe_get(target_row, COL_DISCORD_ID))
+        email_sent = await send_enrollment_payment_email(
+            to_email=email,
+            first_name=student_name,
+            submit_url=new_url,
+            discord_id=discord_id or None,
+        )
+
+        status_line = "Email #2 sent." if email_sent else "Warning: Email #2 failed — check Brevo."
+        logger.info(
+            "renew: token regenerated for email=%s row=%s email_sent=%s",
+            email,
+            target_row_number,
+            email_sent,
+        )
+        await interaction.followup.send(
+            f"**Token renewed for `{email}`.**\n"
+            f"New link (expires {TOKEN_TTL_DAYS} days): {new_url}\n"
+            f"{status_line}",
+            ephemeral=True,
+        )
+
+    except Exception as exc:
+        logger.error("renew slash command failed: %s", exc, exc_info=True)
+        await interaction.followup.send(
+            f"Error during renewal: {exc}",
+            ephemeral=True,
+        )
+
+
 @bot.event
 async def on_member_join(member: discord.Member):
     """
