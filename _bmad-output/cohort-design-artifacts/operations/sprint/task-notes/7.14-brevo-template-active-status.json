@@ -1,0 +1,48 @@
+{
+  "timestamp_utc": "2026-03-11T18:15:48Z",
+  "task_id": "7.14",
+  "templates": [
+    {
+      "id": 3,
+      "name": "K2M Cohort 1 - Email #1 Discord Invite",
+      "isActive": true,
+      "updatedAt": "2026-03-11T19:12:33.000Z"
+    },
+    {
+      "id": 4,
+      "name": "K2M Cohort 1 - Email #1.5 48h Nudge",
+      "isActive": true,
+      "updatedAt": "2026-03-11T19:12:52.000Z"
+    },
+    {
+      "id": 5,
+      "name": "K2M Cohort 1 - Email #1.75 Day-5 Final Nudge",
+      "isActive": true,
+      "updatedAt": "2026-03-11T19:12:54.000Z"
+    },
+    {
+      "id": 6,
+      "name": "K2M Cohort 1 - Email #2 Payment Instructions",
+      "isActive": true,
+      "updatedAt": "2026-03-11T19:12:56.000Z"
+    },
+    {
+      "id": 7,
+      "name": "K2M Cohort 1 - Email #3 M-Pesa Received",
+      "isActive": true,
+      "updatedAt": "2026-03-11T19:12:59.000Z"
+    },
+    {
+      "id": 8,
+      "name": "K2M Cohort 1 - Email #4 Activation Welcome",
+      "isActive": true,
+      "updatedAt": "2026-03-11T19:13:09.000Z"
+    },
+    {
+      "id": 9,
+      "name": "K2M Cohort 1 - Email #5 Waitlist Confirmation",
+      "isActive": true,
+      "updatedAt": "2026-03-11T19:13:11.000Z"
+    }
+  ]
+}

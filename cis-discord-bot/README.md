@@ -85,6 +85,35 @@ powershell -ExecutionPolicy Bypass -File .\scripts\set-railway-secret.ps1
 #   Environment: production
 ```
 
+Task 7.13 Brevo setup audit (domain auth + sender readiness):
+
+```bash
+python .\scripts\task-713-brevo-audit.py --env-file .\.env --domain k2mlabs.com --sender-email trevor@k2mlabs.com --test-to k2m.labs@gmail.com --output ..\_bmad-output\cohort-design-artifacts\operations\sprint\task-notes\7.13-brevo-audit-k2mlabs.json
+```
+
+Optional mutation flags (only when you explicitly want to change Brevo state):
+
+```bash
+python .\scripts\task-713-brevo-audit.py --env-file .\.env --domain k2mlabs.com --sender-email trevor@k2mlabs.com --test-to k2m.labs@gmail.com --ensure-domain --ensure-sender --send-test
+```
+
+Expected ready-state for task 7.13:
+- domain `k2mlabs.com` is authenticated + verified in Brevo
+- sender `Trevor from K2M <trevor@k2mlabs.com>` exists and is active
+- runtime `EMAIL_FROM` points to `trevor@k2mlabs.com`
+
+Task 7.14 Brevo templates (create/update all 7 + test send each):
+
+```bash
+python .\scripts\task-714-brevo-templates.py --env-file .\.env --apply --send-test --test-to k2m.labs@gmail.com --output ..\_bmad-output\cohort-design-artifacts\operations\sprint\task-notes\7.14-brevo-templates.json
+```
+
+Optional personalized preview run (all 7 templates with first name override):
+
+```bash
+python .\scripts\task-714-brevo-templates.py --env-file .\.env --apply --send-test --test-to trevor@k2mlabs.com --test-first-name Ibrahim --output ..\_bmad-output\cohort-design-artifacts\operations\sprint\task-notes\7.14-brevo-preview-ibrahim-trevor-k2mlabs.json
+```
+
 ### 3. Run the Bot
 
 ```bash

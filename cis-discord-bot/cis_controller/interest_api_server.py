@@ -48,7 +48,7 @@ COL_ACTIVATED_AT = 14  # O
 COL_SUBMIT_TOKEN = 15  # P
 COL_TOKEN_EXPIRY = 16  # Q
 COL_INVITE = 17     # R
-COL_ZONE_VERIFY = 18  # S — scenario cross-check (Trevor review only)
+COL_ZONE_VERIFY = 18  # S — scenario cross-check (facilitator review only)
 COL_ANXIETY = 19      # T — anxiety level 1-10 (crisis threshold)
 COL_HABITS = 20       # U — habits pre-assessment (comma-joined)
 
@@ -71,6 +71,41 @@ ENROLL_EMAIL_QUEUE_PATH = Path(
 )
 DISCORD_JOINED_AT_NOTE_KEY = "k2m_discord_joined_at"
 ENROLL_NUDGE_SENT_NOTE_KEY = "k2m_enroll_nudge_sent_at"
+
+
+def _template_id_from_env(env_var: str) -> Optional[int]:
+    raw_value = os.getenv(env_var, "").strip()
+    if not raw_value:
+        return None
+    try:
+        return int(raw_value)
+    except ValueError:
+        logger.warning("Ignoring non-integer template id in %s", env_var)
+        return None
+
+
+def _canonical_email_shell_params() -> Dict[str, str]:
+    """
+    Shared visual-shell params for Brevo template rendering.
+    """
+    return {
+        "instagram_url": os.getenv(
+            "PARENT_EMAIL_SOCIAL_INSTAGRAM_URL",
+            "https://instagram.com/k2mlabs",
+        ).strip(),
+        "x_url": os.getenv(
+            "PARENT_EMAIL_SOCIAL_X_URL",
+            "https://x.com/k2mlabs",
+        ).strip(),
+        "whatsapp_url": os.getenv(
+            "PARENT_EMAIL_SOCIAL_WHATSAPP_URL",
+            "https://wa.me/254700000000",
+        ).strip(),
+        "discord_url": os.getenv(
+            "PARENT_EMAIL_SOCIAL_DISCORD_URL",
+            "https://discord.gg/example-invite",
+        ).strip(),
+    }
 
 
 def _resolve_store():
@@ -653,7 +688,7 @@ async def send_brevo_email(
         first_name_only = first_name.strip().split()[0] if first_name else "there"
 
         if waitlisted:
-            subject = "You're on our priority list!"
+            subject = "K2M - Waitlist confirmation"
             waitlist_num = waitlist_number or (ENROLLMENT_CAP + 1)
             html_content = f"""
             <!DOCTYPE html>
@@ -669,7 +704,7 @@ async def send_brevo_email(
                 logger.error("Cannot send Email #1 without invite_link")
                 return False
 
-            subject = "Your Discord invitation is ready"
+            subject = "K2M - Step 1 done! Join Discord (Step 2 of 4)"
             html_content = f"""
             <!DOCTYPE html>
             <html><body style="font-family:Arial,sans-serif;line-height:1.6;">
@@ -682,11 +717,36 @@ async def send_brevo_email(
             </body></html>
             """
 
-        result = await email_service.send_email(
-            to_email=to_email,
-            subject=subject,
-            html_content=html_content,
-        )
+        template_env = "BREVO_TEMPLATE_EMAIL_5" if waitlisted else "BREVO_TEMPLATE_EMAIL_1"
+        template_id = _template_id_from_env(template_env)
+        shell_params = _canonical_email_shell_params()
+        if template_id is not None:
+            template_params: Dict[str, Any]
+            if waitlisted:
+                template_params = {
+                    **shell_params,
+                    "first_name": first_name_only,
+                    "waitlist_number": str(waitlist_num),
+                }
+            else:
+                template_params = {
+                    **shell_params,
+                    "first_name": first_name_only,
+                    "discord_invite_link": invite_link or "",
+                }
+            result = await email_service.send_email(
+                to_email=to_email,
+                subject=subject,
+                html_content=html_content,
+                template_id=template_id,
+                template_params=template_params,
+            )
+        else:
+            result = await email_service.send_email(
+                to_email=to_email,
+                subject=subject,
+                html_content=html_content,
+            )
 
         if result.success:
             logger.info("Email sent: to=%s waitlisted=%s", to_email, waitlisted)
@@ -724,11 +784,35 @@ async def send_enrollment_payment_email(
           <p>This link expires in {TOKEN_TTL_DAYS} days.</p>
         </body></html>
         """
-        result = await email_service.send_email(
-            to_email=to_email,
-            subject=subject,
-            html_content=html_content,
-        )
+        template_id = _template_id_from_env("BREVO_TEMPLATE_EMAIL_2")
+        shell_params = _canonical_email_shell_params()
+        if template_id is not None:
+            template_params = {
+                **shell_params,
+                "first_name": first_name_only,
+                "mpesa_submit_url": submit_url,
+                "mpesa_tutorial_url": os.getenv(
+                    "MPESA_TUTORIAL_URL",
+                    "https://k2m-edtech.program/m-pesa-payment",
+                ).strip(),
+                "week1_start_date": os.getenv(
+                    "COHORT_1_START_DATE",
+                    "",
+                ).strip(),
+            }
+            result = await email_service.send_email(
+                to_email=to_email,
+                subject=subject,
+                html_content=html_content,
+                template_id=template_id,
+                template_params=template_params,
+            )
+        else:
+            result = await email_service.send_email(
+                to_email=to_email,
+                subject=subject,
+                html_content=html_content,
+            )
         return result.success
     except Exception as exc:
         logger.error("Failed to send enrollment payment email: %s", exc)
@@ -752,14 +836,28 @@ async def send_mpesa_received_email(
           <h2>M-Pesa code received</h2>
           <p>Hey {first_name_only},</p>
           <p>We've received your M-Pesa code and queued it for verification.</p>
-          <p>Trevor reviews payments within 24 hours. You'll get your activation email once confirmed.</p>
+          <p>A facilitator reviews payments within 24 hours. You'll get your activation email once confirmed.</p>
         </body></html>
         """
-        result = await email_service.send_email(
-            to_email=to_email,
-            subject=subject,
-            html_content=html_content,
-        )
+        template_id = _template_id_from_env("BREVO_TEMPLATE_EMAIL_3")
+        shell_params = _canonical_email_shell_params()
+        if template_id is not None:
+            result = await email_service.send_email(
+                to_email=to_email,
+                subject=subject,
+                html_content=html_content,
+                template_id=template_id,
+                template_params={
+                    **shell_params,
+                    "first_name": first_name_only,
+                },
+            )
+        else:
+            result = await email_service.send_email(
+                to_email=to_email,
+                subject=subject,
+                html_content=html_content,
+            )
         return result.success
     except Exception as exc:
         logger.error("Failed to send M-Pesa received email: %s", exc)
@@ -1147,7 +1245,7 @@ async def send_token_expiry_warnings(
                   <p>Hey {first_name},</p>
                   <p>Your secure M-Pesa submission link will expire soon. Please use it before it does:</p>
                   <p><a href="{submit_url}">{submit_url}</a></p>
-                  <p>If your link expires, reply to this email or contact Trevor for a renewal.</p>
+                  <p>If your link expires, reply to this email or contact a facilitator for a renewal.</p>
                 </body></html>
                 """
                 result = await email_service.send_email(
@@ -1221,7 +1319,7 @@ async def send_payment_feedback_dms(
         Sends student KIRA DM once (guarded by unverifiable_dm_sent PG flag).
         Also posts red-X alert to #facilitator-dashboard.
         Message: "We had trouble verifying your payment. Please send a screenshot
-                  of your M-Pesa confirmation to #help or DM Trevor directly."
+                  of your M-Pesa confirmation to #help or DM a facilitator directly."
 
     Pass C — N-23 facilitator escalation:
         Column L = 'Pending' AND age > escalation_after_hours during business hours (EAT).
@@ -1359,7 +1457,7 @@ async def send_payment_feedback_dms(
                     await user.send(
                         f"Hey {name} — we had trouble verifying your payment. "
                         "Please send a screenshot of your M-Pesa confirmation to **#help** "
-                        "or DM Trevor directly."
+                        "or DM a facilitator directly."
                     )
                     set_unverifiable_dm_sent(email, True)
                     stats["unverifiable_dm_sent"] += 1
@@ -1980,7 +2078,7 @@ class InterestAPIServer:
                         user = await self._bot.fetch_user(int(discord_id))
                         await user.send(
                             f"Hey {name} - payment received! "
-                            "Step 4 of 4: Trevor verifies (usually 24 hours). "
+                            "Step 4 of 4: facilitator verifies (usually 24 hours). "
                             "I will DM you when you are activated."
                         )
                         logger.info("Task 7.5: immediate payment DM sent to discord_id=%s", discord_id)

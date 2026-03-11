@@ -1,0 +1,81 @@
+{
+  "timestamp_utc": "2026-03-11T17:59:21Z",
+  "task_id": "7.14",
+  "mode": {
+    "apply": true,
+    "send_test": false
+  },
+  "sender": {
+    "email": "trevor@k2mlabs.com",
+    "name": "Trevor from K2M"
+  },
+  "base_url": "https://api.brevo.com/v3",
+  "templates": [
+    {
+      "key": "email_1",
+      "env_var": "BREVO_TEMPLATE_EMAIL_1",
+      "template_name": "K2M Cohort 1 - Email #1 Discord Invite",
+      "subject": "K2M - Step 1 done! Join Discord (Step 2 of 4)",
+      "action": "updated",
+      "template_id": 3
+    },
+    {
+      "key": "email_1_5",
+      "env_var": "BREVO_TEMPLATE_EMAIL_1_5",
+      "template_name": "K2M Cohort 1 - Email #1.5 48h Nudge",
+      "subject": "K2M - Step 2 reminder (48h): Join Discord",
+      "action": "updated",
+      "template_id": 4
+    },
+    {
+      "key": "email_1_75",
+      "env_var": "BREVO_TEMPLATE_EMAIL_1_75",
+      "template_name": "K2M Cohort 1 - Email #1.75 Day-5 Final Nudge",
+      "subject": "K2M - Step 2 final reminder (Day 5)",
+      "action": "updated",
+      "template_id": 5
+    },
+    {
+      "key": "email_2",
+      "env_var": "BREVO_TEMPLATE_EMAIL_2",
+      "template_name": "K2M Cohort 1 - Email #2 Payment Instructions",
+      "subject": "K2M - Step 3 of 4: Complete your payment",
+      "action": "updated",
+      "template_id": 6
+    },
+    {
+      "key": "email_3",
+      "env_var": "BREVO_TEMPLATE_EMAIL_3",
+      "template_name": "K2M Cohort 1 - Email #3 M-Pesa Received",
+      "subject": "K2M - Step 4 pending: M-Pesa code received",
+      "action": "updated",
+      "template_id": 7
+    },
+    {
+      "key": "email_4",
+      "env_var": "BREVO_TEMPLATE_EMAIL_4",
+      "template_name": "K2M Cohort 1 - Email #4 Activation Welcome",
+      "subject": "K2M - Step 4 complete: You're in",
+      "action": "updated",
+      "template_id": 8
+    },
+    {
+      "key": "email_5",
+      "env_var": "BREVO_TEMPLATE_EMAIL_5",
+      "template_name": "K2M Cohort 1 - Email #5 Waitlist Confirmation",
+      "subject": "K2M - Waitlist confirmation",
+      "action": "updated",
+      "template_id": 9
+    }
+  ],
+  "railway_env_map": {
+    "BREVO_TEMPLATE_EMAIL_1": 3,
+    "BREVO_TEMPLATE_EMAIL_1_5": 4,
+    "BREVO_TEMPLATE_EMAIL_1_75": 5,
+    "BREVO_TEMPLATE_EMAIL_2": 6,
+    "BREVO_TEMPLATE_EMAIL_3": 7,
+    "BREVO_TEMPLATE_EMAIL_4": 8,
+    "BREVO_TEMPLATE_EMAIL_5": 9
+  },
+  "overall_status": "pass"
+}
