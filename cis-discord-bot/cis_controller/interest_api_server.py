@@ -55,6 +55,14 @@ COL_HABITS = 20       # U — habits pre-assessment (comma-joined)
 ENROLLMENT_CAP = int(os.getenv("ENROLLMENT_CAP", "30").strip())
 TOKEN_TTL_DAYS = int(os.getenv("MPESA_SUBMIT_TOKEN_TTL_DAYS", "7").strip())
 MPESA_CODE_PATTERN = re.compile(r"^[A-Z0-9]{10}$")
+CANONICAL_PROFESSIONS = {
+    "teacher",
+    "entrepreneur",
+    "university_student",
+    "working_professional",
+    "gap_year_student",
+    "other",
+}
 ENROLL_EMAIL_QUEUE_PATH = Path(
     os.getenv(
         "ENROLL_EMAIL_QUEUE_PATH",
@@ -63,6 +71,19 @@ ENROLL_EMAIL_QUEUE_PATH = Path(
 )
 DISCORD_JOINED_AT_NOTE_KEY = "k2m_discord_joined_at"
 ENROLL_NUDGE_SENT_NOTE_KEY = "k2m_enroll_nudge_sent_at"
+
+
+def _resolve_store():
+    """
+    Prefer the already-initialized runtime store from main.py.
+    Fallback to get_store() only when running standalone/test contexts.
+    """
+    from database import get_runtime_store, get_store
+
+    runtime_store = get_runtime_store()
+    if runtime_store is not None:
+        return runtime_store
+    return get_store()
 
 
 def _cors_headers() -> Dict[str, str]:
@@ -101,6 +122,61 @@ def _parse_iso_utc(raw: str) -> Optional[datetime]:
 def _is_valid_mpesa_code(raw_code: str) -> bool:
     """Validate M-Pesa transaction code format (10 alphanumeric chars)."""
     return bool(MPESA_CODE_PATTERN.fullmatch((raw_code or "").strip().upper()))
+
+
+def _normalize_profession(raw_value: str) -> str:
+    """
+    Normalize profession/status into canonical sheet values.
+
+    Canonical set:
+      - teacher
+      - entrepreneur
+      - university_student
+      - working_professional
+      - gap_year_student
+      - other
+    """
+    raw = (raw_value or "").strip().lower()
+    if not raw:
+        return "other"
+    if raw in CANONICAL_PROFESSIONS:
+        return raw
+
+    normalized = re.sub(r"\s+", " ", raw.replace("-", " ").replace("_", " ")).strip()
+    alias_map = {
+        "teacher": "teacher",
+        "teacher / educator": "teacher",
+        "educator": "teacher",
+        "entrepreneur": "entrepreneur",
+        "business owner": "entrepreneur",
+        "founder": "entrepreneur",
+        "university student": "university_student",
+        "college student": "university_student",
+        "student": "university_student",
+        "working professional": "working_professional",
+        "professional": "working_professional",
+        "engineer": "working_professional",
+        "recent graduate": "gap_year_student",
+        "recent grad": "gap_year_student",
+        "gap year": "gap_year_student",
+        "gap year student": "gap_year_student",
+        "other": "other",
+    }
+    if normalized in alias_map:
+        return alias_map[normalized]
+
+    # Best-effort fallback by keyword to avoid invalid sheet values.
+    if "teacher" in normalized or "educator" in normalized:
+        return "teacher"
+    if "entrepreneur" in normalized or "business" in normalized or "founder" in normalized:
+        return "entrepreneur"
+    if "student" in normalized or "university" in normalized or "college" in normalized:
+        return "university_student"
+    if "professional" in normalized or "engineer" in normalized or "employee" in normalized:
+        return "working_professional"
+    if "graduate" in normalized or "gap" in normalized:
+        return "gap_year_student"
+    return "other"
 
 
 def _generate_submit_token() -> str:
@@ -975,8 +1051,6 @@ async def send_token_expiry_warnings(
       - If not yet on Discord → fall back to Brevo warning email.
       - After sending: set token_warning_sent = True in PG and log the event.
     """
-    from database import get_store
-
     rows = await read_roster_rows(
         spreadsheet_id=spreadsheet_id,
         sheet_range=sheet_range,
@@ -991,7 +1065,7 @@ async def send_token_expiry_warnings(
     skipped_no_token = 0
     scanned = 0
 
-    store = get_store()
+    store = _resolve_store()
 
     for _row_number, row in enumerate(rows[1:], start=2):
         scanned += 1
@@ -1154,11 +1228,10 @@ async def send_payment_feedback_dms(
         DMs ALL members of the @Facilitator role once per payment submission
         (guarded by payment_escalation_dm_sent PG flag, reset when payment resolves).
     """
-    from database import get_store
     import pytz
 
     EAT = pytz.timezone("Africa/Nairobi")
-    store = get_store()
+    store = _resolve_store()
     get_payment_silence_dm_sent = getattr(store, "get_payment_silence_dm_sent", lambda _email: False)
     set_payment_silence_dm_sent = getattr(store, "set_payment_silence_dm_sent", lambda _email, _value: None)
     get_unverifiable_dm_sent = getattr(store, "get_unverifiable_dm_sent", lambda _email: False)
@@ -1373,7 +1446,7 @@ class InterestAPIServer:
             name = data.get("name", "").strip()
             email = data.get("email", "").strip().lower()
             phone = data.get("phone", "").strip()
-            profession = data.get("profession", "Other").strip() or "Other"
+            profession = _normalize_profession(str(data.get("profession", "")))
 
             if not self.spreadsheet_id:
                 return web.json_response(
@@ -1873,9 +1946,7 @@ class InterestAPIServer:
 
             # Task 7.5 anchor/state reset: start pending timer from M-Pesa submission moment.
             try:
-                from database import get_store
-
-                store = get_store()
+                store = _resolve_store()
                 if hasattr(store, "set_payment_pending_since"):
                     store.set_payment_pending_since(student_email, datetime.now(timezone.utc))
                 if hasattr(store, "set_payment_silence_dm_sent"):

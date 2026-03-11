@@ -197,12 +197,12 @@ playbook_traceability:
 # ============================================================
 progress:
   total_tasks: 92
-  done: 43
+  done: 45
   in_progress: 0
   blocked: 0
-  pending: 49
-  percent_complete: 47
-  last_updated: "2026-03-10 - Task 7.10 completed: KIRA DM progress templates updated (welcome/enroll/payment/activation), activation DM webhook path added, API success responses now include step markers, and task notes + tests updated."
+  pending: 47
+  percent_complete: 49
+  last_updated: "2026-03-11 - Task 7.11 marked done after production verification (mounted internal webhook routes + observed signed/unsigned behavior). Task 7.12 received production hardening (guest permission remediation + invite-diff fallback deploy). Task 7.5 runtime hotfix reused bot runtime store in async payment paths to prevent event-loop stalls. Task 7.1 profession/status contract hardening deployed (canonical enum normalization end-to-end)."
   decision_7_revised: "2026-02-20 â€” Context engine building NOW for Cohort 1 (not deferred)"
   adversarial_review_2: "2026-03-04 â€” Pre-mortem on enrollment flow. 5 P0 bugs fixed, 5 P1 issues resolved. Task 0.7 split into 0.7a-d. Payment amount standardized to KES 5,000. Source-of-truth set via execution_contract."
   adversarial_review_3: "2026-03-04 â€” Pre-mortem party mode (Sally+John+Winston+Amelia+DrQuinn+Murat+Mary+Maya). North star: zero Discord experience. Found 3 critical blockers, 6 high issues, 8 medium issues. Added Sprint 7. Migrated to PostgreSQL immediately (promoted from 6.6 prep). Full decisions log: pre-mortem-2026-03-04-decisions.md"
@@ -2037,6 +2037,7 @@ sprint_7:
         Landing page continues to post to /api/interest; /join command remains absent.
         Refund policy present in Email #4 and now seeded as a pinned #welcome policy message via setup script.
         Regression tests added for interest API error-path truthfulness and canonical sheet write shape.
+        2026-03-11 — Production addendum: Stage-1 landing modal and backend now normalize profession/status to canonical enums (`teacher`, `entrepreneur`, `university_student`, `working_professional`, `gap_year_student`, `other`) to match Sheet validation. Legacy rows remediated; task notes updated in `task-notes/7.1.md`.
 
     - id: "7.2"
       title: "Unique per-student Discord invite links (on_member_join match key)"
@@ -2433,7 +2434,7 @@ sprint_7:
 
     - id: "7.11"
       title: "Webhook authentication: HMAC-SHA256 on all Apps Script â†’ bot endpoints"
-      status: "in_progress"
+      status: "done"
       description: |
         DECISION N-03 (Session 4). Apps Script â†’ Railway webhooks are currently unauthenticated.
         An attacker who discovers the URL can trigger role upgrades for arbitrary discord_ids.
@@ -2460,11 +2461,12 @@ sprint_7:
         POST without valid signature returns 401. POST with valid signature executes normally.
         WEBHOOK_SECRET in Railway env. Apps Script uses Script Properties (not hardcoded).
         401 events visible in facilitator dashboard.
+      summary: "Production verified on 2026-03-11: parent server mounts /api/internal routes at startup, unsigned requests return 401 with signature-missing reason, and webhook secret is active in Railway runtime. Task promoted from local-complete to done."
       notes_ref: "task-notes/7.11.md"
 
     - id: "7.12"
       title: "#welcome-lounge channel: @Guest waiting room during payment verification"
-      status: "pending"
+      status: "done"
       description: |
         DECISION N-05 (Session 4). Students waiting 24h for payment verification as @Guest
         see only locked channels. Creates trust collapse: "did I get scammed?"
@@ -2488,6 +2490,7 @@ sprint_7:
         @Guest can read and post in #welcome-lounge. @Student cannot.
         Pinned message posted. 3 preview posts visible. Student count updates nightly.
         KIRA responds to @Guest questions in the channel.
+      summary: "Implemented waiting-room UX for DECISION N-05: setup automation now creates #welcome-lounge + @Guest role permissions, bot startup seeds pinned verification status and 3 week-1 previews, scheduler refreshes confirmed-student count nightly at 23:10 EAT, router handles guest Q&A with FAQ/escalation path, and role-upgrade now attempts @Guest removal plus sends the required unlock DM."
       notes_ref: "task-notes/7.12.md"
 
     - id: "7.13"
@@ -2642,6 +2645,6 @@ agent_instructions: |
   - Keep each task auditable: link notes_ref and reference changed files in the summary
 
 # Last Updated
-last_updated: "2026-03-10"
-updated_by: "Task 7.8 re-audit: corrected task wording (/recover-member, health timeout), added evidence-backed acceptance notes, and documented fallback alerting hardening plus production probe results."
+last_updated: "2026-03-11"
+updated_by: "Production hardening + verification pass: Task 7.11 closed (webhook auth live in production), Task 7.12 patched for @Guest boundary behavior and invite-diff fallback deployment, and 7.5 payment-path runtime-store hotfix deployed."
 

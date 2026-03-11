@@ -6,6 +6,43 @@
 
 const INTEREST_API_URL = import.meta.env.VITE_INTEREST_API_URL || 'https://kira-bot-production.up.railway.app/api/interest';
 
+const CANONICAL_PROFESSIONS = new Set([
+  'teacher',
+  'entrepreneur',
+  'university_student',
+  'working_professional',
+  'gap_year_student',
+  'other'
+]);
+
+function normalizeProfessionInput(rawValue) {
+  const raw = (rawValue || '').toString().trim().toLowerCase();
+  if (!raw) return 'other';
+  if (CANONICAL_PROFESSIONS.has(raw)) return raw;
+
+  const normalized = raw.replace(/[_-]+/g, ' ').replace(/\s+/g, ' ').trim();
+  const aliasMap = {
+    'teacher / educator': 'teacher',
+    'teacher': 'teacher',
+    'educator': 'teacher',
+    'entrepreneur': 'entrepreneur',
+    'business owner': 'entrepreneur',
+    'founder': 'entrepreneur',
+    'university student': 'university_student',
+    'college student': 'university_student',
+    'student': 'university_student',
+    'working professional': 'working_professional',
+    'professional': 'working_professional',
+    'recent graduate': 'gap_year_student',
+    'recent grad': 'gap_year_student',
+    'gap year student': 'gap_year_student',
+    'gap year': 'gap_year_student',
+    'other': 'other'
+  };
+
+  return aliasMap[normalized] || 'other';
+}
+
 export function initEnrollmentForm() {
   const modal = document.getElementById('enrollmentModal');
   const form = document.getElementById('enrollmentForm');
@@ -68,7 +105,7 @@ export function initEnrollmentForm() {
       name: formData.get('name')?.trim() || '',
       email: formData.get('email')?.trim() || '',
       phone: formData.get('phone')?.trim() || '',
-      profession: formData.get('profession') || 'Other'
+      profession: normalizeProfessionInput(formData.get('profession'))
     };
 
     // Client-side validation
@@ -162,9 +199,9 @@ export function openEnrollmentFormForSegment(segment) {
     const professionSelect = document.getElementById('enrollmentProfession');
     if (professionSelect) {
       const professionMap = {
-        'gap-year': 'Gap Year Student',
-        'teacher': 'Teacher / Educator',
-        'professional': 'Working Professional'
+        'gap-year': 'gap_year_student',
+        'teacher': 'teacher',
+        'professional': 'working_professional'
       };
 
       const mappedProfession = professionMap[segment];
