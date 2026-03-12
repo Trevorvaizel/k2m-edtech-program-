@@ -18,6 +18,8 @@ import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from database import set_runtime_store  # noqa: E402
+from database.store import StudentStateStore  # noqa: E402
 from agents.explorer_prompt import get_system_prompt as get_explorer_system_prompt  # noqa: E402
 from cis_controller.llm_integration import (  # noqa: E402
     CACHED_SYSTEM_PROMPTS,
@@ -69,6 +71,19 @@ class TestProviderHelpers:
     def test_zhipu_model_resolution(self, monkeypatch):
         monkeypatch.setenv("LLM_MODEL", "glm-4.7")
         assert get_active_model("zhipu") == "glm-4.7"
+
+    def test_anthropic_fast_tier_model_resolution(self, monkeypatch):
+        monkeypatch.setenv("CLAUDE_HAIKU_MODEL", "claude-haiku-fast")
+        monkeypatch.setenv("CLAUDE_SONNET_MODEL", "claude-sonnet-deep")
+        assert get_active_model("anthropic", agent="frame") == "claude-haiku-fast"
+        assert get_active_model("anthropic", agent="diverge") == "claude-haiku-fast"
+
+    def test_anthropic_deep_tier_model_resolution(self, monkeypatch):
+        monkeypatch.setenv("CLAUDE_HAIKU_MODEL", "claude-haiku-fast")
+        monkeypatch.setenv("CLAUDE_SONNET_MODEL", "claude-sonnet-deep")
+        assert get_active_model("anthropic", agent="challenge") == "claude-sonnet-deep"
+        assert get_active_model("anthropic", agent="synthesize") == "claude-sonnet-deep"
+        assert get_active_model("anthropic", agent="create-artifact") == "claude-sonnet-deep"
 
 
 class TestPromptCacheShape:
@@ -449,6 +464,92 @@ class TestCallRouting:
             await call_agent_with_context("frame", context, "I need help", [])
 
         assert mock_provider.await_args.kwargs["system_prompt"] == "SYSTEM PROMPT"
+
+    @pytest.mark.asyncio
+    async def test_other_profession_inference_on_first_frame_persists_and_routes_examples(self, tmp_path, monkeypatch):
+        monkeypatch.setenv("CONTEXT_ENGINE_WEBHOOK_URL", "https://example.test/context")
+
+        db_path = tmp_path / "test_context_engine.db"
+        store = StudentStateStore(str(db_path))
+        set_runtime_store(store)
+        try:
+            store.create_student(discord_id="1234567890")
+            store.conn.execute(
+                """
+                UPDATE students
+                SET profession = ?, situation = ?, goals = ?
+                WHERE discord_id = ?
+                """,
+                (
+                    "other",
+                    "I coordinate youth outreach in county offices.",
+                    "Improve planning quality with AI support.",
+                    "1234567890",
+                ),
+            )
+            store.conn.commit()
+
+            context = SimpleNamespace(
+                discord_id="1234567890",
+                current_week=4,
+                zone="zone_2",
+                profession="other",
+                situation="I coordinate youth outreach in county offices.",
+                goals="Improve planning quality with AI support.",
+            )
+
+            with patch(
+                "cis_controller.llm_integration._ensure_system_prompt_loaded",
+                return_value="SYSTEM PROMPT",
+            ), patch(
+                "cis_controller.llm_integration.get_active_provider",
+                return_value="openai",
+            ), patch(
+                "cis_controller.llm_integration.get_active_model",
+                side_effect=lambda provider, agent=None: (
+                    "openai-fast" if agent in {"frame", "profession_inference"} else "openai-deep"
+                ),
+            ), patch(
+                "cis_controller.llm_integration._call_context_engine_webhook",
+                new_callable=AsyncMock,
+                side_effect=[
+                    {
+                        "success": True,
+                        "profile": {
+                            "profession": "other",
+                            "situation": "I coordinate youth outreach in county offices.",
+                            "goals": "Improve planning quality with AI support.",
+                        },
+                    },
+                    {
+                        "success": True,
+                        "examples": [
+                            {"example_text": "Teacher example for this week."},
+                        ],
+                    },
+                ],
+            ) as mock_context_hook, patch(
+                "cis_controller.llm_integration._infer_profession_for_other",
+                new_callable=AsyncMock,
+                return_value=("teacher", {"provider": "openai", "model": "openai-fast"}),
+            ) as mock_infer, patch(
+                "cis_controller.llm_integration._call_openai_compatible",
+                new_callable=AsyncMock,
+                return_value=("ok", {"total_cost_usd": 0.0, "provider": "openai", "model": "openai-fast"}),
+            ):
+                await call_agent_with_context("frame", context, "Help me frame this", [])
+
+            mock_infer.assert_awaited_once()
+            second_call = mock_context_hook.await_args_list[1]
+            assert second_call.args[0] == "getExamplesByProfession"
+            assert second_call.args[1]["profession"] == "teacher"
+
+            student = store.get_student("1234567890")
+            assert student is not None
+            assert student["profession_inferred"] == "teacher"
+        finally:
+            set_runtime_store(None)
+            store.close()
 
 
 class TestInterventionLookup:

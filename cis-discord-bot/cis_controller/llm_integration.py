@@ -12,6 +12,7 @@ import asyncio
 import json
 import logging
 import os
+import re
 import urllib.error
 import urllib.request
 from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
@@ -51,6 +52,40 @@ _anthropic_client: Optional[Any] = None
 
 # Runtime notifier for instant Trevor alerts on provider failures.
 _runtime_failure_notifier: Optional[Callable[[str, str, str], Awaitable[None]]] = None
+
+# Task 6.5: fast-tier model routing for high-volume commands.
+FAST_TIER_AGENTS = {
+    "frame",
+    "diverge",
+    "dashboard_summary",
+    "dashboard-summary",
+    "trevor-summary",
+    "profession_inference",
+}
+
+# Task 6.5: deep-tier model routing for higher-reasoning commands.
+DEEP_TIER_AGENTS = {
+    "challenge",
+    "synthesize",
+    "create-artifact",
+    "create_artifact",
+    "artifact",
+}
+
+ALLOWED_PROFESSIONS = {
+    "teacher",
+    "entrepreneur",
+    "university_student",
+    "working_professional",
+    "gap_year_student",
+    "other",
+}
+INFERRED_PROFESSIONS = {
+    "teacher",
+    "entrepreneur",
+    "university_student",
+    "working_professional",
+}
 
 
 def _get_context_engine_webhook_url() -> str:
@@ -99,6 +134,97 @@ def _truncate_text(value: Any, max_len: int = 220) -> str:
     if len(text) <= max_len:
         return text
     return f"{text[:max_len - 3].rstrip()}..."
+
+
+def _normalize_agent_key(agent: Optional[str]) -> str:
+    """Normalize command/agent names to one routing key."""
+    if not agent:
+        return ""
+    return str(agent).strip().lower().replace(" ", "_")
+
+
+def _resolve_model_tier(agent: Optional[str]) -> str:
+    """Map agent names to model tier. Defaults to deep tier."""
+    key = _normalize_agent_key(agent)
+    if key in FAST_TIER_AGENTS:
+        return "fast"
+    if key in DEEP_TIER_AGENTS:
+        return "deep"
+    return "deep"
+
+
+def _normalize_profession(value: Any) -> str:
+    """Normalize profession labels from profile/form/webhook sources."""
+    token = str(value or "").strip().lower()
+    if not token:
+        return ""
+    token = token.replace("-", "_").replace(" ", "_")
+    aliases = {
+        "university": "university_student",
+        "student": "university_student",
+        "working": "working_professional",
+        "professional": "working_professional",
+        "gap_year": "gap_year_student",
+    }
+    token = aliases.get(token, token)
+    return token if token in ALLOWED_PROFESSIONS else ""
+
+
+def _normalize_inferred_profession(value: Any) -> str:
+    """Normalize inferred profession label to one supported example bucket."""
+    token = _normalize_profession(value)
+    if token in INFERRED_PROFESSIONS:
+        return token
+
+    raw = str(value or "").strip().lower().replace("-", "_").replace(" ", "_")
+    if not raw:
+        return ""
+
+    aliases = {
+        "uni": "university_student",
+        "university": "university_student",
+        "student": "university_student",
+        "working": "working_professional",
+        "professional": "working_professional",
+    }
+    mapped = aliases.get(raw, raw)
+    return mapped if mapped in INFERRED_PROFESSIONS else ""
+
+
+def _resolve_effective_profession(raw_profession: Any, raw_inferred: Any) -> str:
+    """
+    Resolve profession bucket used for examples/prompt grounding.
+
+    Task 6.7 contract:
+    - If profession != other -> use profession as-is.
+    - If profession == other -> use profession_inferred if available.
+    - If inference missing/invalid -> fallback to working_professional.
+    """
+    profession = _normalize_profession(raw_profession)
+    inferred = _normalize_inferred_profession(raw_inferred)
+
+    if profession == "other":
+        return inferred or "working_professional"
+    if profession:
+        return profession
+    return inferred
+
+
+def _persist_profession_inferred(discord_id: str, profession_inferred: str) -> None:
+    """Persist inferred profession to runtime DB when a shared store is available."""
+    if not discord_id or not profession_inferred:
+        return
+    try:
+        from database import get_runtime_store
+
+        store = get_runtime_store()
+        if store is None:
+            return
+        setter = getattr(store, "set_profession_inferred", None)
+        if callable(setter):
+            setter(discord_id, profession_inferred)
+    except Exception as exc:
+        logger.warning("Could not persist profession_inferred for %s: %s", discord_id, exc)
 
 
 def _extract_examples(raw_examples: Any) -> List[str]:
@@ -237,7 +363,88 @@ async def _call_context_engine_webhook(action: str, payload: Dict[str, Any]) -> 
         return {"success": False, "error": str(exc)}
 
 
-async def _load_context_engine_data(student_context: Any) -> Dict[str, Any]:
+async def _infer_profession_for_other(
+    *,
+    provider: str,
+    situation: str,
+    goals: str,
+) -> Tuple[str, Dict[str, Any]]:
+    """
+    Task 6.7: infer closest profession bucket for students who selected "other".
+
+    Returns:
+      (profession_inferred, cost_data)
+    """
+    compact_situation = _truncate_text(situation, max_len=220)
+    compact_goals = _truncate_text(goals, max_len=220)
+    if not compact_situation and not compact_goals:
+        return "working_professional", {
+            "provider": provider,
+            "model": get_active_model(provider, agent="profession_inference"),
+            "fallback": "missing_context",
+        }
+
+    model = get_active_model(provider, agent="profession_inference")
+    system_prompt = (
+        "Classify the student into one profession bucket for coaching examples.\n"
+        "Allowed labels only: teacher, entrepreneur, university_student, working_professional.\n"
+        "Return exactly one label and nothing else."
+    )
+    user_prompt = (
+        f"Situation: {compact_situation or 'unknown'}\n"
+        f"Goals: {compact_goals or 'unknown'}"
+    )
+    messages = [{"role": "user", "content": user_prompt}]
+
+    try:
+        if provider == "anthropic":
+            response_text, cost_data = await _call_anthropic(
+                "profession_inference",
+                model,
+                system_prompt,
+                messages,
+            )
+        elif provider in {"zhipu", "openai", "openai-compatible"}:
+            response_text, cost_data = await _call_openai_compatible(
+                provider=provider,
+                agent="profession_inference",
+                model=model,
+                system_prompt=system_prompt,
+                messages=messages,
+            )
+        else:
+            raise ValueError(f"Unsupported AI_PROVIDER for profession inference: {provider}")
+    except Exception as exc:
+        logger.warning("Profession inference failed for provider %s: %s", provider, exc)
+        return "working_professional", {
+            "provider": provider,
+            "model": model,
+            "fallback": "provider_error",
+        }
+
+    raw_text = str(response_text or "").strip().lower()
+    inferred = _normalize_inferred_profession(raw_text)
+    if not inferred:
+        # Allow minor formatting drift like "Answer: teacher".
+        for token in re.findall(r"[a-z_]+", raw_text):
+            candidate = _normalize_inferred_profession(token)
+            if candidate:
+                inferred = candidate
+                break
+
+    if not inferred:
+        inferred = "working_professional"
+        cost_data = dict(cost_data or {})
+        cost_data["fallback"] = "invalid_label"
+
+    return inferred, cost_data or {"provider": provider, "model": model}
+
+
+async def _load_context_engine_data(
+    student_context: Any,
+    *,
+    agent: Optional[str] = None,
+) -> Dict[str, Any]:
     """
     Fetch task 6.2 context payloads before prompt construction.
     Returns a normalized dict with profile/examples/intervention data.
@@ -246,6 +453,8 @@ async def _load_context_engine_data(student_context: Any) -> Dict[str, Any]:
         "profile": {},
         "examples": [],
         "intervention_text": "",
+        "profession_effective": "",
+        "profession_inferred": "",
     }
     if student_context is None:
         return context_data
@@ -266,24 +475,65 @@ async def _load_context_engine_data(student_context: Any) -> Dict[str, Any]:
             profile = raw_profile
     context_data["profile"] = profile
 
-    profession = str(
+    raw_profession = (
         profile.get("profession")
         or _context_get_value(student_context, "profession", "")
         or ""
+    )
+    raw_profession_inferred = (
+        profile.get("profession_inferred")
+        or _context_get_value(student_context, "profession_inferred", "")
+        or ""
+    )
+    situation = str(
+        profile.get("situation")
+        or _context_get_value(student_context, "situation", "")
+        or ""
     ).strip()
+    goals = str(
+        profile.get("goals")
+        or _context_get_value(student_context, "goals", "")
+        or ""
+    ).strip()
+
+    profession = _normalize_profession(raw_profession)
+    profession_inferred = _normalize_inferred_profession(raw_profession_inferred)
+
+    # Task 6.7: infer once on first /frame for profession="other".
+    if profession == "other" and not profession_inferred and _normalize_agent_key(agent) == "frame":
+        provider = get_active_provider()
+        profession_inferred, inference_cost = await _infer_profession_for_other(
+            provider=provider,
+            situation=situation,
+            goals=goals,
+        )
+        profile["profession_inferred"] = profession_inferred
+        if discord_id and profession_inferred:
+            _persist_profession_inferred(discord_id, profession_inferred)
+        logger.info(
+            "Task 6.7 profession inference: discord_id=%s inferred=%s model=%s",
+            discord_id or "unknown",
+            profession_inferred,
+            inference_cost.get("model", "unknown"),
+        )
+
+    effective_profession = _resolve_effective_profession(profession, profession_inferred)
+    context_data["profession_effective"] = effective_profession
+    context_data["profession_inferred"] = profession_inferred
+
     barrier_type = _normalize_barrier_type(
         profile.get("barrier_type")
         or _context_get_value(student_context, "barrier_type", "")
     )
 
     pending_calls: List[Tuple[str, Awaitable[Dict[str, Any]]]] = []
-    if profession and week is not None:
+    if effective_profession and week is not None:
         pending_calls.append(
             (
                 "examples",
                 _call_context_engine_webhook(
                     "getExamplesByProfession",
-                    {"profession": profession, "week": week},
+                    {"profession": effective_profession, "week": week},
                 ),
             )
         )
@@ -406,13 +656,47 @@ def get_active_provider() -> str:
     return aliases.get(provider, provider)
 
 
-def get_active_model(provider: str) -> str:
-    """Return model name based on active provider."""
+def get_active_model(provider: str, agent: Optional[str] = None) -> str:
+    """
+    Return model name based on provider + task tier.
+
+    Task 6.5 routing:
+    - fast tier: /frame, /diverge, dashboard summaries
+    - deep tier: /challenge, /synthesize, /create-artifact
+    """
+    tier = _resolve_model_tier(agent)
+
     if provider == "anthropic":
-        return os.getenv("CLAUDE_MODEL", CLAUDE_MODEL)
+        fast_model = os.getenv(
+            "CLAUDE_HAIKU_MODEL",
+            os.getenv("CLAUDE_FAST_MODEL", "claude-3-5-haiku-latest"),
+        )
+        deep_model = os.getenv(
+            "CLAUDE_SONNET_MODEL",
+            os.getenv("CLAUDE_MODEL", CLAUDE_MODEL),
+        )
+        return fast_model if tier == "fast" else deep_model
+
     if provider == "openai":
-        return os.getenv("OPENAI_MODEL", os.getenv("LLM_MODEL", "gpt-4o-mini"))
-    return os.getenv("GLM_MODEL", os.getenv("LLM_MODEL", "glm-4.7"))
+        fast_model = os.getenv(
+            "OPENAI_FAST_MODEL",
+            os.getenv("OPENAI_MODEL", os.getenv("LLM_MODEL", "gpt-4o-mini")),
+        )
+        deep_model = os.getenv(
+            "OPENAI_REASONING_MODEL",
+            os.getenv("OPENAI_MODEL", os.getenv("LLM_MODEL", "gpt-4o-mini")),
+        )
+        return fast_model if tier == "fast" else deep_model
+
+    fast_model = os.getenv(
+        "GLM_FAST_MODEL",
+        os.getenv("GLM_MODEL", os.getenv("LLM_MODEL", "glm-4.7")),
+    )
+    deep_model = os.getenv(
+        "GLM_REASONING_MODEL",
+        os.getenv("GLM_MODEL", os.getenv("LLM_MODEL", "glm-4.7")),
+    )
+    return fast_model if tier == "fast" else deep_model
 
 
 def _get_openai_compatible_key(provider: str) -> str:
@@ -637,8 +921,13 @@ def _build_personalized_system_prompt(
         context_examples = []
 
     profession = _truncate_text(
-        profile.get("profession")
-        or _context_get_value(student_context, "profession", ""),
+        _resolve_effective_profession(
+            profile.get("profession")
+            or _context_get_value(student_context, "profession", ""),
+            profile.get("profession_inferred")
+            or context_engine_data.get("profession_inferred")
+            or _context_get_value(student_context, "profession_inferred", ""),
+        ),
         max_len=80,
     )
     situation = _truncate_text(
@@ -998,9 +1287,12 @@ async def call_agent_with_context(
     """
     base_system_prompt = _ensure_system_prompt_loaded(agent)
     provider = get_active_provider()
-    model = get_active_model(provider)
+    model = get_active_model(provider, agent=agent)
 
-    context_engine_data = await _load_context_engine_data(student_context)
+    context_engine_data = await _load_context_engine_data(
+        student_context,
+        agent=agent,
+    )
     system_prompt = _build_personalized_system_prompt(
         base_system_prompt,
         student_context,

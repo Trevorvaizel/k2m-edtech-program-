@@ -49,6 +49,27 @@ class TestDailySummary:
         # Should show escalation count
         assert "🚨 Escalations:" in summary
 
+    def test_daily_summary_includes_model_cost_breakdown(self, store, dashboard):
+        """Task 6.5: daily summary should include cost split by model."""
+        store.log_observability_event(
+            discord_id="123456",
+            event_type="agent_used",
+            metadata={"agent": "frame", "cost_usd": 0.0012, "model": "openai-fast"},
+            model_used="openai-fast",
+        )
+        store.log_observability_event(
+            discord_id="123456",
+            event_type="agent_used",
+            metadata={"agent": "challenge", "cost_usd": 0.0045, "model": "openai-deep"},
+            model_used="openai-deep",
+        )
+
+        summary = dashboard.generate_daily_summary(week=1)
+
+        assert "Daily by model:" in summary
+        assert "openai-fast" in summary
+        assert "openai-deep" in summary
+
 
 class TestPeerVisibilitySummary:
     """Test 6:00 PM peer visibility summary generation."""

@@ -46,6 +46,7 @@ CREATE TABLE IF NOT EXISTS students (
 
     -- Sprint 7.6 / Context-engine required columns
     profession TEXT,
+    profession_inferred TEXT,
     barrier_type TEXT,
     barrier_confidence REAL DEFAULT 0.0,
     situation TEXT,
@@ -156,12 +157,14 @@ CREATE TABLE IF NOT EXISTS observability_events (
     id BIGSERIAL PRIMARY KEY,
     student_id_hash TEXT,
     event_type TEXT,
+    model_used TEXT,
     metadata TEXT,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_observability_student ON observability_events(student_id_hash);
 CREATE INDEX IF NOT EXISTS idx_observability_type ON observability_events(event_type);
+CREATE INDEX IF NOT EXISTS idx_observability_model ON observability_events(model_used);
 CREATE INDEX IF NOT EXISTS idx_observability_timestamp ON observability_events(timestamp);
 
 -- ============================================================
@@ -402,6 +405,7 @@ ALTER TABLE students ADD COLUMN IF NOT EXISTS invite_code VARCHAR(20);
 ALTER TABLE students ADD COLUMN IF NOT EXISTS onboarding_stop_0_complete BOOLEAN DEFAULT FALSE;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS manual_override_timestamp TIMESTAMP;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS profession TEXT;
+ALTER TABLE students ADD COLUMN IF NOT EXISTS profession_inferred TEXT;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS barrier_type TEXT;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS barrier_confidence REAL DEFAULT 0.0;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS situation TEXT;
@@ -429,3 +433,4 @@ ALTER TABLE students ADD COLUMN IF NOT EXISTS payment_pending_since TIMESTAMP;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS payment_silence_dm_sent BOOLEAN DEFAULT FALSE;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS unverifiable_dm_sent BOOLEAN DEFAULT FALSE;
 ALTER TABLE students ADD COLUMN IF NOT EXISTS payment_escalation_dm_sent BOOLEAN DEFAULT FALSE;
+ALTER TABLE observability_events ADD COLUMN IF NOT EXISTS model_used TEXT;

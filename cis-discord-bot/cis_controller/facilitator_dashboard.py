@@ -12,6 +12,7 @@ Posts daily summaries to #facilitator-dashboard channel:
 """
 
 import logging
+import json
 import random
 import re
 from datetime import datetime, timedelta
@@ -131,8 +132,16 @@ class FacilitatorDashboard:
             summary += (
                 f"💰 API Costs:\n"
                 f"- Daily: ${daily_cost:.2f} (within $10 budget)\n"
-                f"- Weekly: ${weekly_cost:.2f} (projected: ${weekly_projected:.2f})\n\n"
+                f"- Weekly: ${weekly_cost:.2f} (projected: ${weekly_projected:.2f})\n"
             )
+            daily_by_model = costs.get("daily_by_model", {})
+            if daily_by_model:
+                breakdown = ", ".join(
+                    f"{model}=${amount:.2f}" for model, amount in daily_by_model.items()
+                )
+                summary += f"- Daily by model: {breakdown}\n\n"
+            else:
+                summary += "- Daily by model: no model-tagged usage yet\n\n"
 
             # Add system health
             summary += (
@@ -518,10 +527,47 @@ class FacilitatorDashboard:
         tracked_days = int(self._row_value(weekly_row, 'tracked_days', 0) or 0)
         weekly_projected = ((weekly / tracked_days) * 7) if tracked_days > 0 else (daily * 7)
 
+        model_rows = self.store.conn.execute(
+            """
+            SELECT model_used, metadata
+            FROM observability_events
+            WHERE event_type = 'agent_used'
+              AND DATE(timestamp) = ?
+            """,
+            (today,),
+        ).fetchall()
+
+        daily_by_model: Dict[str, float] = {}
+        for row in model_rows:
+            model = str(self._row_value(row, "model_used", "") or "").strip()
+            metadata_raw = self._row_value(row, "metadata", "{}")
+            try:
+                metadata = (
+                    metadata_raw
+                    if isinstance(metadata_raw, dict)
+                    else json.loads(str(metadata_raw or "{}"))
+                )
+            except Exception:
+                metadata = {}
+
+            if not model:
+                model = str(metadata.get("model", "")).strip() or "unknown"
+
+            try:
+                cost = float(metadata.get("cost_usd", 0.0) or 0.0)
+            except Exception:
+                cost = 0.0
+            daily_by_model[model] = daily_by_model.get(model, 0.0) + cost
+
+        daily_by_model = dict(
+            sorted(daily_by_model.items(), key=lambda item: item[1], reverse=True)
+        )
+
         return {
             'daily': daily,
             'weekly': weekly,
-            'weekly_projected': weekly_projected
+            'weekly_projected': weekly_projected,
+            'daily_by_model': daily_by_model,
         }
 
     def _check_system_health(self) -> str:

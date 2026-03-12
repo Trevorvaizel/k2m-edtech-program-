@@ -1943,7 +1943,7 @@ sprint_6:
 
     - id: "6.5"
       title: "Multi-model cost routing"
-      status: "pending"
+      status: "done"
       description: |
         Route CIS agent calls to appropriate model based on task complexity:
         /frame, /diverge ? claude-haiku-4-5 (volume, fast, cheap)
@@ -1958,6 +1958,14 @@ sprint_6:
       acceptance: |
         /frame and /diverge use Haiku. /challenge, /synthesize, /create-artifact use Sonnet.
         Dashboard shows daily cost split by model. Tests verify routing logic.
+      summary: |
+        Implemented task 6.5 with tiered model routing in `cis_controller/llm_integration.py`.
+        Fast tier now routes `/frame` and `/diverge` (plus dashboard/profession inference utilities),
+        while deep tier routes `/challenge`, `/synthesize`, and `create-artifact` aliases.
+        Added `model_used` persistence to `observability_events` (schema + store + command logging),
+        and extended facilitator daily summary to include same-day cost breakdown by model.
+        Validation evidence: `task-notes/6.5.md` and `task-notes/6.5-pytest-model-routing.txt`.
+      notes_ref: "task-notes/6.5.md"
 
     - id: "6.6"
       title: "PostgreSQL migration preparation (schema + script)"
@@ -1986,7 +1994,7 @@ sprint_6:
 
     - id: "6.7"
       title: "'Other' profession â€” LLM inference to closest profession example set"
-      status: "pending"
+      status: "done"
       description: |
         DECISION N-18 (Session 4 pre-mortem).
         Students who select profession = "other" currently fall back to working_professional examples.
@@ -2012,6 +2020,16 @@ sprint_6:
         /frame for a student with profession="other" triggers inference call.
         profession_inferred written to DB. CIS prompts use profession_inferred.
         Students with profession != "other" are unaffected.
+      summary: |
+        Implemented task 6.7 by adding first-`/frame` profession inference for students with
+        `profession="other"` in `cis_controller/llm_integration.py`, with constrained labels and
+        fallback to `working_professional` on failure/invalid output.
+        Added DB persistence helpers for `students.profession_inferred` and schema support in
+        SQLite/PostgreSQL paths. Personalized example lookup + prompt grounding now resolve
+        `profession_effective` so `other` students receive closer-fit examples without altering
+        their original selected profession.
+        Validation evidence: `task-notes/6.7.md` and `task-notes/6.7-pytest-other-profession-inference.txt`.
+      notes_ref: "task-notes/6.7.md"
 
 
 # ============================================================

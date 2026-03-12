@@ -18,6 +18,7 @@ from datetime import datetime, timedelta
 import pytz
 
 from cis_controller.escalation_system import (
+    BARRIER_FOCUS_PHRASES,
     EAT,
     EscalationSystem,
     LEVEL_1_YELLOW,
@@ -138,13 +139,22 @@ class TestLevel2Escalation:
 
 class TestBarrierInterventionRouting:
     @pytest.mark.asyncio
-    @pytest.mark.parametrize("barrier_type", ["identity", "time", "relevance", "technical"])
+    @pytest.mark.parametrize(
+        ("barrier_type", "focus_phrase"),
+        [
+            ("identity", BARRIER_FOCUS_PHRASES["identity"]),
+            ("time", BARRIER_FOCUS_PHRASES["time"]),
+            ("relevance", BARRIER_FOCUS_PHRASES["relevance"]),
+            ("technical", BARRIER_FOCUS_PHRASES["technical"]),
+        ],
+    )
     async def test_barrier_intervention_dm_tracks_all_four_barriers(
         self,
         escalation_system,
         mock_bot,
         mock_store,
         barrier_type,
+        focus_phrase,
     ):
         student_user = Mock()
         student_user.send = AsyncMock()
@@ -174,7 +184,7 @@ class TestBarrierInterventionRouting:
         assert student_user.send.await_count == 1
         dm_text = student_user.send.await_args.args[0].lower()
         assert "teacher" in dm_text
-        assert barrier_type in dm_text
+        assert focus_phrase in dm_text
         assert "intervention copy" in dm_text
 
         mock_store.log_observability_event.assert_called_once()
@@ -228,6 +238,42 @@ class TestBarrierInterventionRouting:
         assert kwargs["trigger_reason"] == "low_engagement_signal"
         assert kwargs["engagement_score"] == 1
         mock_l3.assert_not_awaited()
+
+    @pytest.mark.asyncio
+    async def test_low_engagement_dm_does_not_expose_numeric_score(
+        self,
+        escalation_system,
+        mock_bot,
+        mock_store,
+    ):
+        student_user = Mock()
+        student_user.send = AsyncMock()
+        mock_bot.fetch_user.return_value = student_user
+        mock_store.log_observability_event = Mock()
+
+        with patch(
+            "cis_controller.escalation_system.get_context_engine_intervention",
+            new_callable=AsyncMock,
+            return_value={
+                "success": True,
+                "profile": {"first_name": "Trevor"},
+                "profession": "teacher",
+                "barrier_type": "time",
+                "intervention_text": "Try one focused 10-minute sprint.",
+            },
+        ):
+            await escalation_system._send_barrier_intervention_dm(
+                discord_id="111222333",
+                username="<@111222333>",
+                current_week=4,
+                trigger_reason="low_engagement_signal",
+                days_since_post=1,
+                engagement_score=1,
+            )
+
+        dm_text = student_user.send.await_args.args[0].lower()
+        assert "score" not in dm_text
+        assert "1/6" not in dm_text
 
 
 class TestLevel3Escalation:

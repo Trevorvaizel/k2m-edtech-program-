@@ -52,6 +52,12 @@ DEFAULT_INTERVENTION_BY_BARRIER = {
         "Keep it simple: describe your situation in plain words and let KIRA handle the structure."
     ),
 }
+BARRIER_FOCUS_PHRASES = {
+    "identity": "confidence and belonging",
+    "time": "time pressure",
+    "relevance": "real-world relevance",
+    "technical": "tool setup confidence",
+}
 
 
 class EscalationSystem:
@@ -338,9 +344,13 @@ class EscalationSystem:
             )
 
         reason_line = (
-            f"I noticed a low-engagement signal (score {engagement_score}/6)."
+            "I noticed this week may be feeling harder to sustain."
             if trigger_reason == "low_engagement_signal"
             else f"I noticed you've been quiet for {days_since_post} days."
+        )
+        barrier_focus = BARRIER_FOCUS_PHRASES.get(
+            barrier_type,
+            "next-step momentum",
         )
 
         try:
@@ -349,7 +359,7 @@ class EscalationSystem:
             dm_text = (
                 f"Hey {salutation}, quick check-in from KIRA.\n\n"
                 f"{reason_line}\n"
-                f"For your **{profession}** context, I'm using the **{barrier_type}** support track this week.\n\n"
+                f"For your **{profession}** context, let's focus on **{barrier_focus}** this week.\n\n"
                 f"{intervention_text}\n\n"
                 "Reply here if you want me to break this into one tiny first step."
             )

@@ -194,7 +194,8 @@ class TestObservabilityEvents:
         store.log_observability_event(
             discord_id="123456789",
             event_type="agent_used",
-            metadata={"agent": "frame", "week": 1}
+            metadata={"agent": "frame", "week": 1, "model": "openai-fast"},
+            model_used="openai-fast",
         )
 
         # Verify event was logged
@@ -205,6 +206,13 @@ class TestObservabilityEvents:
         count = cursor.fetchone()[0]
 
         assert count == 1
+
+        row = store.conn.execute(
+            "SELECT model_used FROM observability_events WHERE student_id_hash = ?",
+            (hashlib.sha256("123456789".encode()).hexdigest()[:16],),
+        ).fetchone()
+        assert row is not None
+        assert row["model_used"] == "openai-fast"
 
     def test_get_stuck_students_logs_stuck_detected(self, store):
         """Students flagged as stuck should emit stuck_detected events."""
