@@ -1,36 +1,36 @@
 {
-  "timestamp_utc": "2026-03-12T04:39:01Z",
+  "timestamp_utc": "2026-03-12T04:54:34Z",
   "task_id": "7.16",
   "base_url": "https://kira-bot-production.up.railway.app",
-  "test_email": "trevor+smoke716_1773290341@k2mlabs.com",
+  "test_email": "trevor+smoke716_1773291274@k2mlabs.com",
   "steps": {
     "health": {
       "status": 200,
-      "elapsed_ms": 827,
-      "body": "{\"status\": \"healthy\", \"db\": \"connected\", \"discord\": \"connected\", \"details\": {\"db_probe\": \"postgresql\", \"discord_probe\": \"ready\"}, \"checked_at\": \"2026-03-12T04:39:01.996542Z\"}"
+      "elapsed_ms": 810,
+      "body": "{\"status\": \"healthy\", \"db\": \"connected\", \"discord\": \"connected\", \"details\": {\"db_probe\": \"postgresql\", \"discord_probe\": \"ready\"}, \"checked_at\": \"2026-03-12T04:54:34.512658Z\"}"
     },
     "interest": {
       "status": 200,
-      "elapsed_ms": 6547,
+      "elapsed_ms": 4420,
       "body": "{\"success\": true, \"waitlisted\": false, \"message\": \"Step 1 of 4 complete - check your email for your Discord invitation.\"}"
     },
     "enroll": {
       "status": 200,
-      "elapsed_ms": 15551,
-      "body": "{\"success\": true, \"message\": \"Step 3 of 4 - enrollment complete. We will send payment instructions as soon as your Discord join is detected.\", \"submit_url\": \"https://k2m-landing.vercel.app/mpesa-submit?token=eNvDgVlduuC0KLDy\", \"expires_at\": \"2026-03-19T04:39:10Z\"}"
+      "elapsed_ms": 13823,
+      "body": "{\"success\": true, \"message\": \"Step 3 of 4 - enrollment complete. We will send payment instructions as soon as your Discord join is detected.\", \"submit_url\": \"https://k2m-landing.vercel.app/mpesa-submit?token=n7CSH8-qgoV0Fp1q\", \"expires_at\": \"2026-03-19T04:54:40Z\"}"
     },
     "mpesa_get": {
       "status": 200,
-      "elapsed_ms": 1658,
-      "body": "{\"success\": true, \"valid\": true, \"email_hint\": \"t************************1@k2mlabs.com\", \"expires_at\": \"2026-03-19T04:39:10Z\"}"
+      "elapsed_ms": 1077,
+      "body": "{\"success\": true, \"valid\": true, \"email_hint\": \"t************************4@k2mlabs.com\", \"expires_at\": \"2026-03-19T04:54:40Z\"}"
     },
     "mpesa_post": {
       "status": 200,
-      "elapsed_ms": 4072,
+      "elapsed_ms": 2991,
       "body": "{\"success\": true, \"message\": \"M-Pesa code received. Verification usually takes up to 24 hours.\"}"
     }
   },
-  "overall_status": "pass",
-  "submit_url": "https://k2m-landing.vercel.app/mpesa-submit?token=eNvDgVlduuC0KLDy",
-  "submit_token_present": true
+  "submit_url": "https://k2m-landing.vercel.app/mpesa-submit?token=n7CSH8-qgoV0Fp1q",
+  "submit_token_present": true,
+  "overall_status": "pass"
 }

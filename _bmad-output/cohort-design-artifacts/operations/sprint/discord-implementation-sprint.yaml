@@ -197,12 +197,12 @@ playbook_traceability:
 # ============================================================
 progress:
   total_tasks: 92
-  done: 48
-  in_progress: 2
+  done: 49
+  in_progress: 3
   blocked: 0
-  pending: 42
-  percent_complete: 52
-  last_updated: "2026-03-12 - Tasks 7.15 and 7.16 moved to in_progress. Deliverability automation executed for all 7 templates across active Gmail/domain mailboxes with Brevo event audit showing 21/21 delivered. Live production smoke + webhook auth probes passed, and targeted regression suites passed (134 tests). Remaining launch gates are manual provider inbox/spam classification (Safaricom/Airtel/Yahoo) and one full human Discord join->Stop 0 walkthrough."
+  pending: 40
+  percent_complete: 53
+  last_updated: "2026-03-12 - Task 6.1 closed (PostgreSQL pre-load + on_member_join invite linkage verified). Task 6.2 moved to in_progress with engineering plumbing complete (Apps Script context webhooks + llm_integration callers + tests passing) and deployment version created; remaining closeout is operator token/access/content setup for live webhook reachability."
   decision_7_revised: "2026-02-20 â€” Context engine building NOW for Cohort 1 (not deferred)"
   adversarial_review_2: "2026-03-04 â€” Pre-mortem on enrollment flow. 5 P0 bugs fixed, 5 P1 issues resolved. Task 0.7 split into 0.7a-d. Payment amount standardized to KES 5,000. Source-of-truth set via execution_contract."
   adversarial_review_3: "2026-03-04 â€” Pre-mortem party mode (Sally+John+Winston+Amelia+DrQuinn+Murat+Mary+Maya). North star: zero Discord experience. Found 3 critical blockers, 6 high issues, 8 medium issues. Added Sprint 7. Migrated to PostgreSQL immediately (promoted from 6.6 prep). Full decisions log: pre-mortem-2026-03-04-decisions.md"
@@ -1763,15 +1763,15 @@ sprint_5_addendum:
 sprint_6:
   name: "Context Engine + Personalized CIS Agents"
   type: "development"
-  status: "pending"
+  status: "in_progress"
   estimated_days: 7
   decision_basis: "Decision 7 revised 2026-02-20 ï¿½ build NOW not Cohort 2"
   dependencies: "5.6a (experience design complete), sprint_4 (CIS agents built)"
 
   tasks:
     - id: "6.1"
-      title: "Student pre-load bridge (Sheets -> SQLite) + member_join Discord linker"
-      status: "pending"
+      title: "Student pre-load bridge (Sheets -> PostgreSQL) + on_member_join Discord linker"
+      status: "done"
       description: |
         TWO COMPONENTS - both required for full context engine behavior:
 
@@ -1779,7 +1779,7 @@ sprint_6:
         Script target: cis-discord-bot/scripts/preload_students.py
         - Reads APPROVED rows only from Google Sheets (Payment Status = Confirmed).
         - Uses Column D identity written by bot (`discord_id|discord_username`), not a form-entered username.
-        - Upserts context fields to SQLite:
+        - Upserts context fields to PostgreSQL:
             discord_id, discord_username, first_name, real_last_name, email,
             profession, zone, initial_zone, situation, goals, emotional_baseline,
             barrier_type, barrier_confidence, cluster_id, parent_email,
@@ -1800,27 +1800,34 @@ sprint_6:
         - Keeps user as @Guest until payment confirmation path upgrades role by discord_id.
         - Logs observability event: student_linked or student_unmatched.
 
-        SQLite migration requirement:
+        PostgreSQL migration requirement:
         - Add all missing context-engine columns from context_engine_design section 1.3
           before enabling personalized prompt injection in sprint 6.3.
       agent_context:
         load: "source_documents.enrollment_flow_design"
         section: "Google Sheets COLUMN MAP (Updated) + Decision 9"
         also_load: "source_documents.context_engine_design"
-        also_section: "1.3 New SQLite Columns Required + 1.3.1 Data Flow"
+        also_section: "1.3 PostgreSQL Columns Required + 1.3.1 Data Flow"
         design_ref: "source_documents.bot_technical_spec"
       acceptance: |
         preload_students.py runs without errors against live Sheet (approved rows only).
-        Full SQLite migration applied - context-engine columns present.
+        Full PostgreSQL migration applied - context-engine columns present.
         Student records populated with structured profession and Discord identity bridge fields.
         Idempotency verified (run twice = same result).
         member_join handler captures identity and does NOT grant @Student before payment confirmation.
         Unmatched joins create anonymous records (existing fallback preserved).
         student_linked / student_unmatched events logged to observability_events.
+      summary: |
+        Canonical V3 rebase applied: runtime storage is PostgreSQL (not SQLite legacy wording).
+        Verified existing implementation path:
+        - `cis-discord-bot/preload_students.py` performs idempotent approved-row upsert to PostgreSQL.
+        - `cis-discord-bot/main.py` `on_member_join` links via invite_code, keeps @Guest before payment, and logs `student_linked` / `student_unmatched`.
+        Validation evidence and command outputs are in `task-notes/6.1.md`.
+      notes_ref: "task-notes/6.1.md"
 
     - id: "6.2"
       title: "Google Sheets context database + Apps Script webhooks"
-      status: "pending"
+      status: "in_progress"
       description: |
         Extend the existing Student Roster Google Sheet:
         Tab 2: Example_Library
@@ -1845,6 +1852,14 @@ sprint_6:
         Bot can call all 3 from llm_integration.py with correct auth.
         Example and intervention libraries have content loaded by Trevor.
         Response time <200ms (Apps Script native to Sheets).
+      summary: |
+        Implemented task 6.2 engineering plumbing:
+        - Apps Script live code now exposes token-authenticated webhooks `getStudentContext`, `getExamplesByProfession`, `getIntervention`.
+        - `llm_integration.py` now calls all three before prompt assembly (with safe fallback when unavailable), and injects profile/example context without exposing barrier labels in student-facing channels.
+        - Added/updated tests for webhook invocation and auth payload handling.
+        Remaining operator closeout: set `CONTEXT_WEBHOOK_TOKEN` in Apps Script properties, wire bot env (`CONTEXT_ENGINE_WEBHOOK_URL` + token), and load Example/Intervention sheet content.
+        Validation evidence and command outputs are in `task-notes/6.2.md`.
+      notes_ref: "task-notes/6.2.md"
 
     - id: "6.3"
       title: "Personalized CIS agent prompts (all 4 agents)"
@@ -2610,7 +2625,7 @@ sprint_7:
         All 7 templates delivered to Gmail without spam classification.
         Safaricom/Airtel delivery results documented. Trevor/Bruce/Mkunzi aware of
         manual WhatsApp fallback process if email fails.
-      summary: "Executed automated send sweep for all 7 templates to active Gmail/domain mailboxes and captured event-level proof (21/21 delivered). Provider matrix evidence is recorded; Safaricom/Airtel/Yahoo inbox-spam classification remains manual closeout."
+      summary: "Executed automated send sweep for all 7 templates to active Gmail/domain mailboxes and refreshed Brevo event evidence with a deterministic rule (message counted delivered when event history contains at least one delivered event). Current audit: 21/21 delivered-by-event-history; provider matrix closeout for Safaricom/Airtel/Yahoo inbox-spam classification remains manual."
       notes_ref: "task-notes/7.15.md"
 
     - id: "7.16"
@@ -2649,7 +2664,7 @@ sprint_7:
         All 7 happy-path steps pass in a single run. All 5 failure-path tests pass.
         Zero manual interventions required beyond Trevor's payment confirmation.
         Full results documented in task-notes/7.16.md.
-      summary: "Live production API smoke and signed webhook probes passed; targeted regression suites passed (134 tests) covering invite matching, preload, enrollment/payment, token lifecycle, onboarding flow, welcome-lounge, and failure paths. Final real-user Discord join->Stop 0 walkthrough remains pending."
+      summary: "Live production API smoke and signed webhook probes rerun and passed; targeted regression suites rerun and passed (134 tests) covering invite matching, preload, enrollment/payment, token lifecycle, onboarding flow, welcome-lounge, and failure paths. Final real-user Discord join->Stop 0 walkthrough remains pending."
       notes_ref: "task-notes/7.16.md"
 
 # ============================================================
@@ -2679,5 +2694,5 @@ agent_instructions: |
 
 # Last Updated
 last_updated: "2026-03-12"
-updated_by: "Tasks 7.15/7.16 execution pass: deliverability sweep + event audit (21/21 delivered), live smoke + webhook probes passed, and 134 targeted tests passed. Statuses moved to in_progress pending manual provider mailbox classification and final human Discord walkthrough."
+updated_by: "Tasks 7.15/7.16 evidence refresh pass: deliverability sweep rerun + event-audit method correction (21/21 delivered-by-event-history), live smoke + webhook probes rerun, and 134 targeted tests rerun (0 failed). Statuses remain in_progress pending manual provider mailbox classification and final human Discord walkthrough."
 
