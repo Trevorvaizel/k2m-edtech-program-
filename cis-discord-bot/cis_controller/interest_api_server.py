@@ -51,6 +51,7 @@ COL_INVITE = 17     # R
 COL_ZONE_VERIFY = 18  # S — scenario cross-check (facilitator review only)
 COL_ANXIETY = 19      # T — anxiety level 1-10 (crisis threshold)
 COL_HABITS = 20       # U — habits pre-assessment (comma-joined)
+COL_STAGE1_NUDGE_EMAIL_SENT = 21  # V — Stage 1->2 recovery marker (1.5 | 1.75 | blank)
 
 ENROLLMENT_CAP = int(os.getenv("ENROLLMENT_CAP", "30").strip())
 TOKEN_TTL_DAYS = int(os.getenv("MPESA_SUBMIT_TOKEN_TTL_DAYS", "7").strip())
@@ -71,6 +72,8 @@ ENROLL_EMAIL_QUEUE_PATH = Path(
 )
 DISCORD_JOINED_AT_NOTE_KEY = "k2m_discord_joined_at"
 ENROLL_NUDGE_SENT_NOTE_KEY = "k2m_enroll_nudge_sent_at"
+STAGE1_NUDGE_48H = "1.5"
+STAGE1_NUDGE_5DAY = "1.75"
 
 
 def _template_id_from_env(env_var: str) -> Optional[int]:
@@ -864,6 +867,202 @@ async def send_mpesa_received_email(
         return False
 
 
+def _build_discord_invite_link(invite_value: str) -> str:
+    """
+    Normalize roster invite values to a full Discord invite URL.
+    """
+    raw = (invite_value or "").strip()
+    if not raw:
+        return os.getenv("DISCORD_FALLBACK_INVITE_URL", "").strip()
+    if raw.startswith("http://") or raw.startswith("https://"):
+        return raw
+    return f"https://discord.gg/{raw}"
+
+
+def _normalize_kenyan_phone(phone_number: str) -> Optional[str]:
+    """
+    Normalize common Kenyan phone formats to E.164 (+254XXXXXXXXX).
+    """
+    raw = (phone_number or "").strip()
+    if not raw:
+        return None
+    digits = re.sub(r"\D", "", raw)
+    if not digits:
+        return None
+
+    if raw.startswith("+") and len(digits) >= 10:
+        return f"+{digits}"
+    if digits.startswith("0") and len(digits) == 10:
+        return f"+254{digits[1:]}"
+    if digits.startswith("254") and len(digits) == 12:
+        return f"+{digits}"
+    return None
+
+
+def _looks_like_bounce(error_text: Optional[str], status_code: Optional[int]) -> bool:
+    """
+    Best-effort bounce detector from synchronous send response.
+
+    True bounce events are often asynchronous; this matcher catches immediate
+    provider rejects (invalid/unknown recipient style failures).
+    """
+    if status_code in {400, 404, 422, 550, 551, 552, 553, 554}:
+        return True
+    text = (error_text or "").lower()
+    indicators = (
+        "bounce",
+        "bounced",
+        "invalid",
+        "unknown recipient",
+        "mailbox",
+        "does not exist",
+        "hardbounce",
+        "recipient rejected",
+    )
+    return any(indicator in text for indicator in indicators)
+
+
+async def send_stage1_dropoff_email(
+    *,
+    to_email: str,
+    first_name: str,
+    invite_link: str,
+    stage: str,
+) -> Dict[str, Any]:
+    """
+    Send Stage 1->2 recovery email:
+      - 1.5 at 48h
+      - 1.75 at 5 days
+
+    Returns a compact result dict with success/status/error.
+    """
+    if stage not in {STAGE1_NUDGE_48H, STAGE1_NUDGE_5DAY}:
+        return {"success": False, "status_code": None, "error": f"Unsupported stage: {stage}"}
+
+    try:
+        from cis_controller.email_service import EmailService
+
+        email_service = EmailService()
+        first_name_only = first_name.strip().split()[0] if first_name else "there"
+        tutorial_url = os.getenv(
+            "DISCORD_ONBOARDING_TUTORIAL_URL",
+            "https://support.discord.com/hc/en-us/articles/360045138571-Beginner-s-Guide-to-Discord",
+        ).strip()
+
+        if stage == STAGE1_NUDGE_48H:
+            subject = "K2M - Did you get in OK?"
+            template_env = "BREVO_TEMPLATE_EMAIL_1_5"
+            html_content = f"""
+            <!DOCTYPE html>
+            <html><body style="font-family:Arial,sans-serif;line-height:1.6;">
+              <h2>Quick check-in</h2>
+              <p>Hey {first_name_only},</p>
+              <p>Many students need a second tap to complete Discord join. Here is your link again:</p>
+              <p><a href="{invite_link}">{invite_link}</a></p>
+              <p>Need help getting onto Discord? <a href="{tutorial_url}">{tutorial_url}</a></p>
+            </body></html>
+            """
+        else:
+            subject = "K2M - Last chance to secure your spot"
+            template_env = "BREVO_TEMPLATE_EMAIL_1_75"
+            html_content = f"""
+            <!DOCTYPE html>
+            <html><body style="font-family:Arial,sans-serif;line-height:1.6;">
+              <h2>Final reminder</h2>
+              <p>Hey {first_name_only},</p>
+              <p>We have limited spots for Cohort 1. Your invite link expires soon.</p>
+              <p><a href="{invite_link}">{invite_link}</a></p>
+            </body></html>
+            """
+
+        template_id = _template_id_from_env(template_env)
+        shell_params = _canonical_email_shell_params()
+        if template_id is not None:
+            result = await email_service.send_email(
+                to_email=to_email,
+                subject=subject,
+                html_content=html_content,
+                template_id=template_id,
+                template_params={
+                    **shell_params,
+                    "first_name": first_name_only,
+                    "discord_invite_link": invite_link,
+                    "discord_tutorial_url": tutorial_url,
+                },
+            )
+        else:
+            result = await email_service.send_email(
+                to_email=to_email,
+                subject=subject,
+                html_content=html_content,
+            )
+
+        return {
+            "success": bool(result.success),
+            "status_code": result.status_code,
+            "error": result.error or "",
+        }
+    except Exception as exc:
+        logger.error("Failed to send stage1 drop-off email: %s", exc)
+        return {"success": False, "status_code": None, "error": str(exc)}
+
+
+async def send_stage1_whatsapp_nudge(
+    *,
+    phone_number: str,
+    first_name: str,
+    invite_link: str,
+) -> bool:
+    """
+    Send Stage 1->2 recovery fallback via Africa's Talking WhatsApp endpoint.
+
+    Required env:
+      - AFRICAS_TALKING_WHATSAPP_URL
+      - AFRICAS_TALKING_API_KEY
+      - AFRICAS_TALKING_USERNAME (optional, defaults to "sandbox")
+    """
+    endpoint = os.getenv("AFRICAS_TALKING_WHATSAPP_URL", "").strip()
+    api_key = os.getenv("AFRICAS_TALKING_API_KEY", "").strip()
+    username = os.getenv("AFRICAS_TALKING_USERNAME", "sandbox").strip() or "sandbox"
+    normalized_phone = _normalize_kenyan_phone(phone_number)
+
+    if not endpoint or not api_key or not normalized_phone:
+        return False
+
+    first_name_only = first_name.strip().split()[0] if first_name else "there"
+    message = (
+        f"K2M check-in: Hi {first_name_only}, here is your Discord link again: "
+        f"{invite_link} . Reply HELP if you are stuck and a facilitator will assist."
+    )
+
+    headers = {
+        "apiKey": api_key,
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+    }
+    payload = {
+        "username": username,
+        "to": normalized_phone,
+        "message": message,
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=20.0) as client:
+            response = await client.post(endpoint, headers=headers, json=payload)
+        if 200 <= response.status_code < 300:
+            logger.info("Task 7.9: WhatsApp fallback sent to %s", normalized_phone)
+            return True
+        logger.warning(
+            "Task 7.9: WhatsApp fallback failed status=%s body=%s",
+            response.status_code,
+            response.text[:200],
+        )
+    except Exception as exc:
+        logger.warning("Task 7.9: WhatsApp fallback error: %s", exc)
+
+    return False
+
+
 def _load_pending_enroll_email_queue() -> List[Dict[str, Any]]:
     """
     Read persisted Email #2 queue entries from local JSON storage.
@@ -1128,6 +1327,141 @@ async def send_48h_enroll_nudges(
         nudged += 1
 
     return {"scanned": scanned, "nudged": nudged}
+
+
+async def check_stage1_dropoff(
+    *,
+    spreadsheet_id: str,
+    sheet_range: str = "Student Roster!A:Z",
+    creds_path: Optional[str] = None,
+    first_nudge_after_hours: int = 48,
+    final_nudge_after_days: int = 5,
+    max_nudges: int = 50,
+) -> Dict[str, int]:
+    """
+    Task 7.9 nightly worker: Stage 1->2 drop-off recovery.
+
+    Rules:
+      - Student has not joined Discord yet (Column D empty)
+      - Age measured from created_at (Column N)
+      - At 48h: send Email #1.5 once
+      - At 5 days: send Email #1.75 once
+      - Idempotency marker stored in Column V as: 1.5 | 1.75 | blank
+      - If Email #1.5 hard-fails like a bounce and phone exists, attempt
+        Africa's Talking WhatsApp fallback.
+    """
+    rows = await read_roster_rows(
+        spreadsheet_id=spreadsheet_id,
+        sheet_range=sheet_range,
+        creds_path=creds_path,
+    )
+
+    now = datetime.now(timezone.utc)
+    first_nudge_delta = timedelta(hours=first_nudge_after_hours)
+    final_nudge_delta = timedelta(days=final_nudge_after_days)
+
+    stats: Dict[str, int] = {
+        "scanned": 0,
+        "email_1_5_sent": 0,
+        "email_1_75_sent": 0,
+        "whatsapp_sent": 0,
+        "email_failures": 0,
+        "marker_updates": 0,
+        "marker_update_failures": 0,
+        "skipped_joined": 0,
+        "skipped_not_due": 0,
+        "skipped_already_sent": 0,
+    }
+    dispatched = 0
+
+    for row_number, row in enumerate(rows[1:], start=2):
+        if dispatched >= max_nudges:
+            break
+        stats["scanned"] += 1
+
+        email = _safe_get(row, COL_EMAIL).strip().lower()
+        if not email:
+            continue
+
+        # Stop condition: once joined, no Stage 1->2 nudges.
+        if _extract_discord_id(_safe_get(row, COL_DISCORD_ID)):
+            stats["skipped_joined"] += 1
+            continue
+
+        created_at_dt = _parse_iso_utc(_safe_get(row, COL_CREATED_AT))
+        if not created_at_dt:
+            stats["skipped_not_due"] += 1
+            continue
+
+        age = now - created_at_dt
+        if age < first_nudge_delta:
+            stats["skipped_not_due"] += 1
+            continue
+
+        marker = _safe_get(row, COL_STAGE1_NUDGE_EMAIL_SENT).strip().lower()
+        stage_to_send: Optional[str] = None
+
+        if age >= final_nudge_delta:
+            if marker == STAGE1_NUDGE_5DAY:
+                stats["skipped_already_sent"] += 1
+                continue
+            stage_to_send = STAGE1_NUDGE_5DAY
+        else:
+            # 48h <= age < 5 days
+            if marker in {STAGE1_NUDGE_48H, STAGE1_NUDGE_5DAY}:
+                stats["skipped_already_sent"] += 1
+                continue
+            stage_to_send = STAGE1_NUDGE_48H
+
+        invite_link = _build_discord_invite_link(_safe_get(row, COL_INVITE))
+        first_name = (_safe_get(row, COL_NAME) or "there").split(" ")[0]
+
+        result = await send_stage1_dropoff_email(
+            to_email=email,
+            first_name=first_name,
+            invite_link=invite_link,
+            stage=stage_to_send,
+        )
+
+        delivered = bool(result.get("success"))
+        if delivered:
+            dispatched += 1
+            if stage_to_send == STAGE1_NUDGE_48H:
+                stats["email_1_5_sent"] += 1
+            else:
+                stats["email_1_75_sent"] += 1
+        else:
+            stats["email_failures"] += 1
+
+            # Task 7.9 fallback: WhatsApp nudge if Email #1.5 bounced/rejected.
+            if (
+                stage_to_send == STAGE1_NUDGE_48H
+                and _looks_like_bounce(result.get("error"), result.get("status_code"))
+            ):
+                wa_ok = await send_stage1_whatsapp_nudge(
+                    phone_number=_safe_get(row, COL_PHONE),
+                    first_name=first_name,
+                    invite_link=invite_link,
+                )
+                if wa_ok:
+                    dispatched += 1
+                    stats["whatsapp_sent"] += 1
+                    delivered = True
+
+        if delivered:
+            updated = await update_roster_cells(
+                row_number=row_number,
+                updates={COL_STAGE1_NUDGE_EMAIL_SENT: stage_to_send},
+                spreadsheet_id=spreadsheet_id,
+                sheet_range=sheet_range,
+                creds_path=creds_path,
+            )
+            if updated:
+                stats["marker_updates"] += 1
+            else:
+                stats["marker_update_failures"] += 1
+
+    return stats
 
 
 async def send_token_expiry_warnings(

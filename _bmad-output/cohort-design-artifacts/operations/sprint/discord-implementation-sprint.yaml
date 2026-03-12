@@ -197,12 +197,12 @@ playbook_traceability:
 # ============================================================
 progress:
   total_tasks: 92
-  done: 47
+  done: 48
   in_progress: 0
   blocked: 0
-  pending: 45
-  percent_complete: 51
-  last_updated: "2026-03-11 - Task 7.14 visual shell corrected per inbox QA (removed logo-side vertical line, restored cyan divider, reduced typography scale, emoji-friendly copy, facilitator wording), then full 7-template send executed successfully (HTTP 201) to joytrevor.jt@gmail.com with Ibrahim personalization."
+  pending: 44
+  percent_complete: 52
+  last_updated: "2026-03-12 - Task 7.9 completed and live-probed: nightly Stage 1->2 drop-off recovery implemented (48h Email #1.5 + day-5 Email #1.75), Column V idempotency marker added, 23:20 EAT scheduler cadence added, tests passed, Railway scan-path probe confirmed production readiness for email path, and STAGE1_DROPOFF_NUDGE_ENABLED was explicitly set true in Railway."
   decision_7_revised: "2026-02-20 â€” Context engine building NOW for Cohort 1 (not deferred)"
   adversarial_review_2: "2026-03-04 â€” Pre-mortem on enrollment flow. 5 P0 bugs fixed, 5 P1 issues resolved. Task 0.7 split into 0.7a-d. Payment amount standardized to KES 5,000. Source-of-truth set via execution_contract."
   adversarial_review_3: "2026-03-04 â€” Pre-mortem party mode (Sally+John+Winston+Amelia+DrQuinn+Murat+Mary+Maya). North star: zero Discord experience. Found 3 critical blockers, 6 high issues, 8 medium issues. Added Sprint 7. Migrated to PostgreSQL immediately (promoted from 6.6 prep). Full decisions log: pre-mortem-2026-03-04-decisions.md"
@@ -230,7 +230,12 @@ progress:
 
 technical_debt:
   register: "_bmad-output/cohort-design-artifacts/operations/sprint/technical-debt-register.md"
-  open_items: []
+  open_items:
+    - id: "TD-7.9-01"
+      status: "open"
+      source_task: "7.9"
+      owner: "Trevor"
+      summary: "WhatsApp bounce fallback for Task 7.9 is deferred until Africa's Talking WhatsApp API access/credentials are available."
   resolved_items:
     - id: "TD-7.13-01"
       status: "closed"
@@ -2380,14 +2385,14 @@ sprint_7:
 
     - id: "7.9"
       title: "Drop-off recovery email sequence: Stage 1â†’2 re-engagement (48h + 5-day nudge)"
-      status: "pending"
+      status: "done"
       description: |
         DECISION N-01 (Session 4). Highest-volume dropout point: student submits interest form
         but never clicks Discord invite. No re-engagement exists. Email open-and-act rates ~20%.
 
         1. Add scheduler job: check_stage1_dropoff()
            - Runs nightly
-           - Finds rows where Column D is empty AND Column G (created_at) > 48h ago
+           - Finds rows where Column D is empty AND Column N (created_at) > 48h ago
            - At 48h: send Brevo Email #1.5 (friendly nudge â€” "Did you get in OK?")
            - At 5 days: send Brevo Email #1.75 ("Last chance â€” invite expires soon")
            - Stop condition: once Column D populated, cancel all future nudges for this row
@@ -2402,6 +2407,7 @@ sprint_7:
         Student who doesn't join Discord within 48h receives Email #1.5.
         Student who still hasn't joined at day 5 receives Email #1.75.
         No duplicate nudges. Student who joins Discord receives no further nudges.
+      summary: "Implemented check_stage1_dropoff worker in interest_api_server with stage-aware Brevo sends (Email #1.5 and #1.75), Column V idempotency writes, and WhatsApp fallback attempt for bounce-like #1.5 failures. Added scheduler hook at 23:20 EAT (once per day) plus automated tests for worker behavior and scheduler cadence."
       notes_ref: "task-notes/7.9.md"
 
     - id: "7.10"
@@ -2660,6 +2666,6 @@ agent_instructions: |
   - Keep each task auditable: link notes_ref and reference changed files in the summary
 
 # Last Updated
-last_updated: "2026-03-11"
-updated_by: "Production hardening + verification pass: Task 7.11 closed (webhook auth live in production), Task 7.12 patched for @Guest boundary behavior and invite-diff fallback deployment, and 7.5 payment-path runtime-store hotfix deployed."
+last_updated: "2026-03-12"
+updated_by: "Task 7.14 premium redesign: Email #4 refund policy gap fixed, premium dark visual shell, human copy, updated subjects, full 7-template resend HTTP 201 confirmed to joytrevor.jt@gmail.com."
 

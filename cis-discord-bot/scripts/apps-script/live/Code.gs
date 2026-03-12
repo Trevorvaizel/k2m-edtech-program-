@@ -47,6 +47,7 @@ var COL_INVITE_CODE = 18;   // R
 var COL_ZONE_VERIFY = 19;   // S
 var COL_ANXIETY = 20;       // T
 var COL_HABITS = 21;        // U
+var COL_STAGE1_NUDGE_EMAIL_SENT = 22; // V
 var RUNTIME_ROSTER_HEADERS = [
   'enrollment_name',      // A
   'enrollment_email',     // B
@@ -68,7 +69,8 @@ var RUNTIME_ROSTER_HEADERS = [
   'invite_code',          // R
   'zone_verification',    // S
   'anxiety_level',        // T
-  'habits_baseline'       // U
+  'habits_baseline',      // U
+  'stage1_nudge_email_sent' // V
 ];
 var RUNTIME_DROPDOWNS = [
   {
@@ -495,7 +497,7 @@ function setWebhookSecret(secret) {
 /**
  * Non-destructive schema repair:
  * - Keeps all existing data rows
- * - Rewrites row-1 headers (A:U) to runtime canonical labels
+ * - Rewrites row-1 headers (A:V) to runtime canonical labels
  */
 function repairStudentRosterHeaders() {
   return withK2mErrorReporting_('repairStudentRosterHeaders', function() {
@@ -559,7 +561,7 @@ function backupAndRecreateStudentRosterSheet() {
 }
 
 /**
- * Clears only data rows (row 2+) in A:U.
+ * Clears only data rows (row 2+) in A:V.
  * Header row remains intact.
  */
 function clearStudentRosterDataRows() {
@@ -585,8 +587,8 @@ function clearStudentRosterDataRows() {
 }
 
 /**
- * Apply runtime-aligned dropdown automation for Student Roster A:U.
- * - Clears old/misaligned validations in A2:U
+ * Apply runtime-aligned dropdown automation for Student Roster A:V.
+ * - Clears old/misaligned validations in A2:V
  * - Applies dropdowns for runtime fields (profession/zone/payment/etc.)
  * - Uses allowInvalid=true so existing out-of-band values are not blocked
  */
@@ -607,7 +609,7 @@ function applyRuntimeRosterDropdowns() {
 
 /**
  * One-click runtime alignment:
- * 1) Rewrites A1:U1 runtime headers
+ * 1) Rewrites A1:V1 runtime headers
  * 2) Reapplies runtime dropdown validations
  */
 function alignRuntimeRosterSchema() {
@@ -626,7 +628,7 @@ function alignRuntimeRosterSchema() {
 /**
  * Verify runtime alignment without changing data.
  * Checks:
- * - Student Roster headers A:U
+ * - Student Roster headers A:V
  * - Runtime dropdown validation rules on row 2
  * - installable onEdit trigger presence
  * - required/recommended script properties presence
@@ -672,7 +674,7 @@ function verifyRuntimeRosterAlignment() {
  * Fresh-cohort reset helper (safe default):
  * - Creates a timestamped backup copy of Student Roster tab
  * - Reapplies runtime headers + runtime dropdown validations
- * - Clears Student Roster data rows (row 2+ in A:U)
+ * - Clears Student Roster data rows (row 2+ in A:V)
  * - Clears historical activity rows in:
  *   - Submissions Log (row 3+)
  *   - Intervention Tracking (row 3+)
