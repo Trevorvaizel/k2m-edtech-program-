@@ -53,6 +53,228 @@ _anthropic_client: Optional[Any] = None
 _runtime_failure_notifier: Optional[Callable[[str, str, str], Awaitable[None]]] = None
 
 
+def _get_context_engine_webhook_url() -> str:
+    """Resolve Apps Script context webhook URL from env."""
+    return os.getenv("CONTEXT_ENGINE_WEBHOOK_URL", "").strip()
+
+
+def _get_context_engine_webhook_token() -> str:
+    """Resolve shared secret token used by Apps Script context webhook."""
+    return os.getenv("CONTEXT_ENGINE_WEBHOOK_TOKEN", "").strip()
+
+
+def _get_context_engine_timeout_seconds() -> float:
+    """Resolve context webhook timeout with sane lower bound."""
+    raw = os.getenv("CONTEXT_ENGINE_TIMEOUT_SECONDS", "2.5").strip()
+    try:
+        parsed = float(raw)
+    except ValueError:
+        parsed = 2.5
+    return max(parsed, 0.5)
+
+
+def _context_get_value(student_context: Any, key: str, default: Any = "") -> Any:
+    """Read field from dict-like or object-like student context."""
+    if student_context is None:
+        return default
+    if isinstance(student_context, dict):
+        return student_context.get(key, default)
+    return getattr(student_context, key, default)
+
+
+def _normalize_week_number(value: Any) -> Optional[int]:
+    """Normalize week to positive integer when possible."""
+    try:
+        week = int(value)
+    except (TypeError, ValueError):
+        return None
+    if week <= 0:
+        return None
+    return week
+
+
+def _truncate_text(value: Any, max_len: int = 220) -> str:
+    """Return compact single-line context strings."""
+    text = str(value or "").strip().replace("\n", " ")
+    if len(text) <= max_len:
+        return text
+    return f"{text[:max_len - 3].rstrip()}..."
+
+
+def _extract_examples(raw_examples: Any) -> List[str]:
+    """Extract up to 3 example_text strings from webhook payload."""
+    if not isinstance(raw_examples, list):
+        return []
+
+    examples: List[str] = []
+    for item in raw_examples:
+        if isinstance(item, dict):
+            text = item.get("example_text") or item.get("text") or ""
+        else:
+            text = item
+        cleaned = _truncate_text(text, max_len=180)
+        if cleaned:
+            examples.append(cleaned)
+        if len(examples) >= 3:
+            break
+    return examples
+
+
+def _extract_intervention_text(payload: Dict[str, Any]) -> str:
+    """
+    Read intervention text from flexible response shapes.
+    This data is fetched in task 6.2 plumbing and consumed by later task 6.4 logic.
+    """
+    intervention = payload.get("intervention")
+    if isinstance(intervention, dict):
+        return _truncate_text(intervention.get("intervention_text", ""), max_len=240)
+    if isinstance(intervention, str):
+        return _truncate_text(intervention, max_len=240)
+    return _truncate_text(payload.get("intervention_text", ""), max_len=240)
+
+
+async def _call_context_engine_webhook(action: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Call Apps Script context webhook with shared secret token auth.
+
+    Contract:
+      POST CONTEXT_ENGINE_WEBHOOK_URL
+      JSON body includes:
+        - action: getStudentContext | getExamplesByProfession | getIntervention
+        - token: CONTEXT_ENGINE_WEBHOOK_TOKEN (if configured)
+        - action-specific params
+    """
+    url = _get_context_engine_webhook_url()
+    if not url:
+        return {"success": False, "error": "CONTEXT_ENGINE_WEBHOOK_URL not configured"}
+
+    body_payload: Dict[str, Any] = {"action": action}
+    body_payload.update(payload or {})
+
+    token = _get_context_engine_webhook_token()
+    if token:
+        body_payload["token"] = token
+
+    body = json.dumps(body_payload).encode("utf-8")
+    timeout_seconds = _get_context_engine_timeout_seconds()
+
+    def _send_request() -> Dict[str, Any]:
+        request = urllib.request.Request(
+            url,
+            data=body,
+            method="POST",
+            headers={"Content-Type": "application/json"},
+        )
+        with urllib.request.urlopen(request, timeout=timeout_seconds) as resp:
+            raw_text = resp.read().decode("utf-8")
+        parsed = json.loads(raw_text or "{}")
+        if isinstance(parsed, dict):
+            return parsed
+        return {"success": False, "error": "Context webhook returned non-object JSON"}
+
+    try:
+        return await asyncio.to_thread(_send_request)
+    except urllib.error.HTTPError as exc:
+        details = ""
+        try:
+            details = exc.read().decode("utf-8")
+        except Exception:
+            details = str(exc)
+        logger.warning("Context webhook %s failed: HTTP %s %s", action, exc.code, details)
+        return {"success": False, "error": f"HTTP {exc.code}: {details}"}
+    except urllib.error.URLError as exc:
+        logger.warning("Context webhook %s connection error: %s", action, exc)
+        return {"success": False, "error": f"connection error: {exc}"}
+    except Exception as exc:
+        logger.warning("Context webhook %s unexpected failure: %s", action, exc)
+        return {"success": False, "error": str(exc)}
+
+
+async def _load_context_engine_data(student_context: Any) -> Dict[str, Any]:
+    """
+    Fetch task 6.2 context payloads before prompt construction.
+    Returns a normalized dict with profile/examples/intervention data.
+    """
+    context_data: Dict[str, Any] = {
+        "profile": {},
+        "examples": [],
+        "intervention_text": "",
+    }
+    if student_context is None:
+        return context_data
+    if not _get_context_engine_webhook_url():
+        return context_data
+
+    discord_id = str(_context_get_value(student_context, "discord_id", "") or "").strip()
+    week = _normalize_week_number(_context_get_value(student_context, "current_week", None))
+
+    profile: Dict[str, Any] = {}
+    if discord_id:
+        profile_response = await _call_context_engine_webhook(
+            "getStudentContext",
+            {"discord_id": discord_id},
+        )
+        raw_profile = profile_response.get("profile")
+        if profile_response.get("success") and isinstance(raw_profile, dict):
+            profile = raw_profile
+    context_data["profile"] = profile
+
+    profession = str(
+        profile.get("profession")
+        or _context_get_value(student_context, "profession", "")
+        or ""
+    ).strip()
+    barrier_type = str(
+        profile.get("barrier_type")
+        or _context_get_value(student_context, "barrier_type", "")
+        or ""
+    ).strip()
+
+    pending_calls: List[Tuple[str, Awaitable[Dict[str, Any]]]] = []
+    if profession and week is not None:
+        pending_calls.append(
+            (
+                "examples",
+                _call_context_engine_webhook(
+                    "getExamplesByProfession",
+                    {"profession": profession, "week": week},
+                ),
+            )
+        )
+    if barrier_type and week is not None:
+        pending_calls.append(
+            (
+                "intervention",
+                _call_context_engine_webhook(
+                    "getIntervention",
+                    {"barrier_type": barrier_type, "week": week},
+                ),
+            )
+        )
+
+    if not pending_calls:
+        return context_data
+
+    labels = [item[0] for item in pending_calls]
+    responses = await asyncio.gather(
+        *[item[1] for item in pending_calls],
+        return_exceptions=True,
+    )
+
+    for label, response in zip(labels, responses):
+        if isinstance(response, Exception):
+            logger.warning("Context webhook %s raised error: %s", label, response)
+            continue
+        if not isinstance(response, dict) or not response.get("success"):
+            continue
+        if label == "examples":
+            context_data["examples"] = _extract_examples(response.get("examples"))
+        elif label == "intervention":
+            context_data["intervention_text"] = _extract_intervention_text(response)
+
+    return context_data
+
+
 def get_active_provider() -> str:
     """
     Resolve provider from env aliases.
@@ -282,7 +504,11 @@ def _ensure_system_prompt_loaded(agent: str) -> str:
     return prompt
 
 
-def _build_student_context_block(student_context, agent: str) -> str:
+def _build_student_context_block(
+    student_context,
+    agent: str,
+    context_engine_data: Optional[Dict[str, Any]] = None,
+) -> str:
     """
     Build a compact personalization block from StudentContext.
 
@@ -291,6 +517,14 @@ def _build_student_context_block(student_context, agent: str) -> str:
     """
     if student_context is None:
         return ""
+
+    context_engine_data = context_engine_data or {}
+    profile = context_engine_data.get("profile")
+    if not isinstance(profile, dict):
+        profile = {}
+    context_examples = context_engine_data.get("examples")
+    if not isinstance(context_examples, list):
+        context_examples = []
 
     altitude = ""
     try:
@@ -306,17 +540,44 @@ def _build_student_context_block(student_context, agent: str) -> str:
     except Exception:
         example = ""
 
+    profession = _truncate_text(
+        profile.get("profession")
+        or _context_get_value(student_context, "profession", ""),
+        max_len=80,
+    )
+    situation = _truncate_text(
+        profile.get("situation")
+        or _context_get_value(student_context, "situation", ""),
+        max_len=220,
+    )
+    goals = _truncate_text(
+        profile.get("goals")
+        or _context_get_value(student_context, "goals", ""),
+        max_len=220,
+    )
+
+    if not example and context_examples:
+        example = context_examples[0]
+
     lines = [
         "StudentContext:",
-        f"- week: {getattr(student_context, 'current_week', 'unknown')}",
-        f"- zone: {getattr(student_context, 'zone', 'unknown')}",
-        f"- emotional_state: {getattr(student_context, 'emotional_state', 'unknown')}",
-        f"- jtbd_primary_concern: {getattr(student_context, 'jtbd_primary_concern', 'unknown')}",
+        f"- week: {_context_get_value(student_context, 'current_week', 'unknown')}",
+        f"- zone: {_context_get_value(student_context, 'zone', 'unknown')}",
+        f"- emotional_state: {_context_get_value(student_context, 'emotional_state', 'unknown')}",
+        f"- jtbd_primary_concern: {_context_get_value(student_context, 'jtbd_primary_concern', 'unknown')}",
     ]
+    if profession:
+        lines.append(f"- profession: {profession}")
+    if situation:
+        lines.append(f"- situation: {situation}")
+    if goals:
+        lines.append(f"- goals: {goals}")
     if altitude:
         lines.append(f"- altitude: {altitude}")
     if example:
         lines.append(f"- relevant_example: {example}")
+    if len(context_examples) > 1:
+        lines.append(f"- extra_examples: {' | '.join(context_examples[1:3])}")
 
     lines.append("")
     lines.append("Use this context to tailor language and scaffolding.")
@@ -594,7 +855,12 @@ async def call_agent_with_context(
     provider = get_active_provider()
     model = get_active_model(provider)
 
-    context_block = _build_student_context_block(student_context, agent)
+    context_engine_data = await _load_context_engine_data(student_context)
+    context_block = _build_student_context_block(
+        student_context,
+        agent,
+        context_engine_data=context_engine_data,
+    )
     final_user_message = user_message
     if context_block:
         final_user_message = (

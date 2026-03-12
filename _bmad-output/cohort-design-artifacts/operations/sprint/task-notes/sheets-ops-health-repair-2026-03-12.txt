@@ -1,0 +1,29 @@
+Ops health repair execution evidence
+Date: 2026-03-12
+Spreadsheet: 16tLQbGUF9mI2z2cHxlwmGce6Npui0C5w8e1y46uanH0
+
+Live repairs applied:
+1) Student Roster header:
+- V1 changed to stage1_nudge_email_sent
+
+2) Emotional baseline normalization:
+- I5 hopeful -> curious
+- I6 hopeful -> curious
+
+3) Progress Dashboard formula hardening:
+- B26 =IFERROR(AVERAGE('Student Roster'!L:L),0)
+- B27 =IFERROR(AVERAGE('Student Roster'!M:M),0)
+
+4) Intervention Tracking retention repairs:
+- W2 formula replaced with descriptor text: Auto: timestamp + 180 days
+- W3:W legacy formulas rewritten from =B{row}+180 to =IF(B{row}="","",B{row}+180)
+- rewritten formulas: 199
+
+5) Summary crisis contacts:
+- B38, B39, B40 converted from formula-like +254 entries to plain text values
+
+Post-fix audit:
+- Error cells (#REF/#VALUE/#DIV0/#ERROR) across core tabs: 0
+- Headers: Student Roster, Example_Library, Intervention_Library all match expected runtime schema
+- Dropdown contracts (E,F,I,L,S,T,U): all match
+- Remaining manual data gap: Confirmed rows missing discord_id/activated_at on rows 3, 4, 12

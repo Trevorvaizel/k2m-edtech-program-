@@ -19,6 +19,7 @@
  * - APPS_SCRIPT_ALERT_EMAIL
  * - COHORT_ID
  * - COHORT_START_DATE
+ * - CONTEXT_WEBHOOK_TOKEN
  */
 
 var SHEET_NAME = 'Student Roster';
@@ -118,6 +119,32 @@ var RUNTIME_DROPDOWNS = [
 ];
 var SUBMISSIONS_LOG_SHEET_NAME = 'Submissions Log';
 var INTERVENTION_TRACKING_SHEET_NAME = 'Intervention Tracking';
+var EXAMPLE_LIBRARY_SHEET_NAME = 'Example_Library';
+var INTERVENTION_LIBRARY_SHEET_NAME = 'Intervention_Library';
+var OPS_HEALTH_EXPECTED_TABS = [
+  'Student Roster',
+  'Submissions Log',
+  'Intervention Tracking',
+  'Progress Dashboard',
+  'Summary',
+  'Example_Library',
+  'Intervention_Library'
+];
+var SHEET_ERROR_TOKENS = ['#REF!', '#N/A', '#VALUE!', '#DIV/0!', '#NAME?', '#NUM!', '#ERROR!'];
+var EXAMPLE_LIBRARY_SHEET_ALIASES = [
+  'Example Library',
+  'Examples Library',
+  'Examples_Library',
+  'example_library',
+  'example library'
+];
+var INTERVENTION_LIBRARY_SHEET_ALIASES = [
+  'Intervention Library',
+  'Interventions Library',
+  'Interventions_Library',
+  'intervention_library',
+  'intervention library'
+];
 
 function installOnEditTrigger() {
   var spreadsheet = getTargetSpreadsheet_();
@@ -155,6 +182,252 @@ function onEditInstallable(e) {
 
     activateStudentByRow_(sheet, range.getRow());
   });
+}
+
+/**
+ * Task 6.2 context webhooks (deployed via Apps Script web app).
+ *
+ * Expects POST JSON:
+ * {
+ *   token: "<CONTEXT_WEBHOOK_TOKEN>",
+ *   action: "getStudentContext" | "getExamplesByProfession" | "getIntervention",
+ *   ...action fields...
+ * }
+ */
+function doPost(e) {
+  return withK2mErrorReporting_('doPost', function() {
+    var payload = parseWebAppPayload_(e);
+    var auth = validateContextWebhookToken_(payload.token);
+    if (!auth.success) {
+      return jsonResponse_({ success: false, error: auth.error });
+    }
+
+    var action = String(payload.action || '').trim();
+    if (!action) {
+      return jsonResponse_({ success: false, error: 'Missing action' });
+    }
+
+    if (action === 'getStudentContext') {
+      return jsonResponse_(getStudentContext(payload.discord_id));
+    }
+    if (action === 'getExamplesByProfession') {
+      return jsonResponse_(getExamplesByProfession(payload.profession, payload.week));
+    }
+    if (action === 'getIntervention') {
+      return jsonResponse_(getIntervention(payload.barrier_type, payload.week));
+    }
+
+    return jsonResponse_({ success: false, error: 'Unknown action: ' + action });
+  });
+}
+
+function parseWebAppPayload_(e) {
+  var raw = '';
+  if (e && e.postData && e.postData.contents) {
+    raw = String(e.postData.contents).trim();
+  }
+  if (!raw) return {};
+
+  try {
+    var parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed;
+    }
+    throw new Error('Payload must be a JSON object');
+  } catch (err) {
+    throw new Error('Invalid JSON payload: ' + err);
+  }
+}
+
+function validateContextWebhookToken_(providedToken) {
+  var expected = String(getOptionalProperty_('CONTEXT_WEBHOOK_TOKEN', '') || '').trim();
+  if (!expected) {
+    return { success: false, error: 'CONTEXT_WEBHOOK_TOKEN not configured' };
+  }
+
+  var provided = String(providedToken || '').trim();
+  if (!provided || provided !== expected) {
+    return { success: false, error: 'Unauthorized' };
+  }
+  return { success: true };
+}
+
+function getStudentContext(discordIdInput) {
+  var discordId = normalizeDiscordId_(discordIdInput);
+  if (!discordId) {
+    return { success: false, error: 'discord_id must be numeric' };
+  }
+
+  var spreadsheet = getTargetSpreadsheet_();
+  var roster = spreadsheet.getSheetByName(SHEET_NAME);
+  if (!roster) {
+    return { success: false, error: 'Missing sheet: ' + SHEET_NAME };
+  }
+
+  var lastRow = roster.getLastRow();
+  if (lastRow < 2) {
+    return { success: false, error: 'student_not_found' };
+  }
+
+  var values = roster.getRange(2, 1, lastRow - 1, COL_HABITS).getValues();
+  for (var i = 0; i < values.length; i += 1) {
+    var row = values[i];
+    var identity = parseDiscordIdentity_(row[COL_DISCORD_ID - 1]);
+    if (identity.discord_id !== discordId) {
+      continue;
+    }
+
+    var fullName = String(row[COL_NAME - 1] || '').trim();
+    var situation = String(row[COL_SITUATION - 1] || '').trim();
+    var goals = String(row[COL_GOALS - 1] || '').trim();
+    var emotional = String(row[COL_EMOTIONAL - 1] || '').trim().toLowerCase();
+    return {
+      success: true,
+      profile: {
+        discord_id: discordId,
+        discord_username: String(identity.discord_username || '').trim(),
+        first_name: extractFirstName_(fullName),
+        enrollment_name: fullName,
+        profession: normalizeProfession_(row[COL_PROFESSION - 1]),
+        zone: String(row[COL_ZONE - 1] || '').trim(),
+        situation: situation,
+        goals: goals,
+        emotional_baseline: emotional,
+        barrier_type: inferBarrierType_(situation, goals, emotional)
+      }
+    };
+  }
+
+  return { success: false, error: 'student_not_found' };
+}
+
+function getExamplesByProfession(professionInput, weekInput) {
+  var profession = normalizeProfession_(professionInput);
+  var week = parseWeekNumber_(weekInput);
+  if (!profession) {
+    return { success: false, error: 'profession is required' };
+  }
+  if (!week) {
+    return { success: false, error: 'week is required' };
+  }
+
+  var spreadsheet = getTargetSpreadsheet_();
+  var sheet = spreadsheet.getSheetByName(EXAMPLE_LIBRARY_SHEET_NAME);
+  if (!sheet) {
+    return { success: false, error: 'Missing sheet: ' + EXAMPLE_LIBRARY_SHEET_NAME };
+  }
+
+  var rows = sheet.getDataRange().getValues();
+  if (!rows || rows.length < 2) {
+    return { success: true, examples: [], count: 0 };
+  }
+
+  var idx = buildHeaderIndexMap_(rows[0]);
+  if (
+    idx.profession < 0 ||
+    idx.example_text < 0 ||
+    idx.week_relevant < 0
+  ) {
+    return { success: false, error: 'Example_Library headers are missing required columns' };
+  }
+
+  var examples = [];
+  for (var i = 1; i < rows.length; i += 1) {
+    var row = rows[i];
+    var rowProfession = normalizeProfession_(row[idx.profession]);
+    if (rowProfession !== profession) {
+      continue;
+    }
+
+    var weekRelevant = String(row[idx.week_relevant] || '').trim();
+    if (!weekMatchesRange_(week, weekRelevant)) {
+      continue;
+    }
+
+    var exampleText = String(row[idx.example_text] || '').trim();
+    if (!exampleText) {
+      continue;
+    }
+
+    examples.push({
+      id: idx.id >= 0 ? String(row[idx.id] || '').trim() : '',
+      profession: rowProfession,
+      example_text: exampleText,
+      week_relevant: weekRelevant,
+      habit_tag: idx.habit_tag >= 0 ? String(row[idx.habit_tag] || '').trim() : ''
+    });
+
+    if (examples.length >= 3) {
+      break;
+    }
+  }
+
+  return {
+    success: true,
+    examples: examples,
+    count: examples.length
+  };
+}
+
+function getIntervention(barrierTypeInput, weekInput) {
+  var barrierType = normalizeBarrierType_(barrierTypeInput);
+  var week = parseWeekNumber_(weekInput);
+  if (!barrierType) {
+    return { success: false, error: 'barrier_type is required' };
+  }
+  if (!week) {
+    return { success: false, error: 'week is required' };
+  }
+
+  var spreadsheet = getTargetSpreadsheet_();
+  var sheet = spreadsheet.getSheetByName(INTERVENTION_LIBRARY_SHEET_NAME);
+  if (!sheet) {
+    return { success: false, error: 'Missing sheet: ' + INTERVENTION_LIBRARY_SHEET_NAME };
+  }
+
+  var rows = sheet.getDataRange().getValues();
+  if (!rows || rows.length < 2) {
+    return { success: true, intervention: null };
+  }
+
+  var idx = buildHeaderIndexMap_(rows[0]);
+  if (
+    idx.barrier_type < 0 ||
+    idx.week_range < 0 ||
+    idx.intervention_text < 0
+  ) {
+    return { success: false, error: 'Intervention_Library headers are missing required columns' };
+  }
+
+  for (var i = 1; i < rows.length; i += 1) {
+    var row = rows[i];
+    var rowBarrier = normalizeBarrierType_(row[idx.barrier_type]);
+    if (rowBarrier !== barrierType) {
+      continue;
+    }
+
+    var weekRange = String(row[idx.week_range] || '').trim();
+    if (!weekMatchesRange_(week, weekRange)) {
+      continue;
+    }
+
+    var interventionText = String(row[idx.intervention_text] || '').trim();
+    if (!interventionText) {
+      continue;
+    }
+
+    return {
+      success: true,
+      intervention: {
+        id: idx.id >= 0 ? String(row[idx.id] || '').trim() : '',
+        barrier_type: rowBarrier,
+        week_range: weekRange,
+        intervention_text: interventionText
+      }
+    };
+  }
+
+  return { success: true, intervention: null };
 }
 
 function activateStudentByRow_(sheet, row) {
@@ -421,6 +694,146 @@ function parseDiscordIdentity_(cellValue) {
   return { discord_id: '', discord_username: second || raw };
 }
 
+function normalizeDiscordId_(value) {
+  var id = String(value || '').trim();
+  if (!id.match(/^\d+$/)) {
+    return '';
+  }
+  return id;
+}
+
+function normalizeProfession_(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_');
+}
+
+function normalizeBarrierType_(value) {
+  var normalized = String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_');
+
+  if (normalized === 'identity' || normalized === 'time' || normalized === 'relevance' || normalized === 'technical') {
+    return normalized;
+  }
+  return '';
+}
+
+function parseWeekNumber_(value) {
+  if (value === null || value === undefined) return null;
+  if (typeof value === 'number' && !isNaN(value)) {
+    var asNumber = Math.floor(value);
+    return asNumber > 0 ? asNumber : null;
+  }
+
+  var text = String(value || '').trim();
+  if (!text) return null;
+  var match = text.match(/\d+/);
+  if (!match) return null;
+
+  var parsed = parseInt(match[0], 10);
+  return parsed > 0 ? parsed : null;
+}
+
+function weekMatchesRange_(weekNumber, rangeText) {
+  if (!weekNumber) return false;
+
+  var raw = String(rangeText || '').trim().toLowerCase();
+  if (!raw) return true;
+
+  var matches = raw.match(/\d+/g);
+  if (!matches || matches.length === 0) {
+    return true;
+  }
+  if (matches.length === 1) {
+    return weekNumber === parseInt(matches[0], 10);
+  }
+
+  var start = parseInt(matches[0], 10);
+  var end = parseInt(matches[1], 10);
+  if (isNaN(start) || isNaN(end)) {
+    return false;
+  }
+  if (start > end) {
+    var tmp = start;
+    start = end;
+    end = tmp;
+  }
+  return weekNumber >= start && weekNumber <= end;
+}
+
+function normalizeHeaderKey_(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '_');
+}
+
+function buildHeaderIndexMap_(headerRow) {
+  var indexMap = {
+    id: -1,
+    profession: -1,
+    example_text: -1,
+    week_relevant: -1,
+    habit_tag: -1,
+    barrier_type: -1,
+    week_range: -1,
+    intervention_text: -1
+  };
+  for (var i = 0; i < headerRow.length; i += 1) {
+    var key = normalizeHeaderKey_(headerRow[i]);
+    if (Object.prototype.hasOwnProperty.call(indexMap, key)) {
+      indexMap[key] = i;
+    }
+  }
+  return indexMap;
+}
+
+function inferBarrierType_(situation, goals, emotionalBaseline) {
+  var text = (
+    String(situation || '') + ' ' +
+    String(goals || '') + ' ' +
+    String(emotionalBaseline || '')
+  ).toLowerCase();
+
+  if (!text.trim()) {
+    return '';
+  }
+
+  var buckets = {
+    identity: ['not technical', 'not for me', 'behind', 'intimidated', 'not smart', 'stupid', 'nervous', 'overwhelmed'],
+    time: ['busy', 'no time', 'schedule', 'commitments', 'responsibilities', 'overloaded'],
+    relevance: ['not relevant', 'does not apply', 'my job does not need', 'different field', 'skeptical'],
+    technical: ['confusing', 'failed', 'complicated', 'don\'t know where to start', 'technical terms', 'interface']
+  };
+
+  var bestType = '';
+  var bestScore = 0;
+  for (var key in buckets) {
+    if (!Object.prototype.hasOwnProperty.call(buckets, key)) continue;
+    var terms = buckets[key];
+    var score = 0;
+    for (var i = 0; i < terms.length; i += 1) {
+      if (text.indexOf(terms[i]) >= 0) {
+        score += 1;
+      }
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      bestType = key;
+    }
+  }
+  return bestType;
+}
+
+function jsonResponse_(payload) {
+  return ContentService
+    .createTextOutput(JSON.stringify(payload || {}))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
 function getRequiredProperty_(key) {
   var value = PropertiesService.getScriptProperties().getProperty(key);
   if (!value) {
@@ -491,6 +904,20 @@ function setWebhookSecret(secret) {
   PropertiesService.getScriptProperties().setProperty(
     'WEBHOOK_SECRET',
     String(secret).trim()
+  );
+}
+
+/**
+ * Run once to set context webhook token without exposing it in code:
+ * setContextWebhookToken('<shared token used by llm_integration CONTEXT_ENGINE_WEBHOOK_TOKEN>')
+ */
+function setContextWebhookToken(token) {
+  if (!token || !String(token).trim()) {
+    throw new Error('setContextWebhookToken requires a non-empty value');
+  }
+  PropertiesService.getScriptProperties().setProperty(
+    'CONTEXT_WEBHOOK_TOKEN',
+    String(token).trim()
   );
 }
 
@@ -626,6 +1053,396 @@ function alignRuntimeRosterSchema() {
 }
 
 /**
+ * Read-only health review for the bound operations spreadsheet.
+ *
+ * Checks:
+ * - tab presence/visibility
+ * - Student Roster + context library headers
+ * - error tokens in key tabs (A1:Z200)
+ * - dropdown contract integrity on Student Roster row 2
+ * - Confirmed rows missing activation fields
+ */
+function reviewOpsSheetHealth() {
+  return withK2mErrorReporting_('reviewOpsSheetHealth', function() {
+    var spreadsheet = getTargetSpreadsheet_();
+    var sheets = spreadsheet.getSheets();
+    var actualTabs = sheets.map(function(s) { return s.getName(); });
+    var hiddenTabs = sheets
+      .filter(function(s) { return s.isSheetHidden(); })
+      .map(function(s) { return s.getName(); });
+
+    var missingTabs = OPS_HEALTH_EXPECTED_TABS.filter(function(name) {
+      return actualTabs.indexOf(name) < 0;
+    });
+    var extraTabs = actualTabs.filter(function(name) {
+      return OPS_HEALTH_EXPECTED_TABS.indexOf(name) < 0;
+    });
+
+    var headerChecks = {
+      student_roster: verifyHeadersMatch_(
+        spreadsheet.getSheetByName(SHEET_NAME),
+        RUNTIME_ROSTER_HEADERS
+      ),
+      example_library: verifyHeadersMatch_(
+        spreadsheet.getSheetByName(EXAMPLE_LIBRARY_SHEET_NAME),
+        ['id', 'profession', 'example_text', 'week_relevant', 'habit_tag']
+      ),
+      intervention_library: verifyHeadersMatch_(
+        spreadsheet.getSheetByName(INTERVENTION_LIBRARY_SHEET_NAME),
+        ['id', 'barrier_type', 'week_range', 'intervention_text']
+      )
+    };
+
+    var errorScanTabs = [
+      SHEET_NAME,
+      SUBMISSIONS_LOG_SHEET_NAME,
+      INTERVENTION_TRACKING_SHEET_NAME,
+      'Progress Dashboard',
+      'Summary',
+      EXAMPLE_LIBRARY_SHEET_NAME,
+      INTERVENTION_LIBRARY_SHEET_NAME
+    ];
+    var errorScan = {};
+    for (var i = 0; i < errorScanTabs.length; i += 1) {
+      var tabName = errorScanTabs[i];
+      var tabSheet = spreadsheet.getSheetByName(tabName);
+      errorScan[tabName] = scanSheetErrors_(tabSheet, 26, 200);
+    }
+
+    var rosterQuality = inspectRosterQuality_(spreadsheet.getSheetByName(SHEET_NAME));
+    var dropdowns = verifyRuntimeDropdowns_(spreadsheet.getSheetByName(SHEET_NAME));
+
+    return {
+      success: true,
+      action: 'ops_sheet_health_review',
+      spreadsheet_id: spreadsheet.getId(),
+      spreadsheet_name: spreadsheet.getName(),
+      structure: {
+        expected_tabs: OPS_HEALTH_EXPECTED_TABS,
+        actual_tabs: actualTabs,
+        missing_tabs: missingTabs,
+        extra_tabs: extraTabs,
+        hidden_tabs: hiddenTabs
+      },
+      headers: headerChecks,
+      errors: errorScan,
+      roster_quality: rosterQuality,
+      dropdowns: dropdowns
+    };
+  });
+}
+
+/**
+ * One-click safe repair for the known live-sheet issues.
+ *
+ * Applies:
+ * - canonical Student Roster headers/dropdowns
+ * - context library tab presence
+ * - emotional baseline normalization for known legacy values
+ * - dashboard error hardening for average formulas
+ * - intervention retention-date formula hardening
+ * - summary crisis-phone text correction
+ *
+ * Returns post-repair health review.
+ */
+function repairOpsSheetHealth() {
+  return withK2mErrorReporting_('repairOpsSheetHealth', function() {
+    var headerResult = repairStudentRosterHeaders();
+    var libraryResult = ensureContextLibraryTabs();
+    var emotionalResult = normalizeRosterEmotionalBaselineValues();
+    var dashboardResult = repairProgressDashboardRuntimeFormulas();
+    var retentionResult = repairInterventionRetentionDateFormulas();
+    var summaryPhonesResult = repairSummaryCrisisPhones();
+    var postCheck = reviewOpsSheetHealth();
+
+    return {
+      success: true,
+      action: 'ops_sheet_health_repaired',
+      applied: {
+        roster_headers: headerResult,
+        context_libraries: libraryResult,
+        emotional_normalization: emotionalResult,
+        dashboard_runtime_formulas: dashboardResult,
+        retention_formulas: retentionResult,
+        summary_phones: summaryPhonesResult
+      },
+      post_check: postCheck
+    };
+  });
+}
+
+/**
+ * Normalizes known legacy emotional baseline values to runtime options.
+ * Current mapping:
+ * - hopeful -> curious
+ */
+function normalizeRosterEmotionalBaselineValues() {
+  return withK2mErrorReporting_('normalizeRosterEmotionalBaselineValues', function() {
+    var spreadsheet = getTargetSpreadsheet_();
+    var sheet = spreadsheet.getSheetByName(SHEET_NAME);
+    if (!sheet) throw new Error('Missing sheet: ' + SHEET_NAME);
+
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) {
+      return {
+        success: true,
+        action: 'normalize_emotional_baseline',
+        updated_rows: 0,
+        updates: []
+      };
+    }
+
+    var values = sheet.getRange(2, COL_EMOTIONAL, lastRow - 1, 1).getValues();
+    var mapping = {
+      hopeful: 'curious'
+    };
+    var updates = [];
+    for (var i = 0; i < values.length; i += 1) {
+      var raw = String(values[i][0] || '').trim();
+      var normalized = raw.toLowerCase();
+      if (!raw) continue;
+      if (!Object.prototype.hasOwnProperty.call(mapping, normalized)) continue;
+
+      var target = mapping[normalized];
+      if (raw === target) continue;
+      values[i][0] = target;
+      updates.push({
+        row: i + 2,
+        from: raw,
+        to: target
+      });
+    }
+
+    if (updates.length > 0) {
+      sheet.getRange(2, COL_EMOTIONAL, values.length, 1).setValues(values);
+    }
+
+    return {
+      success: true,
+      action: 'normalize_emotional_baseline',
+      updated_rows: updates.length,
+      updates: updates
+    };
+  });
+}
+
+/**
+ * Rewrites legacy Progress Dashboard formulas to current runtime schema.
+ *
+ * Notes:
+ * - Uses Student Roster runtime columns (A:V).
+ * - Replaces legacy references to deprecated columns (AE:AJ).
+ * - Uses Submissions/Interventions tabs for engagement and anxiety trends.
+ */
+function repairProgressDashboardRuntimeFormulas() {
+  return withK2mErrorReporting_('repairProgressDashboardRuntimeFormulas', function() {
+    var spreadsheet = getTargetSpreadsheet_();
+    var sheet = spreadsheet.getSheetByName('Progress Dashboard');
+    if (!sheet) {
+      return {
+        success: false,
+        action: 'repair_progress_dashboard_runtime_formulas',
+        error: 'Missing sheet: Progress Dashboard'
+      };
+    }
+
+    // Optional label updates to match the repaired metric semantics.
+    var labelUpdates = [
+      { cell: 'A31', value: 'Anxiety Band: High (8-10)' },
+      { cell: 'A32', value: 'Anxiety Band: Moderate (6-7)' },
+      { cell: 'A33', value: 'Anxiety Band: Mild (4-5)' },
+      { cell: 'A34', value: 'Anxiety Band: Low (1-3)' },
+      { cell: 'A42', value: 'Any Habit Baseline Set (not \"None yet\")' },
+      { cell: 'A53', value: 'Students with Artifact Submission' },
+      { cell: 'A54', value: 'Artifact Submission Entries' },
+      { cell: 'A55', value: 'Students Without Artifact Submission' },
+      { cell: 'A56', value: 'Artifact Participation Rate' },
+      { cell: 'A57', value: 'Parents with Email on File' }
+    ];
+    for (var i = 0; i < labelUpdates.length; i += 1) {
+      sheet.getRange(labelUpdates[i].cell).setValue(labelUpdates[i].value);
+    }
+
+    var formulaUpdates = [
+      { cell: 'B6', formula: '=COUNTIF(\'Student Roster\'!L:L,"Confirmed")' },
+      { cell: 'B7', formula: '=COUNTIF(\'Student Roster\'!L:L,"Pending")' },
+      { cell: 'B8', formula: '=COUNTIF(\'Student Roster\'!L:L,"Unverifiable")' },
+
+      { cell: 'B12', formula: '=COUNTIF(\'Student Roster\'!F:F,"Zone 0")' },
+      { cell: 'B13', formula: '=COUNTIF(\'Student Roster\'!F:F,"Zone 1")' },
+      { cell: 'B14', formula: '=COUNTIF(\'Student Roster\'!F:F,"Zone 2")' },
+      { cell: 'B15', formula: '=COUNTIF(\'Student Roster\'!F:F,"Zone 3")' },
+      { cell: 'B16', formula: '=COUNTIF(\'Student Roster\'!F:F,"Zone 4")' },
+
+      { cell: 'B17', formula: '=COUNTIF(\'Student Roster\'!S:S,"Zone 0")' },
+      { cell: 'B18', formula: '=COUNTIF(\'Student Roster\'!S:S,"Zone 1")' },
+      { cell: 'B19', formula: '=COUNTIF(\'Student Roster\'!S:S,"Zone 2")' },
+      { cell: 'B20', formula: '=COUNTIF(\'Student Roster\'!S:S,"Zone 3")' },
+      { cell: 'B21', formula: '=COUNTIF(\'Student Roster\'!S:S,"Zone 4")' },
+      {
+        cell: 'B22',
+        formula: '=IFERROR((COUNTIFS(\'Student Roster\'!F:F,"Zone 0",\'Student Roster\'!S:S,"Zone 1")+COUNTIFS(\'Student Roster\'!F:F,"Zone 1",\'Student Roster\'!S:S,"Zone 2")+COUNTIFS(\'Student Roster\'!F:F,"Zone 2",\'Student Roster\'!S:S,"Zone 3")+COUNTIFS(\'Student Roster\'!F:F,"Zone 3",\'Student Roster\'!S:S,"Zone 4"))/MAX(COUNTIF(\'Student Roster\'!S:S,"Zone *"),1),0)'
+      },
+
+      { cell: 'B26', formula: '=IFERROR(AVERAGEIF(\'Student Roster\'!T2:T,">=0"),0)' },
+      { cell: 'B27', formula: '=IFERROR(AVERAGEIF(\'Intervention Tracking\'!S3:S,">=0"),0)' },
+      { cell: 'B28', formula: '=IFERROR(COUNTIF(\'Intervention Tracking\'!L3:L,"Improved")/MAX(COUNTA(\'Intervention Tracking\'!L3:L),1),0)' },
+      { cell: 'B29', formula: '=IFERROR(COUNTIF(\'Intervention Tracking\'!L3:L,"Escalated")/MAX(COUNTA(\'Intervention Tracking\'!L3:L),1),0)' },
+      { cell: 'B30', formula: '=COUNTIF(\'Student Roster\'!T2:T,">=7")' },
+      { cell: 'B31', formula: '=COUNTIF(\'Student Roster\'!T2:T,">=8")' },
+      { cell: 'B32', formula: '=COUNTIFS(\'Student Roster\'!T2:T,">=6",\'Student Roster\'!T2:T,"<=7")' },
+      { cell: 'B33', formula: '=COUNTIFS(\'Student Roster\'!T2:T,">=4",\'Student Roster\'!T2:T,"<=5")' },
+      { cell: 'B34', formula: '=COUNTIFS(\'Student Roster\'!T2:T,">=1",\'Student Roster\'!T2:T,"<=3")' },
+
+      { cell: 'B38', formula: '=IFERROR(COUNTIF(\'Student Roster\'!U:U,"Pause")/MAX(COUNTA(\'Student Roster\'!B:B)-1,1),0)' },
+      { cell: 'B39', formula: '=IFERROR(COUNTIF(\'Student Roster\'!U:U,"Context")/MAX(COUNTA(\'Student Roster\'!B:B)-1,1),0)' },
+      { cell: 'B40', formula: '=IFERROR(COUNTIF(\'Student Roster\'!U:U,"Iterate")/MAX(COUNTA(\'Student Roster\'!B:B)-1,1),0)' },
+      { cell: 'B41', formula: '=IFERROR(COUNTIF(\'Student Roster\'!U:U,"Think First")/MAX(COUNTA(\'Student Roster\'!B:B)-1,1),0)' },
+      { cell: 'B42', formula: '=IFERROR(COUNTIFS(\'Student Roster\'!U:U,"<>",\'Student Roster\'!U:U,"<>None yet")/MAX(COUNTA(\'Student Roster\'!B:B)-1,1),0)' },
+
+      { cell: 'B46', formula: '=IFERROR(COUNTUNIQUE(FILTER(\'Submissions Log\'!E3:E,LEN(\'Submissions Log\'!E3:E)>0))/MAX(COUNTA(\'Student Roster\'!B:B)-1,1),0)' },
+      { cell: 'B47', formula: '=IFERROR(COUNTA(FILTER(\'Submissions Log\'!A3:A,LEN(\'Submissions Log\'!A3:A)>0))/MAX(COUNTUNIQUE(FILTER(\'Submissions Log\'!E3:E,LEN(\'Submissions Log\'!E3:E)>0)),1),0)' },
+      { cell: 'B48', formula: '=IFERROR(COUNTIF(\'Submissions Log\'!J3:J,"/frame")/MAX(COUNTA(\'Student Roster\'!B:B)-1,1),0)' },
+      { cell: 'B49', formula: '=IFERROR(COUNTUNIQUE(FILTER(\'Submissions Log\'!E3:E,\'Submissions Log\'!H3:H="Artifact Submission"))/MAX(COUNTA(\'Student Roster\'!B:B)-1,1),0)' },
+
+      { cell: 'B53', formula: '=COUNTUNIQUE(FILTER(\'Submissions Log\'!E3:E,\'Submissions Log\'!H3:H="Artifact Submission"))' },
+      { cell: 'B54', formula: '=COUNTIF(\'Submissions Log\'!H3:H,"Artifact Submission")' },
+      { cell: 'B55', formula: '=MAX((COUNTA(\'Student Roster\'!B:B)-1)-B53,0)' },
+      { cell: 'B56', formula: '=IFERROR(B53/MAX(COUNTA(\'Student Roster\'!B:B)-1,1),0)' },
+      { cell: 'B57', formula: '=COUNTIF(\'Student Roster\'!J:J,"*@*")' }
+    ];
+    for (var j = 0; j < formulaUpdates.length; j += 1) {
+      sheet.getRange(formulaUpdates[j].cell).setFormula(formulaUpdates[j].formula);
+    }
+
+    return {
+      success: true,
+      action: 'repair_progress_dashboard_runtime_formulas',
+      updated_formulas: formulaUpdates.length,
+      updated_labels: labelUpdates.length,
+      formula_cells: formulaUpdates.map(function(item) { return item.cell; }),
+      label_cells: labelUpdates.map(function(item) { return item.cell; })
+    };
+  });
+}
+
+/**
+ * Backward-compatible wrapper retained for existing runbooks.
+ */
+function hardenProgressDashboardAverages() {
+  return repairProgressDashboardRuntimeFormulas();
+}
+
+/**
+ * Fixes legacy retention-date formulas in Intervention Tracking column W.
+ *
+ * - Converts W2 from broken formula to descriptor text if needed.
+ * - Rewrites legacy per-row formulas `=B{row}+180` to guarded form:
+ *   `=IF(B{row}=\"\",\"\",B{row}+180)`.
+ */
+function repairInterventionRetentionDateFormulas() {
+  return withK2mErrorReporting_('repairInterventionRetentionDateFormulas', function() {
+    var spreadsheet = getTargetSpreadsheet_();
+    var sheet = spreadsheet.getSheetByName(INTERVENTION_TRACKING_SHEET_NAME);
+    if (!sheet) {
+      return {
+        success: false,
+        action: 'repair_intervention_retention_formulas',
+        error: 'Missing sheet: ' + INTERVENTION_TRACKING_SHEET_NAME
+      };
+    }
+
+    var descriptorCell = sheet.getRange('W2');
+    var descriptorFormula = String(descriptorCell.getFormula() || '').trim();
+    var descriptorUpdated = false;
+    if (descriptorFormula === '=B2+180') {
+      descriptorCell.setValue('Auto: timestamp + 180 days');
+      descriptorUpdated = true;
+    }
+
+    var lastRow = Math.max(3, sheet.getMaxRows());
+    var formulaRange = sheet.getRange(3, 23, lastRow - 2, 1);
+    var formulas = formulaRange.getFormulas();
+    var rewrites = 0;
+
+    for (var i = 0; i < formulas.length; i += 1) {
+      var row = i + 3;
+      var existing = String(formulas[i][0] || '').trim();
+      var legacy = '=B' + row + '+180';
+      if (existing !== legacy) continue;
+      formulas[i][0] = '=IF(B' + row + '="","",B' + row + '+180)';
+      rewrites += 1;
+    }
+
+    if (rewrites > 0) {
+      formulaRange.setFormulas(formulas);
+    }
+
+    return {
+      success: true,
+      action: 'repair_intervention_retention_formulas',
+      descriptor_updated: descriptorUpdated,
+      rewritten_formulas: rewrites
+    };
+  });
+}
+
+/**
+ * Converts Summary crisis phone cells from accidental formulas to plain text.
+ * Looks for the "KENYA CRISIS RESOURCES" block and fixes the next 3 rows in column B.
+ */
+function repairSummaryCrisisPhones() {
+  return withK2mErrorReporting_('repairSummaryCrisisPhones', function() {
+    var spreadsheet = getTargetSpreadsheet_();
+    var sheet = spreadsheet.getSheetByName('Summary');
+    if (!sheet) {
+      return {
+        success: false,
+        action: 'repair_summary_crisis_phones',
+        error: 'Missing sheet: Summary'
+      };
+    }
+
+    var headingRow = findRowByExactText_(sheet, 1, 'KENYA CRISIS RESOURCES (Level 4 response protocol)');
+    if (!headingRow) {
+      return {
+        success: false,
+        action: 'repair_summary_crisis_phones',
+        error: 'Crisis resources heading not found'
+      };
+    }
+
+    var fixed = [];
+    for (var i = 1; i <= 3; i += 1) {
+      var row = headingRow + i;
+      var cell = sheet.getRange(row, 2);
+      var formula = String(cell.getFormula() || '').trim();
+      var display = String(cell.getDisplayValue() || '').trim();
+      var candidate = '';
+
+      if (formula && formula.charAt(0) === '+') {
+        candidate = formula;
+      } else if (display.indexOf("'+") === 0) {
+        candidate = display.substring(1);
+      }
+
+      if (!candidate) continue;
+      // Force plain-text storage so leading + is not reinterpreted as formula.
+      cell.setNumberFormat('@');
+      cell.setValue(candidate);
+      fixed.push('B' + row);
+    }
+
+    return {
+      success: true,
+      action: 'repair_summary_crisis_phones',
+      heading_row: headingRow,
+      fixed_cells: fixed
+    };
+  });
+}
+
+/**
  * Verify runtime alignment without changing data.
  * Checks:
  * - Student Roster headers A:V
@@ -668,6 +1485,131 @@ function verifyRuntimeRosterAlignment() {
       }
     };
   });
+}
+
+function verifyHeadersMatch_(sheet, expectedHeaders) {
+  if (!sheet) {
+    return {
+      status: 'missing_sheet',
+      expected: expectedHeaders,
+      actual: []
+    };
+  }
+  var expectedLen = expectedHeaders.length;
+  var actual = sheet.getRange(1, 1, 1, expectedLen).getValues()[0].map(function(v) {
+    return String(v || '').trim();
+  });
+  return {
+    status: arraysEqual_(actual, expectedHeaders) ? 'ok' : 'mismatch',
+    expected: expectedHeaders,
+    actual: actual
+  };
+}
+
+function scanSheetErrors_(sheet, maxCols, maxRows) {
+  if (!sheet) {
+    return { status: 'missing_sheet', count: 0, sample: [] };
+  }
+  var cols = Math.max(1, Math.min(maxCols, sheet.getMaxColumns()));
+  var rows = Math.max(1, Math.min(maxRows, sheet.getMaxRows()));
+  var values = sheet.getRange(1, 1, rows, cols).getDisplayValues();
+  var hits = [];
+  for (var r = 0; r < values.length; r += 1) {
+    var row = values[r];
+    for (var c = 0; c < row.length; c += 1) {
+      var txt = String(row[c] || '').trim();
+      if (SHEET_ERROR_TOKENS.indexOf(txt) >= 0) {
+        hits.push({
+          cell: columnToLetter_(c + 1) + (r + 1),
+          error: txt
+        });
+      }
+    }
+  }
+  return {
+    status: 'ok',
+    count: hits.length,
+    sample: hits.slice(0, 15)
+  };
+}
+
+function inspectRosterQuality_(sheet) {
+  if (!sheet) {
+    return { status: 'missing_sheet' };
+  }
+
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) {
+    return {
+      status: 'ok',
+      data_rows: 0,
+      confirmed_rows_missing_required: [],
+      invalid_emotional_values: []
+    };
+  }
+
+  var values = sheet.getRange(2, 1, lastRow - 1, RUNTIME_ROSTER_HEADERS.length).getValues();
+  var emotionalAllowed = ['excited', 'nervous', 'curious', 'skeptical', 'overwhelmed'];
+  var invalidEmotional = [];
+  var confirmedMissing = [];
+
+  for (var i = 0; i < values.length; i += 1) {
+    var row = values[i];
+    var rowNum = i + 2;
+
+    var emotional = String(row[COL_EMOTIONAL - 1] || '').trim();
+    if (emotional && emotionalAllowed.indexOf(emotional) < 0) {
+      invalidEmotional.push({
+        row: rowNum,
+        value: emotional
+      });
+    }
+
+    var payment = String(row[COL_PAYMENT - 1] || '').trim();
+    if (payment === 'Confirmed') {
+      var missing = [];
+      if (!String(row[COL_DISCORD_ID - 1] || '').trim()) missing.push('discord_id');
+      if (!String(row[COL_ACTIVATED_AT - 1] || '').trim()) missing.push('activated_at');
+      if (missing.length > 0) {
+        confirmedMissing.push({
+          row: rowNum,
+          missing: missing
+        });
+      }
+    }
+  }
+
+  return {
+    status: 'ok',
+    data_rows: values.length,
+    confirmed_rows_missing_required: confirmedMissing,
+    invalid_emotional_values: invalidEmotional
+  };
+}
+
+function findRowByExactText_(sheet, columnNumber, expectedValue) {
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 1) return 0;
+  var values = sheet.getRange(1, columnNumber, lastRow, 1).getDisplayValues();
+  var expected = String(expectedValue || '').trim();
+  for (var i = 0; i < values.length; i += 1) {
+    var got = String(values[i][0] || '').trim();
+    if (got === expected) {
+      return i + 1;
+    }
+  }
+  return 0;
+}
+
+function columnToLetter_(column) {
+  var temp = '';
+  var letter = '';
+  while (column > 0) {
+    temp = (column - 1) % 26;
+    letter = String.fromCharCode(temp + 65) + letter;
+    column = (column - temp - 1) / 26;
+  }
+  return letter;
 }
 
 /**
@@ -879,7 +1821,8 @@ function verifyRuntimeScriptProperties_() {
     'DASHBOARD_WEBHOOK_URL',
     'COHORT_ID',
     'COHORT_START_DATE',
-    'APPS_SCRIPT_ALERT_EMAIL'
+    'APPS_SCRIPT_ALERT_EMAIL',
+    'CONTEXT_WEBHOOK_TOKEN'
   ];
 
   var missingRequired = [];
@@ -936,6 +1879,141 @@ function clearSheetRowsFrom_(spreadsheet, sheetName, startRow) {
     cleared_rows: rowsToClear,
     start_row: startRow
   };
+}
+
+/**
+ * Task 6.2 non-destructive setup helper.
+ *
+ * Creates missing context library tabs with required headers:
+ * - Example_Library: id, profession, example_text, week_relevant, habit_tag
+ * - Intervention_Library: id, barrier_type, week_range, intervention_text
+ *
+ * Safety:
+ * - Never edits existing formulas/data rows.
+ * - Only writes headers when tab is newly created, or when existing tab has no data rows.
+ * - If an existing tab has data + header mismatch, reports manual review required.
+ */
+function ensureContextLibraryTabs() {
+  return withK2mErrorReporting_('ensureContextLibraryTabs', function() {
+    var spreadsheet = getTargetSpreadsheet_();
+    var results = [];
+
+    results.push(ensureContextLibrarySheet_(
+      spreadsheet,
+      EXAMPLE_LIBRARY_SHEET_NAME,
+      ['id', 'profession', 'example_text', 'week_relevant', 'habit_tag'],
+      EXAMPLE_LIBRARY_SHEET_ALIASES
+    ));
+    results.push(ensureContextLibrarySheet_(
+      spreadsheet,
+      INTERVENTION_LIBRARY_SHEET_NAME,
+      ['id', 'barrier_type', 'week_range', 'intervention_text'],
+      INTERVENTION_LIBRARY_SHEET_ALIASES
+    ));
+
+    return {
+      success: true,
+      spreadsheet_id: spreadsheet.getId(),
+      action: 'ensure_context_library_tabs',
+      results: results
+    };
+  });
+}
+
+function ensureContextLibrarySheet_(spreadsheet, sheetName, expectedHeaders, legacyAliases) {
+  var sheet = spreadsheet.getSheetByName(sheetName);
+  var created = false;
+  var renamedFrom = '';
+
+  if (!sheet) {
+    sheet = findSheetByAliases_(spreadsheet, legacyAliases || []);
+    if (sheet) {
+      renamedFrom = sheet.getName();
+      sheet.setName(sheetName);
+    }
+  }
+
+  if (!sheet) {
+    sheet = spreadsheet.insertSheet(sheetName);
+    created = true;
+  }
+
+  var maxCols = sheet.getMaxColumns();
+  if (maxCols < expectedHeaders.length) {
+    sheet.insertColumnsAfter(maxCols, expectedHeaders.length - maxCols);
+  }
+
+  var currentHeaders = sheet.getRange(1, 1, 1, expectedHeaders.length).getValues()[0]
+    .map(function(v) { return String(v || '').trim(); });
+  var expected = expectedHeaders.map(function(v) { return String(v || '').trim(); });
+  var headersMatch = arraysEqual_(currentHeaders, expected);
+
+  if (created) {
+    sheet.getRange(1, 1, 1, expectedHeaders.length).setValues([expectedHeaders]);
+    sheet.setFrozenRows(1);
+    sheet.autoResizeColumns(1, expectedHeaders.length);
+    return {
+      sheet: sheetName,
+      status: 'created',
+      headers_written: true
+    };
+  }
+
+  if (headersMatch) {
+    return {
+      sheet: sheetName,
+      status: renamedFrom ? 'renamed_legacy_ok' : 'ok',
+      headers_written: false,
+      renamed_from: renamedFrom || null
+    };
+  }
+
+  var lastRow = sheet.getLastRow();
+  var hasDataRows = lastRow > 1;
+  if (!hasDataRows) {
+    sheet.getRange(1, 1, 1, expectedHeaders.length).setValues([expectedHeaders]);
+    sheet.setFrozenRows(1);
+    sheet.autoResizeColumns(1, expectedHeaders.length);
+    return {
+      sheet: sheetName,
+      status: 'headers_repaired_empty_sheet',
+      headers_written: true,
+      renamed_from: renamedFrom || null
+    };
+  }
+
+  return {
+    sheet: sheetName,
+    status: 'manual_review_required',
+    headers_written: false,
+    renamed_from: renamedFrom || null,
+    expected_headers: expected,
+    current_headers: currentHeaders
+  };
+}
+
+function findSheetByAliases_(spreadsheet, aliases) {
+  if (!aliases || !aliases.length) return null;
+
+  var lookup = {};
+  for (var i = 0; i < aliases.length; i += 1) {
+    var key = normalizeSheetName_(aliases[i]);
+    if (key) lookup[key] = true;
+  }
+
+  var sheets = spreadsheet.getSheets();
+  for (var j = 0; j < sheets.length; j += 1) {
+    var name = sheets[j].getName();
+    if (lookup[normalizeSheetName_(name)]) {
+      return sheets[j];
+    }
+  }
+
+  return null;
+}
+
+function normalizeSheetName_(value) {
+  return String(value || '').trim().toLowerCase().replace(/[\s_\-]+/g, '');
 }
 
 /**

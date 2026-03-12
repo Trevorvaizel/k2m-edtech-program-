@@ -1,0 +1,69 @@
+Task 6.2 Apps Script deployment evidence
+Date: 2026-03-12
+
+Command: npx.cmd --yes @google/clasp status
+Output:
+Tracked files:
++- appsscript.json
++- Code.gs
+Untracked files:
++- .clasp.json
++- README.md
+
+Command: npx.cmd --yes @google/clasp push -f
+Output:
+Pushed 2 files.
++- appsscript.json
++- Code.gs
+
+Command: npx.cmd --yes @google/clasp version "Task 6.2 context webhooks"
+Output:
+Created version 7
+
+Command: npx.cmd --yes @google/clasp deploy -d "Task 6.2 context webhooks"
+Output:
+Deployed AKfycbyDI141yEoa4zAOx1zNdjc3cCW87HRJmDENnGbYFcFvbT7dC3jYBWUH2qtxFenVY5Va4w @8
+
+Command: npx.cmd --yes @google/clasp deployments
+Output (excerpt):
+Found 4 deployments.
+- AKfycbxDSLXmhMvjM3OpmRACv2Zx7BsRI5PxJKvK8QEitwrc @HEAD
+- AKfycbyDI141yEoa4zAOx1zNdjc3cCW87HRJmDENnGbYFcFvbT7dC3jYBWUH2qtxFenVY5Va4w @8 - Task 6.2 context webhooks
+
+---
+Legacy tab reconciliation redeploy
+
+Command: npx.cmd --yes @google/clasp version "Task 6.2 legacy tab reconciliation"
+Output:
+Created version 9
+
+Command: npx.cmd --yes @google/clasp deploy -V 9 -i AKfycbyDI141yEoa4zAOx1zNdjc3cCW87HRJmDENnGbYFcFvbT7dC3jYBWUH2qtxFenVY5Va4w -d "Task 6.2 legacy tab reconciliation"
+Output:
+Deployed AKfycbyDI141yEoa4zAOx1zNdjc3cCW87HRJmDENnGbYFcFvbT7dC3jYBWUH2qtxFenVY5Va4w @9
+
+---
+Ops health self-serve functions deployment
+
+Command: npx.cmd --yes @google/clasp version "Ops health audit + self-serve repairs"
+Output:
+Created version 10
+
+Command: npx.cmd --yes @google/clasp deploy -V 10 -i AKfycbyDI141yEoa4zAOx1zNdjc3cCW87HRJmDENnGbYFcFvbT7dC3jYBWUH2qtxFenVY5Va4w -d "Ops health audit + self-serve repairs"
+Output:
+Deployed AKfycbyDI141yEoa4zAOx1zNdjc3cCW87HRJmDENnGbYFcFvbT7dC3jYBWUH2qtxFenVY5Va4w @10
+
+Command: npx.cmd --yes @google/clasp version "Ops health repair polish (summary phones text)"
+Output:
+Created version 11
+
+Command: npx.cmd --yes @google/clasp deploy -V 11 -i AKfycbyDI141yEoa4zAOx1zNdjc3cCW87HRJmDENnGbYFcFvbT7dC3jYBWUH2qtxFenVY5Va4w -d "Ops health repair polish (summary phones text)"
+Output:
+Deployed AKfycbyDI141yEoa4zAOx1zNdjc3cCW87HRJmDENnGbYFcFvbT7dC3jYBWUH2qtxFenVY5Va4w @11
+
+Command: npx.cmd --yes @google/clasp version "Progress dashboard runtime formula mapping"
+Output:
+Created version 12
+
+Command: npx.cmd --yes @google/clasp deploy -V 12 -i AKfycbyDI141yEoa4zAOx1zNdjc3cCW87HRJmDENnGbYFcFvbT7dC3jYBWUH2qtxFenVY5Va4w -d "Progress dashboard runtime formula mapping"
+Output:
+Deployed AKfycbyDI141yEoa4zAOx1zNdjc3cCW87HRJmDENnGbYFcFvbT7dC3jYBWUH2qtxFenVY5Va4w @12

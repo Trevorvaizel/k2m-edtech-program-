@@ -1,0 +1,24 @@
+Progress Dashboard runtime formula repair evidence
+Date: 2026-03-12
+Spreadsheet: 16tLQbGUF9mI2z2cHxlwmGce6Npui0C5w8e1y46uanH0
+
+Applied updates:
+- Label cells updated: 10
+- Formula cells updated: 37
+- Target tab: Progress Dashboard
+
+Validation tests executed:
+1) Formula map test
+- Checked exact formulas in 37 target cells
+- Result: mismatch_count = 0
+
+2) Runtime error-token scan (Progress Dashboard A1:Z200)
+- Error tokens scanned: #REF!, #N/A, #VALUE!, #DIV/0!, #NAME?, #NUM!, #ERROR!
+- Result: error_count = 0
+
+3) Legacy-reference regression scan
+- Checked formulas for deprecated references (Student Roster AE:AJ and stale old mappings H/I/M/N/O)
+- Result: legacy_hits = 0
+
+Outcome:
+- Dashboard formulas are now mapped to current runtime schema columns and live data sources.

@@ -8,6 +8,7 @@ Focus:
 """
 
 import inspect
+import json
 import os
 import sys
 from types import SimpleNamespace
@@ -234,6 +235,116 @@ class TestCallRouting:
             result = await call_agent_with_context("frame", None, "hello", [])
             assert result[0] == "openai-ok"
             assert mock_provider.await_count == 2
+
+    @pytest.mark.asyncio
+    async def test_context_engine_webhooks_called_before_prompt_assembly(self, monkeypatch):
+        monkeypatch.setenv("CONTEXT_ENGINE_WEBHOOK_URL", "https://example.test/context")
+        monkeypatch.setenv("CONTEXT_ENGINE_WEBHOOK_TOKEN", "ctx-secret")
+
+        context = SimpleNamespace(
+            discord_id="1234567890",
+            current_week=4,
+            zone="zone_2",
+            emotional_state="curious",
+            jtbd_primary_concern="career_direction",
+        )
+
+        with patch(
+            "cis_controller.llm_integration._ensure_system_prompt_loaded",
+            return_value="SYSTEM PROMPT",
+        ), patch(
+            "cis_controller.llm_integration.get_active_provider",
+            return_value="openai",
+        ), patch(
+            "cis_controller.llm_integration.get_active_model",
+            return_value="gpt-4o-mini",
+        ), patch(
+            "cis_controller.llm_integration._call_context_engine_webhook",
+            new_callable=AsyncMock,
+            side_effect=[
+                {
+                    "success": True,
+                    "profile": {
+                        "profession": "teacher",
+                        "situation": "I teach Form 3 chemistry.",
+                        "goals": "Build stronger critical-thinking sessions.",
+                        "barrier_type": "time",
+                    },
+                },
+                {
+                    "success": True,
+                    "examples": [
+                        {"example_text": "A class planning example."},
+                        {"example_text": "A CBC competency example."},
+                        {"example_text": "A student feedback example."},
+                    ],
+                },
+                {
+                    "success": True,
+                    "intervention": {"intervention_text": "Use one 5-minute framing sprint."},
+                },
+            ],
+        ) as mock_context_hook, patch(
+            "cis_controller.llm_integration._call_openai_compatible",
+            new_callable=AsyncMock,
+            return_value=("ok", {"total_cost_usd": 0.0}),
+        ) as mock_provider:
+            await call_agent_with_context("frame", context, "I need help", [])
+
+        actions = [call.args[0] for call in mock_context_hook.await_args_list]
+        assert actions == [
+            "getStudentContext",
+            "getExamplesByProfession",
+            "getIntervention",
+        ]
+
+        provider_messages = mock_provider.await_args.kwargs["messages"]
+        final_user_message = provider_messages[-1]["content"]
+        assert "profession: teacher" in final_user_message
+        assert "relevant_example: A class planning example." in final_user_message
+        assert "extra_examples: A CBC competency example." in final_user_message
+
+    @pytest.mark.asyncio
+    async def test_context_webhook_payload_includes_token(self, monkeypatch):
+        monkeypatch.setenv("CONTEXT_ENGINE_WEBHOOK_URL", "https://example.test/context")
+        monkeypatch.setenv("CONTEXT_ENGINE_WEBHOOK_TOKEN", "ctx-secret")
+        monkeypatch.setenv("CONTEXT_ENGINE_TIMEOUT_SECONDS", "3")
+
+        from cis_controller import llm_integration as li
+
+        captured = {}
+
+        class _FakeResponse:
+            def __enter__(self):
+                return self
+
+            def __exit__(self, exc_type, exc, tb):
+                return False
+
+            def read(self):
+                return b'{"success": true, "profile": {"profession": "teacher"}}'
+
+        def _fake_urlopen(request, timeout=0):
+            captured["url"] = request.full_url
+            captured["timeout"] = timeout
+            captured["payload"] = json.loads(request.data.decode("utf-8"))
+            return _FakeResponse()
+
+        with patch(
+            "cis_controller.llm_integration.urllib.request.urlopen",
+            side_effect=_fake_urlopen,
+        ):
+            result = await li._call_context_engine_webhook(
+                "getStudentContext",
+                {"discord_id": "1234567890"},
+            )
+
+        assert result["success"] is True
+        assert captured["url"] == "https://example.test/context"
+        assert captured["timeout"] == 3
+        assert captured["payload"]["action"] == "getStudentContext"
+        assert captured["payload"]["discord_id"] == "1234567890"
+        assert captured["payload"]["token"] == "ctx-secret"
 
 
 class TestRuntimeFailureAlerts:
