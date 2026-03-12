@@ -22,6 +22,7 @@ from discord.ext import commands
 
 import pytz
 
+from cis_controller.llm_integration import get_context_engine_intervention
 from database.store import StudentStateStore
 
 logger = logging.getLogger(__name__)
@@ -34,6 +35,23 @@ LEVEL_1_YELLOW = 1  # Bot handles (automated nudge)
 LEVEL_2_ORANGE = 2  # Trevor monitors (dashboard notification)
 LEVEL_3_RED = 3     # Trevor intervenes (direct DM)
 LEVEL_4_CRISIS = 4  # Emergency intervention (instant Trevor DM + resources)
+
+LOW_ENGAGEMENT_THRESHOLD = 2
+LOW_ENGAGEMENT_LOOKBACK_DAYS = 2
+DEFAULT_INTERVENTION_BY_BARRIER = {
+    "identity": (
+        "You belong in this room. Start with one real question from your day and run /frame."
+    ),
+    "time": (
+        "Use a 10-minute sprint: one /frame pass on the decision already in front of you."
+    ),
+    "relevance": (
+        "Pick one live work/school problem and test it with /diverge before deciding anything."
+    ),
+    "technical": (
+        "Keep it simple: describe your situation in plain words and let KIRA handle the structure."
+    ),
+}
 
 
 class EscalationSystem:
@@ -198,12 +216,34 @@ class EscalationSystem:
             # Level 1: 1 day no post (bot nudge) - handled by ParticipationTracker
             # This is already done in participation_tracker.py:check_inactive_students()
 
-            # Level 2: 3+ days no post (Trevor dashboard alert)
+            low_engagement_signal, latest_engagement_score = self._detect_low_engagement_signal(
+                discord_id=discord_id
+            )
+            level_2_trigger_reason = None
             if days_since_post >= 3:
-                # Check if we already escalated this student recently
+                level_2_trigger_reason = "missed_3_days"
+            elif low_engagement_signal:
+                level_2_trigger_reason = "low_engagement_signal"
+
+            # Task 6.4: Personalized barrier-type intervention before Trevor alert.
+            if level_2_trigger_reason:
                 if not await self._was_recently_escalated(discord_id, LEVEL_2_ORANGE, days=7):
+                    await self._send_barrier_intervention_dm(
+                        discord_id=discord_id,
+                        username=username,
+                        current_week=current_week,
+                        trigger_reason=level_2_trigger_reason,
+                        days_since_post=days_since_post,
+                        engagement_score=latest_engagement_score,
+                    )
                     await self._escalate_level_2(
-                        discord_id, username, days_since_post, zone, emotional_state
+                        discord_id,
+                        username,
+                        days_since_post,
+                        zone,
+                        emotional_state,
+                        trigger_reason=level_2_trigger_reason,
+                        engagement_score=latest_engagement_score,
                     )
                     escalation_triggered = True
 
@@ -221,6 +261,122 @@ class EscalationSystem:
 
         except Exception as e:
             logger.error(f"Error checking student escalation for {username}: {e}", exc_info=True)
+
+    def _detect_low_engagement_signal(self, discord_id: str) -> Tuple[bool, Optional[int]]:
+        """
+        Task 6.4 trigger: recent low-quality participation should route intervention.
+
+        Low engagement signal:
+        - latest posting record within LOW_ENGAGEMENT_LOOKBACK_DAYS
+        - engagement_score <= LOW_ENGAGEMENT_THRESHOLD
+        """
+        try:
+            cursor = self.store.conn.cursor()
+            cursor.execute(
+                """
+                SELECT date, engagement_score
+                FROM daily_participation
+                WHERE discord_id = ? AND has_posted = 1
+                ORDER BY date DESC
+                LIMIT 1
+                """,
+                (discord_id,),
+            )
+            row = cursor.fetchone()
+            if not row:
+                return False, None
+
+            if isinstance(row, dict):
+                date_raw = row.get("date")
+                engagement_score_raw = row.get("engagement_score")
+            else:
+                date_raw = row[0]
+                engagement_score_raw = row[1]
+            if not date_raw:
+                return False, None
+
+            last_post = EAT.localize(datetime.strptime(str(date_raw), "%Y-%m-%d"))
+            days_since = max((datetime.now(EAT) - last_post).days, 0)
+            if days_since > LOW_ENGAGEMENT_LOOKBACK_DAYS:
+                return False, None
+
+            engagement_score = int(engagement_score_raw or 0)
+            return engagement_score <= LOW_ENGAGEMENT_THRESHOLD, engagement_score
+        except Exception as exc:
+            logger.error("Error detecting low engagement signal for %s: %s", discord_id, exc)
+            return False, None
+
+    async def _send_barrier_intervention_dm(
+        self,
+        discord_id: str,
+        username: str,
+        current_week: int,
+        trigger_reason: str,
+        days_since_post: int,
+        engagement_score: Optional[int],
+    ) -> None:
+        """
+        Send personalized barrier-type intervention DM (task 6.4).
+        """
+        if not str(discord_id).isdigit():
+            logger.info("Skipping barrier intervention DM for unlinked user id: %s", discord_id)
+            return
+
+        intervention_payload = await get_context_engine_intervention(
+            discord_id=discord_id,
+            current_week=current_week,
+        )
+        profile = intervention_payload.get("profile") or {}
+        first_name = str(profile.get("first_name") or "").strip()
+        profession = str(intervention_payload.get("profession") or "student").strip()
+        barrier_type = str(intervention_payload.get("barrier_type") or "general").strip().lower()
+        intervention_text = str(intervention_payload.get("intervention_text") or "").strip()
+        if not intervention_text:
+            intervention_text = DEFAULT_INTERVENTION_BY_BARRIER.get(
+                barrier_type,
+                "Take one small next step today: run /frame on the question already on your desk.",
+            )
+
+        reason_line = (
+            f"I noticed a low-engagement signal (score {engagement_score}/6)."
+            if trigger_reason == "low_engagement_signal"
+            else f"I noticed you've been quiet for {days_since_post} days."
+        )
+
+        try:
+            student_user = await self.bot.fetch_user(int(discord_id))
+            salutation = first_name or username
+            dm_text = (
+                f"Hey {salutation}, quick check-in from KIRA.\n\n"
+                f"{reason_line}\n"
+                f"For your **{profession}** context, I'm using the **{barrier_type}** support track this week.\n\n"
+                f"{intervention_text}\n\n"
+                "Reply here if you want me to break this into one tiny first step."
+            )
+            await student_user.send(dm_text)
+        except Exception as exc:
+            logger.error("Failed to send barrier intervention DM to %s: %s", discord_id, exc)
+            return
+
+        try:
+            self.store.log_observability_event(
+                discord_id=discord_id,
+                event_type="barrier_intervention_sent",
+                metadata={
+                    "barrier_type": barrier_type or "unknown",
+                    "profession": profession,
+                    "week": current_week,
+                    "trigger_reason": trigger_reason,
+                    "engagement_score": engagement_score,
+                    "days_since_post": days_since_post,
+                },
+            )
+        except Exception as exc:
+            logger.error(
+                "Failed logging barrier intervention observability event for %s: %s",
+                discord_id,
+                exc,
+            )
 
     async def _was_recently_escalated(self, discord_id: str, level: int, days: int = 7) -> bool:
         """
@@ -262,7 +418,9 @@ class EscalationSystem:
         username: str,
         days_since_post: int,
         zone: str,
-        emotional_state: str
+        emotional_state: str,
+        trigger_reason: str = "missed_3_days",
+        engagement_score: Optional[int] = None,
     ):
         """
         Level 2 (Orange Flag): Post alert to #facilitator-dashboard.
@@ -275,6 +433,8 @@ class EscalationSystem:
             days_since_post: Days since last post
             zone: Student's current zone
             emotional_state: Student's current emotional state
+            trigger_reason: Trigger source (inactivity or low engagement)
+            engagement_score: Latest engagement score when available
         """
         try:
             # Get facilitator dashboard channel
@@ -289,7 +449,9 @@ class EscalationSystem:
                 f"**Student:** {username} (ID: {discord_id})\n"
                 f"**Days since last post:** {days_since_post}\n"
                 f"**Zone:** {zone}\n"
-                f"**Emotional state:** {emotional_state}\n\n"
+                f"**Emotional state:** {emotional_state}\n"
+                f"**Trigger reason:** {trigger_reason}\n"
+                f"**Latest engagement score:** {engagement_score if engagement_score is not None else 'n/a'}\n\n"
                 f"**Action needed:** Trevor to review and reach out within 24 hours if needed.\n"
                 f"**Offer:** Office hours (Tues/Thurs 6 PM) or 1:1 coaching session.\n\n"
                 f"_Escalated at: {datetime.now(EAT).strftime('%Y-%m-%d %H:%M')} EAT_"
@@ -300,12 +462,12 @@ class EscalationSystem:
             # Log to database
             await self._log_escalation(
                 discord_id, LEVEL_2_ORANGE,
-                f"Student stuck {days_since_post} days (Level 2 Orange Flag)"
+                f"Student stuck {days_since_post} days (Level 2 Orange Flag, trigger={trigger_reason}, engagement_score={engagement_score})"
             )
 
             # Log to moderation-logs
             await self._log_to_moderation_channel(
-                f"**ORANGE FLAG** - {username} stuck {days_since_post} days"
+                f"**ORANGE FLAG** - {username} stuck {days_since_post} days (trigger: {trigger_reason})"
             )
 
             logger.info(f"Level 2 escalation sent for {username}")

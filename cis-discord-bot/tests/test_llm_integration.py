@@ -26,6 +26,7 @@ from cis_controller.llm_integration import (  # noqa: E402
     TEMPERATURE,
     check_provider_api_health,
     call_agent_with_context,
+    get_context_engine_intervention,
     get_active_model,
     get_active_provider,
     set_runtime_failure_notifier,
@@ -177,7 +178,7 @@ class TestCallRouting:
             mock_provider.assert_awaited_once()
 
     @pytest.mark.asyncio
-    async def test_student_context_is_injected_into_user_message(self):
+    async def test_student_context_is_injected_into_system_prompt(self):
         context = SimpleNamespace(
             current_week=2,
             zone="zone_1",
@@ -206,9 +207,9 @@ class TestCallRouting:
             kwargs = mock_provider.await_args.kwargs
             messages = kwargs["messages"]
             assert messages[-1]["role"] == "user"
-            assert "StudentContext:" in messages[-1]["content"]
-            assert "week: 2" in messages[-1]["content"]
-            assert "Student message:\nI need help" in messages[-1]["content"]
+            assert messages[-1]["content"] == "I need help"
+            assert "Task 6.3 Personalization Context" in kwargs["system_prompt"]
+            assert "current_week: 2" in kwargs["system_prompt"]
 
     @pytest.mark.asyncio
     async def test_retries_transient_errors_before_success(self):
@@ -298,11 +299,11 @@ class TestCallRouting:
             "getIntervention",
         ]
 
-        provider_messages = mock_provider.await_args.kwargs["messages"]
-        final_user_message = provider_messages[-1]["content"]
-        assert "profession: teacher" in final_user_message
-        assert "relevant_example: A class planning example." in final_user_message
-        assert "extra_examples: A CBC competency example." in final_user_message
+        provider_system_prompt = mock_provider.await_args.kwargs["system_prompt"]
+        assert "profession: teacher" in provider_system_prompt
+        assert "profession_examples_week_relevant" in provider_system_prompt
+        assert "1. A class planning example." in provider_system_prompt
+        assert "2. A CBC competency example." in provider_system_prompt
 
     @pytest.mark.asyncio
     async def test_context_webhook_payload_includes_token(self, monkeypatch):
@@ -345,6 +346,144 @@ class TestCallRouting:
         assert captured["payload"]["action"] == "getStudentContext"
         assert captured["payload"]["discord_id"] == "1234567890"
         assert captured["payload"]["token"] == "ctx-secret"
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "agent,marker",
+        [
+            ("frame", "personalized framing seed"),
+            ("diverge", "profession-specific alternatives"),
+            ("challenge", "similar"),
+            ("synthesize", "journey arc"),
+        ],
+    )
+    async def test_agent_specific_personalization_directives(self, agent, marker, monkeypatch):
+        monkeypatch.setenv("CONTEXT_ENGINE_WEBHOOK_URL", "https://example.test/context")
+        context = SimpleNamespace(
+            discord_id="1234567890",
+            current_week=6,
+            zone="zone_3",
+            emotional_state="curious",
+            jtbd_primary_concern="career_direction",
+        )
+
+        with patch(
+            "cis_controller.llm_integration._ensure_system_prompt_loaded",
+            return_value="SYSTEM PROMPT",
+        ), patch(
+            "cis_controller.llm_integration.get_active_provider",
+            return_value="openai",
+        ), patch(
+            "cis_controller.llm_integration.get_active_model",
+            return_value="gpt-4o-mini",
+        ), patch(
+            "cis_controller.llm_integration._call_context_engine_webhook",
+            new_callable=AsyncMock,
+            side_effect=[
+                {
+                    "success": True,
+                    "profile": {
+                        "profession": "teacher",
+                        "situation": "I teach Form 3 chemistry.",
+                        "goals": "Build stronger critical-thinking sessions.",
+                        "barrier_type": "time",
+                        "last_frame_topic": "classroom assessment design",
+                        "cis_journey_summary": "framed classroom issues and tested alternatives",
+                    },
+                },
+                {
+                    "success": True,
+                    "examples": [
+                        {"example_text": "A class planning example."},
+                        {"example_text": "A CBC competency example."},
+                        {"example_text": "A student feedback example."},
+                    ],
+                },
+                {
+                    "success": True,
+                    "intervention": {"intervention_text": "Use one 5-minute framing sprint."},
+                },
+            ],
+        ), patch(
+            "cis_controller.llm_integration._call_openai_compatible",
+            new_callable=AsyncMock,
+            return_value=("ok", {"total_cost_usd": 0.0}),
+        ) as mock_provider:
+            await call_agent_with_context(agent, context, "Help me think", [])
+
+        system_prompt = mock_provider.await_args.kwargs["system_prompt"].lower()
+        assert "task 6.3 personalization context" in system_prompt
+        assert marker in system_prompt
+
+    @pytest.mark.asyncio
+    async def test_prompt_falls_back_to_generic_when_personalization_missing(self):
+        context = SimpleNamespace(
+            discord_id="1234567890",
+            current_week=2,
+            zone="zone_1",
+            emotional_state="curious",
+            jtbd_primary_concern="career_direction",
+            get_relevant_example=lambda _: "",
+        )
+
+        with patch(
+            "cis_controller.llm_integration._ensure_system_prompt_loaded",
+            return_value="SYSTEM PROMPT",
+        ), patch(
+            "cis_controller.llm_integration.get_active_provider",
+            return_value="openai",
+        ), patch(
+            "cis_controller.llm_integration.get_active_model",
+            return_value="gpt-4o-mini",
+        ), patch(
+            "cis_controller.llm_integration._call_context_engine_webhook",
+            new_callable=AsyncMock,
+            side_effect=[
+                {"success": False, "error": "student_not_found"},
+            ],
+        ), patch(
+            "cis_controller.llm_integration._call_openai_compatible",
+            new_callable=AsyncMock,
+            return_value=("ok", {"total_cost_usd": 0.0}),
+        ) as mock_provider:
+            await call_agent_with_context("frame", context, "I need help", [])
+
+        assert mock_provider.await_args.kwargs["system_prompt"] == "SYSTEM PROMPT"
+
+
+class TestInterventionLookup:
+    @pytest.mark.asyncio
+    async def test_get_context_engine_intervention_returns_profile_and_copy(self, monkeypatch):
+        monkeypatch.setenv("CONTEXT_ENGINE_WEBHOOK_URL", "https://example.test/context")
+
+        with patch(
+            "cis_controller.llm_integration._call_context_engine_webhook",
+            new_callable=AsyncMock,
+            side_effect=[
+                {
+                    "success": True,
+                    "profile": {
+                        "profession": "teacher",
+                        "barrier_type": "time",
+                    },
+                },
+                {
+                    "success": True,
+                    "intervention": {
+                        "intervention_text": "Use one focused 10-minute sprint.",
+                    },
+                },
+            ],
+        ):
+            payload = await get_context_engine_intervention(
+                discord_id="1234567890",
+                current_week=4,
+            )
+
+        assert payload["success"] is True
+        assert payload["profession"] == "teacher"
+        assert payload["barrier_type"] == "time"
+        assert "10-minute" in payload["intervention_text"]
 
 
 class TestRuntimeFailureAlerts:

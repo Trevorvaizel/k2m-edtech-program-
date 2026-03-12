@@ -216,6 +216,14 @@ function doPost(e) {
     if (action === 'getIntervention') {
       return jsonResponse_(getIntervention(payload.barrier_type, payload.week));
     }
+    // Maintenance: seed canonical content into library tabs (idempotent)
+    if (action === 'seedContextLibraryContent') {
+      return jsonResponse_(seedContextLibraryContent());
+    }
+    // Maintenance: ensure library tabs exist with correct headers (idempotent)
+    if (action === 'ensureContextLibraryTabs') {
+      return jsonResponse_(ensureContextLibraryTabs());
+    }
 
     return jsonResponse_({ success: false, error: 'Unknown action: ' + action });
   });
@@ -306,6 +314,11 @@ function getExamplesByProfession(professionInput, weekInput) {
   var week = parseWeekNumber_(weekInput);
   if (!profession) {
     return { success: false, error: 'profession is required' };
+  }
+  // Per canonical doc (context-engine-experience-design.md open question 2 resolution):
+  // 'other' profession falls back to working_professional example set.
+  if (profession === 'other') {
+    profession = 'working_professional';
   }
   if (!week) {
     return { success: false, error: 'week is required' };
@@ -2014,6 +2027,252 @@ function findSheetByAliases_(spreadsheet, aliases) {
 
 function normalizeSheetName_(value) {
   return String(value || '').trim().toLowerCase().replace(/[\s_\-]+/g, '');
+}
+
+/**
+ * Seed Example_Library and Intervention_Library tabs with canonical content.
+ *
+ * Source: context-engine-experience-design.md (40 examples + 10 gap_year_student)
+ *         + 8 interventions from Intervention Library section.
+ *
+ * Safety: Idempotent - only writes if the sheet has no data rows beyond the header.
+ * Call manually from Apps Script editor or from repairOpsSheetHealth().
+ */
+function seedContextLibraryContent() {
+  return withK2mErrorReporting_('seedContextLibraryContent', function() {
+    var spreadsheet = getTargetSpreadsheet_();
+    var results = {};
+
+    // ── Example Library ──────────────────────────────────────────────────────
+    var exSheet = spreadsheet.getSheetByName(EXAMPLE_LIBRARY_SHEET_NAME);
+    if (!exSheet) {
+      results.example_library = { status: 'error', message: 'Tab not found. Run ensureContextLibraryTabs() first.' };
+    } else if (exSheet.getLastRow() > 1) {
+      results.example_library = { status: 'skipped', message: 'Data rows already present - not overwriting.' };
+    } else {
+      var examples = getCanonicalExamples_();
+      if (examples.length > 0) {
+        exSheet.getRange(2, 1, examples.length, 5).setValues(examples);
+        exSheet.autoResizeColumns(1, 5);
+      }
+      results.example_library = { status: 'seeded', rows_written: examples.length };
+    }
+
+    // ── Intervention Library ─────────────────────────────────────────────────
+    var intSheet = spreadsheet.getSheetByName(INTERVENTION_LIBRARY_SHEET_NAME);
+    if (!intSheet) {
+      results.intervention_library = { status: 'error', message: 'Tab not found. Run ensureContextLibraryTabs() first.' };
+    } else if (intSheet.getLastRow() > 1) {
+      results.intervention_library = { status: 'skipped', message: 'Data rows already present - not overwriting.' };
+    } else {
+      var interventions = getCanonicalInterventions_();
+      if (interventions.length > 0) {
+        intSheet.getRange(2, 1, interventions.length, 4).setValues(interventions);
+        intSheet.autoResizeColumns(1, 4);
+      }
+      results.intervention_library = { status: 'seeded', rows_written: interventions.length };
+    }
+
+    return { success: true, results: results };
+  });
+}
+
+/**
+ * Returns canonical Example_Library rows.
+ * Format: [id, profession, example_text, week_relevant, habit_tag]
+ * Source: context-engine-experience-design.md sections 2 (teacher/entrepreneur/university_student/working_professional)
+ *         + gap_year_student (research-grounded Kenya context, authored 2026-03-12)
+ */
+function getCanonicalExamples_() {
+  return [
+    // ── TEACHER (10) ────────────────────────────────────────────────────────
+    ['ex-t-01', 'teacher',
+     'Before asking ChatGPT to write my Form 3 Chemistry lesson plan, I paused and noticed: I was about to outsource the part of teaching I actually love — designing how students encounter a new idea. I paused. Then I used AI to check if my plan covered the CBC competencies, not to write the plan itself.',
+     '1-2', 'habit_1'],
+    ['ex-t-02', 'teacher',
+     'I typed: "I teach Form 3 Chemistry in Nakuru, 35 students, KCSE in 8 weeks. My students confuse anode and cathode every time. Give me 3 analogies that work for a Kenyan secondary school student — not from a Western textbook." The response was completely different from my first vague attempt.',
+     '2-3', 'habit_2'],
+    ['ex-t-03', 'teacher',
+     'I asked AI to generate quiz questions on the water cycle for my Standard 6 CBC integrated science class. First response had American examples — rain in Seattle. I ITERATED: "Rewrite using Kenyan contexts — Lake Victoria, the Aberdares, dry season in Turkana." Second attempt was actually usable.',
+     '3-4', 'habit_3'],
+    ['ex-t-04', 'teacher',
+     'My head teacher asked for a proposal for a school garden project. Before asking AI to write it, I spent 10 minutes writing my own argument for WHY a garden would improve our agriculture scores. Then I used AI to pressure-test my reasoning. It asked: "What will you do in the dry season?" I had no answer — but now I do.',
+     '4-5', 'habit_4'],
+    ['ex-t-05', 'teacher',
+     'I used /diverge to break out of the idea that AI is just for writing. This week I generated 7 different ways to assess my students that don\'t involve a written test. I had never thought of using voice notes as assessment before.',
+     '4-5', 'habit_3'],
+    ['ex-t-06', 'teacher',
+     'My Standard 4 class was struggling with reading comprehension. I used AI to generate a story in simple English about a matatu driver in Nairobi, then asked for comprehension questions at 3 difficulty levels. The children recognized the context and engaged more.',
+     '5-6', 'habit_2'],
+    ['ex-t-07', 'teacher',
+     'I used /challenge on my assumption that homework improves performance. It asked: "What evidence do you have that your students who complete homework outperform those who don\'t?" I had none — just tradition. I\'m now running a small experiment in two streams.',
+     '6-7', 'habit_4'],
+    ['ex-t-08', 'teacher',
+     'I\'m writing my artifact about how I changed my marking approach. I\'ve been using /challenge to ask: "What if rubrics actually demotivate creative students?" I can\'t test this fully yet — but I documented it as a thinking experiment. That\'s new for me.',
+     '7-8', 'habit_4'],
+    ['ex-t-09', 'teacher',
+     'First time I used KIRA I typed: "Help me make a lesson plan." KIRA sent it back: "What grade, what subject, what specific misunderstanding are your students stuck on right now?" I realized I hadn\'t actually thought about what I wanted. That was my first real pause.',
+     '1-2', 'habit_1'],
+    ['ex-t-10', 'teacher',
+     'I used AI to write a parent letter about our class trip to Naivasha. But first I wrote my own draft. Mine had the context (cost covered by school, departure 6 AM). AI had better formatting. I merged them. That\'s iteration — not replacement.',
+     '3-4', 'habit_3'],
+
+    // ── ENTREPRENEUR (10) ───────────────────────────────────────────────────
+    ['ex-e-01', 'entrepreneur',
+     'My M-Pesa agent business was slow. I was about to ask AI "how do I grow my business" — and I paused. That question is too vague for a useful answer. Instead: "I run an M-Pesa outlet in Githurai, 60 transactions/day, 2 years operating. How do similar agents in dense urban areas increase transaction volume?" Very different response.',
+     '1-2', 'habit_1'],
+    ['ex-e-02', 'entrepreneur',
+     'I used KIRA to /frame my biggest business problem: why retail customers leave to buy from the supermarket at month-end. KIRA helped me realize I was asking the wrong question — it\'s not about price, it\'s about trust and credit access. That reframe changed my whole approach.',
+     '2-3', 'habit_2'],
+    ['ex-e-03', 'entrepreneur',
+     'I\'m opening a second outlet and needed a business plan. I wrote my own one-page plan first: location, why I chose it, cost estimates. Then I used AI to find gaps. It asked: "What happens to your cash flow in December when you need to stock holiday items?" I hadn\'t thought of that.',
+     '3-4', 'habit_4'],
+    ['ex-e-04', 'entrepreneur',
+     'I used /diverge to think about what else I could sell from my outlet besides fast-moving consumer goods. I got 12 ideas including phone repair, printing, and being a collection point for online orders. I wouldn\'t have generated that list alone in 5 minutes.',
+     '4-5', 'habit_3'],
+    ['ex-e-05', 'entrepreneur',
+     'I used /challenge on my plan to hire a second employee. It asked: "What is your break-even point with two staff? What happens to morale if you can\'t pay during a slow month?" I\'m still hiring — but now I have a contingency plan.',
+     '5-6', 'habit_4'],
+    ['ex-e-06', 'entrepreneur',
+     'I needed to write a bank loan proposal. I used AI to help structure my financials section. But first I spent an hour pulling my actual M-Pesa transaction records. AI can only be as good as what I give it.',
+     '6-7', 'habit_2'],
+    ['ex-e-07', 'entrepreneur',
+     'I used AI to read 10 WhatsApp messages from customers and find the recurring need. I paste them in and ask: "What is the common problem behind these requests?" It\'s like having a business analyst for the price of nothing.',
+     '5-6', 'habit_3'],
+    ['ex-e-08', 'entrepreneur',
+     'My artifact is about how I changed my approach to customer complaints. I used to handle them reactively. Now I collect 5 complaints at once, use AI to find the pattern, then address the root cause. 60% of my complaints were about the same thing: float availability on Fridays.',
+     '7-8', 'habit_4'],
+    ['ex-e-09', 'entrepreneur',
+     'I used KIRA to help frame a pitch to a new supplier. Instead of "give me credit terms," I prepared: my business history, transaction volume, and why credit would benefit both of us. The supplier said it was the most professional approach they\'d heard from a small trader.',
+     '2-3', 'habit_2'],
+    ['ex-e-10', 'entrepreneur',
+     'I\'ve started pausing before every customer interaction where I used to react immediately. This week I had a complaint from a regular customer. Old me: apologize and give a discount. New me: /frame — "What is this customer actually telling me about my business?" The answer changed what I did.',
+     '1-2', 'habit_1'],
+
+    // ── UNIVERSITY STUDENT (10) ─────────────────────────────────────────────
+    ['ex-u-01', 'university_student',
+     '2000-word essay on East African climate policy. Old me: copy-paste to ChatGPT and edit. New me: wrote my own 3-point argument first, then used AI to find evidence to support — or contradict — what I already believed. My lecturer said it was "unusually opinionated." That was a compliment.',
+     '1-2', 'habit_1'],
+    ['ex-u-02', 'university_student',
+     'CATS in 3 days. Tempted to use AI to re-summarize all my notes. I paused. Asked myself: what do I actually not understand? Two concepts. I used AI to explain only those two — not everything I\'d already studied. I passed.',
+     '1-3', 'habit_1'],
+    ['ex-u-03', 'university_student',
+     'My supervisor kept rejecting my research proposal. Instead of "write a better introduction," I typed: "My supervisor said my problem statement is vague. Topic: food security in Mathare. Here\'s my current draft: [paste]. What specifically might she mean by vague?" AI spotted exactly what was unclear.',
+     '3-4', 'habit_2'],
+    ['ex-u-04', 'university_student',
+     'I used /diverge to think about a struggling group project — not as "lazy teammates" but as a coordination failure. I proposed a new team structure based on what /diverge suggested. It worked. We submitted on time.',
+     '4-5', 'habit_3'],
+    ['ex-u-05', 'university_student',
+     'Writing my fourth-year project on mobile money and youth savings in Nairobi. I used AI to generate a literature review outline. But first I wrote my own 5 research questions. AI covered 3 of mine and added 4 I hadn\'t considered.',
+     '5-6', 'habit_2'],
+    ['ex-u-06', 'university_student',
+     'Job applications started. Used AI to prepare for an Equity Bank interview. First wrote my own answers. Then asked AI to challenge them: "What would a skeptical interviewer push back on here?" It found 3 weaknesses I hadn\'t noticed.',
+     '6-7', 'habit_4'],
+    ['ex-u-07', 'university_student',
+     'I asked AI to explain comparative advantage in 3 ways: for a 10-year-old, a layperson, and a first-year economics student. I sent the layperson version to my parents to explain what I study. That was the first time they understood my degree.',
+     '2-3', 'habit_3'],
+    ['ex-u-08', 'university_student',
+     'I asked AI to review my CV. But first I listed my own achievements — things that mattered to me. Then I asked AI to translate them into professional language. I kept my versions wherever AI\'s felt like they belonged to someone else.',
+     '3-4', 'habit_2'],
+    ['ex-u-09', 'university_student',
+     'My artifact is about how I changed my relationship with my own ideas. I used to think my ideas needed AI to be "upgraded." Now I think of AI as a sparring partner for ideas I already had. That shift happened in Week 4 when /challenge refused to let me get away with vague thinking.',
+     '7-8', 'habit_4'],
+    ['ex-u-10', 'university_student',
+     'I noticed I was using AI like a search engine — asking "what is X" instead of "help me think about X." I changed my approach mid-week. The difference in response quality was immediate. That was iteration — on how I use the tool itself.',
+     '3-4', 'habit_3'],
+
+    // ── WORKING PROFESSIONAL (10) ───────────────────────────────────────────
+    ['ex-wp-01', 'working_professional',
+     'I\'m a programme officer at an NGO in Kisumu. Before K2M I used AI to draft reports. This week I paused and realized: the first half of every report is context AI can\'t know. It only has what I give it. So I started every AI interaction with a 3-sentence context brief.',
+     '1-2', 'habit_1'],
+    ['ex-wp-02', 'working_professional',
+     'I manage 12 staff at a commercial bank. I used /frame to articulate a problem I\'d been stuck on for 3 months: why do high-performing staff leave after 18 months? KIRA helped me get specific: "Is this compensation, growth opportunities, or management style?" I\'d been solving the wrong version of the problem.',
+     '2-3', 'habit_2'],
+    ['ex-wp-03', 'working_professional',
+     'I needed to write a board presentation. I first wrote my own 3-page thinking document: what decision does the board need to make, what are the risks, what\'s my recommendation. Then AI helped format and sharpen. The COO said it was the clearest board paper she\'d read this year.',
+     '3-4', 'habit_4'],
+    ['ex-wp-04', 'working_professional',
+     'I used /diverge on our digital transformation strategy. My team had 2 options. /diverge generated 9. We implemented a hybrid of options 3 and 7 — something none of us had thought of independently.',
+     '4-5', 'habit_3'],
+    ['ex-wp-05', 'working_professional',
+     'I used /challenge on our hiring criteria. We filter for university degrees. /challenge asked: "What evidence do you have that degree holders outperform non-graduates in this role?" I had none — just tradition. We\'re piloting skills-based hiring.',
+     '5-6', 'habit_4'],
+    ['ex-wp-06', 'working_professional',
+     'I work in county government and needed to write a cabinet memo. Old approach: find a template. New approach: wrote my own argument in plain language first, then used AI to translate it into official memo format. The content remained mine.',
+     '3-4', 'habit_2'],
+    ['ex-wp-07', 'working_professional',
+     'I\'m writing a policy brief on informal waste management in Nairobi. I used AI to generate 5 counterarguments to my own proposal. Then I addressed each in my draft. My supervisor said she\'d never seen a policy brief that anticipated objections so well.',
+     '6-7', 'habit_4'],
+    ['ex-wp-08', 'working_professional',
+     'I used /challenge on my team\'s Q2 targets. It asked: "What assumptions are these targets based on? What would you do if you hit only 60%?" We\'d never stress-tested our targets before. We now have contingency plans for 3 scenarios.',
+     '5-6', 'habit_4'],
+    ['ex-wp-09', 'working_professional',
+     'My artifact is about changing my approach to feedback conversations. I used to avoid hard feedback. Now I use AI to think through what I want to say BEFORE the conversation. I don\'t outsource the conversation — just the preparation. That\'s the line.',
+     '7-8', 'habit_2'],
+    ['ex-wp-10', 'working_professional',
+     'I noticed I was using AI to avoid uncertainty — asking for answers before I\'d formed my own view. This week: I wrote my own analysis first, then used AI to test it. That sequence change made everything better.',
+     '4-5', 'habit_4'],
+
+    // ── GAP YEAR STUDENT (10) ───────────────────────────────────────────────
+    // Kenya context: KCSE graduates between secondary and university, running side
+    // businesses (airtime/M-Pesa), applying for KUCCPS placement or internships.
+    ['ex-g-01', 'gap_year_student',
+     'Before asking AI to write my cover letter for Equity Bank, I paused. What did I actually want to say? I wrote my own 3 sentences first: I\'m a KCSE graduate, I ran a phone-credit business for 8 months, I want to learn from professionals. Then I asked AI to make it professional. My letter read like me — just better.',
+     '1-2', 'habit_1'],
+    ['ex-g-02', 'gap_year_student',
+     'I\'m on a gap year selling airtime and data bundles in Githurai. KIRA helped me /frame the real question: it\'s not "how do I get more customers" — it\'s "why do the same 15 people buy from me every week and nobody new?" That reframe changed how I post on WhatsApp Status entirely.',
+     '2-3', 'habit_2'],
+    ['ex-g-03', 'gap_year_student',
+     'I used AI to generate 8 ways I could spend my gap year productively. I had thought of 2 on my own. Six I hadn\'t considered — including volunteering as a maths tutor at a nearby primary school, which would count as experience for my education degree application.',
+     '3-4', 'habit_3'],
+    ['ex-g-04', 'gap_year_student',
+     'I was preparing my KUCCPS university course choices. Instead of asking AI "which course should I pick," I used /frame first: "I like working with people, I\'m good at maths, I want to work in Nairobi and earn well by 30." Then I asked AI to match courses to that description. I found three options I hadn\'t considered.',
+     '4-5', 'habit_2'],
+    ['ex-g-05', 'gap_year_student',
+     'My mum asked me to help write a proposal for her chama to get a KCB loan. Before asking AI to write it, I sat down with her for an hour and wrote out her business details myself: what she sells, her monthly income, her customers. AI helped structure — but all the real content came from us.',
+     '3-4', 'habit_4'],
+    ['ex-g-06', 'gap_year_student',
+     'I used /challenge on my plan to start a YouTube channel for study tips. It asked: "Who is your target viewer, and why would they watch your channel over the thousands that already exist?" I couldn\'t answer. That question saved me 3 months of wasted effort. I pivoted to a WhatsApp tutoring group instead — where I already knew people.',
+     '5-6', 'habit_4'],
+    ['ex-g-07', 'gap_year_student',
+     'I was studying for a professional certification exam. Instead of copying AI summaries, I\'d read one section myself first and write 3 questions I still had. Then I used AI to answer only those 3 questions. I retained far more than when I used AI to summarize entire chapters.',
+     '2-3', 'habit_1'],
+    ['ex-g-08', 'gap_year_student',
+     'I used /diverge to think about why my gap year felt like wasted time. It helped me reframe: not wasted — uncurated. I\'d been building skills the whole time (financial literacy, communication, customer service) without naming them. Now my CV has 4 real skills I never knew I had.',
+     '4-5', 'habit_3'],
+    ['ex-g-09', 'gap_year_student',
+     'I asked AI to help me prepare for a job interview at Safaricom. First I wrote out every question I was scared of being asked. Then I answered them myself — badly. Then AI gave me better answers. Then I practiced saying them in my own voice. That\'s three layers of iteration before I ever walked in.',
+     '6-7', 'habit_3'],
+    ['ex-g-10', 'gap_year_student',
+     'My gap year artifact is about changing how I see this time between school and university. I used /frame on the question: "What is a gap year actually for?" I arrived at: building the version of myself that university will meet. That became my artifact title. The thinking changed how I describe myself to everyone I meet.',
+     '7-8', 'habit_4']
+  ];
+}
+
+/**
+ * Returns canonical Intervention_Library rows.
+ * Format: [id, barrier_type, week_range, intervention_text]
+ * Source: context-engine-experience-design.md section 3.
+ */
+function getCanonicalInterventions_() {
+  return [
+    ['int-id-1', 'identity', 'weeks 1-4',
+     '{first_name}, I noticed you\'ve been quiet this week. Here\'s what I know: the fact that you enrolled as a {profession} means you\'re already doing thinking work every day — you just haven\'t had language for it yet. You\'re not behind. Try this: go to the current week channel and read ONE post someone else wrote — just read, no pressure to respond. Then come back.'],
+    ['int-id-2', 'identity', 'weeks 5-8',
+     '{first_name}, you\'ve made it to Week {current_week} — which means you\'ve already practiced more structured thinking with AI than most people ever will. I noticed you went quiet. Sometimes that means the work got personal. If what you\'re working on as a {profession} feels too unfinished to share, that\'s a sign you\'re on to something real. Try /frame and describe what you\'re sitting with — messy is fine.'],
+    ['int-ti-1', 'time', 'weeks 1-4',
+     '{first_name}, I know your week as a {profession} doesn\'t stop for a program. Here\'s what I know: one 5-minute /frame session is enough to practice Habit 2. You don\'t need an hour. Find one thing you\'re already dealing with at work right now and type it in. That\'s it — 5 minutes and you\'re back in.'],
+    ['int-ti-2', 'time', 'weeks 5-8',
+     '{first_name}, you\'ve invested {weeks_completed} weeks already — that\'s real. I know the work piles up for a {profession}. Here\'s what\'s changed: at this stage the tools are faster and the payoff is higher. /challenge takes 8 minutes and gives you a stress-test you\'d normally spend an hour worrying about. Try it on something you\'re already facing this week.'],
+    ['int-re-1', 'relevance', 'weeks 1-4',
+     '{first_name}, I want to ask you something directly: what is the ONE thing that would make your week easier if you could think about it more clearly? Not "use AI for it" — just think more clearly about it. Tell me that one thing, and I\'ll show you exactly where this program connects to your work as a {profession}.'],
+    ['int-re-2', 'relevance', 'weeks 5-8',
+     '{first_name}, by Week {current_week} most students have found their specific use case. I noticed yours hasn\'t clicked yet — and that\'s useful information, not a failure. Let\'s use /diverge to approach this differently: not "how does AI apply to my job as a {profession}" but "what problem in my work would I love more thinking time for?" Start there — that question changes everything.'],
+    ['int-te-1', 'technical', 'weeks 1-4',
+     '{first_name}, the tools in this program are just text — no coding, no apps to download, no settings to configure. If something felt confusing, it was probably the framing of the question, not the technology. Try this: go to #thinking-lab and type /frame, then describe your job in two sentences. KIRA will take it from there.'],
+    ['int-te-2', 'technical', 'weeks 5-8',
+     '{first_name}, you\'ve been navigating this for {weeks_completed} weeks — that means the hard part is behind you. If you hit a wall this week, I\'m here. Type /frame in #thinking-lab and tell me what you got stuck on. I\'ll help you unstick it in under 10 minutes.']
+  ];
 }
 
 /**

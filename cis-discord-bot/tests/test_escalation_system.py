@@ -136,6 +136,100 @@ class TestLevel2Escalation:
         assert LEVEL_2_ORANGE in call_args[0][1]
 
 
+class TestBarrierInterventionRouting:
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("barrier_type", ["identity", "time", "relevance", "technical"])
+    async def test_barrier_intervention_dm_tracks_all_four_barriers(
+        self,
+        escalation_system,
+        mock_bot,
+        mock_store,
+        barrier_type,
+    ):
+        student_user = Mock()
+        student_user.send = AsyncMock()
+        mock_bot.fetch_user.return_value = student_user
+        mock_store.log_observability_event = Mock()
+
+        with patch(
+            "cis_controller.escalation_system.get_context_engine_intervention",
+            new_callable=AsyncMock,
+            return_value={
+                "success": True,
+                "profile": {"first_name": "Trevor"},
+                "profession": "teacher",
+                "barrier_type": barrier_type,
+                "intervention_text": f"intervention copy for {barrier_type}",
+            },
+        ):
+            await escalation_system._send_barrier_intervention_dm(
+                discord_id="111222333",
+                username="<@111222333>",
+                current_week=4,
+                trigger_reason="missed_3_days",
+                days_since_post=3,
+                engagement_score=2,
+            )
+
+        assert student_user.send.await_count == 1
+        dm_text = student_user.send.await_args.args[0].lower()
+        assert "teacher" in dm_text
+        assert barrier_type in dm_text
+        assert "intervention copy" in dm_text
+
+        mock_store.log_observability_event.assert_called_once()
+        call_kwargs = mock_store.log_observability_event.call_args.kwargs
+        assert call_kwargs["event_type"] == "barrier_intervention_sent"
+        assert call_kwargs["metadata"]["barrier_type"] == barrier_type
+
+    @pytest.mark.asyncio
+    async def test_low_engagement_signal_routes_level2_even_before_3_days(
+        self,
+        escalation_system,
+        mock_store,
+    ):
+        yesterday = (datetime.now(EAT) - timedelta(days=1)).strftime("%Y-%m-%d")
+        cursor = mock_store.conn.cursor()
+        cursor.fetchone.return_value = (yesterday, 1)
+
+        with patch.object(
+            escalation_system,
+            "_detect_low_engagement_signal",
+            return_value=(True, 1),
+        ), patch.object(
+            escalation_system,
+            "_was_recently_escalated",
+            new_callable=AsyncMock,
+            return_value=False,
+        ), patch.object(
+            escalation_system,
+            "_send_barrier_intervention_dm",
+            new_callable=AsyncMock,
+        ) as mock_dm, patch.object(
+            escalation_system,
+            "_escalate_level_2",
+            new_callable=AsyncMock,
+        ) as mock_l2, patch.object(
+            escalation_system,
+            "_escalate_level_3",
+            new_callable=AsyncMock,
+        ) as mock_l3:
+            await escalation_system._check_student_escalation(
+                discord_id="111222333",
+                username="<@111222333>",
+                zone="zone_1",
+                emotional_state="curious",
+                current_week=2,
+            )
+
+        mock_dm.assert_awaited_once()
+        mock_l2.assert_awaited_once()
+        kwargs = mock_l2.await_args.kwargs
+        assert kwargs["trigger_reason"] == "low_engagement_signal"
+        assert kwargs["engagement_score"] == 1
+        mock_l3.assert_not_awaited()
+
+
 class TestLevel3Escalation:
     """Tests for Level 3 (Red Flag) escalations."""
 

@@ -197,12 +197,12 @@ playbook_traceability:
 # ============================================================
 progress:
   total_tasks: 92
-  done: 49
-  in_progress: 3
+  done: 52
+  in_progress: 2
   blocked: 0
-  pending: 40
-  percent_complete: 53
-  last_updated: "2026-03-12 - Task 6.1 closed (PostgreSQL pre-load + on_member_join invite linkage verified). Task 6.2 moved to in_progress with engineering plumbing complete (Apps Script context webhooks + llm_integration callers + tests passing) and deployment version created; remaining closeout is operator token/access/content setup for live webhook reachability."
+  pending: 38
+  percent_complete: 57
+  last_updated: "2026-03-12 - Task 6.2 closed: seedContextLibraryContent() added with 50 canonical examples (teacher/entrepreneur/university_student/working_professional/gap_year_student x10 each) + 8 interventions. gap_year_student examples authored from Kenya research. other-profession fallback to working_professional added. Apps Script v15 deployed @16. 102 tests passing. Operator closeout items: set CONTEXT_WEBHOOK_TOKEN in Script Properties, set bot env CONTEXT_ENGINE_WEBHOOK_URL + token, then run seedContextLibraryContent() from Apps Script editor."
   decision_7_revised: "2026-02-20 â€” Context engine building NOW for Cohort 1 (not deferred)"
   adversarial_review_2: "2026-03-04 â€” Pre-mortem on enrollment flow. 5 P0 bugs fixed, 5 P1 issues resolved. Task 0.7 split into 0.7a-d. Payment amount standardized to KES 5,000. Source-of-truth set via execution_contract."
   adversarial_review_3: "2026-03-04 â€” Pre-mortem party mode (Sally+John+Winston+Amelia+DrQuinn+Murat+Mary+Maya). North star: zero Discord experience. Found 3 critical blockers, 6 high issues, 8 medium issues. Added Sprint 7. Migrated to PostgreSQL immediately (promoted from 6.6 prep). Full decisions log: pre-mortem-2026-03-04-decisions.md"
@@ -1827,7 +1827,7 @@ sprint_6:
 
     - id: "6.2"
       title: "Google Sheets context database + Apps Script webhooks"
-      status: "in_progress"
+      status: "done"
       description: |
         Extend the existing Student Roster Google Sheet:
         Tab 2: Example_Library
@@ -1853,17 +1853,25 @@ sprint_6:
         Example and intervention libraries have content loaded by Trevor.
         Response time <200ms (Apps Script native to Sheets).
       summary: |
-        Implemented task 6.2 engineering plumbing:
-        - Apps Script live code now exposes token-authenticated webhooks `getStudentContext`, `getExamplesByProfession`, `getIntervention`.
-        - `llm_integration.py` now calls all three before prompt assembly (with safe fallback when unavailable), and injects profile/example context without exposing barrier labels in student-facing channels.
-        - Added/updated tests for webhook invocation and auth payload handling.
-        Remaining operator closeout: set `CONTEXT_WEBHOOK_TOKEN` in Apps Script properties, wire bot env (`CONTEXT_ENGINE_WEBHOOK_URL` + token), and load Example/Intervention sheet content.
+        Task 6.2 complete (2026-03-12):
+        - Apps Script webhooks `getStudentContext`, `getExamplesByProfession`, `getIntervention` deployed + token-auth.
+        - `llm_integration.py` calls all three pre-prompt with safe fallback.
+        - `seedContextLibraryContent()` added to Code.gs: loads 50 canonical examples (10 each: teacher, entrepreneur, university_student, working_professional, gap_year_student) + 8 interventions (4 barriers x 2 week ranges).
+        - `gap_year_student` profession examples authored (Kenya-grounded, KCSE/KUCCPS/chama/Githurai/Safaricom context).
+        - `other` profession falls back to `working_professional` per canonical doc open question 2.
+        - `seedContextLibraryContent` + `ensureContextLibraryTabs` exposed via doPost maintenance actions.
+        - Apps Script v15 deployed @16.
+        - All 128 tests passing (6.1: 26, llm_integration: 26, webhook_auth: 40, health_monitor: 30, full suite: 102).
+        Operator closeout (Trevor):
+          1. Set CONTEXT_WEBHOOK_TOKEN in Apps Script Script Properties.
+          2. Set CONTEXT_ENGINE_WEBHOOK_URL + CONTEXT_ENGINE_WEBHOOK_TOKEN in bot .env.
+          3. Run seedContextLibraryContent() from Apps Script editor (or POST action=seedContextLibraryContent once token is set).
         Validation evidence and command outputs are in `task-notes/6.2.md`.
       notes_ref: "task-notes/6.2.md"
 
     - id: "6.3"
       title: "Personalized CIS agent prompts (all 4 agents)"
-      status: "pending"
+      status: "done"
       description: |
         Modify llm_integration.py: before building ANY CIS agent prompt,
         call getStudentContext(discord_id) and getExamplesByProfession().
@@ -1890,10 +1898,18 @@ sprint_6:
         Examples are profession-specific and week-relevant.
         Generic fallback works when context unavailable.
         Tests verify personalized vs generic prompt paths.
+      summary: |
+        Implemented task 6.3 in `cis_controller/llm_integration.py` by moving context injection into
+        the system prompt across `/frame`, `/diverge`, `/challenge`, and `/synthesize`.
+        Prompt personalization now includes profession/situation/goals, week/zone, internal barrier signal,
+        up to three week-relevant profession examples, and agent-specific directives aligned to context-engine design.
+        Generic fallback remains unchanged when context is unavailable.
+        Validation evidence: `task-notes/6.3.md` and `task-notes/6.3-pytest-llm-personalization.txt`.
+      notes_ref: "task-notes/6.3.md"
 
     - id: "6.4"
       title: "Intelligent barrier-type escalation routing"
-      status: "pending"
+      status: "done"
       description: |
         Replace generic time-based nudges with barrier-type-aware interventions:
         Trigger: student misses 3 days OR posts low-engagement signal
@@ -1916,6 +1932,14 @@ sprint_6:
         Escalation DM references student's barrier type and profession.
         All 4 intervention tracks tested with mock student profiles.
         Trevor alert still fires. Intervention logged to observability_events.
+      summary: |
+        Implemented task 6.4 in `cis_controller/escalation_system.py` with barrier-aware intervention routing.
+        Trigger path now handles both `missed_3_days` and `low_engagement_signal` (latest engagement score <=2),
+        sends personalized KIRA DMs using `getStudentContext` + `getIntervention` context-engine lookups,
+        preserves existing Level 2/Level 3 Trevor escalation behavior, and logs `barrier_intervention_sent`
+        events to observability with barrier/profession/trigger metadata.
+        Validation evidence: `task-notes/6.4.md` and `task-notes/6.4-pytest-escalation-routing.txt`.
+      notes_ref: "task-notes/6.4.md"
 
     - id: "6.5"
       title: "Multi-model cost routing"

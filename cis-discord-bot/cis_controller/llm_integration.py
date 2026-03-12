@@ -133,6 +133,53 @@ def _extract_intervention_text(payload: Dict[str, Any]) -> str:
     return _truncate_text(payload.get("intervention_text", ""), max_len=240)
 
 
+def _normalize_barrier_type(value: Any) -> str:
+    """Normalize barrier type to one of the supported intervention tracks."""
+    raw = str(value or "").strip().lower()
+    allowed = {"identity", "time", "relevance", "technical"}
+    return raw if raw in allowed else ""
+
+
+def _format_example_lines(examples: List[str]) -> List[str]:
+    """Render up to 3 context examples as numbered lines."""
+    rendered: List[str] = []
+    for idx, example in enumerate(examples[:3], start=1):
+        if not example:
+            continue
+        rendered.append(f"{idx}. {example}")
+    return rendered
+
+
+def _agent_personalization_guidance(agent: str, profession: str) -> List[str]:
+    """Return agent-specific personalization directives for task 6.3."""
+    role = profession or "student"
+    if agent == "frame":
+        return [
+            f"- Use a personalized framing seed grounded in {role} realities.",
+            "- Ask exactly one clarifying question and keep it concrete.",
+            "- Ground follow-up prompts in the provided profession examples.",
+        ]
+    if agent == "diverge":
+        return [
+            f"- Generate profession-specific alternatives a {role} can test this week.",
+            "- Offer 5-7 distinct perspectives before converging.",
+            "- Keep divergence practical; avoid abstract thought experiments.",
+        ]
+    if agent == "challenge":
+        return [
+            f"- Stress-test assumptions with examples from similar {role} contexts.",
+            "- Challenge the idea, never the person's identity or capacity.",
+            "- End with one revision question that strengthens decision quality.",
+        ]
+    if agent == "synthesize":
+        return [
+            "- Reference the student's journey arc (zone movement + explored topics).",
+            "- Help them articulate conclusions in their own words.",
+            f"- Bridge toward how another {role} could apply the same insight.",
+        ]
+    return []
+
+
 async def _call_context_engine_webhook(action: str, payload: Dict[str, Any]) -> Dict[str, Any]:
     """
     Call Apps Script context webhook with shared secret token auth.
@@ -224,11 +271,10 @@ async def _load_context_engine_data(student_context: Any) -> Dict[str, Any]:
         or _context_get_value(student_context, "profession", "")
         or ""
     ).strip()
-    barrier_type = str(
+    barrier_type = _normalize_barrier_type(
         profile.get("barrier_type")
         or _context_get_value(student_context, "barrier_type", "")
-        or ""
-    ).strip()
+    )
 
     pending_calls: List[Tuple[str, Awaitable[Dict[str, Any]]]] = []
     if profession and week is not None:
@@ -273,6 +319,69 @@ async def _load_context_engine_data(student_context: Any) -> Dict[str, Any]:
             context_data["intervention_text"] = _extract_intervention_text(response)
 
     return context_data
+
+
+async def get_context_engine_intervention(
+    discord_id: str,
+    current_week: Any,
+    fallback_context: Any = None,
+) -> Dict[str, Any]:
+    """
+    Resolve barrier-aware intervention copy for escalation routing (task 6.4).
+
+    Returns:
+      {
+        "success": bool,
+        "profile": dict,
+        "profession": str,
+        "barrier_type": str,
+        "week": Optional[int],
+        "intervention_text": str,
+      }
+    """
+    result: Dict[str, Any] = {
+        "success": False,
+        "profile": {},
+        "profession": "",
+        "barrier_type": "",
+        "week": _normalize_week_number(current_week),
+        "intervention_text": "",
+    }
+
+    cleaned_discord_id = str(discord_id or "").strip()
+    if not cleaned_discord_id or not _get_context_engine_webhook_url():
+        return result
+
+    profile_response = await _call_context_engine_webhook(
+        "getStudentContext",
+        {"discord_id": cleaned_discord_id},
+    )
+    profile = profile_response.get("profile")
+    if isinstance(profile, dict) and profile_response.get("success"):
+        result["profile"] = profile
+
+    result["profession"] = _truncate_text(
+        result["profile"].get("profession")
+        or _context_get_value(fallback_context, "profession", ""),
+        max_len=80,
+    )
+    result["barrier_type"] = _normalize_barrier_type(
+        result["profile"].get("barrier_type")
+        or _context_get_value(fallback_context, "barrier_type", ""),
+    )
+
+    week = result["week"]
+    barrier_type = result["barrier_type"]
+    if barrier_type and week is not None:
+        intervention_response = await _call_context_engine_webhook(
+            "getIntervention",
+            {"barrier_type": barrier_type, "week": week},
+        )
+        if isinstance(intervention_response, dict) and intervention_response.get("success"):
+            result["intervention_text"] = _extract_intervention_text(intervention_response)
+
+    result["success"] = bool(result["profile"] or result["intervention_text"])
+    return result
 
 
 def get_active_provider() -> str:
@@ -504,19 +613,20 @@ def _ensure_system_prompt_loaded(agent: str) -> str:
     return prompt
 
 
-def _build_student_context_block(
-    student_context,
+def _build_personalized_system_prompt(
+    base_system_prompt: str,
+    student_context: Any,
     agent: str,
     context_engine_data: Optional[Dict[str, Any]] = None,
 ) -> str:
     """
-    Build a compact personalization block from StudentContext.
+    Inject task 6.3 personalization into system prompts for all CIS agents.
 
-    This keeps Framer grounded in zone/week/emotional context without
-    hardcoding separate example libraries in this layer.
+    Fallback contract:
+    - If context is unavailable, return base system prompt unchanged.
     """
     if student_context is None:
-        return ""
+        return base_system_prompt
 
     context_engine_data = context_engine_data or {}
     profile = context_engine_data.get("profile")
@@ -525,20 +635,6 @@ def _build_student_context_block(
     context_examples = context_engine_data.get("examples")
     if not isinstance(context_examples, list):
         context_examples = []
-
-    altitude = ""
-    try:
-        if hasattr(student_context, "get_altitude"):
-            altitude = student_context.get_altitude() or ""
-    except Exception:
-        altitude = ""
-
-    example = ""
-    try:
-        if hasattr(student_context, "get_relevant_example"):
-            example = student_context.get_relevant_example(agent) or ""
-    except Exception:
-        example = ""
 
     profession = _truncate_text(
         profile.get("profession")
@@ -555,33 +651,82 @@ def _build_student_context_block(
         or _context_get_value(student_context, "goals", ""),
         max_len=220,
     )
+    barrier_type = _normalize_barrier_type(
+        profile.get("barrier_type")
+        or _context_get_value(student_context, "barrier_type", ""),
+    )
+    journey_summary = _truncate_text(
+        profile.get("cis_journey_summary")
+        or _context_get_value(student_context, "cis_journey_summary", ""),
+        max_len=280,
+    )
+    last_frame_topic = _truncate_text(
+        profile.get("last_frame_topic")
+        or _context_get_value(student_context, "last_frame_topic", ""),
+        max_len=180,
+    )
 
-    if not example and context_examples:
-        example = context_examples[0]
+    # Preserve legacy local example fallback if context webhook lacks examples.
+    if not context_examples:
+        try:
+            local_example = (
+                student_context.get_relevant_example(agent)
+                if hasattr(student_context, "get_relevant_example")
+                else ""
+            )
+        except Exception:
+            local_example = ""
+        local_example = _truncate_text(local_example, max_len=180)
+        if local_example:
+            context_examples = [local_example]
+
+    has_personalization = any(
+        [profession, situation, goals, barrier_type, context_examples, journey_summary, last_frame_topic]
+    )
+    if not has_personalization:
+        return base_system_prompt
+
+    week = _context_get_value(student_context, "current_week", "unknown")
+    zone = _context_get_value(student_context, "zone", "unknown")
+    agent_directives = _agent_personalization_guidance(agent, profession)
+    example_lines = _format_example_lines(context_examples)
 
     lines = [
-        "StudentContext:",
-        f"- week: {_context_get_value(student_context, 'current_week', 'unknown')}",
-        f"- zone: {_context_get_value(student_context, 'zone', 'unknown')}",
-        f"- emotional_state: {_context_get_value(student_context, 'emotional_state', 'unknown')}",
-        f"- jtbd_primary_concern: {_context_get_value(student_context, 'jtbd_primary_concern', 'unknown')}",
+        "",
+        "## Task 6.3 Personalization Context (INTERNAL)",
+        "Use these details to ground responses in the student's world.",
+        "Never expose internal labels like barrier type to the student verbatim.",
+        f"- current_week: {week}",
+        f"- current_zone: {zone}",
+        f"- profession: {profession or 'unknown'}",
     ]
-    if profession:
-        lines.append(f"- profession: {profession}")
     if situation:
         lines.append(f"- situation: {situation}")
     if goals:
         lines.append(f"- goals: {goals}")
-    if altitude:
-        lines.append(f"- altitude: {altitude}")
-    if example:
-        lines.append(f"- relevant_example: {example}")
-    if len(context_examples) > 1:
-        lines.append(f"- extra_examples: {' | '.join(context_examples[1:3])}")
+    if barrier_type:
+        lines.append(f"- internal_barrier_signal: {barrier_type}")
+    if last_frame_topic:
+        lines.append(f"- last_frame_topic: {last_frame_topic}")
+    if journey_summary:
+        lines.append(f"- cis_journey_summary: {journey_summary}")
 
-    lines.append("")
-    lines.append("Use this context to tailor language and scaffolding.")
-    return "\n".join(lines)
+    if example_lines:
+        lines.append("- profession_examples_week_relevant:")
+        lines.extend([f"  {line}" for line in example_lines])
+
+    if agent_directives:
+        lines.append("- agent_specific_directives:")
+        lines.extend([f"  {directive}" for directive in agent_directives])
+
+    lines.extend(
+        [
+            "- fallback_rule: if context feels incomplete, keep original generic coaching behavior.",
+            "- safety_rule: no ranking, no comparison, no pressure language.",
+        ]
+    )
+
+    return f"{base_system_prompt}\n" + "\n".join(lines)
 
 
 def _extract_openai_choice_text(response_data: Dict[str, Any]) -> str:
@@ -851,25 +996,20 @@ async def call_agent_with_context(
         - Total cost in USD
         - Provider and model information
     """
-    system_prompt = _ensure_system_prompt_loaded(agent)
+    base_system_prompt = _ensure_system_prompt_loaded(agent)
     provider = get_active_provider()
     model = get_active_model(provider)
 
     context_engine_data = await _load_context_engine_data(student_context)
-    context_block = _build_student_context_block(
+    system_prompt = _build_personalized_system_prompt(
+        base_system_prompt,
         student_context,
         agent,
         context_engine_data=context_engine_data,
     )
-    final_user_message = user_message
-    if context_block:
-        final_user_message = (
-            f"{context_block}\n\n"
-            f"Student message:\n{user_message}"
-        )
 
     messages = conversation_history[-10:] + [
-        {"role": "user", "content": final_user_message}
+        {"role": "user", "content": user_message}
     ]
 
     try:
