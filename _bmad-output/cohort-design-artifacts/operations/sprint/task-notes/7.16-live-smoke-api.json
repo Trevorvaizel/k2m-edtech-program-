@@ -1,0 +1,36 @@
+{
+  "timestamp_utc": "2026-03-12T04:39:01Z",
+  "task_id": "7.16",
+  "base_url": "https://kira-bot-production.up.railway.app",
+  "test_email": "trevor+smoke716_1773290341@k2mlabs.com",
+  "steps": {
+    "health": {
+      "status": 200,
+      "elapsed_ms": 827,
+      "body": "{\"status\": \"healthy\", \"db\": \"connected\", \"discord\": \"connected\", \"details\": {\"db_probe\": \"postgresql\", \"discord_probe\": \"ready\"}, \"checked_at\": \"2026-03-12T04:39:01.996542Z\"}"
+    },
+    "interest": {
+      "status": 200,
+      "elapsed_ms": 6547,
+      "body": "{\"success\": true, \"waitlisted\": false, \"message\": \"Step 1 of 4 complete - check your email for your Discord invitation.\"}"
+    },
+    "enroll": {
+      "status": 200,
+      "elapsed_ms": 15551,
+      "body": "{\"success\": true, \"message\": \"Step 3 of 4 - enrollment complete. We will send payment instructions as soon as your Discord join is detected.\", \"submit_url\": \"https://k2m-landing.vercel.app/mpesa-submit?token=eNvDgVlduuC0KLDy\", \"expires_at\": \"2026-03-19T04:39:10Z\"}"
+    },
+    "mpesa_get": {
+      "status": 200,
+      "elapsed_ms": 1658,
+      "body": "{\"success\": true, \"valid\": true, \"email_hint\": \"t************************1@k2mlabs.com\", \"expires_at\": \"2026-03-19T04:39:10Z\"}"
+    },
+    "mpesa_post": {
+      "status": 200,
+      "elapsed_ms": 4072,
+      "body": "{\"success\": true, \"message\": \"M-Pesa code received. Verification usually takes up to 24 hours.\"}"
+    }
+  },
+  "overall_status": "pass",
+  "submit_url": "https://k2m-landing.vercel.app/mpesa-submit?token=eNvDgVlduuC0KLDy",
+  "submit_token_present": true
+}

@@ -59,7 +59,7 @@ development_status:
   2-0-build-pre-map-anticipation-framing: done
   2-1-create-territory-map-svg-structure: review
   2-2-build-particle-coalescence-system: in-progress
-  2-3-implement-zone-illumination-and-magnetic-hovers: ready-for-dev
+  2-3-implement-zone-illumination-and-magnetic-hovers: in-progress
   epic-2-retrospective: optional
 
   epic-3: backlog

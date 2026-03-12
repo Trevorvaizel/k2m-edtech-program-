@@ -1,9 +1,12 @@
-﻿#!/usr/bin/env python
+#!/usr/bin/env python
 """
 Task 7.14 - Brevo template lifecycle automation.
 
 Creates/updates the 7 required transactional templates, runs optional test sends,
 and writes an evidence report for sprint notes.
+
+2026-03-12 premium redesign: inline-CSS table layout matching K2M dark brand,
+human copy across all 7 templates, Email #4 refund policy gap fixed.
 """
 
 from __future__ import annotations
@@ -20,6 +23,8 @@ from typing import Any, Dict, List, Optional
 import httpx
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+
 DEFAULT_OUTPUT = (
     PROJECT_ROOT
     / "_bmad-output/cohort-design-artifacts/operations/sprint/task-notes/7.14-brevo-templates.json"
@@ -61,216 +66,167 @@ def logo_url() -> str:
     return "https://k2m-landing.vercel.app/k2m-logo.svg"
 
 
-def html_shell(step_badge: str, title: str, subtitle: str, body_html: str) -> str:
-    brand_logo_url = logo_url()
+# ---------------------------------------------------------------------------
+# Premium dark visual shell — fully inline CSS for inbox compatibility
+# ---------------------------------------------------------------------------
+
+def _cta_button(href_param: str, label: str) -> str:
+    """Table-based CTA button. href_param is the Brevo {{params.xxx}} token."""
+    return f"""<table cellpadding="0" cellspacing="0" border="0" style="margin:24px 0 8px;">
+  <tr>
+    <td align="center" bgcolor="#2de2dc" style="border-radius:999px;">
+      <a href="{href_param}"
+         style="display:inline-block;padding:16px 40px;font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:800;color:#041014;text-decoration:none;border-radius:999px;letter-spacing:0.2px;">{label}</a>
+    </td>
+  </tr>
+</table>"""
+
+
+def _bullet(bold: str, rest: str) -> str:
+    return (
+        f'<p style="margin:0 0 10px;font-family:Arial,Helvetica,sans-serif;font-size:15px;'
+        f'line-height:1.6;color:#d1d5db;">'
+        f'<span style="color:#2de2dc;font-weight:700;">&#10022;</span>&nbsp;'
+        f'<strong style="color:#f9fafb;">{bold}</strong> {rest}</p>'
+    )
+
+
+def html_shell(
+    step_badge: str,
+    title: str,
+    title_accent: str,
+    subtitle: str,
+    body_html: str,
+) -> str:
+    """
+    Premium dark-brand email shell.
+
+    title       — white first line  e.g. "Welcome to the"
+    title_accent — teal second line e.g. "AI Confidence Cohort"
+    subtitle    — small grey caps   e.g. "COHORT 1 · MARCH 2026"
+    body_html   — pre-rendered HTML inserted into the body cell
+    step_badge  — used as preheader text (hidden from visual render)
+    """
+    brand_logo = logo_url()
     return f"""<!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>{title}</title>
-  <style>
-    body {{
-      margin: 0;
-      padding: 0;
-      background: #e5e7eb;
-      font-family: Arial, Helvetica, sans-serif;
-      color: #e5e7eb;
-    }}
-    .outer {{
-      width: 100%;
-      padding: 16px 0;
-      background: #e5e7eb;
-    }}
-    .card {{
-      width: 640px;
-      max-width: 640px;
-      margin: 0 auto;
-      background: #050608;
-      border: 1px solid #0f172a;
-      border-radius: 12px;
-      overflow: hidden;
-    }}
-    .hero {{
-      padding: 26px 28px 12px;
-      text-align: center;
-    }}
-    .logo-row {{
-      margin: 0 auto 12px;
-    }}
-    .logo {{
-      display: block;
-      width: 84px;
-      max-width: 84px;
-      height: auto;
-      margin: 0 auto;
-      border: 0;
-    }}
-    .blue-line {{
-      height: 1px;
-      border: 0;
-      margin: 0 0 14px;
-      background: #13d7d0;
-    }}
-    .hero h1 {{
-      margin: 0;
-      font-size: 38px;
-      line-height: 1.2;
-      color: #f9fafb;
-      font-weight: 800;
-    }}
-    .hero .subtitle {{
-      margin: 8px 0 0;
-      color: #2de2dc;
-      font-size: 12px;
-      letter-spacing: 1px;
-      font-weight: 700;
-      text-transform: uppercase;
-    }}
-    .preheader {{
-      display: none;
-      max-height: 0;
-      overflow: hidden;
-      opacity: 0;
-      color: transparent;
-    }}
-    .body {{
-      padding: 24px 30px 30px;
-      font-size: 15px;
-      line-height: 1.65;
-      color: #d1d5db;
-    }}
-    .body p {{
-      margin: 0 0 12px;
-    }}
-    .body strong {{
-      color: #f9fafb;
-    }}
-    .panel {{
-      border: 1px solid #1f2937;
-      background: #0b0f14;
-      border-radius: 10px;
-      padding: 14px 16px;
-      margin: 16px 0;
-    }}
-    .cta {{
-      display: inline-block;
-      background: #2de2dc;
-      color: #041014 !important;
-      text-decoration: none;
-      border-radius: 999px;
-      padding: 14px 30px;
-      font-weight: 800;
-      font-size: 16px;
-      letter-spacing: 0.2px;
-      margin: 10px 0 18px;
-    }}
-    .note {{
-      color: #9ca3af;
-      font-size: 13px;
-    }}
-    .footer-divider {{
-      height: 1px;
-      background: #111827;
-      margin: 24px 0 18px;
-      border: 0;
-    }}
-    .footer {{
-      color: #9ca3af;
-      font-size: 12px;
-      text-align: center;
-    }}
-    .img {{
-      width: 100%;
-      max-width: 560px;
-      border-radius: 10px;
-      border: 1px solid #334155;
-      display: block;
-      margin: 10px auto;
-      height: auto;
-    }}
-    .social {{
-      margin: 16px 0 8px;
-      text-align: center;
-    }}
-    .social a {{
-      display: inline-block;
-      width: 26px;
-      height: 26px;
-      line-height: 26px;
-      text-align: center;
-      border-radius: 999px;
-      margin: 0 5px;
-      text-decoration: none;
-      font-weight: 700;
-      font-size: 12px;
-      color: #f8fafc;
-      background: #1f2937;
-    }}
-    .social .ig {{ background: #e1306c; }}
-    .social .x {{ background: #111827; border: 1px solid #374151; }}
-    .social .wa {{ background: #16a34a; }}
-    .social .dc {{ background: #5865f2; }}
-    @media only screen and (max-width: 700px) {{
-      .outer {{
-        padding: 0;
-      }}
-      .card {{
-        width: 100% !important;
-        max-width: 100% !important;
-        border-radius: 0 !important;
-        border-left: 0;
-        border-right: 0;
-      }}
-      .hero h1 {{
-        font-size: 32px;
-      }}
-      .body {{
-        padding: 20px 18px 24px;
-        font-size: 14px;
-      }}
-    }}
-  </style>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <title>{title} {title_accent}</title>
 </head>
-<body>
-  <div class="preheader">{step_badge}</div>
-  <div class="outer">
-    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
-      <tr>
-        <td align="center">
-          <div class="card">
-            <div class="hero">
-              <table role="presentation" cellpadding="0" cellspacing="0" border="0" class="logo-row">
+<body style="margin:0;padding:0;background:#ffffff;">
+  <!-- preheader -->
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0;font-size:1px;color:transparent;">{step_badge}</div>
+
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background:#ffffff;">
+    <tr>
+      <td align="center" style="padding:32px 12px;">
+
+        <!-- card — dark background, rounded, no outer dark container -->
+        <table width="600" cellpadding="0" cellspacing="0" border="0"
+               style="background:#0a0a0a;border-radius:16px;overflow:hidden;max-width:600px;width:100%;">
+
+          <!-- ── HEADER ── -->
+          <tr>
+            <td align="center" style="padding:52px 40px 32px;">
+              <img src="{brand_logo}" width="96" alt="K2M"
+                   style="display:block;margin:0 auto 28px;width:96px;height:auto;border:0;" />
+              <!-- separator with gradient fade at both ends -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                  <td><img class="logo" src="{brand_logo_url}" alt="K2M logo" width="84" /></td>
+                  <td height="1" style="background:linear-gradient(to right,transparent,#2de2dc 25%,#2de2dc 75%,transparent);font-size:1px;line-height:1px;">&nbsp;</td>
                 </tr>
               </table>
-              <hr class="blue-line" />
-              <h1>{title}</h1>
-              <p class="subtitle">{subtitle}</p>
-            </div>
-            <div class="body">
+              <p style="margin:24px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:36px;
+                         font-weight:800;color:#f9fafb;line-height:1.15;text-align:center;">{title}</p>
+              <p style="margin:4px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:36px;
+                         font-weight:800;color:#2de2dc;line-height:1.15;text-align:center;">{title_accent}</p>
+              <p style="margin:16px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:11px;
+                         font-weight:700;letter-spacing:2.5px;color:#6b7280;text-transform:uppercase;
+                         text-align:center;">{subtitle}</p>
+            </td>
+          </tr>
+
+          <!-- ── BODY ── -->
+          <tr>
+            <td style="padding:8px 44px 44px;font-family:Arial,Helvetica,sans-serif;
+                        font-size:15px;line-height:1.75;color:#e5e7eb;">
               {body_html}
-              <hr class="footer-divider" />
-              <div class="footer">
-                <div class="social">
-                  <a class="ig" href="{{{{params.instagram_url}}}}">📸</a>
-                  <a class="x" href="{{{{params.x_url}}}}">X</a>
-                  <a class="wa" href="{{{{params.whatsapp_url}}}}">💬</a>
-                  <a class="dc" href="{{{{params.discord_url}}}}">🎮</a>
-                </div>
-                <div>Nairobi, Kenya</div>
-                Trevor from K2M &lt;trevor@k2mlabs.com&gt;
-              </div>
-            </div>
-          </div>
-        </td>
-      </tr>
-    </table>
-  </div>
+
+              <!-- ── FOOTER ── -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr><td height="1" style="background:#1f2937;font-size:1px;line-height:1px;margin:28px 0;">&nbsp;</td></tr>
+              </table>
+              <br />
+
+              <!-- social icons — glassmorphism circles + simpleicons CDN brand marks -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center" style="padding-bottom:14px;">
+                    <table cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <!-- Instagram — rose glass -->
+                        <td style="padding:0 7px;">
+                          <a href="{{{{params.instagram_url}}}}"
+                             style="display:inline-block;width:34px;height:34px;border-radius:50%;background:rgba(225,48,108,0.14);border:1.5px solid rgba(225,48,108,0.55);text-decoration:none;text-align:center;line-height:34px;">
+                            <img src="https://cdn.simpleicons.org/instagram/ffffff" width="16" height="16" alt="Instagram"
+                                 style="vertical-align:middle;display:inline;border:0;" />
+                          </a>
+                        </td>
+                        <!-- X / Twitter — white glass -->
+                        <td style="padding:0 7px;">
+                          <a href="{{{{params.x_url}}}}"
+                             style="display:inline-block;width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,0.07);border:1.5px solid rgba(255,255,255,0.22);text-decoration:none;text-align:center;line-height:34px;">
+                            <img src="https://cdn.simpleicons.org/x/ffffff" width="16" height="16" alt="X"
+                                 style="vertical-align:middle;display:inline;border:0;" />
+                          </a>
+                        </td>
+                        <!-- WhatsApp — green glass -->
+                        <td style="padding:0 7px;">
+                          <a href="{{{{params.whatsapp_url}}}}"
+                             style="display:inline-block;width:34px;height:34px;border-radius:50%;background:rgba(37,211,102,0.13);border:1.5px solid rgba(37,211,102,0.55);text-decoration:none;text-align:center;line-height:34px;">
+                            <img src="https://cdn.simpleicons.org/whatsapp/ffffff" width="16" height="16" alt="WhatsApp"
+                                 style="vertical-align:middle;display:inline;border:0;" />
+                          </a>
+                        </td>
+                        <!-- Discord — blurple glass -->
+                        <td style="padding:0 7px;">
+                          <a href="{{{{params.discord_url}}}}"
+                             style="display:inline-block;width:34px;height:34px;border-radius:50%;background:rgba(88,101,242,0.14);border:1.5px solid rgba(88,101,242,0.55);text-decoration:none;text-align:center;line-height:34px;">
+                            <img src="https://cdn.simpleicons.org/discord/ffffff" width="16" height="16" alt="Discord"
+                                 style="vertical-align:middle;display:inline;border:0;" />
+                          </a>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="text-align:center;font-family:Arial,Helvetica,sans-serif;font-size:12px;
+                          color:#6b7280;margin:0 0 4px;">Nairobi, Kenya</p>
+              <p style="text-align:center;font-family:Arial,Helvetica,sans-serif;font-size:11px;
+                          color:#4b5563;margin:0;">
+                &#169; 2026 K2M Labs. All rights reserved.<br />
+                You're receiving this because you enrolled in the AI Confidence Cohort.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+        <!-- /card -->
+
+      </td>
+    </tr>
+  </table>
 </body>
 </html>"""
 
+
+# ---------------------------------------------------------------------------
+# Template specs
+# ---------------------------------------------------------------------------
 
 @dataclass
 class TemplateSpec:
@@ -290,86 +246,229 @@ def build_template_specs(screenshot_uri: str) -> List[TemplateSpec]:
         "discord_url": "https://discord.gg/example-invite",
     }
 
-    email_1_body = f"""
-<p>Hey {{{{params.first_name}}}}! 👋</p>
-<p>You completed Step 1. Join Discord to unlock Step 2 and keep momentum.</p>
-<p><a class="cta" href="{{{{params.discord_invite_link}}}}">🚀 Join the Discord Now</a></p>
-<div class="panel">
-  <p><strong>New to Discord?</strong> Use this quick map before you click around.</p>
-  <img class="img" src="{screenshot_uri}" alt="Annotated Discord orientation visual" />
-  <p>✨ Your channels are in the left sidebar.</p>
-  <p>✨ KIRA messages you in DMs.</p>
-  <p>✨ Server name at the top: K2M Cohort #1.</p>
-</div>
-<p class="note">If the link expires, reply to this email for a fresh invite.</p>
-"""
+    # ── Email #1 — Discord Invite ────────────────────────────────────────────
+    email_1_body = f"""<p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#d1d5db;">
+  Hey {{{{params.first_name}}}}! &#128075;
+</p>
+<p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#d1d5db;">
+  You've just taken the first step toward <strong style="color:#f9fafb;">wielding AI with real confidence.</strong>
+  Over the next 8 weeks, you'll move from copying prompts to actually <em>thinking</em> with AI &#8212;
+  guided by mentors, frameworks, and a community that has your back.
+</p>
+<p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#d1d5db;">
+  Here's what to expect:
+</p>
+{_bullet("Pause &#8594; Context &#8594; Iterate", "&#8212; the thinking habits that change everything")}
+{_bullet("Live weekly sessions", "with AI practitioners and mentors")}
+{_bullet("A private Discord community", "for support, accountability &amp; collaboration")}
+<p style="margin:14px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#d1d5db;">
+  Your first move? <strong style="color:#f9fafb;">Join our Discord</strong> &#8212; it's where everything happens.
+</p>
+<table align="center" cellpadding="0" cellspacing="0" border="0" style="margin:24px auto 8px;">
+  <tr>
+    <td align="center" bgcolor="#2de2dc" style="border-radius:999px;">
+      <a href="{{{{params.discord_invite_link}}}}"
+         style="display:inline-block;padding:16px 40px;font-family:Arial,Helvetica,sans-serif;
+                font-size:16px;font-weight:800;color:#041014;text-decoration:none;
+                border-radius:999px;letter-spacing:0.2px;">&#128640; Join the Discord Now</a>
+    </td>
+  </tr>
+</table>
+<p style="margin:24px 0 10px;font-family:Arial,Helvetica,sans-serif;font-size:14px;
+           line-height:1.6;color:#9ca3af;">
+  <strong style="color:#d1d5db;">New to Discord?</strong> Here's a quick map of the server to help you find your way.
+</p>
+<img src="{screenshot_uri}" alt="Annotated Discord server map" width="520"
+     style="display:block;width:100%;max-width:520px;height:auto;border-radius:10px;
+            border:1px solid #1f2937;margin:0 auto 14px;" />
+<p style="margin:0 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#9ca3af;">
+  &#10024; Your channels are in the left sidebar.
+</p>
+<p style="margin:0 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#9ca3af;">
+  &#10024; KIRA &#8212; our AI mentor &#8212; will message you directly in DMs.
+</p>
+<p style="margin:0 0 20px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#9ca3af;">
+  &#10024; Look for the server named: <strong style="color:#d1d5db;">K2M Cohort #1</strong>.
+</p>
+<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.6;color:#6b7280;">
+  If the invite link expires before you get a chance to join, just reply to this email and we'll send you a fresh one.
+</p>"""
 
-    email_15_body = """
-<p>Hey {{params.first_name}}! ⏰</p>
-<p>This is your 48-hour check-in. Most students need a second tap to complete Discord join.</p>
-<p><a class="cta" href="{{params.discord_invite_link}}">🚀 Join Discord Now</a></p>
-<div class="panel">
-  <p><strong>Need help?</strong> Reply with "help" and a facilitator will walk you through it.</p>
-</div>
-"""
+    # ── Email #1.5 — 48h Nudge ───────────────────────────────────────────────
+    email_15_body = """<p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#d1d5db;">
+  Hey {{params.first_name}}! &#9200;
+</p>
+<p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#d1d5db;">
+  It's been 48 hours since you registered, and I just wanted to make sure nothing slipped through the cracks.
+</p>
+<p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#d1d5db;">
+  Your spot in the <strong style="color:#f9fafb;">AI Confidence Cohort</strong> is still reserved &#8212;
+  but the next step is joining our Discord, where the real journey begins. It only takes two minutes.
+</p>
+<table align="center" cellpadding="0" cellspacing="0" border="0" style="margin:24px auto 8px;">
+  <tr>
+    <td align="center" bgcolor="#2de2dc" style="border-radius:999px;">
+      <a href="{{params.discord_invite_link}}"
+         style="display:inline-block;padding:16px 40px;font-family:Arial,Helvetica,sans-serif;
+                font-size:16px;font-weight:800;color:#041014;text-decoration:none;
+                border-radius:999px;letter-spacing:0.2px;">&#128640; Join Discord Now</a>
+    </td>
+  </tr>
+</table>
+<p style="margin:20px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.6;color:#6b7280;">
+  Need a hand? Just reply to this email with &#8220;help&#8221; and someone from our team will walk you through it personally.
+</p>"""
 
-    email_175_body = """
-<p>Hey {{params.first_name}}! ⏳</p>
-<p>This is your 5-day final reminder for Step 2.</p>
-<p><a class="cta" href="{{params.discord_invite_link}}">🚀 Final Discord Link</a></p>
-<div class="panel">
-  <p>Your invite may expire soon. Reply and a facilitator can refresh it.</p>
-</div>
-"""
+    # ── Email #1.75 — Day-5 Final Nudge ─────────────────────────────────────
+    email_175_body = """<p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#d1d5db;">
+  Hey {{params.first_name}}! &#9203;
+</p>
+<p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#d1d5db;">
+  This is your final reminder. It's been 5 days since you registered for the
+  <strong style="color:#f9fafb;">AI Confidence Cohort</strong>, and your Discord invite is about to expire.
+</p>
+<p style="margin:0 0 20px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#d1d5db;">
+  We'd hate for you to miss out on what we've built for you.
+</p>
+<table align="center" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto 8px;">
+  <tr>
+    <td align="center" bgcolor="#2de2dc" style="border-radius:999px;">
+      <a href="{{params.discord_invite_link}}"
+         style="display:inline-block;padding:16px 40px;font-family:Arial,Helvetica,sans-serif;
+                font-size:16px;font-weight:800;color:#041014;text-decoration:none;
+                border-radius:999px;letter-spacing:0.2px;">&#128640; Join Discord &#8212; Final Link</a>
+    </td>
+  </tr>
+</table>
+<p style="margin:20px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.6;color:#6b7280;">
+  If the link has already expired, just reply and a facilitator will send you a fresh one within a few hours.
+</p>"""
 
-    email_2_body = """
-<p>Hey {{params.first_name}}! 💳</p>
-<p>Your enrollment profile is complete. Next: submit payment and your M-Pesa code.</p>
-<p><a class="cta" href="{{params.mpesa_submit_url}}">✅ Submit M-Pesa Code</a></p>
-<div class="panel">
-  <p><strong>M-Pesa tutorial:</strong> <a href="{{params.mpesa_tutorial_url}}">{{params.mpesa_tutorial_url}}</a></p>
-  <p><strong>Refund policy:</strong> Full refund available if requested 7+ days before cohort start ({{params.week1_start_date}}). Contact a facilitator for help.</p>
-</div>
-"""
+    # ── Email #2 — Payment Instructions ─────────────────────────────────────
+    email_2_body = """<p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#d1d5db;">
+  Hey {{params.first_name}}! &#128179;
+</p>
+<p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#d1d5db;">
+  You're almost there. Your enrollment profile is complete, and there's just one thing left to do:
+  submit your M-Pesa payment to lock in your spot.
+</p>
+<p style="margin:0 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#d1d5db;">
+  <strong style="color:#f9fafb;">Amount:</strong> KES 5,000
+</p>
+<p style="margin:0 0 20px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#d1d5db;">
+  <strong style="color:#f9fafb;">Deadline:</strong> Before the cohort starts on {{params.week1_start_date}}
+</p>
+<table align="center" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto 8px;">
+  <tr>
+    <td align="center" bgcolor="#2de2dc" style="border-radius:999px;">
+      <a href="{{params.mpesa_submit_url}}"
+         style="display:inline-block;padding:16px 40px;font-family:Arial,Helvetica,sans-serif;
+                font-size:16px;font-weight:800;color:#041014;text-decoration:none;
+                border-radius:999px;letter-spacing:0.2px;">&#9989; Submit M-Pesa Payment</a>
+    </td>
+  </tr>
+</table>
+<p style="margin:20px 0 6px;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.6;color:#9ca3af;">
+  Need help completing the payment? We've put together a short tutorial to walk you through it:
+  <a href="{{params.mpesa_tutorial_url}}"
+     style="color:#2de2dc;text-decoration:none;">M-Pesa Payment Guide &#8250;</a>
+</p>
+<p style="margin:16px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.6;color:#6b7280;">
+  <strong style="color:#9ca3af;">Refund policy:</strong> You're eligible for a full refund if you request it
+  at least 7 days before the cohort starts ({{params.week1_start_date}}). Just reply to this email or reach out
+  to a facilitator and we'll sort it out &#8212; no questions asked.
+</p>"""
 
-    email_3_body = """
-<p>Hey {{params.first_name}}! ✅</p>
-<p>We received your M-Pesa code and queued verification.</p>
-<div class="panel">
-  <p>Step 4 is now in facilitator review (usually within 24 hours).</p>
-</div>
-"""
+    # ── Email #3 — M-Pesa Received ───────────────────────────────────────────
+    email_3_body = """<p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#d1d5db;">
+  Hey {{params.first_name}}! &#9989;
+</p>
+<p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#d1d5db;">
+  We've got your M-Pesa code and it's now in our verification queue.
+  Our team typically confirms payments within <strong style="color:#f9fafb;">24 hours</strong>.
+</p>
+<p style="margin:0 0 20px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#d1d5db;">
+  You don't need to do anything right now &#8212; we'll send you a confirmation email the moment
+  your payment clears and your spot is officially activated.
+</p>
+<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#d1d5db;">
+  Sit tight, you're almost in! &#127919;
+</p>"""
 
-    email_4_body = """
-<p>Hey {{params.first_name}}! 🎉</p>
-<p>Your payment is confirmed. You are fully activated in Cohort 1.</p>
-<div class="panel">
-  <p><strong>First live session:</strong> {{params.first_session_date}} at 6 PM EAT</p>
-  <p><strong>Week 1 starts:</strong> {{params.week1_start_date}}</p>
-  <p><strong>Your cluster:</strong> {{params.cluster_name}}</p>
-</div>
-<p><a class="cta" href="{{params.discord_invite_link}}">🚀 Open Discord</a></p>
-"""
+    # ── Email #4 — Activation Welcome ───────────────────────────────────────
+    # GAP FIX: Sprint spec requires refund policy in Email #4. Added below.
+    email_4_body = """<p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#d1d5db;">
+  Hey {{params.first_name}}! &#127881;
+</p>
+<p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#d1d5db;">
+  Your payment is confirmed and your spot is <strong style="color:#f9fafb;">officially activated.</strong>
+  Welcome to the AI Confidence Cohort &#8212; we're genuinely excited to have you.
+</p>
+<p style="margin:0 0 10px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#d1d5db;">
+  Here's what's coming up:
+</p>
+<p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#d1d5db;">
+  <span style="color:#2de2dc;font-weight:700;">&#10022;</span>&nbsp;
+  <strong style="color:#f9fafb;">First live session:</strong> {{params.first_session_date}} at 6 PM EAT
+</p>
+<p style="margin:0 0 8px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#d1d5db;">
+  <span style="color:#2de2dc;font-weight:700;">&#10022;</span>&nbsp;
+  <strong style="color:#f9fafb;">Week 1 begins:</strong> {{params.week1_start_date}}
+</p>
+<p style="margin:0 0 20px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#d1d5db;">
+  <span style="color:#2de2dc;font-weight:700;">&#10022;</span>&nbsp;
+  <strong style="color:#f9fafb;">Your cluster:</strong> {{params.cluster_name}}
+</p>
+<p style="margin:0 0 20px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#d1d5db;">
+  Everything happens in Discord. Your KIRA mentor will DM you with your personalised
+  onboarding journey as soon as you're in.
+</p>
+<table align="center" cellpadding="0" cellspacing="0" border="0" style="margin:0 auto 8px;">
+  <tr>
+    <td align="center" bgcolor="#2de2dc" style="border-radius:999px;">
+      <a href="{{params.discord_invite_link}}"
+         style="display:inline-block;padding:16px 40px;font-family:Arial,Helvetica,sans-serif;
+                font-size:16px;font-weight:800;color:#041014;text-decoration:none;
+                border-radius:999px;letter-spacing:0.2px;">&#128640; Open Discord</a>
+    </td>
+  </tr>
+</table>
+<p style="margin:20px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.6;color:#6b7280;">
+  <strong style="color:#9ca3af;">Cancellation reminder:</strong> You're entitled to a full refund if
+  requested at least 7 days before the start date ({{params.week1_start_date}}). After that, all payments
+  are final. If anything comes up, just reply here and we'll take care of you.
+</p>"""
 
-    email_5_body = """
-<p>Hey {{params.first_name}}! 📝</p>
-<p>Thanks for your interest. Cohort 1 is currently full.</p>
-<div class="panel">
-  <p>You are <strong>#{{params.waitlist_number}}</strong> on the priority waitlist.</p>
-  <p>We will contact you first when the next intake opens.</p>
-</div>
-"""
+    # ── Email #5 — Waitlist ──────────────────────────────────────────────────
+    email_5_body = """<p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#d1d5db;">
+  Hey {{params.first_name}}! &#128203;
+</p>
+<p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#d1d5db;">
+  Cohort 1 is currently full, but we've added you to our
+  <strong style="color:#f9fafb;">priority waitlist</strong>.
+  You're <strong style="color:#2de2dc;">&#35;{{params.waitlist_number}}</strong> on the list.
+</p>
+<p style="margin:0 0 14px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#d1d5db;">
+  When a spot opens up &#8212; or when we open Cohort 2 &#8212; you'll be the first to know.
+  We'll also give you priority access before we open registration to the public.
+</p>
+<p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.7;color:#d1d5db;">
+  Keep an eye on your inbox. We'll be in touch. &#128075;<br />
+  <span style="color:#9ca3af;">&#8212; Trevor &amp; the K2M team</span>
+</p>"""
 
+    # ── Assemble TemplateSpec list ───────────────────────────────────────────
     return [
         TemplateSpec(
             key="email_1",
             env_var="BREVO_TEMPLATE_EMAIL_1",
             name="K2M Cohort 1 - Email #1 Discord Invite",
-            subject="K2M - Step 1 done! Join Discord (Step 2 of 4)",
+            subject="Your spot in the AI Confidence Cohort is waiting \U0001f680",
             html_content=html_shell(
                 step_badge="Step 2 of 4",
-                title="Join Discord to Continue",
-                subtitle="Your onboarding is in motion.",
+                title="Welcome to the",
+                title_accent="AI Confidence Cohort",
+                subtitle="COHORT 1 \u00b7 MARCH 2026",
                 body_html=email_1_body,
             ),
             test_params={
@@ -382,11 +481,12 @@ def build_template_specs(screenshot_uri: str) -> List[TemplateSpec]:
             key="email_1_5",
             env_var="BREVO_TEMPLATE_EMAIL_1_5",
             name="K2M Cohort 1 - Email #1.5 48h Nudge",
-            subject="K2M - Step 2 reminder (48h): Join Discord",
+            subject="We're holding your spot \u2014 join Discord to continue (Step 2 of 4)",
             html_content=html_shell(
                 step_badge="Step 2 of 4",
-                title="48h Reminder",
-                subtitle="We are holding your spot while you join Discord.",
+                title="We're Holding Your",
+                title_accent="Spot for You",
+                subtitle="STEP 2 OF 4",
                 body_html=email_15_body,
             ),
             test_params={
@@ -399,11 +499,12 @@ def build_template_specs(screenshot_uri: str) -> List[TemplateSpec]:
             key="email_1_75",
             env_var="BREVO_TEMPLATE_EMAIL_1_75",
             name="K2M Cohort 1 - Email #1.75 Day-5 Final Nudge",
-            subject="K2M - Step 2 final reminder (Day 5)",
+            subject="Last chance \u2014 your Discord invite expires soon (Step 2 of 4)",
             html_content=html_shell(
                 step_badge="Step 2 of 4",
-                title="Day-5 Final Reminder",
-                subtitle="Complete Discord join to keep momentum.",
+                title="Your Invite",
+                title_accent="Expires Soon",
+                subtitle="STEP 2 OF 4 \u00b7 FINAL REMINDER",
                 body_html=email_175_body,
             ),
             test_params={
@@ -416,11 +517,12 @@ def build_template_specs(screenshot_uri: str) -> List[TemplateSpec]:
             key="email_2",
             env_var="BREVO_TEMPLATE_EMAIL_2",
             name="K2M Cohort 1 - Email #2 Payment Instructions",
-            subject="K2M - Step 3 of 4: Complete your payment",
+            subject="One step left \u2014 complete your payment to lock in your spot (Step 3 of 4)",
             html_content=html_shell(
                 step_badge="Step 3 of 4",
-                title="Payment Instructions",
-                subtitle="Submit your M-Pesa payment code.",
+                title="One Step Away",
+                title_accent="From Your Cohort",
+                subtitle="STEP 3 OF 4",
                 body_html=email_2_body,
             ),
             test_params={
@@ -435,11 +537,12 @@ def build_template_specs(screenshot_uri: str) -> List[TemplateSpec]:
             key="email_3",
             env_var="BREVO_TEMPLATE_EMAIL_3",
             name="K2M Cohort 1 - Email #3 M-Pesa Received",
-            subject="K2M - Step 4 pending: M-Pesa code received",
+            subject="Payment received \u2014 verification in progress (Step 4 of 4)",
             html_content=html_shell(
                 step_badge="Step 4 of 4",
-                title="M-Pesa Code Received",
-                subtitle="Verification queue has started.",
+                title="Payment",
+                title_accent="Received \u2713",
+                subtitle="STEP 4 OF 4",
                 body_html=email_3_body,
             ),
             test_params={
@@ -451,11 +554,12 @@ def build_template_specs(screenshot_uri: str) -> List[TemplateSpec]:
             key="email_4",
             env_var="BREVO_TEMPLATE_EMAIL_4",
             name="K2M Cohort 1 - Email #4 Activation Welcome",
-            subject="K2M - Step 4 complete: You're in",
+            subject="You're in \u2014 Welcome to Cohort 1! \U0001f389",
             html_content=html_shell(
                 step_badge="Step 4 complete",
-                title="Welcome to Cohort 1",
-                subtitle="Your access is now active.",
+                title="Welcome to",
+                title_accent="Cohort 1",
+                subtitle="YOU\u2019RE OFFICIALLY IN",
                 body_html=email_4_body,
             ),
             test_params={
@@ -471,11 +575,12 @@ def build_template_specs(screenshot_uri: str) -> List[TemplateSpec]:
             key="email_5",
             env_var="BREVO_TEMPLATE_EMAIL_5",
             name="K2M Cohort 1 - Email #5 Waitlist Confirmation",
-            subject="K2M - Waitlist confirmation",
+            subject="You're on the priority list \u2014 we'll notify you first",
             html_content=html_shell(
                 step_badge="Waitlist",
-                title="You're on the Priority List",
-                subtitle="We will notify you first when seats open.",
+                title="You're on the",
+                title_accent="Priority List",
+                subtitle="COHORT 1 WAITLIST",
                 body_html=email_5_body,
             ),
             test_params={
@@ -780,4 +885,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-

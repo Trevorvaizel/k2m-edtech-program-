@@ -35,6 +35,7 @@ from cis_controller.onboarding import (
     is_skip_signal,
     parse_stop0_profile_answers,
 )
+from cis_controller.welcome_lounge import upsert_welcome_lounge_content
 from cis_controller.router import route_slash_command, setup_bot_events, set_runtime_services
 
 # Load environment variables
@@ -432,6 +433,46 @@ async def _link_member_identity_to_roster(
     )
 
 
+def _select_unique_recent_unlinked_student(store, window_minutes: int = 90):
+    """
+    Invite-diff fallback candidate selector.
+
+    Handles the edge case where a one-use invite is created after the last
+    snapshot and consumed/deleted before on_member_join diffing sees it.
+    Returns a student row only when exactly one recent unlinked candidate exists.
+    """
+    if store is None:
+        return None
+
+    conn = getattr(store, "conn", None) or getattr(store, "db", None)
+    if conn is None or not hasattr(conn, "execute"):
+        return None
+
+    minutes = max(5, min(180, int(window_minutes)))
+    query = f"""
+        SELECT *
+          FROM students
+         WHERE (discord_id IS NULL
+                OR discord_id = ''
+                OR discord_id LIKE '__pending__%')
+           AND invite_code IS NOT NULL
+           AND invite_code != ''
+           AND created_at >= datetime('now', '-{minutes} minutes')
+         ORDER BY created_at DESC
+         LIMIT 2
+    """
+
+    try:
+        rows = conn.execute(query).fetchall()
+    except Exception as exc:
+        logger.warning("Invite fallback candidate scan failed: %s", exc)
+        return None
+
+    if len(rows) == 1:
+        return rows[0]
+    return None
+
+
 def build_status_embed() -> discord.Embed:
     """Build a shared status embed for both prefix and slash commands."""
     embed = discord.Embed(
@@ -678,6 +719,35 @@ async def on_ready():
             logger.warning("Daily prompt scheduler not started: missing DISCORD_GUILD_ID")
     except Exception as exc:
         logger.error("Failed to start daily prompt scheduler: %s", exc, exc_info=True)
+
+    # Task 7.12: ensure #welcome-lounge is seeded with pinned status + previews.
+    try:
+        lounge_guild_id = None
+        if DISCORD_GUILD_ID:
+            lounge_guild_id = int(DISCORD_GUILD_ID)
+        elif bot.guilds:
+            lounge_guild_id = int(bot.guilds[0].id)
+
+        lounge_result = await upsert_welcome_lounge_content(
+            bot=bot,
+            store=runtime_store,
+            guild_id=lounge_guild_id,
+            include_previews=True,
+        )
+        if lounge_result.get("ok"):
+            logger.info(
+                "Task 7.12: welcome-lounge initialized (confirmed=%s, previews_added=%s, status_changed=%s)",
+                lounge_result.get("confirmed_count"),
+                lounge_result.get("preview_posts_created"),
+                lounge_result.get("status_changed"),
+            )
+        else:
+            logger.warning(
+                "Task 7.12: welcome-lounge initialization skipped (%s)",
+                lounge_result.get("reason"),
+            )
+    except Exception as exc:
+        logger.error("Task 7.12: welcome-lounge initialization failed: %s", exc, exc_info=True)
 
     # Optional lightweight unsubscribe endpoint for parent email links.
     enable_interest_api = os.getenv(
@@ -1490,6 +1560,22 @@ async def on_member_join(member: discord.Member):
                 store, "link_student_by_invite"
             )
 
+            if not used_code:
+                fallback_student = _select_unique_recent_unlinked_student(
+                    store,
+                    window_minutes=90,
+                )
+                fallback_code = str(
+                    _row_value(fallback_student, "invite_code", "")
+                ).strip()
+                if fallback_code:
+                    used_code = fallback_code
+                    logger.warning(
+                        "Invite diff fallback engaged: discord_id=%s invite_code=%s",
+                        member.id,
+                        used_code,
+                    )
+
             if used_code:
                 if has_invite_methods:
                     student = store.get_student_by_invite_code(used_code)
@@ -1569,6 +1655,8 @@ async def on_member_join(member: discord.Member):
                     "Quick Discord guide on mobile:\n"
                     "Tap the menu icon (top left) to see channels.\n"
                     "Tap the inbox icon to see my messages.\n"
+                    "Swipe right to return to the channel list.\n"
+                    "The most important place right now is your DM with me (here).\n"
                     "I will guide you through everything step by step.\n\n"
                     "You are now on value-first onboarding:\n"
                     "Stop 1 -> Stop 2 -> Stop 3 -> Stop 0 (optional profile)\n\n"

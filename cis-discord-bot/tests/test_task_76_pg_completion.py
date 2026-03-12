@@ -205,6 +205,40 @@ async def test_scheduler_runs_nightly_sync_once_at_0010():
     assert scheduler.run_nightly_sheets_sync.await_count == 2
 
 
+@pytest.mark.asyncio
+async def test_scheduler_runs_welcome_lounge_refresh_once_at_2310():
+    bot = MagicMock()
+    bot.get_guild = MagicMock(return_value=MagicMock())
+
+    with patch("scheduler.scheduler.DailyPromptLibrary"):
+        scheduler = DailyPromptScheduler(
+            bot=bot,
+            guild_id=123456,
+            channel_mapping={},
+            cohort_start_date="2026-02-01",
+            store=MagicMock(),
+        )
+
+    scheduler.get_week_day = MagicMock(return_value=(1, WeekDay.MONDAY))
+    scheduler.post_welcome_lounge_status_refresh = AsyncMock()
+
+    with patch("scheduler.scheduler.datetime") as mock_datetime:
+        mock_datetime.now.return_value = datetime(
+            2026, 3, 5, 23, 10, tzinfo=scheduler.cohort_start_date.tzinfo
+        )
+        await scheduler.check_and_post()
+        await scheduler.check_and_post()
+
+        assert scheduler.post_welcome_lounge_status_refresh.await_count == 1
+
+        mock_datetime.now.return_value = datetime(
+            2026, 3, 6, 23, 10, tzinfo=scheduler.cohort_start_date.tzinfo
+        )
+        await scheduler.check_and_post()
+
+    assert scheduler.post_welcome_lounge_status_refresh.await_count == 2
+
+
 def test_database_factory_selects_pg_store_when_database_url_is_postgres():
     sentinel = object()
     with patch("database.pg_store.get_pg_store", return_value=sentinel) as mock_get_pg_store:
@@ -252,3 +286,55 @@ def test_pg_connection_wrapper_cursor_supports_sqlite_style_calls():
     assert row == {"ok": True}
     assert executed["sql"] == "SELECT 1 WHERE id = %s"
     assert executed["params"] == (7,)
+
+
+def test_pg_store_realign_serial_sequences_advances_serials():
+    from database.pg_store import PgStudentStateStore
+
+    calls = []
+
+    class _FakeCursor:
+        def execute(self, query, params=None):
+            calls.append((query, params))
+
+        def fetchall(self):
+            return [("observability_events", "id")]
+
+    class _FakeConn:
+        def cursor(self):
+            return _FakeCursor()
+
+    store = object.__new__(PgStudentStateStore)
+    store.conn = types.SimpleNamespace(_conn=_FakeConn())
+
+    realigned = store._realign_serial_sequences()
+
+    assert realigned == 1
+    assert len(calls) == 2
+    assert calls[1][1] == ("observability_events", "id")
+
+
+def test_pg_store_get_confirmed_student_count_uses_confirmed_and_linked_filters():
+    from database.pg_store import PgStudentStateStore
+
+    calls = []
+
+    class _FakeResult:
+        def fetchone(self):
+            return {"count": 11}
+
+    class _FakeConn:
+        def execute(self, query, params=()):
+            calls.append((query, params))
+            return _FakeResult()
+
+    store = object.__new__(PgStudentStateStore)
+    store.conn = _FakeConn()
+
+    count = store.get_confirmed_student_count()
+
+    assert count == 11
+    assert len(calls) == 1
+    query = calls[0][0]
+    assert "LOWER(COALESCE(payment_status" in query
+    assert "discord_id NOT LIKE '__pending__%'" in query

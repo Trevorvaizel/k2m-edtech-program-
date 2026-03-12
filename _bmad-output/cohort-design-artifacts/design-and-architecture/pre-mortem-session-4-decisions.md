@@ -45,9 +45,9 @@ Three themes emerged:
 **Problem:** A student submits the interest form (Stage 1) and gets Brevo Email #1. If they don't click the Discord invite, they become a ghost lead in Google Sheets. There is NO follow-up. Email open-and-act rates are 10–30%; most students need a nudge.
 
 **Decision:**
-- **Email #1.5 (48h nudge):** Sent if Column D is still empty 48 hours after Column G (created_at). Subject: "K2M — Did you get in OK?" Body: "Just checking you got your Discord link. Here it is again: [invite_url]. Need help getting onto Discord? [tutorial_url]"
+- **Email #1.5 (48h nudge):** Sent if Column D is still empty 48 hours after Column N (created_at). Subject: "K2M — Did you get in OK?" Body: "Just checking you got your Discord link. Here it is again: [invite_url]. Need help getting onto Discord? [tutorial_url]"
 - **Email #1.75 (5-day final):** Sent if Column D still empty at day 5. Subject: "K2M — Last chance to secure your spot." Body: "We have limited spots for Cohort 1. Your invite link expires in 2 days. [invite_url]"
-- **Scheduler job:** `check_stage1_dropoff()` — nightly, checks Column D empty + Column G > 48h. Sends appropriate nudge based on days elapsed.
+- **Scheduler job:** `check_stage1_dropoff()` — nightly, checks Column D empty + Column N > 48h. Sends appropriate nudge based on days elapsed.
 - **Stop condition:** Once Column D is populated (student joined Discord), no further nudge emails.
 
 **Sprint task:** 7.9 (new)

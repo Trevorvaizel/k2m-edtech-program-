@@ -7,7 +7,7 @@ Implements Story 5.3 parent email delivery system.
 
 import logging
 import os
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 from dataclasses import dataclass
 from datetime import datetime
 import httpx
@@ -76,6 +76,8 @@ class EmailService:
         from_email: Optional[str] = None,
         from_name: Optional[str] = None,
         reply_to: Optional[str] = None,
+        template_id: Optional[int] = None,
+        template_params: Optional[Dict[str, Any]] = None,
     ) -> EmailResult:
         """
         Send an email using the configured provider.
@@ -88,6 +90,8 @@ class EmailService:
             from_email: Sender email (default from env)
             from_name: Sender name (default from env)
             reply_to: Reply-to address (optional)
+            template_id: Brevo template ID (optional)
+            template_params: Brevo transactional template params (optional)
 
         Returns:
             EmailResult with success status and details
@@ -131,6 +135,8 @@ class EmailService:
                     from_email=from_email,
                     from_name=from_name,
                     reply_to=reply_to,
+                    template_id=template_id,
+                    template_params=template_params,
                 )
             elif self.provider == 'sendgrid':
                 return await self._send_via_sendgrid(
@@ -174,6 +180,8 @@ class EmailService:
         from_email: str,
         from_name: str,
         reply_to: Optional[str],
+        template_id: Optional[int],
+        template_params: Optional[Dict[str, Any]],
     ) -> EmailResult:
         """Send email via Brevo Transactional API."""
         url = f"{self.brevo_base_url}/smtp/email"
@@ -188,11 +196,19 @@ class EmailService:
                 "name": from_name,
             },
             "to": [{"email": to_email}],
-            "subject": subject,
-            "htmlContent": html_content,
         }
-        if text_content:
-            payload["textContent"] = text_content
+        if template_id is not None:
+            payload["templateId"] = int(template_id)
+            if template_params:
+                payload["params"] = template_params
+            # Keep optional subject override support for template sends.
+            if subject:
+                payload["subject"] = subject
+        else:
+            payload["subject"] = subject
+            payload["htmlContent"] = html_content
+            if text_content:
+                payload["textContent"] = text_content
         if reply_to:
             payload["replyTo"] = {"email": reply_to}
 

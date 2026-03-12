@@ -153,6 +153,95 @@ class TestRoleUpgradeEndpoint:
         mock_grant.assert_awaited_once_with("123456789012345678")
 
     @pytest.mark.asyncio
+    async def test_role_upgrade_sends_post_upgrade_dm(self, monkeypatch):
+        monkeypatch.setenv("WEBHOOK_SECRET", SECRET_STR)
+        body = json.dumps({"discord_id": "123456789012345678"}).encode()
+        req = _make_request(body, {"X-K2M-Signature": _sign(body)})
+
+        from cis_controller.internal_api_server import InternalWebhookServer
+
+        bot = MagicMock()
+        user = MagicMock()
+        user.send = AsyncMock()
+        bot.fetch_user = AsyncMock(return_value=user)
+        server = InternalWebhookServer(bot=bot)
+
+        with patch(
+            "cis_controller.internal_api_server._grant_student_role",
+            new_callable=AsyncMock,
+            return_value=(True, ""),
+        ):
+            resp = await server._handle_role_upgrade(req)
+
+        assert resp.status == 200
+        payload = json.loads(resp.body)
+        assert payload["post_upgrade_dm_sent"] is True
+        user.send.assert_awaited_once()
+        sent_text = user.send.await_args_list[0].args[0]
+        assert "#welcome-lounge served its purpose" in sent_text
+
+    @pytest.mark.asyncio
+    async def test_role_upgrade_attempts_guest_role_removal_when_configured(self, monkeypatch):
+        monkeypatch.setenv("WEBHOOK_SECRET", SECRET_STR)
+        monkeypatch.setenv("GUEST_ROLE_ID", "444555666")
+        body = json.dumps({"discord_id": "123456789012345678"}).encode()
+        req = _make_request(body, {"X-K2M-Signature": _sign(body)})
+
+        with patch(
+            "cis_controller.internal_api_server._grant_student_role",
+            new_callable=AsyncMock,
+            return_value=(True, ""),
+        ), patch(
+            "cis_controller.internal_api_server._remove_guest_role",
+            new_callable=AsyncMock,
+            return_value=(True, ""),
+        ) as mock_remove_guest, patch(
+            "cis_controller.internal_api_server._send_role_upgrade_dm",
+            new_callable=AsyncMock,
+            return_value=(True, ""),
+        ):
+            resp = await self._server()._handle_role_upgrade(req)
+
+        assert resp.status == 200
+        mock_remove_guest.assert_awaited_once_with("123456789012345678")
+
+    @pytest.mark.asyncio
+    async def test_role_upgrade_applies_welcome_lounge_lock_when_guest_removal_fails(self, monkeypatch):
+        monkeypatch.setenv("WEBHOOK_SECRET", SECRET_STR)
+        monkeypatch.setenv("GUEST_ROLE_ID", "444555666")
+        body = json.dumps({"discord_id": "123456789012345678"}).encode()
+        req = _make_request(body, {"X-K2M-Signature": _sign(body)})
+
+        from cis_controller.internal_api_server import InternalWebhookServer
+
+        server = InternalWebhookServer(bot=MagicMock())
+
+        with patch(
+            "cis_controller.internal_api_server._grant_student_role",
+            new_callable=AsyncMock,
+            return_value=(True, ""),
+        ), patch(
+            "cis_controller.internal_api_server._remove_guest_role",
+            new_callable=AsyncMock,
+            return_value=(False, "remove failed"),
+        ), patch(
+            "cis_controller.internal_api_server._lock_welcome_lounge_for_member",
+            new_callable=AsyncMock,
+            return_value=(True, ""),
+        ) as mock_lock, patch(
+            "cis_controller.internal_api_server._send_role_upgrade_dm",
+            new_callable=AsyncMock,
+            return_value=(True, ""),
+        ):
+            resp = await server._handle_role_upgrade(req)
+
+        assert resp.status == 200
+        payload = json.loads(resp.body)
+        assert payload["guest_role_removed"] is False
+        assert payload["welcome_lounge_member_lock_applied"] is True
+        mock_lock.assert_awaited_once_with(server._bot, "123456789012345678")
+
+    @pytest.mark.asyncio
     async def test_missing_signature_returns_401(self, monkeypatch):
         monkeypatch.setenv("WEBHOOK_SECRET", SECRET_STR)
         body = json.dumps({"discord_id": "123456789012345678"}).encode()

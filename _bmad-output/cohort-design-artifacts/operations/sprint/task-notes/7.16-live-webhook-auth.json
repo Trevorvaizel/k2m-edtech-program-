@@ -1,0 +1,32 @@
+{
+  "timestamp_utc": "2026-03-12T04:43:26Z",
+  "task_id": "7.16",
+  "base_url": "https://kira-bot-production.up.railway.app",
+  "checks": {
+    "role_upgrade_unsigned": {
+      "status_code": 401,
+      "ok": true
+    },
+    "role_upgrade_signed_invalid_id": {
+      "status_code": 400,
+      "ok": true
+    },
+    "preload_unsigned": {
+      "status_code": 401,
+      "ok": true
+    },
+    "preload_signed": {
+      "status_code": 200,
+      "ok": true
+    },
+    "apps_script_error_unsigned": {
+      "status_code": 401,
+      "ok": true
+    },
+    "apps_script_error_signed": {
+      "status_code": 200,
+      "ok": true
+    }
+  },
+  "overall_status": "pass"
+}

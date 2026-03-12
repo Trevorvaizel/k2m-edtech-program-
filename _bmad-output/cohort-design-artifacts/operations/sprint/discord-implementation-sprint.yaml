@@ -198,11 +198,11 @@ playbook_traceability:
 progress:
   total_tasks: 92
   done: 48
-  in_progress: 0
+  in_progress: 2
   blocked: 0
-  pending: 44
+  pending: 42
   percent_complete: 52
-  last_updated: "2026-03-12 - Task 7.9 completed and live-probed: nightly Stage 1->2 drop-off recovery implemented (48h Email #1.5 + day-5 Email #1.75), Column V idempotency marker added, 23:20 EAT scheduler cadence added, tests passed, Railway scan-path probe confirmed production readiness for email path, and STAGE1_DROPOFF_NUDGE_ENABLED was explicitly set true in Railway."
+  last_updated: "2026-03-12 - Tasks 7.15 and 7.16 moved to in_progress. Deliverability automation executed for all 7 templates across active Gmail/domain mailboxes with Brevo event audit showing 21/21 delivered. Live production smoke + webhook auth probes passed, and targeted regression suites passed (134 tests). Remaining launch gates are manual provider inbox/spam classification (Safaricom/Airtel/Yahoo) and one full human Discord join->Stop 0 walkthrough."
   decision_7_revised: "2026-02-20 â€” Context engine building NOW for Cohort 1 (not deferred)"
   adversarial_review_2: "2026-03-04 â€” Pre-mortem on enrollment flow. 5 P0 bugs fixed, 5 P1 issues resolved. Task 0.7 split into 0.7a-d. Payment amount standardized to KES 5,000. Source-of-truth set via execution_contract."
   adversarial_review_3: "2026-03-04 â€” Pre-mortem party mode (Sally+John+Winston+Amelia+DrQuinn+Murat+Mary+Maya). North star: zero Discord experience. Found 3 critical blockers, 6 high issues, 8 medium issues. Added Sprint 7. Migrated to PostgreSQL immediately (promoted from 6.6 prep). Full decisions log: pre-mortem-2026-03-04-decisions.md"
@@ -235,7 +235,17 @@ technical_debt:
       status: "open"
       source_task: "7.9"
       owner: "Trevor"
-      summary: "WhatsApp bounce fallback for Task 7.9 is deferred until Africa's Talking WhatsApp API access/credentials are available."
+      summary: "WhatsApp fallback code path for Task 7.9 exists, but production activation is deferred until Africa's Talking WhatsApp API credentials are available."
+    - id: "TD-7.15-01"
+      status: "open"
+      source_task: "7.15"
+      owner: "Trevor"
+      summary: "Provider matrix closeout is pending manual inbox/spam classification for Safaricom/Airtel/Yahoo mailboxes."
+    - id: "TD-7.16-01"
+      status: "open"
+      source_task: "7.16"
+      owner: "Trevor"
+      summary: "Final full-path human production walkthrough (Discord invite join -> facilitator payment confirm -> Stop 0 completion) is still required."
   resolved_items:
     - id: "TD-7.13-01"
       status: "closed"
@@ -2574,7 +2584,7 @@ sprint_7:
 
     - id: "7.15"
       title: "Brevo deliverability test (Cohort 1 scope â€” SMS backup deferred to Cohort 2)"
-      status: "pending"
+      status: "in_progress"
       description: |
         DECISIONS M-08, N-13 (Sessions 3 + 4). Brevo deliverability verified against Kenyan
         email providers before launch. Depends on tasks 7.13, 7.14.
@@ -2600,11 +2610,12 @@ sprint_7:
         All 7 templates delivered to Gmail without spam classification.
         Safaricom/Airtel delivery results documented. Trevor/Bruce/Mkunzi aware of
         manual WhatsApp fallback process if email fails.
+      summary: "Executed automated send sweep for all 7 templates to active Gmail/domain mailboxes and captured event-level proof (21/21 delivered). Provider matrix evidence is recorded; Safaricom/Airtel/Yahoo inbox-spam classification remains manual closeout."
       notes_ref: "task-notes/7.15.md"
 
     - id: "7.16"
       title: "End-to-end smoke test: full enrollment pipeline validation before launch"
-      status: "pending"
+      status: "in_progress"
       description: |
         DECISION N-14 (Session 4). No smoke test existed. Launch is blocked until this passes.
         Depends on ALL other Sprint 7 tasks.
@@ -2638,6 +2649,7 @@ sprint_7:
         All 7 happy-path steps pass in a single run. All 5 failure-path tests pass.
         Zero manual interventions required beyond Trevor's payment confirmation.
         Full results documented in task-notes/7.16.md.
+      summary: "Live production API smoke and signed webhook probes passed; targeted regression suites passed (134 tests) covering invite matching, preload, enrollment/payment, token lifecycle, onboarding flow, welcome-lounge, and failure paths. Final real-user Discord join->Stop 0 walkthrough remains pending."
       notes_ref: "task-notes/7.16.md"
 
 # ============================================================
@@ -2667,5 +2679,5 @@ agent_instructions: |
 
 # Last Updated
 last_updated: "2026-03-12"
-updated_by: "Task 7.14 premium redesign: Email #4 refund policy gap fixed, premium dark visual shell, human copy, updated subjects, full 7-template resend HTTP 201 confirmed to joytrevor.jt@gmail.com."
+updated_by: "Tasks 7.15/7.16 execution pass: deliverability sweep + event audit (21/21 delivered), live smoke + webhook probes passed, and 134 targeted tests passed. Statuses moved to in_progress pending manual provider mailbox classification and final human Discord walkthrough."
 

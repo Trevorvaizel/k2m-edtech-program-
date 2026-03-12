@@ -42,6 +42,11 @@ logger = logging.getLogger(__name__)
 
 # ── Discord REST constants ──────────────────────────────────────────────────
 DISCORD_API = "https://discord.com/api/v10"
+ROLE_UPGRADE_DM_TEXT = (
+    "#welcome-lounge served its purpose - your full access is now unlocked!\n\n"
+    "Continue in #welcome-and-rules and your week channels.\n\n"
+    "- KIRA"
+)
 
 
 def _discord_headers() -> dict:
@@ -103,6 +108,7 @@ def _build_activation_dm_messages(
         "When you're ready to start: go to #welcome-and-rules.\n"
         "I'll guide you through the rest."
         f"{details_block}"
+        "I'll remind you before each.\n\n"
         "- KIRA"
     )
 
@@ -138,6 +144,86 @@ async def _grant_student_role(discord_id: str) -> tuple[bool, str]:
         return False, f"Discord returned {resp.status_code}: {resp.text[:200]}"
     except Exception as exc:
         return False, f"Discord REST error: {exc}"
+
+
+async def _remove_guest_role(discord_id: str) -> tuple[bool, str]:
+    """
+    DELETE /guilds/{guild_id}/members/{user_id}/roles/{role_id} to remove @Guest.
+    Returns (success, error_message).
+    """
+    guild_id = os.getenv("DISCORD_GUILD_ID", "").strip()
+    role_id = os.getenv("GUEST_ROLE_ID", "").strip()
+    if not guild_id or not role_id:
+        return False, "DISCORD_GUILD_ID or GUEST_ROLE_ID not configured"
+
+    url = f"{DISCORD_API}/guilds/{guild_id}/members/{discord_id}/roles/{role_id}"
+    try:
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            resp = await client.delete(url, headers=_discord_headers())
+
+        if resp.status_code == 204:
+            return True, ""
+        return False, f"Discord returned {resp.status_code}: {resp.text[:200]}"
+    except Exception as exc:
+        return False, f"Discord REST error: {exc}"
+
+
+async def _send_role_upgrade_dm(bot, discord_id: str) -> tuple[bool, str]:
+    """
+    Send post-upgrade DM after @Guest -> @Student transition.
+    Returns (success, error_message).
+    """
+    if bot is None:
+        return False, "Bot unavailable"
+
+    try:
+        user = await bot.fetch_user(int(discord_id))
+        await user.send(ROLE_UPGRADE_DM_TEXT)
+        return True, ""
+    except Exception as exc:
+        return False, f"DM delivery failed: {exc}"
+
+
+async def _lock_welcome_lounge_for_member(bot, discord_id: str) -> tuple[bool, str]:
+    """
+    Fallback boundary guard:
+    apply a member-specific send deny in #welcome-lounge when @Guest removal fails.
+    """
+    if bot is None:
+        return False, "Bot unavailable"
+
+    channel_id = os.getenv("CHANNEL_WELCOME_LOUNGE", "").strip()
+    guild_id = os.getenv("DISCORD_GUILD_ID", "").strip()
+    if not channel_id or not guild_id or not channel_id.isdigit() or not guild_id.isdigit():
+        return False, "CHANNEL_WELCOME_LOUNGE or DISCORD_GUILD_ID not configured"
+
+    try:
+        channel = bot.get_channel(int(channel_id))
+        if channel is None:
+            channel = await bot.fetch_channel(int(channel_id))
+        if channel is None or not hasattr(channel, "set_permissions"):
+            return False, "welcome lounge channel unavailable"
+
+        guild = bot.get_guild(int(guild_id))
+        member = guild.get_member(int(discord_id)) if guild is not None else None
+        if member is None and guild is not None and hasattr(guild, "fetch_member"):
+            try:
+                member = await guild.fetch_member(int(discord_id))
+            except Exception:
+                member = None
+        if member is None:
+            return False, "member not found in guild"
+
+        await channel.set_permissions(
+            member,
+            read_messages=True,
+            send_messages=False,
+            read_message_history=True,
+            reason="Task 7.12 fallback: lock lounge posting when @Guest removal fails",
+        )
+        return True, ""
+    except Exception as exc:
+        return False, f"Welcome lounge member lock failed: {exc}"
 
 
 def _upsert_single_student(row: dict) -> tuple[bool, str]:
@@ -322,8 +408,51 @@ class InternalWebhookServer:
             logger.error("role-upgrade failed for %s: %s", discord_id, error)
             return web.json_response({"success": False, "error": error}, status=500)
 
-        logger.info("role-upgrade granted @Student to discord_id=%s", discord_id)
-        return web.json_response({"success": True, "discord_id": discord_id})
+        guest_role_removed = None
+        lounge_member_lock_applied = None
+        if os.getenv("GUEST_ROLE_ID", "").strip():
+            guest_role_removed, guest_error = await _remove_guest_role(discord_id)
+            if not guest_role_removed:
+                logger.warning(
+                    "role-upgrade could not remove @Guest for %s: %s",
+                    discord_id,
+                    guest_error,
+                )
+                lounge_member_lock_applied, lounge_error = await _lock_welcome_lounge_for_member(
+                    self._bot,
+                    discord_id,
+                )
+                if not lounge_member_lock_applied:
+                    logger.warning(
+                        "role-upgrade fallback could not lock welcome-lounge for %s: %s",
+                        discord_id,
+                        lounge_error,
+                    )
+
+        dm_sent, dm_error = await _send_role_upgrade_dm(self._bot, discord_id)
+        if not dm_sent:
+            logger.warning(
+                "role-upgrade post-DM failed for %s: %s",
+                discord_id,
+                dm_error,
+            )
+
+        logger.info(
+            "role-upgrade granted @Student to discord_id=%s (guest_removed=%s, lounge_lock=%s, dm_sent=%s)",
+            discord_id,
+            guest_role_removed,
+            lounge_member_lock_applied,
+            dm_sent,
+        )
+        return web.json_response(
+            {
+                "success": True,
+                "discord_id": discord_id,
+                "guest_role_removed": guest_role_removed,
+                "welcome_lounge_member_lock_applied": lounge_member_lock_applied,
+                "post_upgrade_dm_sent": dm_sent,
+            }
+        )
 
     async def _handle_preload_student(self, request: web.Request) -> web.Response:
         """

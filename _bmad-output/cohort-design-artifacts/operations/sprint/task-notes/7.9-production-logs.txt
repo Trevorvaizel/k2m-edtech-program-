@@ -1,0 +1,50 @@
+[2026-03-12] Local verification (cis-discord-bot)
+
+Command:
+py -m pytest tests/test_task_79_dropoff_recovery.py
+Result:
+6 passed, 0 failed
+
+Command:
+py -m pytest tests/test_interest_api_server.py tests/test_task_76_pg_completion.py
+Result:
+27 passed, 0 failed
+
+---
+
+[2026-03-12] Production probe (Railway deployment)
+
+Command:
+py -c "GET https://kira-bot-production.up.railway.app/health"
+Result:
+status 200
+body {"status": "healthy", "db": "connected", "discord": "connected", "details": {"db_probe": "postgresql", "discord_probe": "ready"}, "checked_at": "2026-03-12T04:34:21.658496Z"}
+
+Command:
+py tmp_live_smoke_postfix.py
+Result:
+interest_status 200
+enroll_status 200
+mpesa_status_get 200
+mpesa_status_post 200
+
+---
+
+[2026-03-12] Production env dry-run for Task 7.9 worker (non-destructive)
+
+Command:
+railway.cmd status
+Result:
+Project: k2m-cis-discord-bot
+Environment: production
+Service: kira-bot
+
+Command:
+railway.cmd run py tmp_task79_probe.py
+Result:
+{'scanned': 218, 'email_1_5_sent': 0, 'email_1_75_sent': 0, 'whatsapp_sent': 0, 'email_failures': 0, 'marker_updates': 0, 'marker_update_failures': 0, 'skipped_joined': 2, 'skipped_not_due': 11, 'skipped_already_sent': 0}
+
+Command:
+railway.cmd run py -c "<presence-check>"
+Result:
+{"STAGE1_DROPOFF_NUDGE_ENABLED": "set", "GOOGLE_SHEETS_ID": "set", "GOOGLE_SHEETS_RANGE": "set", "GOOGLE_SHEETS_CREDS": "set", "BREVO_TEMPLATE_EMAIL_1_5": "set", "BREVO_TEMPLATE_EMAIL_1_75": "set", "AFRICAS_TALKING_WHATSAPP_URL": "missing", "AFRICAS_TALKING_API_KEY": "missing", "AFRICAS_TALKING_USERNAME": "missing", "STAGE1_DROPOFF_NUDGE_ENABLED_value": "true"}

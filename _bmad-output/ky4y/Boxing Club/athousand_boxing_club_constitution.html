@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A Thousand Boxing Club - Oyugis Constitution</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&family=Lora:ital,wght@0,400;0,600;1,400&display=swap');
+
+    :root {
+      --navy: #1B3A8C;
+      --orange: #F47920;
+      --gold: #D4A418;
+      --light-navy: #E8EEF7;
+      --text: #1A1A1A;
+      --muted: #555555;
+      --paper-shadow: rgba(0, 0, 0, 0.18);
+      --font-serif: 'Lora', Georgia, 'Times New Roman', serif;
+      --font-sans: 'Montserrat', Arial, 'Helvetica Neue', Helvetica, sans-serif;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #c0c0c0;
+      font-family: var(--font-serif);
+      color: var(--text);
+      font-size: 11pt;
+      line-height: 1.6;
+    }
+
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      margin: 10mm auto;
+      padding: 15mm 18mm 15mm 20mm;
+      background: #ffffff;
+      box-shadow: 0 4px 24px var(--paper-shadow);
+      position: relative;
+      page-break-after: always;
+      overflow: hidden;
+    }
+
+    .cover {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      padding-top: 16mm;
+      min-height: 100%;
+      background: linear-gradient(135deg, #fef9f3 0%, #ffffff 56%, #f6f9ff 100%);
+    }
+
+    .cover-logo-wrap {
+      width: 44mm;
+      height: 44mm;
+      border-radius: 50%;
+      border: 2px solid #e2e7f5;
+      padding: 2.5mm;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 5mm;
+      box-shadow: 0 2px 8px rgba(27, 58, 140, 0.14);
+    }
+
+    .cover-logo-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+
+    .cover-org {
+      font-family: var(--font-sans);
+      font-size: 8pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 2.2px;
+      color: var(--muted);
+      margin-bottom: 2.5mm;
+    }
+
+    .cover-title {
+      font-family: var(--font-sans);
+      font-size: 18pt;
+      font-weight: 800;
+      text-transform: uppercase;
+      line-height: 1.2;
+      color: var(--navy);
+      margin-bottom: 2mm;
+      letter-spacing: 0.6px;
+    }
+
+    .cover-title .accent {
+      color: var(--orange);
+    }
+
+    .cover-subtitle {
+      font-family: var(--font-sans);
+      font-size: 10pt;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      color: var(--navy);
+      margin-bottom: 4mm;
+    }
+
+    .cover-divider {
+      width: 42mm;
+      height: 3px;
+      background: linear-gradient(90deg, var(--navy) 0%, var(--gold) 50%, var(--orange) 100%);
+      border-radius: 2px;
+      margin: 0 auto 6mm;
+    }
+
+    .cover-meta {
+      width: 100%;
+      max-width: 120mm;
+      text-align: left;
+      background: linear-gradient(135deg, var(--light-navy), #ffffff);
+      border-left: 5px solid var(--navy);
+      padding: 5mm 8mm;
+      font-size: 9.2pt;
+      line-height: 1.8;
+      box-shadow: 0 2px 8px rgba(27, 58, 140, 0.1);
+    }
+
+    .cover-meta strong {
+      color: var(--navy);
+      font-family: var(--font-sans);
+      font-size: 8pt;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .cover-slogan {
+      margin-top: 8mm;
+      font-family: var(--font-sans);
+      font-size: 9pt;
+      font-weight: 800;
+      letter-spacing: 1.6px;
+      text-transform: uppercase;
+      color: var(--orange);
+    }
+
+    .cover-footer {
+      position: absolute;
+      bottom: 11mm;
+      left: 18mm;
+      right: 18mm;
+      text-align: center;
+      font-size: 7.5pt;
+      color: var(--muted);
+      font-style: italic;
+      line-height: 1.55;
+    }
+
+    .running-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 2px solid var(--navy);
+      padding-bottom: 1.8mm;
+      margin-bottom: 5mm;
+      background: linear-gradient(90deg, var(--navy) 0%, transparent 100%);
+      background-position: bottom left;
+      background-repeat: no-repeat;
+      background-size: 58% 2px;
+    }
+
+    .rh-left {
+      font-family: var(--font-sans);
+      font-size: 7.4pt;
+      font-weight: 800;
+      color: var(--navy);
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+
+    .rh-right {
+      font-family: var(--font-serif);
+      font-size: 7.6pt;
+      color: var(--muted);
+      font-style: italic;
+      font-weight: 600;
+    }
+
+    .page-num {
+      position: absolute;
+      bottom: 8mm;
+      left: 0;
+      right: 0;
+      text-align: center;
+      font-family: var(--font-sans);
+      font-size: 8pt;
+      color: var(--muted);
+    }
+
+    h2 {
+      font-family: var(--font-sans);
+      font-size: 10.8pt;
+      font-weight: 800;
+      color: var(--navy);
+      text-transform: uppercase;
+      letter-spacing: 0.35px;
+      margin: 3.3mm 0 1.8mm;
+      padding-bottom: 1.1mm;
+      border-bottom: 2px solid var(--orange);
+      position: relative;
+      page-break-after: avoid;
+    }
+
+    h2::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 0;
+      width: 56px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--gold), var(--orange));
+    }
+
+    h3 {
+      font-family: var(--font-sans);
+      font-size: 9.3pt;
+      font-weight: 700;
+      color: var(--navy);
+      margin: 2.8mm 0 1.3mm;
+      page-break-after: avoid;
+    }
+
+    p {
+      margin-bottom: 1.5mm;
+      orphans: 3;
+      widows: 3;
+      page-break-inside: avoid;
+    }
+
+    ul,
+    ol {
+      margin: 1mm 0 1.7mm 5.5mm;
+    }
+
+    li {
+      margin-bottom: 0.9mm;
+      font-size: 10.5pt;
+      line-height: 1.55;
+      orphans: 2;
+      widows: 2;
+    }
+
+    strong {
+      color: var(--navy);
+    }
+
+    .note-box {
+      background: #fff8f0;
+      border-left: 4px solid var(--orange);
+      padding: 3.4mm 4.2mm;
+      margin: 2.8mm 0;
+      font-size: 9.5pt;
+      font-style: italic;
+      color: #474747;
+      line-height: 1.55;
+      page-break-inside: avoid;
+    }
+
+    .office-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 2mm 0 2.8mm;
+      font-size: 9.7pt;
+    }
+
+    .office-table th {
+      background: var(--navy);
+      color: #ffffff;
+      font-family: var(--font-sans);
+      font-size: 7.8pt;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      text-transform: uppercase;
+      border: 1px solid var(--navy);
+      padding: 1.7mm 2.3mm;
+      text-align: left;
+    }
+
+    .office-table td {
+      border: 1px solid #ccd4e8;
+      padding: 1.6mm 2.3mm;
+      vertical-align: top;
+      line-height: 1.46;
+      font-size: 9.7pt;
+    }
+
+    .office-table tr:nth-child(odd) td {
+      background: #ffffff;
+    }
+
+    .office-table tr:nth-child(even) td {
+      background: var(--light-navy);
+    }
+
+    .signatures {
+      border: 1.5px solid var(--navy);
+      border-radius: 2px;
+      padding: 4.2mm 5.2mm;
+      margin-top: 3.3mm;
+      background: #fafbff;
+      page-break-inside: avoid;
+    }
+
+    .sig-row {
+      display: flex;
+      gap: 5.5mm;
+      align-items: flex-end;
+      margin-bottom: 3.8mm;
+    }
+
+    .sig-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .sig-field {
+      flex: 1;
+    }
+
+    .sig-field span {
+      display: block;
+      height: 5.5mm;
+      border-bottom: 1px solid #888;
+      margin-bottom: 0.9mm;
+    }
+
+    .sig-field label {
+      font-size: 6.8pt;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .doc-footer {
+      margin-top: 3.5mm;
+      border-top: 1px solid #dddddd;
+      padding-top: 2mm;
+      text-align: center;
+      font-size: 7pt;
+      color: var(--muted);
+      line-height: 1.5;
+      font-style: italic;
+    }
+
+    @media screen and (max-width: 900px) {
+      body {
+        background: #f2f2f2;
+      }
+
+      .page {
+        width: 100%;
+        min-height: auto;
+        margin: 0;
+        padding: 12mm;
+        box-shadow: none;
+      }
+    }
+
+    @media print {
+      body {
+        background: none;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .page {
+        margin: 0;
+        box-shadow: none;
+        width: 210mm;
+        min-height: 297mm;
+        page-break-after: always;
+      }
+
+      .page:last-child {
+        page-break-after: auto;
+      }
+
+      h2,
+      h3,
+      .rh-left,
+      .page-num,
+      .cover-org,
+      .cover-title,
+      .cover-subtitle,
+      .cover-meta strong,
+      .cover-slogan,
+      .office-table th {
+        font-family: var(--font-sans) !important;
+      }
+
+      p,
+      li,
+      td,
+      .rh-right,
+      .cover-footer,
+      .doc-footer {
+        font-family: var(--font-serif) !important;
+      }
+    }
+
+    @page {
+      size: A4;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="cover">
+      <div class="cover-logo-wrap">
+        <img src="WhatsApp%20Image%202026-03-06%20at%2015.46.09.jpeg" alt="A Thousand Boxing Club logo">
+      </div>
+      <div class="cover-org">Constitution of</div>
+      <div class="cover-title">A Thousand <span class="accent">Boxing Club</span></div>
+      <div class="cover-subtitle">Oyugis, Homa Bay County</div>
+      <div class="cover-divider"></div>
+      <div class="cover-meta">
+        <strong>Name:</strong> A Thousand Boxing Club - Oyugis<br>
+        <strong>Area of Operation:</strong> Homa Bay County and Kenya as a whole<br>
+        <strong>Document Type:</strong> Club Constitution<br>
+        <strong>Status:</strong> Adopted by Members
+      </div>
+      <div class="cover-slogan">Discipline. Strength. Community.</div>
+    </div>
+    <div class="cover-footer">
+      <em>This constitution was agreed and adopted by A Thousand Boxing Club members.</em>
+    </div>
+  </div>
+
+  <div class="page">
+    <div class="running-header">
+      <span class="rh-left">A Thousand Boxing Club - Constitution</span>
+      <span class="rh-right">Articles 1-4</span>
+    </div>
+
+    <h2>Article 1: Name</h2>
+    <p>The name of the organization shall be <strong>A Thousand Boxing Club - Oyugis</strong>.</p>
+
+    <h2>Article 2: Area of Operation</h2>
+    <p>The club shall operate within <strong>Homa Bay County and Kenya as a whole</strong>.</p>
+
+    <h2>Article 3: Objectives</h2>
+    <p>The objectives of the club shall be:</p>
+    <ol>
+      <li>To promote boxing and physical fitness among youth.</li>
+      <li>To identify and nurture boxing talent in the community.</li>
+      <li>To encourage discipline, teamwork, and sportsmanship.</li>
+      <li>To support members through training, mentorship and organized sports activities.</li>
+      <li>To mobilize savings and manage a loan system for the benefit of members.</li>
+    </ol>
+
+    <h2>Article 4: Membership</h2>
+    <h3>4.1 Eligibility</h3>
+    <p>Membership shall be open to individuals interested in boxing and community sports development who agree to abide by this constitution.</p>
+
+    <h3>4.2 Membership Requirements</h3>
+    <p>A member shall:</p>
+    <ul>
+      <li>Register with the club.</li>
+      <li>Pay the agreed membership fee.</li>
+      <li>Participate in club activities.</li>
+    </ul>
+
+    <h3>4.3 Termination of Membership</h3>
+    <p>Membership may be suspended or terminated if a member:</p>
+    <ul>
+      <li>Violates the constitution.</li>
+      <li>Misuses club funds or property.</li>
+      <li>Acts in a manner that damages the reputation of the club.</li>
+    </ul>
+
+    <div class="page-num">- 2 -</div>
+  </div>
+
+  <div class="page">
+    <div class="running-header">
+      <span class="rh-left">A Thousand Boxing Club - Constitution</span>
+      <span class="rh-right">Articles 5-6</span>
+    </div>
+
+    <h2>Article 5: Office Bearers</h2>
+    <p>The office bearers of the club shall be:</p>
+    <table class="office-table">
+      <thead>
+        <tr>
+          <th style="width: 42%;">Office</th>
+          <th style="width: 58%;">Name</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Chairman</strong></td><td>Charles Kai</td></tr>
+        <tr><td><strong>Vice Chairperson</strong></td><td>Evance Odhiambo</td></tr>
+        <tr><td><strong>Secretary</strong></td><td>Trevor Otieno</td></tr>
+        <tr><td><strong>Assistant Secretary</strong></td><td>Nicolas Otieno</td></tr>
+        <tr><td><strong>Treasurer</strong></td><td>Erick Akoyo</td></tr>
+        <tr><td><strong>Organizing Secretary</strong></td><td>Wycliffe Odhiambo</td></tr>
+        <tr><td><strong>Coordinator</strong></td><td>Roy Ocholla</td></tr>
+      </tbody>
+    </table>
+    <p>These officials shall form the <strong>Executive Committee</strong> of the club.</p>
+
+    <h2>Article 6: Duties of Office Bearers</h2>
+    <h3>Chairman</h3>
+    <ul>
+      <li>Preside over all meetings of the club.</li>
+      <li>Provide leadership and direction to the club.</li>
+      <li>Represent the club in official matters.</li>
+    </ul>
+
+    <h3>Vice Chairperson</h3>
+    <ul>
+      <li>Assist the chairman in carrying out his duties.</li>
+      <li>Perform the duties of the chairman in his absence.</li>
+    </ul>
+
+    <h3>Secretary</h3>
+    <ul>
+      <li>Keep records of meetings and club activities.</li>
+      <li>Maintain correspondence and documentation of the club.</li>
+      <li>Issue notices for meetings.</li>
+    </ul>
+
+    <div class="page-num">- 3 -</div>
+  </div>
+
+  <div class="page">
+    <div class="running-header">
+      <span class="rh-left">A Thousand Boxing Club - Constitution</span>
+      <span class="rh-right">Articles 6-8</span>
+    </div>
+
+    <h2>Article 6: Duties of Office Bearers (continued)</h2>
+    <h3>Assistant Secretary</h3>
+    <ul>
+      <li>Assist the secretary in carrying out his duties.</li>
+      <li>Perform duties of the secretary in his absence.</li>
+    </ul>
+
+    <h3>Treasurer</h3>
+    <ul>
+      <li>Receive and manage all club funds.</li>
+      <li>Keep accurate financial records.</li>
+      <li>Present financial reports during meetings.</li>
+    </ul>
+
+    <h3>Organizing Secretary</h3>
+    <ul>
+      <li>Organize club training sessions, events and competitions.</li>
+    </ul>
+
+    <h3>Coordinator</h3>
+    <ul>
+      <li>Coordinate club programs and member participation.</li>
+    </ul>
+
+    <h2>Article 7: Meetings</h2>
+    <h3>7.1 Regular Meetings</h3>
+    <p>The club shall hold regular meetings as agreed by members.</p>
+
+    <h3>7.2 Annual General Meeting (AGM)</h3>
+    <p>An Annual General Meeting shall be held once every year to review club activities and finances.</p>
+
+    <h3>7.3 Quorum</h3>
+    <p>The quorum for meetings shall be <strong>at least half of the registered members</strong>.</p>
+
+    <h2>Article 8: Finance</h2>
+    <h3>8.1 Sources of Funds</h3>
+    <p>The funds of the club shall come from:</p>
+    <ul>
+      <li>Membership registration fees</li>
+      <li>Member contributions</li>
+      <li>Donations or sponsorships</li>
+      <li>Competition or activity income</li>
+    </ul>
+
+    <div class="page-num">- 4 -</div>
+  </div>
+
+  <div class="page">
+    <div class="running-header">
+      <span class="rh-left">A Thousand Boxing Club - Constitution</span>
+      <span class="rh-right">Articles 8-9</span>
+    </div>
+
+    <h2>Article 8: Finance (continued)</h2>
+    <h3>8.2 Bank Account</h3>
+    <p>The club shall operate a bank or group account.</p>
+    <p>Signatories to the account shall include:</p>
+    <ul>
+      <li>Chairman</li>
+      <li>Treasurer</li>
+      <li>Secretary</li>
+    </ul>
+    <p>Any withdrawal shall require at least <strong>two signatories</strong>.</p>
+
+    <h2>Article 9: Savings and Loans</h2>
+    <h3>9.1 Purpose</h3>
+    <p>The club may operate a savings and loan system to support members financially and grow club funds.</p>
+
+    <h3>9.2 Savings</h3>
+    <p>Members may contribute savings as agreed during meetings. All savings shall be recorded by the treasurer.</p>
+
+    <h3>9.3 Loan Eligibility</h3>
+    <p>A member may qualify for a loan if:</p>
+    <ul>
+      <li>They have been an active member of the club.</li>
+      <li>They have savings within the club.</li>
+      <li>The loan is approved by the Executive Committee.</li>
+    </ul>
+
+    <h3>9.4 Loan Limit</h3>
+    <p>A member may borrow an amount not exceeding <strong>three times their savings</strong>, subject to approval by the committee.</p>
+
+    <h3>9.5 Loan Approval</h3>
+    <p>Loans must be approved by the <strong>Chairman, Secretary, and Treasurer</strong> and recorded in the club loan register.</p>
+
+    <h3>9.6 Repayment</h3>
+    <p>Loans shall be repaid within a period agreed by the members during approval.</p>
+    <p>Failure to repay may result in deductions from the member's savings or disciplinary action by the committee.</p>
+
+    <div class="page-num">- 5 -</div>
+  </div>
+
+  <div class="page">
+    <div class="running-header">
+      <span class="rh-left">A Thousand Boxing Club - Constitution</span>
+      <span class="rh-right">Articles 10-12 and Signatories</span>
+    </div>
+
+    <h2>Article 10: Elections</h2>
+    <p>Elections of office bearers shall be held during the <strong>Annual General Meeting</strong>.</p>
+    <p>Voting shall be conducted by secret ballot and a simple majority shall determine the winner.</p>
+
+    <h2>Article 11: Amendment of the Constitution</h2>
+    <p>This constitution may be amended during a meeting of members.</p>
+    <p>Any amendment must be approved by <strong>two-thirds of members present</strong>.</p>
+
+    <h2>Article 12: Dissolution</h2>
+    <p>In the event that the club is dissolved:</p>
+    <ul>
+      <li>Members shall be notified at least <strong>30 days in advance</strong>.</li>
+      <li>All debts and liabilities shall first be cleared.</li>
+      <li>Remaining assets shall be shared among members according to their contributions or as decided by the members.</li>
+    </ul>
+
+    <h2>Signatories</h2>
+    <div class="signatures">
+      <div class="sig-row">
+        <div class="sig-field"><span>&nbsp;</span><label>Chairman (Name and Signature)</label></div>
+        <div class="sig-field" style="flex: 0.45;"><span>&nbsp;</span><label>Date</label></div>
+      </div>
+      <div class="sig-row">
+        <div class="sig-field"><span>&nbsp;</span><label>Secretary (Name and Signature)</label></div>
+        <div class="sig-field" style="flex: 0.45;"><span>&nbsp;</span><label>Date</label></div>
+      </div>
+      <div class="sig-row">
+        <div class="sig-field"><span>&nbsp;</span><label>Treasurer (Name and Signature)</label></div>
+        <div class="sig-field" style="flex: 0.45;"><span>&nbsp;</span><label>Date</label></div>
+      </div>
+      <div class="sig-row">
+        <div class="sig-field"><span>&nbsp;</span><label>Location</label></div>
+        <div class="sig-field" style="flex: 0.45;"><span>&nbsp;</span><label>Oyugis</label></div>
+      </div>
+    </div>
+
+    <div class="doc-footer">
+      <p>A Thousand Boxing Club - Oyugis | Constitution</p>
+      <p>Agreed and adopted by A Thousand Boxing Club members.</p>
+    </div>
+
+    <div class="page-num">- 6 -</div>
+  </div>
+</body>
+</html>

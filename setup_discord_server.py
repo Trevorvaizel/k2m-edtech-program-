@@ -4,8 +4,8 @@ Implements Story 5.1 Complete Discord Server Architecture
 
 This script creates the entire K2M Cohort #1 Discord server structure:
 - 4 channel categories
-- 14 channels with permissions
-- 3 roles (Student, Trevor, CIS Bot)
+- 15 channels with permissions
+- 4 roles (Guest, Student, Trevor, CIS Bot)
 - Welcome & resources content
 - Weekly channel visibility controls
 
@@ -45,6 +45,7 @@ CATEGORIES = {
         "channels": [
             {"name": "welcome", "emoji": "ðŸ‘‹", "topic": "Welcome & Getting Started"},
             {"name": "announcements", "emoji": "ðŸ“¢", "topic": "Important Updates"},
+            {"name": "welcome-lounge", "emoji": "ðŸ•’", "topic": "Guest waiting room while payment verification completes"},
             {"name": "resources", "emoji": "ðŸ“š", "topic": "Resources & Guides"},
             {"name": "introductions", "emoji": "ðŸ‘‹", "topic": "Introduce Yourself"}
         ]
@@ -255,12 +256,17 @@ async def setup_server():
 
 
 async def create_roles(guild):
-    """Create @Student, @Trevor, @CIS Bot roles with correct permissions"""
+    """Create @Guest, @Student, @Trevor, @CIS Bot roles with correct permissions"""
 
     roles = {}
 
     # Define role configurations
     role_configs = {
+        "Guest": {
+            "color": discord.Color.light_grey(),
+            # Keep base role neutral; channel/category overwrites define Guest access.
+            "permissions": discord.Permissions.none()
+        },
         "Student": {
             "color": discord.Color.blue(),
             "permissions": discord.Permissions(
@@ -299,6 +305,16 @@ async def create_roles(guild):
 
         if existing_role:
             print(f"  âœ“ Role '{role_name}' already exists")
+            if (
+                existing_role.permissions != config["permissions"]
+                or existing_role.color != config["color"]
+            ):
+                await existing_role.edit(
+                    color=config["color"],
+                    permissions=config["permissions"],
+                    reason="Task 7.12: reconcile role permissions with canonical setup",
+                )
+                print(f"    âœ… Updated role settings for '{role_name}'")
             roles[role_name] = existing_role
         else:
             role = await guild.create_role(
@@ -328,6 +344,17 @@ async def create_channels(guild, roles):
                 position=category_data["position"]
             )
             print(f"  âœ… Created category: {category_name}")
+
+        # Task 7.12 boundary hardening baseline:
+        # deny @Guest at category level; #welcome-lounge gets explicit allow.
+        guest_role = roles.get("Guest")
+        if guest_role is not None:
+            await category.set_permissions(
+                guest_role,
+                read_messages=False,
+                send_messages=False,
+                read_message_history=False,
+            )
 
         # Create channels in category
         for channel_config in category_data["channels"]:
@@ -360,10 +387,48 @@ async def set_channel_permissions(channel, roles, channel_config, guild):
     """Set role-based permissions for each channel"""
 
     student_role = roles["Student"]
+    guest_role = roles.get("Guest")
     trevor_role = roles["Trevor"]
     bot_role = roles["CIS Bot"]
 
     channel_name = channel_config["name"]
+
+    # Guest waiting room (Task 7.12)
+    if channel_name == "welcome-lounge":
+        await channel.set_permissions(guild.default_role,  # @everyone
+            read_messages=False,
+            send_messages=False
+        )
+        if guest_role is not None:
+            await channel.set_permissions(guest_role,
+                read_messages=True,
+                send_messages=True,
+                read_message_history=True
+            )
+        await channel.set_permissions(student_role,
+            read_messages=True,
+            send_messages=False,
+            read_message_history=True
+        )
+        await channel.set_permissions(bot_role,
+            read_messages=True,
+            send_messages=True
+        )
+        # Trevor always has full access
+        await channel.set_permissions(trevor_role,
+            read_messages=True,
+            send_messages=True,
+            manage_messages=True
+        )
+        return
+
+    # Everywhere else: explicitly deny @Guest.
+    if guest_role is not None:
+        await channel.set_permissions(guest_role,
+            read_messages=False,
+            send_messages=False,
+            read_message_history=False
+        )
 
     # Read-only channels
     if channel_name in ["welcome", "announcements", "resources", "thinking-showcase"]:
@@ -616,8 +681,8 @@ if __name__ == "__main__":
     print(f"\nTarget Server: {SERVER_NAME}")
     print("This script will create:")
     print("  âœ“ 4 channel categories")
-    print("  âœ“ 14 channels with permissions")
-    print("  âœ“ 3 roles (Student, Trevor, CIS Bot)")
+    print("  âœ“ 15 channels with permissions")
+    print("  âœ“ 4 roles (Guest, Student, Trevor, CIS Bot)")
     print("  âœ“ Welcome & resources content")
     print("  âœ“ Weekly channel visibility controls")
     print("\nIdempotent: Safe to run multiple times.\n")

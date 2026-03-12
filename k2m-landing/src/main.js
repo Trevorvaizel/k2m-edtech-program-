@@ -124,6 +124,22 @@ window.addEventListener('load', () => {
   try {
     initEnrollmentForm();
     console.log('✅ Enrollment form initialized');
+
+    // Shareable deep-link entrypoint for Stage 1 interest form.
+    // Supports: /?join=1, /?interest=1, /?stage=1
+    const params = new URLSearchParams(window.location.search);
+    const path = (window.location.pathname || '').toLowerCase();
+    const shouldOpenInterest =
+      path === '/join' ||
+      params.get('join') === '1' ||
+      params.get('interest') === '1' ||
+      params.get('stage') === '1';
+
+    if (shouldOpenInterest && typeof window.openEnrollmentForm === 'function') {
+      // Slight delay ensures modal DOM + listeners are fully mounted.
+      setTimeout(() => window.openEnrollmentForm(), 120);
+      console.log('✅ Interest form auto-opened from URL params');
+    }
   } catch (error) {
     console.error('❌ Error initializing enrollment form:', error);
   }

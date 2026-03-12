@@ -1,0 +1,96 @@
+{
+  "task": "7.13",
+  "timestamp_utc": "2026-03-11T16:58:05Z",
+  "base_url": "https://api.brevo.com/v3",
+  "domain": "k2mlabs.com",
+  "sender_email": "trevor@k2mlabs.com",
+  "sender_name": "Trevor from K2M",
+  "test_to": "k2m.labs@gmail.com",
+  "actions": {
+    "ensure_domain": false,
+    "ensure_sender": false,
+    "send_test": true
+  },
+  "checks": {
+    "account": {
+      "status_code": 200,
+      "email": "k2m.labs@gmail.com",
+      "companyName": "K2M LABs"
+    },
+    "domain_detail": {
+      "status_code": 200,
+      "verified": true,
+      "authenticated": true,
+      "dns_records": {
+        "dkim_record": null,
+        "dkim1Record": {
+          "type": "CNAME",
+          "value": "b1.k2mlabs-com.dkim.brevo.com",
+          "host_name": "brevo1._domainkey",
+          "status": true
+        },
+        "dkim2Record": {
+          "type": "CNAME",
+          "value": "b2.k2mlabs-com.dkim.brevo.com",
+          "host_name": "brevo2._domainkey",
+          "status": true
+        },
+        "brevo_code": {
+          "type": "TXT",
+          "value": "brevo-code:a8500676b5dc8cf194ea2e605f995050",
+          "host_name": "@",
+          "status": true
+        },
+        "dmarc_record": {
+          "type": "TXT",
+          "value": "v=DMARC1; p=none; rua=mailto:rua@dmarc.brevo.com",
+          "host_name": "_dmarc",
+          "status": true
+        }
+      }
+    },
+    "sender": {
+      "exists": true,
+      "active": true,
+      "id": 3,
+      "email": "trevor@k2mlabs.com"
+    },
+    "runtime_sender_env": {
+      "EMAIL_FROM": "trevor@k2mlabs.com",
+      "EMAIL_FROM_NAME": "Trevor from K2M",
+      "matches_target_sender": true
+    },
+    "test_send": {
+      "status_code": 201,
+      "messageId": "<202603111658.66315469735@smtp-relay.mailin.fr>",
+      "response": {
+        "messageId": "<202603111658.66315469735@smtp-relay.mailin.fr>"
+      },
+      "subject": "K2M Task 7.13 test send 2026-03-11T16:58:09Z"
+    },
+    "test_send_events": {
+      "status_code": 200,
+      "events": [
+        {
+          "email": "k2m.labs@gmail.com",
+          "date": "2026-03-11T17:58:11+01:00",
+          "messageId": "<202603111658.66315469735@smtp-relay.mailin.fr>",
+          "event": "delivered",
+          "subject": "K2M Task 7.13 test send 2026-03-11T16:58:09Z",
+          "from": "trevor@k2mlabs.com"
+        },
+        {
+          "email": "k2m.labs@gmail.com",
+          "date": "2026-03-11T17:58:09.434+01:00",
+          "messageId": "<202603111658.66315469735@smtp-relay.mailin.fr>",
+          "event": "requests",
+          "subject": "K2M Task 7.13 test send 2026-03-11T16:58:09Z",
+          "from": "trevor@k2mlabs.com"
+        }
+      ]
+    }
+  },
+  "blockers": [],
+  "next_actions": [],
+  "overall_status": "pass"
+}

@@ -101,6 +101,7 @@ async def test_cis_graduated_introduction_end_to_end(monkeypatch, store):
             assert unlock_week in reply_text
             assert "/frame" in reply_text
             assert "You're on track" in reply_text
+            assert "[LOCKED]" in reply_text
 
     # ------------------------------------------------------------------
     # Week 4 and Week 6: unlock announcements post correctly.

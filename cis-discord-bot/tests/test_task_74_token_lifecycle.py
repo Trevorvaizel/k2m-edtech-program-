@@ -57,6 +57,7 @@ async def test_token_expiry_warning_sends_dm_and_sets_flag(monkeypatch):
     store_mock = MagicMock()
     store_mock.get_token_warning_sent.return_value = False
     store_mock.set_token_warning_sent = MagicMock()
+    store_mock.log_observability_event = MagicMock()
 
     import database as _db_module
     monkeypatch.setattr(_db_module, "get_store", lambda: store_mock)
@@ -77,6 +78,10 @@ async def test_token_expiry_warning_sends_dm_and_sets_flag(monkeypatch):
     assert stats["skipped_already_sent"] == 0
     user_mock.send.assert_awaited_once()
     store_mock.set_token_warning_sent.assert_called_once_with("grace@example.com", True)
+    store_mock.log_observability_event.assert_called_once()
+    _, kwargs = store_mock.log_observability_event.call_args
+    assert kwargs["event_type"] == "token_expiry_warning_sent"
+    assert kwargs["metadata"]["channel"] == "discord_dm"
 
 
 # ---------------------------------------------------------------------------
@@ -132,6 +137,7 @@ async def test_token_expiry_warning_brevo_fallback_for_pre_discord(monkeypatch):
     store_mock = MagicMock()
     store_mock.get_token_warning_sent.return_value = False
     store_mock.set_token_warning_sent = MagicMock()
+    store_mock.log_observability_event = MagicMock()
 
     import database as _db_module
     monkeypatch.setattr(_db_module, "get_store", lambda: store_mock)
@@ -151,6 +157,10 @@ async def test_token_expiry_warning_brevo_fallback_for_pre_discord(monkeypatch):
     assert stats["warned_dm"] == 0
     assert stats["warned_email"] == 1
     store_mock.set_token_warning_sent.assert_called_once_with("grace@example.com", True)
+    store_mock.log_observability_event.assert_called_once()
+    _, kwargs = store_mock.log_observability_event.call_args
+    assert kwargs["event_type"] == "token_expiry_warning_sent"
+    assert kwargs["metadata"]["channel"] == "brevo_email"
 
 
 # ---------------------------------------------------------------------------
@@ -281,29 +291,82 @@ async def test_mpesa_status_expired_returns_json_for_api_caller(monkeypatch):
 
 
 # ---------------------------------------------------------------------------
-# 8. pg_store: get/set_token_warning_sent contract (unit — mocked store)
+# 8. pg_store: get/set_token_warning_sent contract (unit - real methods)
 # ---------------------------------------------------------------------------
 
-def test_pg_store_token_warning_sent_contract():
-    """
-    Verify the get/set_token_warning_sent contract via a mock store that
-    mirrors the PgStudentStateStore API. Avoids real DB dependencies.
-    """
-    store = MagicMock()
-    store.get_token_warning_sent.return_value = False
+def test_pg_store_get_token_warning_sent_returns_false_when_missing():
+    from database.pg_store import PgStudentStateStore
 
-    # Default: not sent
-    assert store.get_token_warning_sent("grace@example.com") is False
+    class _Cursor:
+        def __init__(self, row=None, rowcount=0):
+            self._row = row
+            self.rowcount = rowcount
 
-    # After set True — flag is True
-    store.get_token_warning_sent.return_value = True
-    store.set_token_warning_sent("grace@example.com", True)
-    assert store.get_token_warning_sent("grace@example.com") is True
+        def fetchone(self):
+            return self._row
 
-    # After set False (renew cycle reset) — flag is False
-    store.get_token_warning_sent.return_value = False
-    store.set_token_warning_sent("grace@example.com", False)
-    assert store.get_token_warning_sent("grace@example.com") is False
+    class _Conn:
+        def __init__(self):
+            self.last_sql = None
+            self.last_params = None
 
-    store.set_token_warning_sent.assert_any_call("grace@example.com", True)
-    store.set_token_warning_sent.assert_any_call("grace@example.com", False)
+        def execute(self, sql, params=()):
+            self.last_sql = sql
+            self.last_params = params
+            return _Cursor(row=None, rowcount=0)
+
+        def commit(self):
+            raise AssertionError("commit should not be called by getter")
+
+    store = PgStudentStateStore.__new__(PgStudentStateStore)
+    store.conn = _Conn()
+
+    assert store.get_token_warning_sent("Grace@Example.com") is False
+    assert "LOWER(enrollment_email)" in store.conn.last_sql
+    assert store.conn.last_params == ("grace@example.com",)
+
+
+def test_pg_store_set_token_warning_sent_inserts_placeholder_when_missing():
+    from database.pg_store import PgStudentStateStore
+
+    class _Cursor:
+        def __init__(self, rowcount=0):
+            self.rowcount = rowcount
+
+        def fetchone(self):
+            return None
+
+    class _Conn:
+        def __init__(self):
+            self.calls = []
+            self.commits = 0
+            self._seen_update = 0
+
+        def execute(self, sql, params=()):
+            self.calls.append((sql, params))
+            if "UPDATE students SET token_warning_sent" in sql:
+                self._seen_update += 1
+                # First update simulates "row does not exist yet"
+                if self._seen_update == 1:
+                    return _Cursor(rowcount=0)
+                return _Cursor(rowcount=1)
+            if "INSERT INTO students" in sql:
+                return _Cursor(rowcount=1)
+            return _Cursor(rowcount=0)
+
+        def commit(self):
+            self.commits += 1
+
+    store = PgStudentStateStore.__new__(PgStudentStateStore)
+    store.conn = _Conn()
+
+    store.set_token_warning_sent("Grace@Example.com", True)
+
+    # Update attempted, then placeholder insert, then final update
+    assert len(store.conn.calls) == 3
+    assert "UPDATE students SET token_warning_sent" in store.conn.calls[0][0]
+    assert "INSERT INTO students (discord_id, enrollment_email, token_warning_sent)" in store.conn.calls[1][0]
+    assert store.conn.calls[1][1][0] == "__pending__grace@example.com"
+    assert store.conn.calls[1][1][1] == "grace@example.com"
+    assert store.conn.calls[1][1][2] is True
+    assert store.conn.commits == 1

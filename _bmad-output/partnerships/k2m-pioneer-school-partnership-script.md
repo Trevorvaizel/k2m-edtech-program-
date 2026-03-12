@@ -1,8 +1,10 @@
 # K2M Pioneer School Partnership Script
 **In association with Le Wagon, France**
-**Version:** 1.0
-**Date:** 2026-02-24
+**Version:** 2.0
+**Date:** 2026-03-11
 **Use:** In-person school walk-ins, principal + teacher meetings, follow-up sequence
+
+> **v2.0 Changes:** Five pre-mortem hardening fixes applied — accountability commitment on close, verbal names during call (no list submission), individual student cards (not mass announcement), parent-facing registration form (parent consents directly to K2M), school progress tracking post-nomination.
 
 ---
 
@@ -19,7 +21,7 @@
 - `[DATE + TIME]` — Orientation Slot A
 - `[DATE + TIME]` — Orientation Slot B
 - `[CONFIRMED SLOT]` — Whichever slot the school picks
-- `[DEADLINE DATE]` — Nomination list deadline
+- `[REGISTRATION LINK]` — School-specific registration URL (e.g. k2mlabs.com/apply/kereri)
 
 ---
 
@@ -58,7 +60,7 @@ Walk in as someone who is choosing — not seeking.
 
 *Then — the pivot that makes them sit forward:*
 
-> "We're not selling seats. K2M is sponsoring 75% of the program cost for every pioneer student. Your job is simply to nominate them."
+> "We're not selling seats. K2M is sponsoring 75% of the program cost for every pioneer student. Your job is simply to name them — we handle everything else."
 
 ---
 
@@ -94,13 +96,23 @@ Walk in as someone who is choosing — not seeking.
 ---
 
 ### ACT 4 — THE CLOSE
-*(One ask. One door.)*
+*(One commitment. Right now.)*
 
-> "We need one thing from your school: a nomination list. Your top 20 Form 4 leavers. Teacher-identified, merit-based — you know your students better than anyone."
+> "We have two orientation dates for pioneer schools: [DATE + TIME] and [DATE + TIME]. Which one works better for your school?"
 
-> "We have two orientation dates for pioneer schools: [DATE + TIME] and [DATE + TIME]. Which one would work for your school to send their nominees?"
+*Stop. Let them answer. Once they pick a slot:*
 
-*Stop. Let them answer.*
+> "Good. Now — while I have you — can you give me the names of your first five nominees? Just first and last name. I'll build their individual nomination cards tonight and send them directly to you tomorrow. You forward each card to that student. That's all you need to do."
+
+*Open your notes app visibly. Write the names as they speak.*
+
+> "I'll have the cards ready for you by [SPECIFIC DAY — tomorrow or day after]. And I'll check in with you on [DATE, one week out] to let you know how many of your students have confirmed their spots."
+
+**Why this close works:**
+- School has committed to a slot (not just "thinking about it")
+- Names are collected verbally, live — no form, no list submission, no data liability for the school
+- A specific check-in date is locked in — accountability without pressure
+- School knows they only have to forward cards — trivially easy
 
 ---
 
@@ -120,6 +132,13 @@ Walk in as someone who is choosing — not seeking.
 
 **If they ask: "Is this only for strong students?"**
 > "We ask the school to nominate their best 20 — because the pioneer cohort needs students who will engage seriously and produce results. Those results are what we use to demonstrate the program to future schools and future cohorts."
+
+**If they mention data protection or ask about parent consent:**
+> "That's exactly why we built it this way. You don't submit anything — no lists, no parent contacts, nothing. You give me first and last names verbally, right now, and I build individual invitation cards for each student. You forward each card directly to that student or parent. The parent then registers through K2M's form — they give us their own details and consent directly. Your school's exposure is zero. You're endorsing students, not handling their data."
+
+*Pause. Let it land.*
+
+> "That was the whole point of the design — the school's job is to say 'this student is worthy.' K2M takes it from there."
 
 ---
 ---
@@ -146,25 +165,24 @@ Your school is on our shortlist.
 
 Here is the structure:
 
-→ Your school nominates 20 of your best Form 4 leavers.
+→ You name your best Form 4 leavers. K2M does the rest.
 → K2M sponsors 75% of the program cost for every one
-   of those 20 students.
+   of those students.
 → The pioneer contribution from each student is
    [PIONEER_FEE] KES — against a full program value
    of [FULL_FEE] KES.
 → 8 weeks. 4 thinking habits. One proof artifact
    per student by Week 8.
 
-This offer is for the pioneer cohort only.
-Once we confirm our 5 schools, the standard fee applies
-to all future intakes.
+Your confirmed orientation slot: [CONFIRMED SLOT]
 
-We have two orientation slots for pioneer schools:
+I'm building the individual nomination cards for the
+students you named today. I'll have them ready for you
+by [SPECIFIC DATE] — you'll just need to forward each
+one directly to that student or their parent.
 
-   A — [DATE + TIME]
-   B — [DATE + TIME]
-
-Reply A or B and I will send the nomination form.
+I'll check in with you on [CHECK-IN DATE] to let you
+know how many of your students have confirmed.
 
 Trevor
 K2M — In partnership with Le Wagon France
@@ -174,22 +192,25 @@ K2M — In partnership with Le Wagon France
 ---
 ---
 
-## PIECE 2 — THE NOMINATION FORM
-*(This is what the teacher shares with their nominated students and parents. Prestige first. Numbers second.)*
+## PIECE 2 — INDIVIDUAL STUDENT NOMINATION CARD
+*(K2M creates one card per student, using names collected verbally on the call. School forwards each card directly to that student or parent. Student is NOT mass-announced — each card is addressed to them by name.)*
+
+*(Create as a WhatsApp message or image. One per student.)*
 
 ---
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-K2M PIONEER COHORT — NOMINATION FORM
-In association with Le Wagon, France
+FOR: [STUDENT FULL NAME]
+[SCHOOL NAME] — K2M PIONEER NOMINATION
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-You have been nominated by your school as one of 20
-students selected for the K2M Pioneer Cohort.
+Your school has nominated you specifically
+for a place in the K2M Pioneer Cohort.
 
-This is not an open enrollment.
-Your school identified you specifically.
+This invitation is yours alone.
+20 students from [SCHOOL NAME].
+You are one of them.
 
 ─────────────────────────────────────
 WHAT THIS IS
@@ -205,61 +226,67 @@ to show for it.
 
 The program runs in association with Le Wagon —
 a French institution with campuses in London,
-Paris, Singapore, and 44 cities worldwide. Their
-graduates have gone on to careers at Google,
-HSBC, Airbnb, and leading firms across East Africa.
+Paris, Singapore, and 44 cities worldwide.
 
 ─────────────────────────────────────
 PIONEER SPONSORSHIP
 ─────────────────────────────────────
-K2M covers 75% of the full program cost for every
-pioneer student.
-
 Full program value:    [FULL_FEE] KES
 Your pioneer fee:      [PIONEER_FEE] KES
 
-This rate applies to Cohort 1 only.
-It is not available after pioneer places are filled.
+K2M covers 75% for pioneer students.
+This rate closes when the 20 slots fill.
 
 ─────────────────────────────────────
-WHAT YOU GET
+YOUR SPOT IS RESERVED FOR 48 HOURS
 ─────────────────────────────────────
-→ 8-week structured cohort (online, Discord)
-→ 4 thinking habits built over the program
-→ 1 proof artifact — real work in a domain
-   you had never studied
-→ K2M Pioneer Cohort certification
-→ Le Wagon program association designation
-→ Access to K2M alumni network
+To confirm: your parent registers at
 
-─────────────────────────────────────
-TO CONFIRM YOUR PLACE
-─────────────────────────────────────
-Reply with the following to [WHATSAPP NUMBER]:
+   [REGISTRATION LINK]
 
-   Name:
-   School:
-   Nominated by (teacher name):
-   Preferred orientation slot: A or B
+Or reply to this message directly.
 
-   Orientation A — [DATE + TIME]
-   Orientation B — [DATE + TIME]
-
-Reserve your seat by sending [PIONEER_FEE] KES
-via Mpesa to [MPESA_DETAILS] after confirming.
-
-Pioneer places: 20 per school.
-Once filled, the standard rate applies.
+Your parent fills in their own details.
+K2M handles everything after that.
 
 ─────────────────────────────────────
-Questions? DM THINK → [WHATSAPP NUMBER]
+Questions? Reply here or DM: [WHATSAPP NUMBER]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
 ---
 ---
 
-## PIECE 3 — THE SELECTED SCHOOL CONFIRMATION
+## PIECE 3 — PARENT REGISTRATION FORM
+*(This is what opens when the parent clicks [REGISTRATION LINK]. Parent is the one who registers and consents — not the student. Parent is the economic decision-maker. Parent giving their own data directly to K2M removes all data protection liability from the school.)*
+
+**Form fields:**
+```
+Student Name: [pre-filled from school's verbal list if possible]
+School: [pre-filled from school-specific URL]
+
+Parent / Guardian Name:
+Parent Phone Number:
+Parent Email:
+Preferred orientation slot: [A — DATE] or [B — DATE]
+
+[ ] I consent to K2M Labs contacting me regarding
+    this program and my child's enrollment.
+    (Required to complete registration)
+
+[CONFIRM MY CHILD'S PLACE →]
+```
+
+**On submission:**
+- Parent receives immediate WhatsApp confirmation
+- K2M team is notified
+- School progress counter updates
+- 48-hour payment window opens: parent receives Mpesa details
+
+---
+---
+
+## PIECE 4 — SCHOOL CONFIRMATION MESSAGE
 *(Goes to the teacher or principal once their school is confirmed. Print it or send it over WhatsApp.)*
 
 ---
@@ -299,25 +326,23 @@ WHAT THIS MEANS FOR YOUR SCHOOL
    students navigated and what they produced.
 
 ─────────────────────────────────────
-NEXT STEP — ONE ACTION
+YOUR SCHOOL'S PIONEER PROGRESS
 ─────────────────────────────────────
-Send us your nomination list of 20 students by
-[DEADLINE DATE].
+You will receive a weekly SMS showing how many
+of your 20 slots have been confirmed.
 
-Format: Student name + parent WhatsApp number.
-Send to: [WHATSAPP NUMBER]
+Example: "Kereri Girls: 12/20 slots confirmed.
+8 remaining. Orientation: [DATE]."
 
-Once we receive the list, we send each nominated
-student the Pioneer Nomination Form directly.
-You do not need to coordinate anything after that.
+No action needed from you — just stay informed.
 
 ─────────────────────────────────────
-ORIENTATION DATE
+YOUR ORIENTATION DATE
 ─────────────────────────────────────
-Your school's confirmed pioneer orientation:
 [CONFIRMED SLOT — DATE + TIME]
 
-Students will receive the orientation link directly.
+Students receive the orientation link directly
+once they complete registration.
 
 ─────────────────────────────────────
 Thank you for believing in your students enough
@@ -329,6 +354,31 @@ Trevor
 K2M — In association with Le Wagon, France
 [WHATSAPP NUMBER]
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+```
+
+---
+---
+
+## PIECE 5 — SCHOOL PROGRESS SMS
+*(Automated weekly. Sent to school contact from the time the first student registers until all 20 slots fill or the cohort closes.)*
+
+```
+K2M Update — [SCHOOL NAME]:
+[X]/20 pioneer slots confirmed.
+[Y] remaining.
+Orientation: [DATE].
+Forward cards to any remaining nominees to fill your school's spots.
+— Trevor, K2M
+```
+
+*If a school is stalling at low numbers (e.g. 3/20 with 1 week left):*
+```
+K2M Update — [SCHOOL NAME]:
+3/20 slots confirmed. 17 still open.
+If you have more nominees to reach,
+send me their names — I'll build their cards today.
+— Trevor, K2M
+[WHATSAPP NUMBER]
 ```
 
 ---
@@ -377,18 +427,38 @@ PIONEER SELECTION        →  "We are being chosen.
                              The [PIONEER_FEE] is commitment,
                              not the full cost."
 
-20 STUDENT NOMINATION    →  "No heavy lifting on our end.
-(school identifies)          We just name our best."
+VERBAL NAMES ON CALL     →  "That was easy. I just named them.
+(not a list to submit)       No paperwork. No risk."
 
-CBC LIVE DEMO            →  "This person understands our world.
-(teacher's pain)             They're not selling — they're useful."
+INDIVIDUAL CARDS         →  "My student received something
+(not a mass announcement)    addressed to them personally.
+                             This feels real."
 
-ONE CLOSE (Slot A or B)  →  "The decision is simple.
-                             We just pick a date."
+PARENT REGISTERS         →  "I didn't handle anyone's data.
+(not school)                 The parent consented directly.
+                             I'm protected."
+
+PROGRESS SMS             →  "I can see how my students
+(weekly update)              are doing. I'm still part of this."
+
+ONE CLOSE (Slot + Names) →  "The decision is simple.
+                             I pick a date and name my students."
 ```
 
 ---
 
-*Built by K2M + Sophia (Master Storyteller, CIS Party Mode)*
-*Pioneer Strategy — School Walk-In Edition*
+## PRE-MORTEM: FIVE FAILURE MODES ADDRESSED IN V2.0
+
+| # | Failure Mode | V1.0 Gap | V2.0 Fix |
+|---|---|---|---|
+| 1 | Link never shared | No accountability commitment | Specific day for cards + check-in date locked on call |
+| 2 | Mass announcement kills exclusivity | School blasts link to group | Individually addressed cards per student |
+| 3 | Parent shuts down unknown WhatsApp | Parent not in the flow | Parent is the registration actor, consents directly |
+| 4 | Names list = same psychological friction | School submits list | Names collected verbally on the call, school submits nothing |
+| 5 | School goes cold for Cohort 2 | No post-nomination relationship | Weekly progress SMS, outcomes report at Week 8 |
+
+---
+
+*Built by K2M + CIS Unit (Dr. Quinn, Nadia, Maya, Zara, Leo, Amara)*
+*Pioneer Strategy — School Walk-In Edition v2.0*
 *"You are not asking for anything. You are offering something rare."*

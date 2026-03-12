@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mockup 6: The Conversation (Fixed)</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Space+Grotesk:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --teal: #40E0D0;
+      --teal-border: rgba(64, 224, 208, 0.2);
+      --grey: #B0B0B0;
+    }
+
+    body {
+      background: #000;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+
+    .starfield { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 20px;
+      text-align: center;
+      position: relative;
+      z-index: 10;
+      background: radial-gradient(ellipse at center, rgba(32, 178, 170, 0.05) 0%, transparent 70%);
+    }
+
+    .hero-eyebrow { font-size: 13px; color: var(--teal); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 28px; }
+    .hero-title { font-family: 'Space Grotesk', sans-serif; font-size: clamp(28px, 5vw, 60px); font-weight: 700; line-height: 1.15; margin-bottom: 28px; max-width: 900px; }
+    .hero-title strong { color: var(--teal); }
+    .hero-sub { font-size: clamp(16px, 2vw, 18px); color: var(--grey); line-height: 1.7; max-width: 640px; }
+
+    /* ── RESONANCE ZONE STUBS ── */
+    .resonance-stub {
+      min-height: 55vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 80px 20px;
+      border-top: 1px solid rgba(64, 224, 208, 0.07);
+      position: relative;
+      z-index: 10;
+    }
+
+    /* All content visible by default */
+    .stub-label { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--teal); margin-bottom: 20px; }
+    .stub-quote { font-family: 'Space Grotesk', sans-serif; font-size: clamp(20px, 3.5vw, 36px); font-weight: 600; max-width: 700px; line-height: 1.35; }
+    .stub-echo { margin-top: 20px; font-size: 14px; color: var(--teal); }
+
+    /* ── CONVERSATION SECTION ── */
+    /*
+     * FIX: The initial question state is VISIBLE by default.
+     * GSAP only handles the transition animations between steps.
+     * No ScrollTrigger dependency for initial visibility.
+     */
+    .conversation-section {
+      position: relative;
+      z-index: 10;
+      padding: 100px 20px 80px;
+      min-height: 60vh;
+    }
+
+    /* Subtle top border/gradient to signal section change */
+    .conversation-section::before {
+      content: '';
+      display: block;
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(64,224,208,0.3), transparent);
+      margin-bottom: 80px;
+    }
+
+    .conversation-container {
+      max-width: 680px;
+      margin: 0 auto;
+    }
+
+    /* Steps */
+    .conv-step {
+      display: none;
+    }
+
+    .conv-step.active {
+      display: block;
+    }
+
+    /* ── QUESTION STEP ── */
+    .conv-bubble-author {
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--teal);
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .conv-author-dot {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(64, 224, 208, 0.1);
+      border: 1px solid rgba(64, 224, 208, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .conv-bubble-body {
+      background: rgba(10, 10, 10, 0.85);
+      border: 1px solid rgba(64, 224, 208, 0.2);
+      border-radius: 4px 16px 16px 16px;
+      padding: 24px 28px;
+      backdrop-filter: blur(8px);
+      margin-bottom: 32px;
+    }
+
+    .conv-bubble-body p {
+      font-size: clamp(17px, 2.2vw, 21px);
+      line-height: 1.7;
+      color: #e0e0e0;
+    }
+
+    .conv-bubble-body p em { color: #fff; font-style: italic; }
+
+    /* Choice buttons — large tap targets, no hover required */
+    .conv-choices { display: flex; flex-direction: column; gap: 12px; }
+
+    .conv-choice {
+      padding: 18px 22px;
+      background: rgba(10, 10, 10, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      text-align: left;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-family: 'Inter', sans-serif;
+      color: #fff;
+      min-height: 72px;
+    }
+
+    .conv-choice:hover,
+    .conv-choice:focus {
+      border-color: var(--card-accent);
+      background: rgba(var(--card-accent-rgb), 0.07);
+      transform: translateX(4px);
+      outline: none;
+    }
+
+    .conv-choice--student { --card-accent: #40E0D0; --card-accent-rgb: 64,224,208; }
+    .conv-choice--teacher { --card-accent: #F59E0B; --card-accent-rgb: 245,158,11; }
+    .conv-choice--professional { --card-accent: #818CF8; --card-accent-rgb: 99,102,241; }
+
+    .conv-choice-indicator {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(var(--card-accent-rgb), 0.1);
+      border: 1px solid rgba(var(--card-accent-rgb), 0.25);
+      flex-shrink: 0;
+      font-size: 18px;
+    }
+
+    .conv-choice-text { flex: 1; }
+
+    .conv-choice-label {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 3px;
+    }
+
+    .conv-choice-sub {
+      font-size: 13px;
+      color: var(--grey);
+    }
+
+    .conv-choice-arrow {
+      font-size: 16px;
+      color: var(--grey);
+      transition: transform 0.25s ease, color 0.25s ease;
+      flex-shrink: 0;
+    }
+
+    .conv-choice:hover .conv-choice-arrow {
+      transform: translateX(4px);
+      color: var(--card-accent);
+    }
+
+    /* ── RESPONSE STEPS ── */
+    .conv-response-tag {
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--resp-accent, var(--teal));
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .conv-response-tag .conv-author-dot {
+      border-color: rgba(var(--resp-accent-rgb, 64,224,208), 0.4);
+      background: rgba(var(--resp-accent-rgb, 64,224,208), 0.1);
+    }
+
+    .conv-response-message {
+      background: rgba(10, 10, 10, 0.85);
+      border: 1px solid var(--resp-border, rgba(64,224,208,0.2));
+      border-radius: 4px 16px 16px 16px;
+      padding: 28px 32px;
+      backdrop-filter: blur(8px);
+      margin-bottom: 24px;
+    }
+
+    .conv-response-message p {
+      font-size: clamp(16px, 2vw, 18px);
+      line-height: 1.75;
+      color: #ddd;
+      margin-bottom: 16px;
+    }
+
+    .conv-response-message p:last-child { margin-bottom: 0; }
+    .conv-response-message em { color: #fff; font-style: italic; }
+
+    .conv-status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      padding: 14px 18px;
+      border-radius: 10px;
+      background: rgba(var(--resp-accent-rgb, 64,224,208), 0.06);
+      border: 1px solid rgba(var(--resp-accent-rgb, 64,224,208), 0.15);
+    }
+
+    .conv-status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--resp-accent, var(--teal));
+      flex-shrink: 0;
+    }
+
+    .conv-status--live .conv-status-dot { animation: live-pulse 1.5s ease-in-out infinite; }
+
+    @keyframes live-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(64, 224, 208, 0.6); }
+      50% { box-shadow: 0 0 0 6px rgba(64, 224, 208, 0); }
+    }
+
+    .conv-status-text { font-size: 13px; color: #ccc; }
+    .conv-status-text strong { color: #fff; }
+
+    .conv-cta {
+      padding: 18px 28px;
+      border: none;
+      border-radius: 12px;
+      font-family: 'Inter', sans-serif;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      width: 100%;
+      text-decoration: none;
+    }
+
+    .conv-cta:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+    .conv-urgency {
+      margin-top: 10px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.35);
+      text-align: center;
+    }
+
+    .conv-roadmap-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin-top: 14px;
+      font-size: 13px;
+      color: var(--grey);
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-family: 'Inter', sans-serif;
+      width: 100%;
+      padding: 8px;
+      transition: color 0.2s ease;
+    }
+
+    .conv-roadmap-btn:hover { color: #fff; }
+
+    .conv-back {
+      margin-top: 20px;
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.35);
+      font-size: 13px;
+      cursor: pointer;
+      padding: 10px 0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-family: 'Inter', sans-serif;
+      transition: color 0.25s ease;
+      width: 100%;
+    }
+
+    .conv-back:hover { color: var(--grey); }
+
+    /* ── ROADMAP MODAL (shared across mockups) ── */
+    .roadmap-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.92);
+      z-index: 9000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+      backdrop-filter: blur(8px);
+    }
+
+    .roadmap-overlay.open { opacity: 1; pointer-events: all; }
+
+    .roadmap-modal {
+      background: rgba(10, 10, 10, 0.97);
+      border: 1px solid rgba(64, 224, 208, 0.25);
+      border-radius: 20px;
+      padding: 48px;
+      max-width: 680px;
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      transform: translateY(20px) scale(0.97);
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      position: relative;
+    }
+
+    .roadmap-overlay.open .roadmap-modal { transform: translateY(0) scale(1); }
+
+    .roadmap-close {
+      position: absolute; top: 20px; right: 20px;
+      background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 50%; width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: var(--grey); font-size: 18px; transition: all 0.2s ease;
+    }
+
+    .roadmap-close:hover { background: rgba(255,255,255,0.12); color: #fff; }
+
+    .roadmap-eyebrow { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--teal); margin-bottom: 16px; }
+    .roadmap-title { font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+    .roadmap-subtitle { font-size: 15px; color: var(--grey); margin-bottom: 40px; line-height: 1.6; }
+
+    .roadmap-phases { display: flex; flex-direction: column; gap: 20px; }
+
+    .roadmap-phase {
+      padding: 22px 24px; border-radius: 12px;
+      border: 1px solid var(--phase-border); background: var(--phase-bg);
+    }
+
+    .phase--live { --phase-border: rgba(64,224,208,0.3); --phase-bg: rgba(64,224,208,0.04); }
+    .phase--building { --phase-border: rgba(245,158,11,0.3); --phase-bg: rgba(245,158,11,0.04); }
+    .phase--planned { --phase-border: rgba(99,102,241,0.3); --phase-bg: rgba(99,102,241,0.04); }
+    .phase--exploring { --phase-border: rgba(255,255,255,0.1); --phase-bg: rgba(255,255,255,0.02); }
+
+    .phase-status { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
+    .phase--live .phase-status { color: #40E0D0; }
+    .phase--building .phase-status { color: #F59E0B; }
+    .phase--planned .phase-status { color: #818CF8; }
+    .phase--exploring .phase-status { color: var(--grey); }
+
+    .phase-name { font-family: 'Space Grotesk', sans-serif; font-size: 17px; font-weight: 700; margin-bottom: 6px; }
+    .phase-desc { font-size: 13px; color: var(--grey); line-height: 1.6; margin-bottom: 12px; }
+
+    .phase-progress { height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+    .phase-progress-bar { height: 100%; border-radius: 2px; background: var(--bar-color); }
+    .phase--live .phase-progress-bar { --bar-color: #40E0D0; }
+    .phase--building .phase-progress-bar { --bar-color: #F59E0B; }
+    .phase--planned .phase-progress-bar { --bar-color: #818CF8; }
+    .phase--exploring .phase-progress-bar { --bar-color: rgba(255,255,255,0.2); }
+
+    .roadmap-footer { margin-top: 28px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.08); text-align: center; font-size: 13px; color: var(--grey); line-height: 1.6; }
+
+    @media (max-width: 640px) { .roadmap-modal { padding: 28px 20px; } }
+
+    /* ── MOCKUP LABEL ── */
+    .mockup-label {
+      position: fixed; bottom: 16px; right: 16px;
+      background: rgba(10,10,10,0.9); border: 1px solid var(--teal);
+      border-radius: 8px; padding: 12px 16px; font-size: 11px;
+      color: var(--grey); z-index: 8000; max-width: 240px; line-height: 1.5;
+    }
+
+    .mockup-label strong { display: block; color: var(--teal); font-size: 12px; margin-bottom: 6px; }
+
+    @media (max-width: 640px) { .mockup-label { display: none; } }
+  </style>
+</head>
+<body>
+
+  <div class="starfield" id="starfield"></div>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-eyebrow">The walls fell.</div>
+    <h1 class="hero-title">
+      Intelligence used to be locked behind universities and expensive experts.<br>
+      <strong>Not anymore.</strong>
+    </h1>
+    <p class="hero-sub">
+      AI changed that. But access alone isn't enough. The question now is
+      whether you know how to <em>think</em> with what's on the other side.
+    </p>
+  </section>
+
+  <!-- RESONANCE ZONES (stubs — all visible by default) -->
+  <section class="resonance-stub">
+    <div>
+      <div class="stub-label">Zone 2</div>
+      <div class="stub-quote">"I keep starting over. It never feels quite right."</div>
+      <div class="stub-echo">Sound familiar?</div>
+    </div>
+  </section>
+
+  <section class="resonance-stub">
+    <div>
+      <div class="stub-label">Zone 4</div>
+      <div class="stub-quote">"I control the quality. AI accelerates my vision."</div>
+      <div class="stub-echo">Sound familiar?</div>
+    </div>
+  </section>
+
+  <!-- THE CONVERSATION — visible by default, no scroll dependency -->
+  <section class="conversation-section" id="conversation">
+    <div class="conversation-container">
+
+      <!-- STEP: The question (default visible) -->
+      <div class="conv-step active" id="step-question">
+
+        <div class="conv-bubble-author">
+          <div class="conv-author-dot">K</div>
+          K2M
+        </div>
+        <div class="conv-bubble-body">
+          <p>
+            You found yourself somewhere in those voices.<br>
+            <em>Tell us where you're coming from.</em>
+          </p>
+        </div>
+
+        <div class="conv-choices">
+          <button class="conv-choice conv-choice--student" onclick="selectPath('student')">
+            <div class="conv-choice-indicator">🎓</div>
+            <div class="conv-choice-text">
+              <div class="conv-choice-label">I'm a student</div>
+              <div class="conv-choice-sub">Gap year, recent grad, looking forward</div>
+            </div>
+            <span class="conv-choice-arrow">→</span>
+          </button>
+
+          <button class="conv-choice conv-choice--teacher" onclick="selectPath('teacher')">
+            <div class="conv-choice-indicator">📐</div>
+            <div class="conv-choice-text">
+              <div class="conv-choice-label">I'm an educator</div>
+              <div class="conv-choice-sub">Teacher, trainer, someone who guides others</div>
+            </div>
+            <span class="conv-choice-arrow">→</span>
+          </button>
+
+          <button class="conv-choice conv-choice--professional" onclick="selectPath('professional')">
+            <div class="conv-choice-indicator">⚡</div>
+            <div class="conv-choice-text">
+              <div class="conv-choice-label">I'm a professional</div>
+              <div class="conv-choice-sub">Career-focused, experienced, serious about growth</div>
+            </div>
+            <span class="conv-choice-arrow">→</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- STEP: Student response -->
+      <div class="conv-step" id="step-student"
+           style="--resp-border: rgba(64,224,208,0.25); --resp-accent: #40E0D0; --resp-accent-rgb: 64,224,208;">
+
+        <div class="conv-response-tag">
+          <div class="conv-author-dot">K</div>
+          K2M — for the student
+        </div>
+        <div class="conv-response-message">
+          <p>
+            You're at a threshold — between what you were taught and what the
+            world is now demanding. That gap is real. You've felt it.
+          </p>
+          <p>
+            <em>Cohort 1 was built for exactly this moment.</em>
+          </p>
+          <p>
+            Not to teach you AI tools. To teach you to navigate with intelligence
+            as your advantage. The way the top professionals in every field you're
+            looking at actually think. We'll show you how.
+          </p>
+        </div>
+        <div class="conv-status conv-status--live">
+          <div class="conv-status-dot"></div>
+          <div class="conv-status-text">
+            <strong>Cohort 1 — Applications Open Now.</strong>
+            Full scholarship. Closes April 30, 2026.
+          </div>
+        </div>
+        <a href="#" class="conv-cta" style="background: linear-gradient(135deg, #20B2AA, #008B8B); color: #000; box-shadow: 0 4px 24px rgba(32,178,170,0.3);">
+          Apply for Cohort 1 →
+        </a>
+        <div class="conv-urgency">Full scholarship · No application fee · Limited spots</div>
+        <button class="conv-roadmap-btn" onclick="openRoadmap()">View full program roadmap →</button>
+        <button class="conv-back" onclick="goBack()">← That's not me</button>
+      </div>
+
+      <!-- STEP: Teacher response -->
+      <div class="conv-step" id="step-teacher"
+           style="--resp-border: rgba(245,158,11,0.25); --resp-accent: #F59E0B; --resp-accent-rgb: 245,158,11;">
+
+        <div class="conv-response-tag">
+          <div class="conv-author-dot" style="border-color: rgba(245,158,11,0.4); background: rgba(245,158,11,0.1);">K</div>
+          K2M — for the educator
+        </div>
+        <div class="conv-response-message">
+          <p>
+            Your students are already using AI. You can feel it in how they write,
+            how they research, how they submit work. You're not afraid of it —
+            you're watching it change the room without a guide.
+          </p>
+          <p>
+            <em>We haven't forgotten you. We're building what you've been asking for.</em>
+          </p>
+          <p>
+            AI for Teachers isn't a certificate. It's a real tool for bringing
+            this into your classroom with confidence — so you lead the conversation,
+            not just observe it.
+          </p>
+        </div>
+        <div class="conv-status" style="--resp-accent-rgb: 245,158,11;">
+          <div class="conv-status-dot" style="background: #F59E0B;"></div>
+          <div class="conv-status-text">
+            <strong>AI for Teachers</strong> — In development. Priority waitlist now open.
+          </div>
+        </div>
+        <a href="#" class="conv-cta" style="background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.4); color: #F59E0B;">
+          Join the Priority Waitlist →
+        </a>
+        <button class="conv-roadmap-btn" onclick="openRoadmap()">View full program roadmap →</button>
+        <button class="conv-back" onclick="goBack()">← That's not me</button>
+      </div>
+
+      <!-- STEP: Professional response -->
+      <div class="conv-step" id="step-professional"
+           style="--resp-border: rgba(99,102,241,0.25); --resp-accent: #818CF8; --resp-accent-rgb: 99,102,241;">
+
+        <div class="conv-response-tag">
+          <div class="conv-author-dot" style="border-color: rgba(99,102,241,0.4); background: rgba(99,102,241,0.1);">K</div>
+          K2M — for the professional
+        </div>
+        <div class="conv-response-message">
+          <p>
+            You didn't get where you are by accident. You've built something —
+            a reputation, a way of working, a standard you hold yourself to.
+            And now the field is shifting.
+          </p>
+          <p>
+            <em>You're the reason we're building what comes next.</em>
+          </p>
+          <p>
+            AI for Professionals isn't about catching up. It's about running
+            further and faster — with the intelligence you already have,
+            multiplied. Tell us you're ready.
+          </p>
+        </div>
+        <div class="conv-status" style="--resp-accent-rgb: 99,102,241;">
+          <div class="conv-status-dot" style="background: #818CF8;"></div>
+          <div class="conv-status-text">
+            <strong>AI for Professionals</strong> — Coming 2026. Be the first to know.
+          </div>
+        </div>
+        <a href="#" class="conv-cta" style="background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.4); color: #818CF8;">
+          Signal Your Interest →
+        </a>
+        <button class="conv-roadmap-btn" onclick="openRoadmap()">View full program roadmap →</button>
+        <button class="conv-back" onclick="goBack()">← That's not me</button>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ROADMAP MODAL -->
+  <div class="roadmap-overlay" id="roadmapOverlay" onclick="handleOverlayClick(event)">
+    <div class="roadmap-modal" id="roadmapModal">
+      <button class="roadmap-close" onclick="closeRoadmap()">×</button>
+      <div class="roadmap-eyebrow">K2M Program Roadmap</div>
+      <h2 class="roadmap-title">Where we're going.</h2>
+      <p class="roadmap-subtitle">
+        We build in public. These are the programs we're committed to —
+        in the order we're building them.
+      </p>
+
+      <div class="roadmap-phases">
+        <div class="roadmap-phase phase--live">
+          <div class="phase-status">✅ Live Now</div>
+          <div class="phase-name">Cohort 1: Gap Year Cognitive Accelerator</div>
+          <p class="phase-desc">Full scholarship. Applications open now. Closes April 30, 2026.</p>
+          <div class="phase-progress"><div class="phase-progress-bar" data-width="100%"></div></div>
+        </div>
+        <div class="roadmap-phase phase--building">
+          <div class="phase-status">🔨 In Development</div>
+          <div class="phase-name">AI for Teachers</div>
+          <p class="phase-desc">Built for educators who want to lead the AI conversation, not chase it. Priority waitlist open.</p>
+          <div class="phase-progress"><div class="phase-progress-bar" data-width="40%"></div></div>
+        </div>
+        <div class="roadmap-phase phase--planned">
+          <div class="phase-status">📅 Planned — 2026</div>
+          <div class="phase-name">AI for Professionals</div>
+          <p class="phase-desc">For experienced professionals. Not catching up — multiplying what you've built.</p>
+          <div class="phase-progress"><div class="phase-progress-bar" data-width="10%"></div></div>
+        </div>
+        <div class="roadmap-phase phase--exploring">
+          <div class="phase-status">💭 Exploring</div>
+          <div class="phase-name">Corporate &amp; Team Training</div>
+          <p class="phase-desc">Enterprise cohorts, custom tracks. If your organisation is interested, reach out.</p>
+          <div class="phase-progress"><div class="phase-progress-bar" data-width="5%"></div></div>
+        </div>
+      </div>
+
+      <div class="roadmap-footer">
+        We announce before we build. Join a waitlist and you help shape the program —
+        not just attend it.
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup-label">
+    <strong>Mockup 6: The Conversation (Fixed)</strong>
+    Initial question visible immediately — no scroll needed.
+    Pick your path, K2M responds directly to you.
+    "← That's not me" = zero-friction retry.
+    Roadmap modal in every response.
+  </div>
+
+  <script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    // Starfield
+    const sf = document.getElementById('starfield');
+    for (let i = 0; i < 100; i++) {
+      const s = document.createElement('div');
+      s.style.cssText = `
+        position: absolute; border-radius: 50%; background: #fff;
+        width: ${1 + Math.random() * 2}px; height: ${1 + Math.random() * 2}px;
+        left: ${Math.random() * 100}%; top: ${Math.random() * 100}%;
+        opacity: ${0.05 + Math.random() * 0.35};
+      `;
+      sf.appendChild(s);
+    }
+
+    // Hero
+    gsap.timeline({ delay: 0.3 })
+      .from('.hero-eyebrow', { opacity: 0, y: -15, duration: 0.6, ease: 'power2.out' })
+      .from('.hero-title', { opacity: 0, x: -50, duration: 0.9, ease: 'power3.out' }, '-=0.2')
+      .from('.hero-sub', { opacity: 0, x: 30, duration: 0.8, ease: 'power2.out' }, '-=0.5');
+
+    // Resonance stubs — animate from hidden
+    gsap.utils.toArray('.resonance-stub').forEach(stub => {
+      gsap.from(stub.querySelectorAll('.stub-label, .stub-quote, .stub-echo'), {
+        opacity: 0, y: 20, stagger: 0.1, duration: 0.7, ease: 'power2.out',
+        scrollTrigger: { trigger: stub, start: 'top 80%', once: true }
+      });
+    });
+
+    // Conversation section — gentle entrance
+    gsap.from('#conversation .conv-bubble-author, #conversation .conv-bubble-body', {
+      opacity: 0, y: 16, stagger: 0.12, duration: 0.7, ease: 'power2.out',
+      scrollTrigger: { trigger: '#conversation', start: 'top 85%', once: true }
+    });
+
+    gsap.from('.conv-choice', {
+      opacity: 0, x: -16, stagger: 0.08, duration: 0.6, ease: 'power2.out', delay: 0.2,
+      scrollTrigger: { trigger: '#conversation', start: 'top 85%', once: true }
+    });
+
+    // ── PATH SELECTION ──
+    function selectPath(path) {
+      const questionStep = document.getElementById('step-question');
+
+      gsap.to(questionStep, {
+        opacity: 0, x: -20, duration: 0.35, ease: 'power2.in',
+        onComplete: () => {
+          questionStep.classList.remove('active');
+
+          const targetStep = document.getElementById(`step-${path}`);
+          targetStep.classList.add('active');
+
+          // Animate in
+          gsap.fromTo(targetStep,
+            { opacity: 0, y: 20 },
+            { opacity: 1, y: 0, duration: 0.6, ease: 'power3.out' }
+          );
+
+          // Smooth scroll
+          setTimeout(() => {
+            targetStep.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 100);
+        }
+      });
+    }
+
+    function goBack() {
+      const activeResponse = document.querySelector('.conv-step.active:not(#step-question)');
+      if (!activeResponse) return;
+
+      gsap.to(activeResponse, {
+        opacity: 0, x: 20, duration: 0.35, ease: 'power2.in',
+        onComplete: () => {
+          activeResponse.classList.remove('active');
+
+          const questionStep = document.getElementById('step-question');
+          questionStep.classList.add('active');
+          questionStep.style.opacity = '0';
+
+          gsap.to(questionStep, { opacity: 1, x: 0, duration: 0.5, ease: 'power2.out' });
+
+          questionStep.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      });
+    }
+
+    // Roadmap modal
+    function openRoadmap() {
+      const overlay = document.getElementById('roadmapOverlay');
+      overlay.classList.add('open');
+      document.body.style.overflow = 'hidden';
+
+      // Animate progress bars
+      setTimeout(() => {
+        document.querySelectorAll('.phase-progress-bar').forEach(bar => {
+          const target = bar.dataset.width || bar.style.width;
+          bar.style.width = '0%';
+          bar.style.transition = 'none';
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              bar.style.transition = 'width 1.2s cubic-bezier(0.4, 0, 0.2, 1)';
+              bar.style.width = target;
+            });
+          });
+        });
+      }, 200);
+    }
+
+    function closeRoadmap() {
+      document.getElementById('roadmapOverlay').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    function handleOverlayClick(e) {
+      if (e.target === document.getElementById('roadmapOverlay')) closeRoadmap();
+    }
+
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeRoadmap(); });
+
+    window.selectPath = selectPath;
+    window.goBack = goBack;
+    window.openRoadmap = openRoadmap;
+    window.closeRoadmap = closeRoadmap;
+    window.handleOverlayClick = handleOverlayClick;
+  </script>
+</body>
+</html>

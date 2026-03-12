@@ -4,6 +4,10 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/join",
+      "destination": "/?join=1"
+    },
+    {
       "source": "/enroll",
       "destination": "/enroll.html"
     },

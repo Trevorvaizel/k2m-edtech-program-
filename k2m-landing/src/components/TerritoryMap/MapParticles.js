@@ -168,14 +168,15 @@ export class MapParticleSystem {
    * AC: Chaos → Order animation (Zone 0-1 Wilderness Focus)
    */
   animateFormation() {
-    // Create ScrollTrigger configuration
+    // Create ScrollTrigger configuration with PINNING for cinematic feel
     this.timeline = gsap.timeline({
       scrollTrigger: {
         trigger: '.territory-map',
-        start: 'top center',
-        end: 'center center',
-        scrub: 0.3, // FAST scrub for mystery → curiosity (Zone 0-1)
-        anticipatePin: 1
+        start: 'top top', // Changed from 'top center' - pin from top
+        end: '+=200%', // Pin for 2x viewport height of scroll
+        pin: true, // ADD: Lock viewport during animation
+        scrub: 2, // Changed from 0.3 - CINEMATIC smooth (luxurious)
+        anticipatePin: 1 // Smooth entry into pin state
       }
     });
 

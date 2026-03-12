@@ -532,6 +532,27 @@ class PgStudentStateStore(StudentStateStore):
             (hours,),
         ).fetchone()
 
+    def get_confirmed_student_count(self) -> int:
+        """
+        Count confirmed students with real Discord linkage.
+
+        Task 7.12 uses this for #welcome-lounge status refreshes in PostgreSQL mode.
+        """
+        row = self.conn.execute(
+            """
+            SELECT COUNT(*) AS count
+              FROM students
+             WHERE LOWER(COALESCE(payment_status, '')) = 'confirmed'
+               AND discord_id IS NOT NULL
+               AND discord_id != ''
+               AND discord_id NOT LIKE '__pending__%'
+            """
+        ).fetchone()
+        if row is None:
+            return 0
+        value = row["count"] if isinstance(row, dict) else row[0]
+        return int(value or 0)
+
     def update_onboarding_stop(self, discord_id: str, stop: int) -> None:
         """Advance student through KIRA onboarding stops 0-4 (Decision H-05)."""
         self.conn.execute(

@@ -226,6 +226,63 @@ async def test_interest_endpoint_success_message_includes_step_marker(monkeypatc
 
 
 @pytest.mark.asyncio
+async def test_send_brevo_email_prefers_template_id_when_configured(monkeypatch):
+    calls = []
+
+    class _StubService:
+        async def send_email(self, **kwargs):
+            calls.append(kwargs)
+            return type("R", (), {"success": True})()
+
+    import cis_controller.email_service as email_service_module
+
+    monkeypatch.setattr(email_service_module, "EmailService", lambda: _StubService())
+    monkeypatch.setenv("BREVO_TEMPLATE_EMAIL_1", "12001")
+
+    ok = await api.send_brevo_email(
+        to_email="test@example.com",
+        first_name="Test User",
+        waitlisted=False,
+        invite_link="https://discord.gg/test",
+    )
+
+    assert ok is True
+    assert len(calls) == 1
+    assert calls[0]["template_id"] == 12001
+    assert calls[0]["template_params"]["first_name"] == "Test"
+    assert calls[0]["template_params"]["discord_invite_link"] == "https://discord.gg/test"
+
+
+@pytest.mark.asyncio
+async def test_send_enrollment_payment_email_prefers_template_id_when_configured(monkeypatch):
+    calls = []
+
+    class _StubService:
+        async def send_email(self, **kwargs):
+            calls.append(kwargs)
+            return type("R", (), {"success": True})()
+
+    import cis_controller.email_service as email_service_module
+
+    monkeypatch.setattr(email_service_module, "EmailService", lambda: _StubService())
+    monkeypatch.setenv("BREVO_TEMPLATE_EMAIL_2", "12002")
+    monkeypatch.setenv("COHORT_1_START_DATE", "March 16, 2026")
+
+    ok = await api.send_enrollment_payment_email(
+        to_email="test@example.com",
+        first_name="Test User",
+        submit_url="https://k2m-edtech.program/mpesa-submit?token=abc",
+        discord_id="1234567890123",
+    )
+
+    assert ok is True
+    assert len(calls) == 1
+    assert calls[0]["template_id"] == 12002
+    assert calls[0]["template_params"]["first_name"] == "Test"
+    assert calls[0]["template_params"]["week1_start_date"] == "March 16, 2026"
+
+
+@pytest.mark.asyncio
 async def test_enroll_endpoint_returns_submit_url_on_success(monkeypatch):
     row = ["Test Student", "test@example.com", "+254700000000"] + [""] * 15
     captured_updates = {}

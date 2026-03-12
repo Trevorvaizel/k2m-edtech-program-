@@ -1,0 +1,130 @@
+{
+  "timestamp_utc": "2026-03-12T04:37:58Z",
+  "task_id": "7.14",
+  "mode": {
+    "apply": false,
+    "send_test": true
+  },
+  "sender": {
+    "email": "trevor@k2mlabs.com",
+    "name": "Trevor from K2M"
+  },
+  "base_url": "https://api.brevo.com/v3",
+  "templates": [
+    {
+      "key": "email_1",
+      "env_var": "BREVO_TEMPLATE_EMAIL_1",
+      "template_name": "K2M Cohort 1 - Email #1 Discord Invite",
+      "subject": "Your spot in the AI Confidence Cohort is waiting \ud83d\ude80",
+      "action": "found",
+      "template_id": 3,
+      "test_send": {
+        "status_code": 201,
+        "success": true,
+        "response": {
+          "messageId": "<202603120437.10979393640@smtp-relay.mailin.fr>"
+        }
+      }
+    },
+    {
+      "key": "email_1_5",
+      "env_var": "BREVO_TEMPLATE_EMAIL_1_5",
+      "template_name": "K2M Cohort 1 - Email #1.5 48h Nudge",
+      "subject": "We're holding your spot \u2014 join Discord to continue (Step 2 of 4)",
+      "action": "found",
+      "template_id": 4,
+      "test_send": {
+        "status_code": 201,
+        "success": true,
+        "response": {
+          "messageId": "<202603120438.41881360374@smtp-relay.mailin.fr>"
+        }
+      }
+    },
+    {
+      "key": "email_1_75",
+      "env_var": "BREVO_TEMPLATE_EMAIL_1_75",
+      "template_name": "K2M Cohort 1 - Email #1.75 Day-5 Final Nudge",
+      "subject": "Last chance \u2014 your Discord invite expires soon (Step 2 of 4)",
+      "action": "found",
+      "template_id": 5,
+      "test_send": {
+        "status_code": 201,
+        "success": true,
+        "response": {
+          "messageId": "<202603120438.95877481545@smtp-relay.mailin.fr>"
+        }
+      }
+    },
+    {
+      "key": "email_2",
+      "env_var": "BREVO_TEMPLATE_EMAIL_2",
+      "template_name": "K2M Cohort 1 - Email #2 Payment Instructions",
+      "subject": "One step left \u2014 complete your payment to lock in your spot (Step 3 of 4)",
+      "action": "found",
+      "template_id": 6,
+      "test_send": {
+        "status_code": 201,
+        "success": true,
+        "response": {
+          "messageId": "<202603120438.26666772728@smtp-relay.mailin.fr>"
+        }
+      }
+    },
+    {
+      "key": "email_3",
+      "env_var": "BREVO_TEMPLATE_EMAIL_3",
+      "template_name": "K2M Cohort 1 - Email #3 M-Pesa Received",
+      "subject": "Payment received \u2014 verification in progress (Step 4 of 4)",
+      "action": "found",
+      "template_id": 7,
+      "test_send": {
+        "status_code": 201,
+        "success": true,
+        "response": {
+          "messageId": "<202603120438.17265171409@smtp-relay.mailin.fr>"
+        }
+      }
+    },
+    {
+      "key": "email_4",
+      "env_var": "BREVO_TEMPLATE_EMAIL_4",
+      "template_name": "K2M Cohort 1 - Email #4 Activation Welcome",
+      "subject": "You're in \u2014 Welcome to Cohort 1! \ud83c\udf89",
+      "action": "found",
+      "template_id": 8,
+      "test_send": {
+        "status_code": 201,
+        "success": true,
+        "response": {
+          "messageId": "<202603120438.94515892638@smtp-relay.mailin.fr>"
+        }
+      }
+    },
+    {
+      "key": "email_5",
+      "env_var": "BREVO_TEMPLATE_EMAIL_5",
+      "template_name": "K2M Cohort 1 - Email #5 Waitlist Confirmation",
+      "subject": "You're on the priority list \u2014 we'll notify you first",
+      "action": "found",
+      "template_id": 9,
+      "test_send": {
+        "status_code": 201,
+        "success": true,
+        "response": {
+          "messageId": "<202603120438.29524808534@smtp-relay.mailin.fr>"
+        }
+      }
+    }
+  ],
+  "railway_env_map": {
+    "BREVO_TEMPLATE_EMAIL_1": 3,
+    "BREVO_TEMPLATE_EMAIL_1_5": 4,
+    "BREVO_TEMPLATE_EMAIL_1_75": 5,
+    "BREVO_TEMPLATE_EMAIL_2": 6,
+    "BREVO_TEMPLATE_EMAIL_3": 7,
+    "BREVO_TEMPLATE_EMAIL_4": 8,
+    "BREVO_TEMPLATE_EMAIL_5": 9
+  },
+  "overall_status": "pass"
+}

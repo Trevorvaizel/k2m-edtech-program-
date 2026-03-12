@@ -381,7 +381,7 @@ For each column with drop-down options:
 - Discord architecture: `_bmad-output/cohort-design-artifacts/playbook-v2/05-discord-ops/5-1-discord-server-structure.md`
 
 **For Issues:**
-- Check sprint status: `_bmad-output/cohort-design-artifacts/discord-implementation-sprint.yaml`
+- Check sprint status: `_bmad-output/cohort-design-artifacts/operations/sprint/discord-implementation-sprint.yaml`
 - Review task 0.6 completion notes
 - Consult Story 5.5 specification for column details
 

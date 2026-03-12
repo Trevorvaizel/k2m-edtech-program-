@@ -21,7 +21,18 @@ CREATE TABLE IF NOT EXISTS students (
     last_interaction TEXT,  -- ISO timestamp
     cluster_id INTEGER DEFAULT 1,  -- Task 4.3: Cluster assignment (1-8)
     last_name TEXT,  -- Task 4.3: Last name for cluster assignment
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+
+    -- Sprint 7 runtime linkage fields
+    invite_code TEXT,
+    onboarding_stop INTEGER DEFAULT 0,
+    onboarding_stop_0_complete INTEGER DEFAULT 0,
+    onboarding_stop_0_started_at TEXT,
+    profile_complete INTEGER DEFAULT 0,
+    primary_device_context TEXT,
+    study_hours_per_week INTEGER,
+    confidence_level INTEGER,
+    family_obligations_hint TEXT
 );
 
 -- Index for common queries
@@ -29,6 +40,8 @@ CREATE INDEX IF NOT EXISTS idx_students_cohort ON students(cohort_id);
 CREATE INDEX IF NOT EXISTS idx_students_week ON students(current_week);
 CREATE INDEX IF NOT EXISTS idx_students_zone ON students(zone);
 CREATE INDEX IF NOT EXISTS idx_students_cluster ON students(cluster_id);  -- Task 4.3
+CREATE INDEX IF NOT EXISTS idx_students_invite ON students(invite_code);
+CREATE INDEX IF NOT EXISTS idx_students_onboarding ON students(onboarding_stop);
 
 -- ============================================================
 -- HABIT PRACTICE TABLE
