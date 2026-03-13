@@ -9,6 +9,7 @@ __pycache__/
 *$py.class
 *.so
 .Python
+.venv/
 venv/
 env/
 ENV/
@@ -34,6 +35,17 @@ Thumbs.db
 # Logs
 *.log
 logs/
+test-results/
 
 # Discord bot specific
 cohort-*.db
+cis-discord-bot/.pytest-runs/
+cis-discord-bot/tmp_*.py
+
+# Landing page local artifacts
+k2m-landing/test-results/
+k2m-landing/tmp_*.mjs
+k2m-landing/public/Dynamic Morphing _ GSAP Demo Hub - Google Chrome 2026-01-18 21-59-24.mp4
+
+# Sensitive / ambiguous local notes
+_bmad-output/strategy-and-research/Proton_password.txt
