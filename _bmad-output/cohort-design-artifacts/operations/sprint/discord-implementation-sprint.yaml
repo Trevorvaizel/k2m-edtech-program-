@@ -807,7 +807,7 @@ sprint_4:
         load: "source_documents.thinking_showcase_spec"
         section: "Publication Flow + Celebration Culture Design + Graduation"
       acceptance: "Artifacts publish to showcase with correct formatting, celebration fires, badge awarded"
-      summary: "âœ… Task 4.2 COMPLETE - #thinking-showcase publication + celebration (2026-02-19)"
+      summary: "âœ… Task 4.2 COMPLETE - #thinking-showcase publication + celebration (2026-02-19) + artifact lifecycle observability hardening (2026-03-12)."
       dev_notes: |
         Implementation in cis-discord-bot/commands/artifact.py:
         - publish_artifact_to_showcase(): Main publication flow
@@ -819,7 +819,11 @@ sprint_4:
         - 4 Habits badge announcement included
         - Guardrail #3 compliant (no comparison language)
         - Router integration via handle_artifact_text_input()
+        2026-03-12 addendum:
+        - End-to-end artifact lifecycle observability events (start, section saves, completion, publish requested/confirmed/success/failure)
+        - /inspect-journey rendering updated to show artifact lifecycle events explicitly
       notes_ref: "_bmad-output/cohort-design-artifacts/task-notes/4.2.md"
+      notes_ref_addendum: "_bmad-output/cohort-design-artifacts/operations/sprint/task-notes/4.2-artifact-lifecycle-observability-2026-03-12.md"
 
     - id: "4.3"
       title: "Implement cluster assignment + voice channels"
@@ -1964,6 +1968,7 @@ sprint_6:
         while deep tier routes `/challenge`, `/synthesize`, and `create-artifact` aliases.
         Added `model_used` persistence to `observability_events` (schema + store + command logging),
         and extended facilitator daily summary to include same-day cost breakdown by model.
+        Production PostgreSQL column `observability_events.model_used` verified present on 2026-03-12.
         Validation evidence: `task-notes/6.5.md` and `task-notes/6.5-pytest-model-routing.txt`.
       notes_ref: "task-notes/6.5.md"
 
@@ -2028,6 +2033,7 @@ sprint_6:
         SQLite/PostgreSQL paths. Personalized example lookup + prompt grounding now resolve
         `profession_effective` so `other` students receive closer-fit examples without altering
         their original selected profession.
+        Production PostgreSQL column `students.profession_inferred` verified present on 2026-03-12.
         Validation evidence: `task-notes/6.7.md` and `task-notes/6.7-pytest-other-profession-inference.txt`.
       notes_ref: "task-notes/6.7.md"
 
@@ -2263,6 +2269,10 @@ sprint_7:
         4 PG columns for 7.5 lifecycle/anchors (idempotent ALTER TABLE). Full suite: 628/628 passing.
         Production deploy 8ea22565-94bc-428c-8d93-a9efd109c6e9 SUCCESS; /api/mpesa-submit behavior verified live.
         Trevor action required: confirm FACILITATOR_ROLE_ID is set in Railway env vars.
+        2026-03-12 follow-up hotfix: fixed runtime scheduler crash in send_payment_feedback_dms
+        caused by iterating raw Sheets matrix rows as tuple pairs; function now handles
+        canonical [header, row1, ...] shape and tuple-mock shape. Notes:
+        task-notes/7.5-7.11-runtime-hotfix-2026-03-12.md
       description: |
         DECISIONS H-02, M-01, N-12. SESSION 4 UPDATE: N-23 — KIRA escalation DMs go to ALL THREE facilitators (Trevor + Bruce + Mkunzi) at 8h+ pending threshold, not Trevor alone.
         1. /api/mpesa-submit: after writing Column K, immediately send KIRA DM:
@@ -2308,6 +2318,11 @@ sprint_7:
         - Validation evidence captured in task-notes/7.6.md:
           - Local tests: 516 passed.
           - Railway: DB PostgreSQL startup log present, health check passed, no SQLite startup log, sync-back dry-run executed.
+        - Follow-up hardening on 2026-03-12:
+          - Fixed dropped-connection recovery loop (`SSL connection has been closed unexpectedly` -> `connection already closed`) in PostgreSQL runtime wrapper.
+          - Added reconnect/retry logic + pool probe in `database/pg_store.py`.
+          - Added regression tests in `tests/test_pg_store_connectivity.py` (verified with 37-pass subset).
+          - Notes: task-notes/7.6-postgresql-connection-recovery-2026-03-12.md
         Implementation deviation documented: psycopg2 wrapper retained for PostgreSQL compatibility instead of full asyncpg rewrite.
       description: |
         DECISIONS H-03, H-06 + GAP FIX #3. BLOCKING. Must complete before cohort launch.
@@ -2546,7 +2561,7 @@ sprint_7:
         POST without valid signature returns 401. POST with valid signature executes normally.
         WEBHOOK_SECRET in Railway env. Apps Script uses Script Properties (not hardcoded).
         401 events visible in facilitator dashboard.
-      summary: "Production verified on 2026-03-11: parent server mounts /api/internal routes at startup, unsigned requests return 401 with signature-missing reason, and webhook secret is active in Railway runtime. Task promoted from local-complete to done."
+      summary: "Production verified on 2026-03-11: parent server mounts /api/internal routes at startup, unsigned requests return 401 with signature-missing reason, and webhook secret is active in Railway runtime. 2026-03-12 follow-up: 401 dashboard logs now include request User-Agent for faster source attribution (see task-notes/7.5-7.11-runtime-hotfix-2026-03-12.md). Task promoted from local-complete to done."
       notes_ref: "task-notes/7.11.md"
 
     - id: "7.12"
