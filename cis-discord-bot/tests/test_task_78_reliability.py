@@ -5,11 +5,13 @@ Covers:
   - /health endpoint reports healthy when DB + Discord are connected
   - /health endpoint reports degraded payload when Discord is unavailable
   - /health endpoint performs SQLite fallback connectivity probe via SELECT 1
+  - /health degrades instead of hanging when the DB probe stalls
 """
 
 from __future__ import annotations
 
 import json
+import time
 from types import SimpleNamespace
 from unittest.mock import MagicMock
 
@@ -110,3 +112,25 @@ async def test_health_reports_degraded_when_db_probe_fails():
     assert payload["status"] == "degraded"
     assert payload["db"] == "disconnected"
     assert payload["discord"] == "connected"
+
+
+@pytest.mark.asyncio
+async def test_health_reports_degraded_when_db_probe_times_out():
+    class _SlowStore:
+        def check_pg_connectivity(self) -> bool:
+            time.sleep(0.2)
+            return True
+
+    server = ParentUnsubscribeServer(
+        store=_SlowStore(),
+        internal_webhook_server=SimpleNamespace(_bot=_bot(True)),
+        health_probe_timeout_seconds=0.01,
+    )
+
+    resp = await server._handle_health(MagicMock())
+    payload = json.loads(resp.body)
+
+    assert resp.status == 200
+    assert payload["status"] == "degraded"
+    assert payload["db"] == "disconnected"
+    assert payload["details"]["db_probe"] == "timeout_after_0.1s"

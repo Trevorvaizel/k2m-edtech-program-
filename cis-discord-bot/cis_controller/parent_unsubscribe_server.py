@@ -30,6 +30,7 @@ class ParentUnsubscribeServer:
         host: str = "0.0.0.0",
         port: int = 8080,
         path: str = "/parent/unsubscribe",
+        health_probe_timeout_seconds: float = 5.0,
     ):
         self.store = store or get_store()
         self.interest_api_server = interest_api_server
@@ -37,6 +38,9 @@ class ParentUnsubscribeServer:
         self.host = host
         self.port = port
         self.path = path
+        self.health_probe_timeout_seconds = max(
+            0.1, float(health_probe_timeout_seconds)
+        )
         self._runner: Optional[web.AppRunner] = None
         self._site: Optional[web.BaseSite] = None
 
@@ -91,7 +95,18 @@ class ParentUnsubscribeServer:
         deployment alive. We still expose dependency readiness via payload
         fields (`status`, `db`, `discord`) so degraded state is observable.
         """
-        db_ok, db_probe = self._check_db_connectivity()
+        try:
+            db_ok, db_probe = await asyncio.wait_for(
+                asyncio.to_thread(self._check_db_connectivity),
+                timeout=self.health_probe_timeout_seconds,
+            )
+        except asyncio.TimeoutError:
+            db_ok = False
+            db_probe = f"timeout_after_{self.health_probe_timeout_seconds:g}s"
+            logger.error(
+                "Health DB check timed out after %.2fs",
+                self.health_probe_timeout_seconds,
+            )
         discord_ok, discord_probe = self._check_discord_connectivity()
         healthy = db_ok and discord_ok
 

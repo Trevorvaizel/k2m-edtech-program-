@@ -270,6 +270,29 @@ async def test_silence_dm_sent_when_pending_over_24h(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_silence_dm_handles_raw_sheet_matrix_shape(monkeypatch):
+    """
+    Production read_roster_rows() returns [header, row1, row2, ...] (not tuple pairs).
+    Ensure scheduler path does not crash on that canonical shape.
+    """
+    row_number, row_values = _make_row(payment_status="Pending", created_offset_hours=25)
+    assert row_number == 2
+    header = [""] * len(row_values)
+    store = _make_store(silence=False, pending_since=_now() - timedelta(hours=25))
+    bot = _make_bot()
+
+    monkeypatch.setattr(api, "read_roster_rows", AsyncMock(return_value=[header, row_values]))
+    with patch("database.get_store", return_value=store):
+        stats = await api.send_payment_feedback_dms(
+            bot=bot,
+            spreadsheet_id="sheet-id",
+        )
+
+    assert stats["silence_dm_sent"] == 1
+    bot.fetch_user.assert_awaited_once()
+
+
+@pytest.mark.asyncio
 async def test_silence_dm_not_sent_when_pending_under_24h(monkeypatch):
     row = _make_row(payment_status="Pending", created_offset_hours=10)
     store = _make_store(silence=False, pending_since=_now() - timedelta(hours=10))

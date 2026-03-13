@@ -202,14 +202,61 @@ class PgConnectionWrapper:
         # Mimic sqlite3 attribute — ignored in PG mode but prevents AttributeErrors
         self.row_factory = None
 
+    def _is_connection_open(self) -> bool:
+        return self._conn is not None and getattr(self._conn, "closed", 0) == 0
+
+    def _reacquire_connection(self, discard_existing: bool = True) -> None:
+        if self._pool is None:
+            raise RuntimeError("PostgreSQL pool is not available for reconnect")
+
+        existing = self._conn
+        if existing is not None:
+            try:
+                self._pool.putconn(existing, close=bool(discard_existing))
+            except Exception as exc:
+                logger.warning("Failed to return stale PostgreSQL connection to pool: %s", exc)
+
+        self._conn = self._pool.getconn()
+        self._conn.autocommit = False
+
+    @staticmethod
+    def _should_retry_on_error(exc: Exception) -> bool:
+        text = str(exc).lower()
+        return any(
+            token in text
+            for token in (
+                "connection already closed",
+                "ssl connection has been closed unexpectedly",
+                "server closed the connection unexpectedly",
+                "terminating connection",
+            )
+        )
+
     def execute(self, sql: str, params=()) -> Any:
         translated = _translate_sql(sql)
         if translated is None:
             return _NullCursor()
 
+        if not self._is_connection_open():
+            self._reacquire_connection(discard_existing=True)
+
         cursor = self._conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cursor.execute(translated, params if params else None)
-        return PgCursorWrapper(cursor)
+        try:
+            cursor.execute(translated, params if params else None)
+            return PgCursorWrapper(cursor)
+        except Exception as exc:
+            try:
+                cursor.close()
+            except Exception:
+                pass
+            if not self._should_retry_on_error(exc):
+                raise
+
+            logger.warning("Retrying PostgreSQL query after reconnect: %s", exc)
+            self._reacquire_connection(discard_existing=True)
+            retry_cursor = self._conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+            retry_cursor.execute(translated, params if params else None)
+            return PgCursorWrapper(retry_cursor)
 
     def cursor(self) -> PgCursorCompat:
         """
@@ -221,11 +268,27 @@ class PgConnectionWrapper:
         translated = _translate_sql(sql)
         if translated is None:
             return
+        if not self._is_connection_open():
+            self._reacquire_connection(discard_existing=True)
         cursor = self._conn.cursor()
-        cursor.executemany(translated, params_list)
+        try:
+            cursor.executemany(translated, params_list)
+        except Exception as exc:
+            try:
+                cursor.close()
+            except Exception:
+                pass
+            if not self._should_retry_on_error(exc):
+                raise
+            logger.warning("Retrying PostgreSQL executemany after reconnect: %s", exc)
+            self._reacquire_connection(discard_existing=True)
+            retry_cursor = self._conn.cursor()
+            retry_cursor.executemany(translated, params_list)
 
     def executescript(self, script: str) -> None:
         """Execute a multi-statement SQL script (schema init path)."""
+        if not self._is_connection_open():
+            self._reacquire_connection(discard_existing=True)
         cursor = self._conn.cursor()
         for stmt in _split_sql_statements(script):
             stmt = stmt.strip()
@@ -245,7 +308,7 @@ class PgConnectionWrapper:
         """Return connection to pool instead of closing it."""
         if self._pool and self._conn:
             try:
-                self._pool.putconn(self._conn)
+                self._pool.putconn(self._conn, close=(getattr(self._conn, "closed", 0) != 0))
             except Exception as exc:
                 logger.warning("Error returning connection to pool: %s", exc)
         self._conn = None
@@ -339,6 +402,36 @@ class PgStudentStateStore(StudentStateStore):
         pg_conn = PgStudentStateStore._pg_pool.getconn()
         pg_conn.autocommit = False
         self.conn = PgConnectionWrapper(pg_conn, pool=PgStudentStateStore._pg_pool)
+
+    def _reconnect_primary_connection(self, reason: str = "") -> bool:
+        """
+        Drop the current primary connection wrapper and acquire a fresh one.
+        Returns True when a new primary connection is available.
+        """
+        pool = PgStudentStateStore._pg_pool
+        if pool is None:
+            logger.error("DB reconnect failed: PostgreSQL pool is not initialized")
+            return False
+
+        old_pg_conn = getattr(self.conn, "_conn", None) if self.conn is not None else None
+        if old_pg_conn is not None:
+            try:
+                pool.putconn(old_pg_conn, close=True)
+            except Exception as exc:
+                logger.warning("Failed to discard stale PostgreSQL connection: %s", exc)
+
+        try:
+            new_conn = pool.getconn()
+            new_conn.autocommit = False
+            self.conn = PgConnectionWrapper(new_conn, pool=pool)
+            if reason:
+                logger.info("DB: PostgreSQL primary connection refreshed (%s)", reason)
+            else:
+                logger.info("DB: PostgreSQL primary connection refreshed")
+            return True
+        except Exception as exc:
+            logger.error("DB reconnect failed while acquiring new connection: %s", exc, exc_info=True)
+            return False
 
     def _apply_connection_pragmas(self, conn, db_target=None) -> None:
         """PostgreSQL has no PRAGMA equivalents — no-op."""
@@ -902,13 +995,49 @@ class PgStudentStateStore(StudentStateStore):
         Verify PostgreSQL connection is live. Returns True if healthy.
         Called by HealthMonitor every 5 minutes (task 7.6 acceptance criterion).
         """
+        pool = PgStudentStateStore._pg_pool
+        probe_conn = None
+
         try:
-            cursor = self.conn._conn.cursor()
-            cursor.execute("SELECT 1")
+            if pool is not None:
+                probe_conn = pool.getconn()
+                with probe_conn.cursor() as cursor:
+                    cursor.execute("SELECT 1")
+            else:
+                primary = getattr(self.conn, "_conn", None) if self.conn is not None else None
+                if primary is None:
+                    logger.error("PostgreSQL connectivity check failed: primary connection missing")
+                    return False
+                with primary.cursor() as cursor:
+                    cursor.execute("SELECT 1")
+
+            # If health probe passes but primary connection is stale, refresh proactively.
+            primary = getattr(self.conn, "_conn", None) if self.conn is not None else None
+            if primary is None or getattr(primary, "closed", 1) != 0:
+                self._reconnect_primary_connection(
+                    reason="health-check detected closed primary connection"
+                )
             return True
         except Exception as exc:
             logger.error("PostgreSQL connectivity check failed: %s", exc)
+            if self._reconnect_primary_connection(reason=f"health-check failure: {exc}"):
+                try:
+                    primary = getattr(self.conn, "_conn", None) if self.conn is not None else None
+                    if primary is None:
+                        return False
+                    with primary.cursor() as cursor:
+                        cursor.execute("SELECT 1")
+                    logger.info("DB: PostgreSQL connectivity restored after reconnect")
+                    return True
+                except Exception as retry_exc:
+                    logger.error("PostgreSQL connectivity retry failed: %s", retry_exc)
             return False
+        finally:
+            if probe_conn is not None and pool is not None:
+                try:
+                    pool.putconn(probe_conn, close=(getattr(probe_conn, "closed", 0) != 0))
+                except Exception as exc:
+                    logger.warning("Failed to return PostgreSQL probe connection to pool: %s", exc)
 
     @classmethod
     def get_pool_status(cls) -> dict:

@@ -1716,7 +1716,14 @@ async def send_payment_feedback_dms(
         except ValueError:
             logger.warning("Task 7.5: invalid %s value '%s' (must be int)", env_key, value)
 
-    for row_number, row in rows:
+    # read_roster_rows returns a raw Sheets matrix (header + rows), but some
+    # tests/mocks pass pre-zipped (row_number, row_values) tuples.
+    if rows and isinstance(rows[0], tuple):
+        row_iter = rows
+    else:
+        row_iter = enumerate(rows[1:], start=2)
+
+    for row_number, row in row_iter:
         if stats["scanned"] >= max_per_pass:
             break
         stats["scanned"] += 1

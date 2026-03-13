@@ -75,6 +75,33 @@ class TestInspectJourney:
         assert "No observability events found yet" in mock_send.call_args[0][1]
         assert mock_send.call_args.kwargs.get("ephemeral") is True
 
+    @pytest.mark.asyncio
+    async def test_renders_artifact_lifecycle_events(self):
+        store = Mock()
+        store.get_student.return_value = {"current_week": 8, "zone": "zone_4"}
+        store.has_active_student_consent.return_value = True
+        store.get_student_journey_events.return_value = [
+            {
+                "event_type": "artifact_section_saved",
+                "timestamp": "2026-03-12T10:00:00",
+                "metadata": {"section": 3, "artifact_status": "in_progress"},
+            },
+            {
+                "event_type": "artifact_publish_failed",
+                "timestamp": "2026-03-12T10:05:00",
+                "metadata": {"visibility": "public", "reason": "showcase_channel_not_found"},
+            },
+        ]
+
+        with patch("commands.admin.send_response", new_callable=AsyncMock) as mock_send:
+            await admin.inspect_journey(_ctx(42), store, "<@123456789>")
+
+        response = mock_send.call_args[0][1]
+        assert "artifact_section_saved" in response
+        assert "section: 3" in response
+        assert "artifact_publish_failed" in response
+        assert "reason: showcase_channel_not_found" in response
+
 
 class TestAdminPrivacy:
     @pytest.mark.asyncio

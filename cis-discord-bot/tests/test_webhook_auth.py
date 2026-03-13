@@ -692,3 +692,31 @@ class TestDashboard401Logging:
 
         bot.get_channel.assert_called_once_with(12345)
         channel.send.assert_awaited_once()
+        sent_text = channel.send.await_args.args[0]
+        assert "User-Agent:" in sent_text
+        assert "unknown" in sent_text
+
+    @pytest.mark.asyncio
+    async def test_includes_user_agent_when_provided(self, monkeypatch):
+        monkeypatch.setenv("FACILITATOR_DASHBOARD_CHANNEL_ID", "12345")
+        monkeypatch.setenv("CHANNEL_FACILITATOR_DASHBOARD", "")
+
+        from cis_controller.internal_api_server import _log_401_to_dashboard
+
+        channel = MagicMock()
+        channel.send = AsyncMock()
+
+        bot = MagicMock()
+        bot.get_channel.return_value = channel
+        bot.fetch_channel = AsyncMock(return_value=channel)
+
+        await _log_401_to_dashboard(
+            bot=bot,
+            source_ip="9.8.7.6",
+            endpoint="/api/internal/role-upgrade",
+            reason="Missing X-K2M-Signature header",
+            user_agent="Python-urllib/3.12",
+        )
+
+        sent_text = channel.send.await_args.args[0]
+        assert "Python-urllib/3.12" in sent_text

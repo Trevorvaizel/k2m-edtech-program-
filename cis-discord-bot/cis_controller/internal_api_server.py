@@ -1,12 +1,12 @@
-"""
-internal_api_server.py — Task 7.11: HMAC-authenticated internal webhook endpoints.
+﻿"""
+internal_api_server.py â€” Task 7.11: HMAC-authenticated internal webhook endpoints.
 
-DECISION N-03 (Session 4): Apps Script → Railway webhooks are unauthenticated.
+DECISION N-03 (Session 4): Apps Script â†’ Railway webhooks are unauthenticated.
 This module provides:
-  POST /api/internal/role-upgrade    — grant @Student role via discord_id
-  POST /api/internal/preload-student — upsert one student row to PostgreSQL
-  POST /api/internal/apps-script-error — post Apps Script failures to #facilitator-dashboard
-  POST /api/internal/activation-dm — send activation DM(s) to activated student
+  POST /api/internal/role-upgrade    â€” grant @Student role via discord_id
+  POST /api/internal/preload-student â€” upsert one student row to PostgreSQL
+  POST /api/internal/apps-script-error â€” post Apps Script failures to #facilitator-dashboard
+  POST /api/internal/activation-dm â€” send activation DM(s) to activated student
 
 All endpoints require a valid X-K2M-Signature header (HMAC-SHA256).
 401 events are logged to #facilitator-dashboard with source IP.
@@ -40,7 +40,7 @@ from cis_controller.webhook_auth import get_client_ip, require_webhook_signature
 
 logger = logging.getLogger(__name__)
 
-# ── Discord REST constants ──────────────────────────────────────────────────
+# â”€â”€ Discord REST constants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 DISCORD_API = "https://discord.com/api/v10"
 ROLE_UPGRADE_DM_TEXT = (
     "#welcome-lounge served its purpose - your full access is now unlocked!\n\n"
@@ -280,23 +280,33 @@ def _upsert_single_student(row: dict) -> tuple[bool, str]:
         return False, f"DB upsert error: {exc}"
 
 
-async def _log_401_to_dashboard(bot, source_ip: str, endpoint: str, reason: str) -> None:
+async def _log_401_to_dashboard(
+    bot,
+    source_ip: str,
+    endpoint: str,
+    reason: str,
+    user_agent: str = "",
+) -> None:
     """Post a 401 alert to #facilitator-dashboard (best-effort)."""
     try:
         channel_id = _dashboard_channel_id()
         if not bot or not channel_id:
             logger.warning(
-                "401 on %s from %s (%s) — dashboard channel not configured",
-                endpoint, source_ip, reason,
+                "401 on %s from %s (%s) ua=%s â€” dashboard channel not configured",
+                endpoint, source_ip, reason, (user_agent or "-"),
             )
             return
         channel = bot.get_channel(int(channel_id))
         if channel is None:
             channel = await bot.fetch_channel(int(channel_id))
+        ua_preview = (user_agent or "").strip()
+        if len(ua_preview) > 120:
+            ua_preview = ua_preview[:117] + "..."
         await channel.send(
-            f"🚨 **401 Unauthorized webhook** on `{endpoint}`\n"
+            f"ðŸš¨ **401 Unauthorized webhook** on `{endpoint}`\n"
             f"Source IP: `{source_ip}`\n"
-            f"Reason: {reason}"
+            f"Reason: {reason}\n"
+            f"User-Agent: `{ua_preview or 'unknown'}`"
         )
     except Exception as exc:
         logger.error("Failed to log 401 to dashboard: %s", exc)
@@ -328,7 +338,7 @@ async def _log_apps_script_error_to_dashboard(
 
         error_preview = (error_message or "").strip()[:1200] or "Unknown error"
         text = (
-            "🚨 **Apps Script error**\n"
+            "ðŸš¨ **Apps Script error**\n"
             f"Function: `{function_name}`\n"
             f"Error: {error_preview}\n"
             f"Source IP: `{source_ip}`"
@@ -347,13 +357,13 @@ async def _log_apps_script_error_to_dashboard(
 
 class InternalWebhookServer:
     """
-    Lightweight aiohttp server for HMAC-authenticated Apps Script → bot webhooks.
+    Lightweight aiohttp server for HMAC-authenticated Apps Script â†’ bot webhooks.
 
     Endpoints:
-      POST /api/internal/role-upgrade    — body: {"discord_id": "..."}
-      POST /api/internal/preload-student — body: {<student row fields>}
-      POST /api/internal/apps-script-error — body: {"type":"apps_script_error","fn":"...","error":"..."}
-      POST /api/internal/activation-dm — body: {"discord_id":"...","enrollment_name":"..."}
+      POST /api/internal/role-upgrade    â€” body: {"discord_id": "..."}
+      POST /api/internal/preload-student â€” body: {<student row fields>}
+      POST /api/internal/apps-script-error â€” body: {"type":"apps_script_error","fn":"...","error":"..."}
+      POST /api/internal/activation-dm â€” body: {"discord_id":"...","enrollment_name":"..."}
     """
 
     def __init__(
@@ -374,7 +384,7 @@ class InternalWebhookServer:
         """Inject bot reference after startup (called from main.py on_ready)."""
         self._bot = bot
 
-    # ── Handlers ──────────────────────────────────────────────────────────
+    # â”€â”€ Handlers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     async def _handle_role_upgrade(self, request: web.Request) -> web.Response:
         """
@@ -383,10 +393,17 @@ class InternalWebhookServer:
         Header: X-K2M-Signature: sha256=<hmac>
         """
         source_ip = get_client_ip(request)
+        user_agent = str(request.headers.get("User-Agent", "")).strip()
         ok, body, reason = await require_webhook_signature(request)
         if not ok:
             logger.warning("401 role-upgrade from %s: %s", source_ip, reason)
-            await _log_401_to_dashboard(self._bot, source_ip, "/api/internal/role-upgrade", reason)
+            await _log_401_to_dashboard(
+                self._bot,
+                source_ip,
+                "/api/internal/role-upgrade",
+                reason,
+                user_agent=user_agent,
+            )
             return web.json_response({"success": False, "error": reason}, status=401)
 
         try:
@@ -461,11 +478,16 @@ class InternalWebhookServer:
         Header: X-K2M-Signature: sha256=<hmac>
         """
         source_ip = get_client_ip(request)
+        user_agent = str(request.headers.get("User-Agent", "")).strip()
         ok, body, reason = await require_webhook_signature(request)
         if not ok:
             logger.warning("401 preload-student from %s: %s", source_ip, reason)
             await _log_401_to_dashboard(
-                self._bot, source_ip, "/api/internal/preload-student", reason
+                self._bot,
+                source_ip,
+                "/api/internal/preload-student",
+                reason,
+                user_agent=user_agent,
             )
             return web.json_response({"success": False, "error": reason}, status=401)
 
@@ -500,6 +522,7 @@ class InternalWebhookServer:
         Header: X-K2M-Signature: sha256=<hmac>
         """
         source_ip = get_client_ip(request)
+        user_agent = str(request.headers.get("User-Agent", "")).strip()
         ok, body, reason = await require_webhook_signature(request)
         if not ok:
             logger.warning("401 apps-script-error from %s: %s", source_ip, reason)
@@ -508,6 +531,7 @@ class InternalWebhookServer:
                 source_ip,
                 "/api/internal/apps-script-error",
                 reason,
+                user_agent=user_agent,
             )
             return web.json_response({"success": False, "error": reason}, status=401)
 
@@ -584,6 +608,7 @@ class InternalWebhookServer:
         Header: X-K2M-Signature: sha256=<hmac>
         """
         source_ip = get_client_ip(request)
+        user_agent = str(request.headers.get("User-Agent", "")).strip()
         ok, body, reason = await require_webhook_signature(request)
         if not ok:
             logger.warning("401 activation-dm from %s: %s", source_ip, reason)
@@ -592,6 +617,7 @@ class InternalWebhookServer:
                 source_ip,
                 "/api/internal/activation-dm",
                 reason,
+                user_agent=user_agent,
             )
             return web.json_response({"success": False, "error": reason}, status=401)
 
@@ -653,7 +679,7 @@ class InternalWebhookServer:
         logger.info("Task 7.10: activation DM sent to discord_id=%s", discord_id)
         return web.json_response({"success": True, "discord_id": discord_id})
 
-    # ── Route registration ─────────────────────────────────────────────────
+    # â”€â”€ Route registration â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     def register_routes(self, app: web.Application) -> None:
         """
@@ -666,7 +692,7 @@ class InternalWebhookServer:
         app.router.add_post("/api/internal/apps-script-error", self._handle_apps_script_error)
         app.router.add_post("/api/internal/activation-dm", self._handle_activation_dm)
 
-    # ── Lifecycle ──────────────────────────────────────────────────────────
+    # â”€â”€ Lifecycle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
     async def start(self) -> None:
         if self._runner is not None:
