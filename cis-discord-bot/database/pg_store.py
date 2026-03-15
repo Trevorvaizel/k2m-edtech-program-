@@ -82,6 +82,10 @@ def _translate_sql(sql: str) -> Optional[str]:
     # ? → %s  (parameterized placeholder)
     sql = sql.replace("?", "%s")
 
+    # psycopg2 treats '%' as placeholder syntax whenever params are supplied.
+    # Escape any remaining literal percent so LIKE '__pending__%' stays valid.
+    sql = _escape_literal_percents(sql)
+
     # sqlite_master is used only in _table_exists / _column_exists which we override
     # but translate just in case it leaks through
     sql = sql.replace("sqlite_master", "pg_class")
@@ -90,6 +94,31 @@ def _translate_sql(sql: str) -> Optional[str]:
     sql = sql.replace("AUTOINCREMENT", "")
 
     return sql
+
+
+def _escape_literal_percents(sql: str) -> str:
+    """Escape non-placeholder percent signs for psycopg2 (`%%` → literal `%`)."""
+    escaped: list[str] = []
+    idx = 0
+
+    while idx < len(sql):
+        char = sql[idx]
+        if char != "%":
+            escaped.append(char)
+            idx += 1
+            continue
+
+        next_char = sql[idx + 1] if idx + 1 < len(sql) else ""
+        if next_char in {"s", "%"}:
+            escaped.append("%")
+            escaped.append(next_char)
+            idx += 2
+            continue
+
+        escaped.append("%%")
+        idx += 1
+
+    return "".join(escaped)
 
 
 # ---------------------------------------------------------------------------
@@ -212,12 +241,25 @@ class PgConnectionWrapper:
         existing = self._conn
         if existing is not None:
             try:
+                if getattr(existing, "closed", 0) == 0:
+                    existing.rollback()
+            except Exception as exc:
+                logger.warning("Failed to rollback PostgreSQL connection before pool return: %s", exc)
+            try:
                 self._pool.putconn(existing, close=bool(discard_existing))
             except Exception as exc:
                 logger.warning("Failed to return stale PostgreSQL connection to pool: %s", exc)
 
         self._conn = self._pool.getconn()
         self._conn.autocommit = False
+
+    def _rollback_after_error(self) -> None:
+        if not self._is_connection_open():
+            return
+        try:
+            self._conn.rollback()
+        except Exception as exc:
+            logger.warning("Failed to rollback PostgreSQL transaction after error: %s", exc)
 
     @staticmethod
     def _should_retry_on_error(exc: Exception) -> bool:
@@ -245,6 +287,7 @@ class PgConnectionWrapper:
             cursor.execute(translated, params if params else None)
             return PgCursorWrapper(cursor)
         except Exception as exc:
+            self._rollback_after_error()
             try:
                 cursor.close()
             except Exception:
@@ -274,6 +317,7 @@ class PgConnectionWrapper:
         try:
             cursor.executemany(translated, params_list)
         except Exception as exc:
+            self._rollback_after_error()
             try:
                 cursor.close()
             except Exception:
@@ -290,13 +334,17 @@ class PgConnectionWrapper:
         if not self._is_connection_open():
             self._reacquire_connection(discard_existing=True)
         cursor = self._conn.cursor()
-        for stmt in _split_sql_statements(script):
-            stmt = stmt.strip()
-            if stmt:
-                translated = _translate_sql(stmt)
-                if translated:
-                    cursor.execute(translated)
-        self._conn.commit()
+        try:
+            for stmt in _split_sql_statements(script):
+                stmt = stmt.strip()
+                if stmt:
+                    translated = _translate_sql(stmt)
+                    if translated:
+                        cursor.execute(translated)
+            self._conn.commit()
+        except Exception:
+            self._rollback_after_error()
+            raise
 
     def commit(self) -> None:
         self._conn.commit()
@@ -307,6 +355,11 @@ class PgConnectionWrapper:
     def close(self) -> None:
         """Return connection to pool instead of closing it."""
         if self._pool and self._conn:
+            try:
+                if getattr(self._conn, "closed", 0) == 0:
+                    self._conn.rollback()
+            except Exception as exc:
+                logger.warning("Error rolling back PG connection before pool return: %s", exc)
             try:
                 self._pool.putconn(self._conn, close=(getattr(self._conn, "closed", 0) != 0))
             except Exception as exc:

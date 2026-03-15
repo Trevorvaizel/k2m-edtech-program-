@@ -5,6 +5,7 @@ Decision B-01 + N-07 + GAP FIX #1 + GAP FIX #8.
 """
 
 import asyncio
+import importlib
 import json
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -297,6 +298,49 @@ async def test_handle_interest_stores_real_invite_code(monkeypatch):
 
 
 @pytest.mark.asyncio
+async def test_handle_interest_tracks_real_invite_in_runtime_snapshot(monkeypatch):
+    """Fresh one-use invites are inserted into the live join snapshot cache."""
+    import cis_controller.interest_api_server as api
+
+    monkeypatch.setenv("DISCORD_GUILD_ID", "777")
+
+    async def _fake_check_dup(*_args, **_kwargs):
+        return False
+
+    async def _fake_check_cap(*_args, **_kwargs):
+        return {"paid_count": 0, "cap": 30, "available": 30}
+
+    async def _fake_create_invite():
+        return {"code": "REALCODE", "url": "https://discord.gg/REALCODE"}
+
+    async def _fake_append(*_args, **_kwargs):
+        return True
+
+    async def _fake_send_email(**_kwargs):
+        return True
+
+    monkeypatch.setattr(api, "check_duplicate_email", _fake_check_dup)
+    monkeypatch.setattr(api, "check_enrollment_cap", _fake_check_cap)
+    monkeypatch.setattr(api, "create_discord_invite_link", _fake_create_invite)
+    monkeypatch.setattr(api, "append_to_student_roster", _fake_append)
+    monkeypatch.setattr(api, "send_brevo_email", _fake_send_email)
+
+    server = api.InterestAPIServer(spreadsheet_id="sheet123", creds_path="")
+    snapshot = {}
+    server.set_invite_snapshot_cache(snapshot)
+
+    class _Req:
+        async def json(self):
+            return {"name": "Alice Wanjiru", "email": "alice@k2m.org", "phone": "+254700000001"}
+
+    response = await server._handle_interest(_Req())
+    body = json.loads(response.body)
+
+    assert body["success"] is True
+    assert snapshot == {777: {"REALCODE": 0}}
+
+
+@pytest.mark.asyncio
 async def test_handle_interest_falls_back_on_invite_failure(monkeypatch):
     """Uses DISCORD_INVITE_FALLBACK_URL when invite creation fails, still succeeds."""
     import cis_controller.interest_api_server as api
@@ -393,3 +437,106 @@ async def test_link_roster_discord_identity_by_invite_code_updates_column_d(monk
     assert captured["row_number"] == 2
     assert captured["updates"][api.COL_DISCORD_ID] == "123456789|alice#0001"
     assert result["enrollment_email"] == "alice@k2m.org"
+
+
+@pytest.mark.asyncio
+async def test_select_unique_recent_unlinked_roster_student_returns_only_candidate(monkeypatch):
+    """Sheets fallback resolves only when exactly one recent unlinked row exists."""
+    import cis_controller.interest_api_server as api
+
+    now = api._iso_utc(api.datetime.now(api.timezone.utc))
+
+    async def _fake_read_rows(**_kwargs):
+        return [
+            ["Name", "Email", "Phone", "Discord", "Profession", "", "", "", "", "", "", "", "", "Created", "", "", "", "Invite"],
+            ["Alice", "alice@k2m.org", "+2547", "", "Teacher", "", "", "", "", "", "", "", "", now, "", "", "", "ABC123"],
+        ]
+
+    monkeypatch.setattr(api, "read_roster_rows", _fake_read_rows)
+
+    result = await api.select_unique_recent_unlinked_roster_student(
+        spreadsheet_id="sheet-123",
+        sheet_range="Student Roster!A:Z",
+        window_minutes=20,
+    )
+
+    assert result is not None
+    assert result["invite_code"] == "ABC123"
+    assert result["enrollment_email"] == "alice@k2m.org"
+
+
+@pytest.mark.asyncio
+async def test_on_member_join_uses_sheets_fallback_when_pg_has_no_recent_match(monkeypatch):
+    monkeypatch.setenv("DISCORD_TOKEN", "test-token")
+    monkeypatch.setenv("DISCORD_GUILD_ID", "777")
+    monkeypatch.setenv("COHORT_1_START_DATE", "2026-03-16")
+    monkeypatch.setenv("GOOGLE_SHEETS_ID", "sheet-123")
+
+    main_module = importlib.import_module("main")
+    main_module = importlib.reload(main_module)
+
+    guest_role = MagicMock()
+    guest_role.name = "Guest"
+
+    guild = MagicMock()
+    guild.id = 777
+    guild.roles = [guest_role]
+    guild.invites = AsyncMock(return_value=[])
+
+    member = MagicMock()
+    member.bot = False
+    member.id = 123456789
+    member.name = "duffy"
+    member.display_name = "Duffy"
+    member.guild = guild
+    member.add_roles = AsyncMock()
+    member.send = AsyncMock()
+
+    store = MagicMock()
+    store.get_student_by_invite_code = MagicMock(return_value=None)
+    store.link_student_by_invite = MagicMock(return_value=False)
+    store.log_observability_event = MagicMock()
+    store.update_onboarding_stop = MagicMock()
+    store.touch_student_last_active = MagicMock()
+    store.upsert_student_from_sheets = MagicMock()
+    store.get_student = MagicMock(
+        return_value={"enrollment_name": "Dare Denish", "profession": "teacher"}
+    )
+
+    roster_payload = {
+        "row_number": 21,
+        "enrollment_name": "Dare Denish",
+        "enrollment_email": "daredenish12@gmail.com",
+        "profession": "teacher",
+        "invite_code": "REAL123",
+    }
+
+    with patch.object(main_module, "_get_store", return_value=store), patch.object(
+        main_module,
+        "_select_unique_recent_unlinked_student",
+        return_value=None,
+    ), patch.object(
+        main_module,
+        "_select_unique_recent_unlinked_roster_student",
+        new=AsyncMock(return_value=roster_payload),
+    ), patch.object(
+        main_module,
+        "_link_member_identity_to_roster",
+        new=AsyncMock(return_value=roster_payload),
+    ):
+        await main_module.on_member_join(member)
+
+    store.upsert_student_from_sheets.assert_called_once_with(
+        enrollment_email="daredenish12@gmail.com",
+        enrollment_name="Dare Denish",
+        invite_code="REAL123",
+        enrollment_status="lead",
+        payment_status="lead",
+    )
+    store.link_student_by_invite.assert_called_once_with(
+        invite_code="REAL123",
+        discord_id="123456789",
+        discord_username="duffy",
+    )
+    member.send.assert_awaited_once()
+    assert "Step 2 complete - here's Step 3." in member.send.await_args.args[0]
