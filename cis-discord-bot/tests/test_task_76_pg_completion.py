@@ -288,6 +288,121 @@ def test_pg_connection_wrapper_cursor_supports_sqlite_style_calls():
     assert executed["params"] == (7,)
 
 
+def test_pg_connection_wrapper_escapes_literal_percent_in_parameterized_queries():
+    executed = {}
+
+    class _FakeCursor:
+        def execute(self, sql, params=None):
+            executed["sql"] = sql
+            executed["params"] = params
+
+        def fetchone(self):
+            return {"ok": True}
+
+        def fetchall(self):
+            return [{"ok": True}]
+
+    class _FakeConn:
+        def cursor(self, cursor_factory=None):
+            return _FakeCursor()
+
+        def commit(self):
+            return None
+
+        def rollback(self):
+            return None
+
+    class _FakePool:
+        def putconn(self, _conn):
+            return None
+
+    conn = PgConnectionWrapper(_FakeConn(), _FakePool())
+
+    conn.execute(
+        "SELECT * FROM students WHERE discord_id LIKE '__pending__%' AND invite_code = ?",
+        ("ABC123",),
+    ).fetchone()
+
+    assert executed["sql"] == (
+        "SELECT * FROM students WHERE discord_id LIKE '__pending__%%' AND invite_code = %s"
+    )
+    assert executed["params"] == ("ABC123",)
+
+
+def test_pg_connection_wrapper_rolls_back_failed_statement_before_next_query():
+    executed = []
+
+    class _FakeConn:
+        def __init__(self):
+            self.aborted = False
+            self.rollback_calls = 0
+
+        def cursor(self, cursor_factory=None):
+            conn = self
+
+            class _FakeCursor:
+                rowcount = 1
+
+                def execute(self, sql, params=None):
+                    if sql == "SELECT broken":
+                        conn.aborted = True
+                        raise RuntimeError("boom")
+                    if conn.aborted:
+                        raise RuntimeError("current transaction is aborted")
+                    executed.append((sql, params))
+
+                def fetchone(self):
+                    return {"ok": True}
+
+            return _FakeCursor()
+
+        def commit(self):
+            return None
+
+        def rollback(self):
+            self.rollback_calls += 1
+            self.aborted = False
+
+    class _FakePool:
+        def putconn(self, _conn, close=False):
+            return None
+
+    conn = PgConnectionWrapper(_FakeConn(), _FakePool())
+
+    with pytest.raises(RuntimeError, match="boom"):
+        conn.execute("SELECT broken")
+
+    row = conn.execute("SELECT 1").fetchone()
+
+    assert row == {"ok": True}
+    assert executed == [("SELECT 1", None)]
+    assert conn._conn.rollback_calls == 1
+
+
+def test_pg_connection_wrapper_close_rolls_back_before_returning_to_pool():
+    calls = {"rollback": 0, "putconn": []}
+
+    class _FakeConn:
+        closed = 0
+
+        def rollback(self):
+            calls["rollback"] += 1
+
+    class _FakePool:
+        def putconn(self, conn, close=False):
+            calls["putconn"].append((conn, close))
+
+    pg_conn = _FakeConn()
+    pool = _FakePool()
+    conn = PgConnectionWrapper(pg_conn, pool)
+
+    conn.close()
+
+    assert calls["rollback"] == 1
+    assert calls["putconn"] == [(pg_conn, False)]
+    assert conn._conn is None
+
+
 def test_pg_store_realign_serial_sequences_advances_serials():
     from database.pg_store import PgStudentStateStore
 

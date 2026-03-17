@@ -561,6 +561,55 @@ async def link_roster_discord_identity_by_invite_code(
     }
 
 
+async def select_unique_recent_unlinked_roster_student(
+    spreadsheet_id: str,
+    sheet_range: str = "Student Roster!A:Z",
+    creds_path: Optional[str] = None,
+    window_minutes: int = 20,
+) -> Optional[Dict[str, Any]]:
+    """
+    Return a single recent roster row that is still missing a Discord identity.
+
+    This is a join-time fallback for the window between Sheets append and PG preload.
+    """
+    minutes = max(5, min(180, int(window_minutes)))
+    rows = await read_roster_rows(
+        spreadsheet_id=spreadsheet_id,
+        sheet_range=sheet_range,
+        creds_path=creds_path,
+    )
+
+    now = datetime.now(timezone.utc)
+    candidates: List[Dict[str, Any]] = []
+    for row_number, row in enumerate(rows[1:], start=2):
+        invite_code = _safe_get(row, COL_INVITE).strip()
+        if not invite_code:
+            continue
+
+        if _extract_discord_id(_safe_get(row, COL_DISCORD_ID)):
+            continue
+
+        created_at_dt = _parse_iso_utc(_safe_get(row, COL_CREATED_AT))
+        if not created_at_dt or now - created_at_dt > timedelta(minutes=minutes):
+            continue
+
+        candidates.append(
+            {
+                "row_number": row_number,
+                "enrollment_name": _safe_get(row, COL_NAME),
+                "enrollment_email": _safe_get(row, COL_EMAIL),
+                "profession": _safe_get(row, COL_PROFESSION),
+                "invite_code": invite_code,
+                "created_at": _safe_get(row, COL_CREATED_AT),
+            }
+        )
+
+        if len(candidates) > 1:
+            return None
+
+    return candidates[0] if len(candidates) == 1 else None
+
+
 async def update_roster_cells(
     row_number: int,
     updates: Dict[int, Any],
@@ -1863,10 +1912,40 @@ class InterestAPIServer:
         self._runner: Optional[web.AppRunner] = None
         self._site: Optional[web.BaseSite] = None
         self._bot = bot
+        self._invite_snapshot_cache: Optional[Dict[int, Dict[str, int]]] = None
 
     def set_bot(self, bot) -> None:
         """Inject bot reference after startup (called from main.py on_ready)."""
         self._bot = bot
+
+    def set_invite_snapshot_cache(self, snapshot_cache: Dict[int, Dict[str, int]]) -> None:
+        """Share the join-handler invite snapshot so fresh one-use codes are visible."""
+        self._invite_snapshot_cache = snapshot_cache
+
+    def _resolve_runtime_guild_id(self) -> Optional[int]:
+        raw_guild_id = os.getenv("DISCORD_GUILD_ID", "").strip()
+        if raw_guild_id.isdigit():
+            return int(raw_guild_id)
+
+        guilds = getattr(getattr(self, "_bot", None), "guilds", None) or []
+        if len(guilds) == 1:
+            return getattr(guilds[0], "id", None)
+        return None
+
+    def _remember_created_invite(self, invite_code: str) -> None:
+        code = (invite_code or "").strip()
+        guild_id = self._resolve_runtime_guild_id()
+        snapshot_cache = getattr(self, "_invite_snapshot_cache", None)
+        if not code or guild_id is None or snapshot_cache is None:
+            return
+
+        guild_snapshot = snapshot_cache.setdefault(guild_id, {})
+        guild_snapshot.setdefault(code, 0)
+        logger.info(
+            "Tracked fresh invite in runtime snapshot: guild_id=%s invite_code=%s",
+            guild_id,
+            code,
+        )
 
     async def _handle_cors(self, request: web.Request) -> web.Response:
         return web.Response(
@@ -1926,12 +2005,14 @@ class InterestAPIServer:
 
             invite_code = _generate_placeholder_invite_code(email)
             invite_link = os.getenv("DISCORD_INVITE_FALLBACK_URL", "").strip()
+            real_invite_created = False
 
             if not waitlisted:
                 invite_data = await create_discord_invite_link()
                 if invite_data:
                     invite_code = invite_data["code"]
                     invite_link = invite_data["url"]
+                    real_invite_created = True
                 elif not invite_link:
                     return web.json_response(
                         {
@@ -1959,6 +2040,9 @@ class InterestAPIServer:
                     status=500,
                     headers=_cors_headers(),
                 )
+
+            if real_invite_created:
+                self._remember_created_invite(invite_code)
 
             waitlist_number = None
             if waitlisted:

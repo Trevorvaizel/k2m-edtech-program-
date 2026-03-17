@@ -433,6 +433,30 @@ async def _link_member_identity_to_roster(
     )
 
 
+async def _select_unique_recent_unlinked_roster_student(
+    window_minutes: int = 20,
+) -> Optional[dict]:
+    """Read Google Sheets directly when the join lands before PG preload."""
+    spreadsheet_id = os.getenv("GOOGLE_SHEETS_ID", "").strip()
+    if not spreadsheet_id:
+        return None
+
+    from cis_controller.interest_api_server import (
+        select_unique_recent_unlinked_roster_student,
+    )
+
+    try:
+        return await select_unique_recent_unlinked_roster_student(
+            spreadsheet_id=spreadsheet_id,
+            sheet_range=os.getenv("GOOGLE_SHEETS_RANGE", "Student Roster!A:Z").strip(),
+            creds_path=os.getenv("GOOGLE_SHEETS_CREDENTIALS_PATH", "").strip() or None,
+            window_minutes=window_minutes,
+        )
+    except Exception as exc:
+        logger.warning("Roster fallback candidate scan failed: %s", exc)
+        return None
+
+
 def _select_unique_recent_unlinked_student(store, window_minutes: int = 90):
     """
     Invite-diff fallback candidate selector.
@@ -779,6 +803,8 @@ async def on_ready():
     # Task 7.5: inject bot into InterestAPIServer so KIRA payment DMs can fire.
     if interest_api_server is not None:
         interest_api_server.set_bot(bot)
+        if hasattr(interest_api_server, "set_invite_snapshot_cache"):
+            interest_api_server.set_invite_snapshot_cache(_guild_invite_snapshot)
 
     try:
         enable_unsubscribe_server = os.getenv(
@@ -1272,6 +1298,13 @@ async def recover_member_slash(
         )
         return
 
+    if member.bot:
+        await interaction.followup.send(
+            "Bots cannot be recovered as students.",
+            ephemeral=True,
+        )
+        return
+
     store = _get_store()
     student = None
 
@@ -1575,6 +1608,20 @@ async def on_member_join(member: discord.Member):
                         member.id,
                         used_code,
                     )
+                else:
+                    roster_fallback = await _select_unique_recent_unlinked_roster_student(
+                        window_minutes=20,
+                    )
+                    roster_fallback_code = str(
+                        _row_value(roster_fallback, "invite_code", "")
+                    ).strip()
+                    if roster_fallback_code:
+                        used_code = roster_fallback_code
+                        logger.warning(
+                            "Invite diff Sheets fallback engaged: discord_id=%s invite_code=%s",
+                            member.id,
+                            used_code,
+                        )
 
             if used_code:
                 if has_invite_methods:
