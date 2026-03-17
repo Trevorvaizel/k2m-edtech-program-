@@ -181,6 +181,12 @@ State transitions are written to the `students` table (`current_state` column) o
 - Cluster session facilitation
 - Welcome lounge refresh
 
+**Cluster live-session automation includes:**
+- 24-hour pre-session announcements to the current week channel
+- 1-hour reminders before session start
+- voice-channel creation / cleanup for session windows
+- post-session summary posting when Trevor runs the cluster command flow
+
 **Week calculation:**
 ```python
 current_week = (days_since_COHORT_1_START_DATE // 7) + 1  # capped at 8
@@ -301,7 +307,20 @@ Parents can unsubscribe via a dedicated endpoint (`parent_unsubscribe_server` st
 
 ---
 
-## Startup Sequence (What Happens When Bot Starts)
+## 11 — Activation and Welcome Lounge
+
+The join flow is intentionally staged:
+
+- `on_member_join` attempts invite-based identity matching
+- matched joins receive `@Guest` first, not `@Student`
+- `#welcome-lounge` acts as a waiting room while payment / activation is pending
+- internal webhook calls can upgrade the member to `@Student`, remove `@Guest`, and send activation DMs
+
+This is why "member joined the guild" and "student fully activated" are separate runtime concepts.
+
+---
+
+## 12 — Startup Sequence (What Happens When Bot Starts)
 
 ```
 1. Load .env

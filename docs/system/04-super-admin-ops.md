@@ -79,6 +79,15 @@ Full reference: `cis-discord-bot/.env.template`
 | `CONTEXT_ENGINE_WEBHOOK_TOKEN` | `secret` | Must match Apps Script Script Property `CONTEXT_WEBHOOK_TOKEN` |
 | `WEBHOOK_SECRET` | `secret` | Shared secret for Apps Script internal webhook calls into the bot |
 
+### Enrollment and activation ops
+
+| Variable | Purpose |
+|----------|---------|
+| `GOOGLE_SHEETS_ID` | Spreadsheet backing enrollment, payment, and recovery flows |
+| `GOOGLE_SHEETS_RANGE` | Roster range, usually `Student Roster!A:Z` |
+| `GOOGLE_SHEETS_CREDENTIALS_PATH` | Optional credentials path for Sheets sync / recovery scripts |
+| `COHORT_1_FIRST_SESSION_DATE` | Used in activation DM messaging |
+
 ### Weekly channel mapping
 
 | Variable | Maps to |
@@ -88,6 +97,15 @@ Full reference: `cis-discord-bot/.env.template`
 | `CHANNEL_WEEK_4_5` | Discord channel ID for weeks 4–5 |
 | `CHANNEL_WEEK_6_7` | Discord channel ID for weeks 6–7 |
 | `CHANNEL_WEEK_8` | Discord channel ID for week 8 |
+| `CHANNEL_WELCOME_LOUNGE` | Waiting-room channel used before activation completes |
+
+### Role mapping
+
+| Variable | Purpose |
+|----------|---------|
+| `STUDENT_ROLE_ID` | Role granted after activation / payment verification |
+| `GUEST_ROLE_ID` | Role used for newly joined, not-yet-activated students |
+| `FACILITATOR_ROLE_ID` | Role expected for Trevor-only operational commands |
 
 ### Cost controls
 
@@ -106,6 +124,7 @@ Full reference: `cis-discord-bot/.env.template`
 | `MOUNT_INTEREST_API_ON_PARENT_SERVER` | `true` | Mount interest/enroll routes on the shared parent unsubscribe server |
 | `ENABLE_PARENT_UNSUBSCRIBE_SERVER` | `true` | Start the shared aiohttp listener on port 8080 |
 | `SHEETS_SYNC_ENABLED` | `false` | Enable nightly PostgreSQL → Sheets engagement sync |
+| `CLUSTER_SESSION_SCHEDULE_JSON` | unset | Optional override for the default cluster live-session schedule |
 
 ---
 
@@ -171,6 +190,19 @@ This creates: 4 categories, 15 channels, 4 roles.
 
 ---
 
+## Join to Activation Lifecycle
+
+The built system has a real waiting-room state between "joined Discord" and "fully activated student":
+
+1. A matched new join receives `@Guest`
+2. `#welcome-lounge` stays open for Guest posting while payment / activation is pending
+3. Apps Script can call `/api/internal/role-upgrade` to grant `@Student` and remove `@Guest`
+4. Apps Script can call `/api/internal/activation-dm` to send final activation details, including first-session and week-1 timing
+
+Operationally, this means a student can be inside Discord but not yet fully activated for the cohort.
+
+---
+
 ## Adding a New Student Mid-Cohort
 
 1. Add them to the Discord server (invite or manual add)
@@ -178,6 +210,57 @@ This creates: 4 categories, 15 channels, 4 roles.
 3. Student is created with `current_week = 1` regardless of the cohort's current week
 4. They progress by submitting weekly reflections
 5. If they need to fast-track to the current cohort week, use `/unlock-week` for each week
+
+---
+
+## Support Recovery Commands
+
+These commands are part of normal ops and should be in the runbook:
+
+### Recover unmatched joins
+
+```bash
+/recover-member @member [invite_code]
+```
+
+Use this when invite matching failed on `on_member_join`:
+- with `invite_code`, KIRA links the exact enrollment row
+- without `invite_code`, KIRA tries the most recent unlinked enrolled student within 24 hours
+
+This is the primary recovery path for "student is in Discord but not linked to their enrollment row."
+
+### Renew expired payment links
+
+```bash
+/renew email@example.com
+```
+
+Use this when a student's payment submission link expired:
+- generates a new 7-day token
+- writes the new token + expiry back to Sheets
+- resets token warning state in PostgreSQL when available
+- sends a fresh payment email
+
+---
+
+## Cluster Session Operations
+
+Cluster live-session support is built into the runtime:
+- default session cadence is Monday / Wednesday / Friday at 6:00 PM EAT across 8 cluster buckets
+- 24-hour announcements are automated
+- 1-hour reminders are automated
+- temporary voice-channel cleanup is automated after sessions
+
+Trevor-facing cluster commands:
+
+```bash
+/switch-cluster @student cluster_id [reason]
+/cluster-roster cluster_id
+/all-cluster-rosters
+/post-session-summary cluster_id session_notes [attendance_count]
+```
+
+If the default schedule needs to change, override it with `CLUSTER_SESSION_SCHEDULE_JSON`.
 
 ---
 

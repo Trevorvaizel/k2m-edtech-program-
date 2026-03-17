@@ -45,6 +45,17 @@ The student starts on the K2M Landing Page (Vercel), which submits directly to b
 
 > **Identity note:** The landing flow does not capture a Discord handle. Identity is linked when the student joins Discord and the invite / Sheets / internal webhook data are reconciled.
 
+### Activation and Waiting Room
+
+When a matched student joins Discord, KIRA assigns them the `@Guest` role first and routes them into `#welcome-lounge` while payment / activation is still settling.
+
+**What this does:**
+- Guests can ask questions in `#welcome-lounge`
+- Activated students with `@Student` can still read `#welcome-lounge`, but cannot post there
+- Apps Script can call the bot's internal `role-upgrade` and `activation-dm` endpoints to grant `@Student`, remove `@Guest`, and send the final activation DM with first-session timing
+
+This means "joined Discord" and "fully activated for the cohort" are separate states in the built system.
+
 ---
 
 ## Phase 2 — Onboarding (Discord DM)
@@ -121,6 +132,20 @@ Each week follows a fixed schedule (all times EAT, Africa/Nairobi):
 
 Week 8 has **no nodes scheduled** — it is reserved for final reflection only.
 
+### Parent Communication Preference
+
+Students control parent/guardian email visibility from inside Discord:
+
+- `/parent-consent` — add parent email and choose a preference
+- `/update-parent-consent` — switch the preference later
+- `/view-parent-consent` — inspect the current setting
+
+**Available modes:**
+- `share_weekly` — weekly Monday updates to the parent with habits practiced, conversation counts, and reflection highlights
+- `privacy_first` — no weekly updates; parent only hears at Week 8 when the artifact is ready
+
+Private DM content is not forwarded in the weekly parent updates.
+
 ### Agent Unlock Schedule
 
 Students do not have access to all agents at once. KIRA unlocks them progressively:
@@ -166,6 +191,17 @@ Starting at week 6, students build a **6-section Thinking Artifact** — a struc
 **Artifact states:** `not_started` → `in_progress` → `completed` → `published`
 
 Only completed artifacts can be published to #thinking-showcase.
+
+### Showcase Sharing Preference
+
+Students can set a default publication preference with:
+`/showcase-preference`
+
+**Options:**
+- `always_ask` — KIRA asks every time before publishing
+- `always_yes` — KIRA auto-shares eligible celebration/showcase moments
+- `always_no` — KIRA keeps outputs private by default
+- `week8_only` — KIRA saves public sharing for the Week 8 artifact flow
 
 ---
 

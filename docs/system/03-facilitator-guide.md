@@ -123,6 +123,61 @@ Returns cohort-level stats for the past N days. Safe to run at any time. Output 
 
 ---
 
+## Additional Cohort Views
+
+Trevor also has a few quick diagnostic commands for intervention and pattern spotting:
+
+```
+/show-stuck-students [inactive_days=3]
+/show-zone-shifts [days=30]
+/show-milestones [days=7]
+```
+
+Use these when the dashboard summary is too coarse:
+- `/show-stuck-students` surfaces students with low recent agent activity
+- `/show-zone-shifts` shows identity / zone movement over time
+- `/show-milestones` shows habit celebrations that may merit reinforcement
+
+These outputs are Trevor-only and intended for facilitation, not public ranking.
+
+---
+
+## Support Recovery Commands
+
+Two support commands matter operationally and were easy to miss in the original docs:
+
+```
+/recover-member @member [invite_code]
+/renew email@example.com
+```
+
+Use `/recover-member` when a student joined without their unique invite or invite matching failed. With an `invite_code`, KIRA does an exact match; without one, it tries a recent unlinked enrollment fallback.
+
+Use `/renew` when a student's payment / M-Pesa submit link has expired. KIRA generates a new token, writes it back to Sheets, resets the warning cycle, and sends a fresh payment email.
+
+---
+
+## Cluster Operations
+
+If you are running live cluster sessions, Trevor also has cluster-management commands:
+
+```
+/switch-cluster @student cluster_id [reason]
+/cluster-roster cluster_id
+/all-cluster-rosters
+/post-session-summary cluster_id session_notes [attendance_count]
+```
+
+These support:
+- moving a student between clusters
+- checking roster capacity
+- reviewing all 8 cluster buckets at once
+- posting a facilitator summary after a live session
+
+The default live-session cadence is 6:00 PM EAT on alternating Monday / Wednesday / Friday slots, but the schedule can be overridden operationally.
+
+---
+
 ## Student Has DMs Disabled
 
 All KIRA communication happens via Discord DM — onboarding, agent responses, nudges, and crisis resources. If a student has DMs disabled (a common Discord privacy setting), KIRA cannot reach them.
@@ -135,6 +190,24 @@ All KIRA communication happens via Discord DM — onboarding, agent responses, n
 3. Once enabled, ask the student to run `/onboarding` in Discord so KIRA can restart the DM flow
 
 > This is a known gap with no automated fix currently in place.
+
+---
+
+## Parent Email Preferences
+
+Students control their own parent email visibility from Discord:
+
+```
+/parent-consent parent_email consent_preference
+/update-parent-consent consent_preference
+/view-parent-consent
+```
+
+The two supported modes are:
+- `share_weekly` — weekly Monday updates
+- `privacy_first` — hold updates until Week 8
+
+If a parent asks why they are or are not receiving updates, check that the student has actually set a consent preference first.
 
 ---
 
