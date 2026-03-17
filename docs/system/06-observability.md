@@ -68,9 +68,14 @@ Railway dashboard → your project → Deployments → View Logs
 
 **Querying events:**
 
-```python
+```text
 # Via admin command
 /show-aggregate-patterns days=7
+
+# Additional Trevor-only diagnostic views
+/show-stuck-students inactive_days=3
+/show-zone-shifts days=30
+/show-milestones days=7
 
 # Via store method (code)
 store.get_student_journey_events(discord_id, limit=50)
