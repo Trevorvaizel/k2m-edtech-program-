@@ -13,6 +13,7 @@
 - Progressive agent unlocks tied to weekly reflections — not just time
 - Facilitator escalation system with 4 levels (nudge → dashboard → DM → crisis)
 - Safety filter blocks all comparison language and detects mental health crisis signals
+- Bot-hosted HTTP APIs power landing-page interest capture, enrollment, payment submission, and activation flows
 - Scales to 200+ students with 10% human oversight
 
 ---
@@ -22,10 +23,10 @@
 | Layer | Technology |
 |-------|-----------|
 | Bot runtime | Python 3 + discord.py 2.3.2 (Railway) |
-| AI provider | OpenAI `gpt-4o-mini` (swappable via `AI_PROVIDER`) |
+| AI provider | OpenAI by default (model selection is env-configured and swappable via `AI_PROVIDER`) |
 | Database (prod) | PostgreSQL on Railway |
-| Database (dev) | SQLite (automatic fallback) |
-| Landing page | Next.js on Vercel (`k2m-landing/`) |
+| Database (dev) | SQLite (local/test runtime when `DATABASE_URL` is unset) |
+| Landing page | Vite static frontend on Vercel (`k2m-landing/`) |
 | Context engine | Google Apps Script webhook |
 | Email | Brevo for parent notifications |
 
@@ -73,7 +74,7 @@ k2m-edtech-program-/
 │   ├── tests/                    ← 80+ test files
 │   ├── .env.template             ← Canonical env var reference
 │   └── main.py                   ← Entry point
-├── k2m-landing/                  ← Enrollment landing page (Next.js/Vercel)
+├── k2m-landing/                  ← Enrollment landing page (Vite/Vercel)
 ├── docs/
 │   └── system/                   ← System documentation (start here)
 ├── _bmad-output/                 ← Design artifacts, playbook, sprint tracker
@@ -89,7 +90,7 @@ k2m-edtech-program-/
 |----------|---------|
 | Information & Onboarding | #welcome, #announcements, #resources, #introductions |
 | Core Interaction | #thinking-lab, #thinking-showcase, #general |
-| Weekly Progression | #week-1 through #week-8 (progressive unlock) |
+| Weekly Progression | #week-1-wonder, #week-2-3-trust, #week-4-5-converse, #week-6-7-direct, #week-8-showcase |
 | Admin | #facilitator-dashboard, #bot-testing, #moderation-logs |
 
 ---

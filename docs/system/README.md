@@ -22,8 +22,8 @@
 ## Quick Reference
 
 **KIRA is running on:** Railway (bot) + PostgreSQL (database)
-**Landing page is on:** Vercel (Next.js)
-**AI Provider:** OpenAI `gpt-4o-mini` (swappable via `AI_PROVIDER` env var)
+**Landing page is on:** Vercel (Vite static frontend)
+**AI Provider:** OpenAI by default (model selection is env-driven via `OPENAI_MODEL` / `OPENAI_FAST_MODEL` / `OPENAI_REASONING_MODEL`)
 **Cohort timing:** Set via `COHORT_1_START_DATE` env var
 **Context engine:** Google Apps Script webhook (see CLAUDE.md for deployment rules)
 

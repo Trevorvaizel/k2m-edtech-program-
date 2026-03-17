@@ -25,7 +25,7 @@ Level 3 (Red)     ──  7+ days stuck     ──  KIRA sends YOU a direct DM
 Level 4 (Crisis)  ──  Crisis keywords   ──  KIRA pages you immediately + sends student resources
 ```
 
-Escalations are also logged to #moderation-logs.
+Level 2-4 escalations and safety events are logged to #moderation-logs.
 
 ### What triggers "stuck"?
 
@@ -57,13 +57,13 @@ When KIRA escalates a student, it will tell you their **barrier type**. Here's t
 | **Technical** ("I don't understand how to use this") | "Keep it simple: describe your situation in plain words and let KIRA handle the structure." |
 
 **How does KIRA determine barrier type?**
-Barrier type is drawn from the student's context profile — specifically the `barrier_type` field in their `StudentContext`, which is populated by the context engine (Google Sheets) based on their JTBD submission and any profession/situation data captured at enrollment. If the context engine hasn't populated this field (see [Known Gaps](./04-super-admin-ops.md#known-gaps-to-watch)), the barrier type may be missing from the escalation alert. In that case, use your own judgement based on what you know about the student.
+Barrier type is inferred from enrollment and context data, including situation, goals, and emotional baseline passed through the Apps Script context engine. If that inference is missing or stale, use your own judgement based on what you know about the student.
 
 ---
 
 ## The Facilitator Dashboard
 
-KIRA posts to **#facilitator-dashboard** with cohort-level stats. You can also run `/admin patterns` to pull an aggregate report.
+KIRA posts to **#facilitator-dashboard** with cohort-level stats. You can also run `/show-aggregate-patterns` to pull an aggregate report.
 
 **What the dashboard shows (by design — Guardrail #3):**
 - Total students / active students
@@ -86,7 +86,7 @@ If a student missed a reflection but should move to the next week, Trevor can ma
 
 Use the admin command (in Discord, as facilitator):
 ```
-/admin unlock_week @student week_number
+/unlock-week @student week_number
 ```
 
 This:
@@ -106,12 +106,17 @@ After consent, Trevor can pull their full journey context. The consent expires a
 
 This is **Guardrail #8** — student data is never surfaced without explicit consent.
 
+Use the admin command after consent:
+```
+/inspect-journey @student
+```
+
 ---
 
 ## Aggregate Patterns Command
 
 ```
-/admin patterns [days=7]
+/show-aggregate-patterns [days=7]
 ```
 
 Returns cohort-level stats for the past N days. Safe to run at any time. Output is always aggregate — no individual student data.
@@ -120,14 +125,14 @@ Returns cohort-level stats for the past N days. Safe to run at any time. Output 
 
 ## Student Has DMs Disabled
 
-All KIRA communication happens via Discord DM — onboarding, agent responses, nudges, and crisis resources. If a student has DMs disabled (a common Discord privacy setting), KIRA cannot reach them and will fail silently.
+All KIRA communication happens via Discord DM — onboarding, agent responses, nudges, and crisis resources. If a student has DMs disabled (a common Discord privacy setting), KIRA cannot reach them.
 
-**How to spot it:** A new member joined but never completed onboarding, and there are no DM-related errors in #moderation-logs for them.
+**How to spot it:** A new member joined but never completed onboarding, and Railway logs show DM-delivery warnings or the student never reaches `onboarding_complete`.
 
 **What to do:**
 1. Reach out to the student directly in a public channel or via another channel
 2. Ask them to enable DMs from server members (Discord Settings → Privacy & Safety → Allow direct messages from server members)
-3. Once enabled, you can manually trigger re-onboarding by asking Trevor to run the onboarding flow again for that Discord ID
+3. Once enabled, ask the student to run `/onboarding` in Discord so KIRA can restart the DM flow
 
 > This is a known gap with no automated fix currently in place.
 

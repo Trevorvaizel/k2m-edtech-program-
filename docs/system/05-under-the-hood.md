@@ -24,7 +24,7 @@ Student types /frame
   [4] Context Engine   ← Fetch personalised examples from Google Sheets
         │
         ▼
-  [5] LLM Call         ← OpenAI gpt-4o-mini with student context injected
+  [5] LLM Call         ← Provider/model resolved from env with student context injected
         │
         ▼
   [6] Output Filter    ← Does KIRA's response contain any comparison language? (output check)
@@ -86,7 +86,7 @@ Any violation raises a `ComparisonViolationError`. The message is blocked and ne
 `router.py` is the dispatcher. It has 3 layers:
 
 ```
-Layer 1: Is this a slash command or natural language?
+Layer 1: Is this a slash command or natural language from DM or a designated public channel?
           ↓ (command identified)
 Layer 2: Is this agent unlocked for the student's current week?
           ↓ (agent allowed)
@@ -111,7 +111,9 @@ Layer 3: Route to correct handler
 - `/challenge` → Habit 4 (THINK FIRST)
 - `/synthesize` → Habit 4 (THINK FIRST)
 
-**All agent responses are sent as DMs.** KIRA uses a `PrivateReplyMessage` adapter so interactions stay private even when initiated from a public channel.
+**Allowed public entry points are limited.** Student commands must come from DM, `#thinking-lab`, or `#bot-testing`.
+
+**Successful agent responses are sent as DMs.** KIRA uses a `PrivateReplyMessage` adapter so interactions stay private even when initiated from a public channel.
 
 ---
 
@@ -130,6 +132,8 @@ KIRA connects to a Google Apps Script webhook to personalise agent responses.
 **Webhook:** `CONTEXT_ENGINE_WEBHOOK_URL` (set in env)
 **Auth:** Token-based (`CONTEXT_ENGINE_WEBHOOK_TOKEN` must match Apps Script Script Property)
 **Timeout:** 2.5 seconds (configurable via `CONTEXT_ENGINE_TIMEOUT_SECONDS`)
+
+**Separate internal webhook path:** Apps Script also calls bot-side internal endpoints authenticated with `WEBHOOK_SECRET` for operational events such as student preload, Discord role upgrade, and activation DM handoff.
 
 > See CLAUDE.md for critical deployment rules around this webhook.
 
@@ -202,7 +206,7 @@ Days since last post:
   1 day ──────────────────────  Level 1 (Yellow)
                                 KIRA sends student a nudge DM
 
-  3+ days ─────────────────────  Level 2 (Orange)
+  3+ days or low engagement ───  Level 2 (Orange)
                                 Alert posted to #facilitator-dashboard
 
   7+ days ─────────────────────  Level 3 (Red)
@@ -213,7 +217,7 @@ Days since last post:
                                 Student sent crisis resources
 ```
 
-All escalations are logged to #moderation-logs with: timestamp, student zone, emotional state, escalation level.
+Only Level 2-4 escalations and safety events are posted to #moderation-logs. Level 1 nudges remain DM + database activity, not moderation-channel events.
 
 ---
 
@@ -221,7 +225,7 @@ All escalations are logged to #moderation-logs with: timestamp, student zone, em
 
 `llm_integration.py` abstracts all AI provider calls.
 
-**Active runtime:** OpenAI `gpt-4o-mini`
+**Active runtime:** Provider/model are resolved from env at startup.
 **Supported alternatives (swap via `AI_PROVIDER` env var):** `anthropic` (Claude Sonnet), `zhipu` (GLM-5)
 
 **Agent tiers:**
@@ -230,6 +234,8 @@ All escalations are logged to #moderation-logs with: timestamp, student zone, em
 |------|--------|-----|
 | Fast | frame, diverge, dashboard_summary, profession_inference | High volume, simpler reasoning |
 | Deep | challenge, synthesize, create-artifact | Heavier reasoning required |
+
+For OpenAI, fast-tier and deep-tier routing can split across `OPENAI_FAST_MODEL` and `OPENAI_REASONING_MODEL`; both fall back to `OPENAI_MODEL` and then `LLM_MODEL`.
 
 **Parameters:** `MAX_TOKENS=1000` · `TEMPERATURE=1.0` · Prompt caching enabled by default
 
@@ -247,7 +253,7 @@ All escalations are logged to #moderation-logs with: timestamp, student zone, em
 |-------------|----------|--------|
 | Production (Railway) | PostgreSQL | `pg_store.py` |
 | Local dev / tests | SQLite | `store.py` |
-| Emergency fallback | SQLite in-memory | `store.py` (auto-activates) |
+| Emergency fallback | SQLite in-memory | `store.py` (SQLite-mode backup only) |
 
 **Selection logic (automatic):**
 ```python
@@ -302,13 +308,13 @@ Parents can unsubscribe via a dedicated endpoint (`parent_unsubscribe_server` st
 2. Validate required env vars (DISCORD_TOKEN, COHORT_1_START_DATE, DATABASE_URL)
 3. Validate LLM provider config
 4. Create Discord bot with intents (messages, DMs, members, message_content)
-5. Connect to PostgreSQL (or fallback to SQLite)
+5. Connect to PostgreSQL when `DATABASE_URL` is set; otherwise run SQLite
 6. Load and cache agent system prompts
 7. on_ready():
    a. Start DailyPromptScheduler (background task)
    b. Start HealthMonitor
-   c. Start parent unsubscribe server
-   d. Start interest API server
-   e. Start internal webhook server (HMAC-authenticated, for Apps Script → bot)
+   c. Create InternalWebhookServer early so it can be mounted on the shared HTTP server
+   d. Start parent unsubscribe server (and mount interest/internal routes there when configured)
+   e. Start standalone interest API server only if those routes were not mounted on the shared server
    f. Snapshot guild invite counts (for member join detection)
 ```
