@@ -36,6 +36,8 @@ The bot auto-deploys from the `main` branch on Railway. No manual action needed 
 
 Auto-deploys from `main`. No manual action needed.
 
+**Built with:** Vite static frontend
+
 ### Apps Script (Context Engine) — CRITICAL
 
 > **⚠️ READ THIS BEFORE TOUCHING APPS SCRIPT**
@@ -75,6 +77,7 @@ Full reference: `cis-discord-bot/.env.template`
 | `FACILITATOR_DISCORD_ID` | `987654321` | Your Discord ID (receives crisis DMs) |
 | `CONTEXT_ENGINE_WEBHOOK_URL` | `https://script.google.com/...` | Apps Script endpoint |
 | `CONTEXT_ENGINE_WEBHOOK_TOKEN` | `secret` | Must match Apps Script Script Property `CONTEXT_WEBHOOK_TOKEN` |
+| `WEBHOOK_SECRET` | `secret` | Shared secret for Apps Script internal webhook calls into the bot |
 
 ### Weekly channel mapping
 
@@ -98,9 +101,11 @@ Full reference: `cis-discord-bot/.env.template`
 
 | Variable | Default | Purpose |
 |----------|---------|---------|
-| `ENABLE_NATURAL_LANGUAGE_FALLBACK` | `false` | Allow NL commands (not just slash) |
-| `ENABLE_ARTIFACT_TRACKING` | `true` | Track artifact section progress |
 | `SYNC_GLOBAL_COMMANDS` | `false` | Set `true` only in prod (avoid dev duplicates) |
+| `ENABLE_INTEREST_API` | `true` | Enable `/api/interest`, `/api/enroll`, and payment endpoints |
+| `MOUNT_INTEREST_API_ON_PARENT_SERVER` | `true` | Mount interest/enroll routes on the shared parent unsubscribe server |
+| `ENABLE_PARENT_UNSUBSCRIBE_SERVER` | `true` | Start the shared aiohttp listener on port 8080 |
+| `SHEETS_SYNC_ENABLED` | `false` | Enable nightly PostgreSQL → Sheets engagement sync |
 
 ---
 
@@ -126,7 +131,7 @@ python cis-discord-bot/migrate_to_pg.py
 
 If `DATABASE_URL` is not set (or doesn't start with `postgresql://`), the bot automatically uses SQLite at `cis-discord-bot/cohort-1.db`.
 
-**Emergency fallback:** If PostgreSQL becomes unreachable in production, the bot can activate an in-memory SQLite fallback to keep routing alive while you recover the database. This is automatic — KIRA will alert you via `_runtime_failure_notifier`.
+**Emergency fallback:** In PostgreSQL mode, the health monitor does **not** switch production traffic to SQLite. It alerts on degraded PostgreSQL connectivity and expects manual recovery. In-memory SQLite fallback only applies when the process is already running in SQLite mode.
 
 ---
 
@@ -144,7 +149,15 @@ The scheduler runs as a background task inside the bot process. It posts to Disc
 **The scheduler reads prompts from:**
 `_bmad-output/cohort-design-artifacts/playbook-v2/03-sessions/daily-prompt-library.md`
 
-The scheduler also runs daily escalation checks (see [Facilitator Guide](./03-facilitator-guide.md)).
+The scheduler also runs operational jobs beyond content posting:
+- `10:00 AM` daily escalation checks
+- `5:00 PM Friday` reflection summaries to `#facilitator-dashboard`
+- `6-hour cadence at :05` payment feedback DM passes
+- `7:00 PM` onboarding timeout and re-entry checks
+- `11:00 PM` token expiry warning pass
+- `11:10 PM` `#welcome-lounge` status refresh
+- `11:20 PM` Stage 1 → 2 drop-off recovery nudges
+- `12:10 AM` nightly PostgreSQL → Sheets engagement sync when `SHEETS_SYNC_ENABLED=true`
 
 ---
 
@@ -154,7 +167,7 @@ To spin up a fresh Discord server with the correct structure:
 ```bash
 python setup_discord_server.py
 ```
-This creates: 4 categories, 14 channels, 3 roles.
+This creates: 4 categories, 15 channels, 4 roles.
 
 ---
 
@@ -164,7 +177,7 @@ This creates: 4 categories, 14 channels, 3 roles.
 2. KIRA auto-detects the new member and starts onboarding in DM
 3. Student is created with `current_week = 1` regardless of the cohort's current week
 4. They progress by submitting weekly reflections
-5. If they need to fast-track to the current cohort week, use `/admin unlock_week` for each week
+5. If they need to fast-track to the current cohort week, use `/unlock-week` for each week
 
 ---
 
@@ -205,9 +218,9 @@ The context engine reads from spreadsheet ID: `16tLQbGUF9mI2z2cHxlwmGce6Npui0C5w
 
 | Gap | Risk | Priority | How to verify / remediate |
 |-----|------|----------|--------------------------|
-| **Sheets → PostgreSQL sync** | Enrollment data drifts silently — students in Sheets may not exist in DB and vice versa | High | Manually cross-reference: query `SELECT discord_id FROM students` against the Sheets enrollment tab. No auto-sync exists; this must be done before each cohort launch. |
+| **Sheets ↔ PostgreSQL reconciliation is partial** | Enrollment and engagement can still drift across systems even though some sync paths exist | High | Manually cross-reference enrollment rows, invite-linked Discord IDs, and `students` table records before each cohort launch. |
 | **Profession inference incomplete** | `profession_inferred` field unpopulated for students who answered "other" at enrollment; context engine examples may not personalise correctly | Medium | Check a sample of student records: `SELECT discord_id, profession, profession_inferred FROM students WHERE profession = 'other'`. Follow up on Task 1.3 implementation. |
 | **Context engine HTTP calls unverified** | Personalised examples may not be reaching students even though the webhook URL is configured | High | Test manually: trigger a `/frame` interaction and check Railway logs for outbound HTTP calls to the Apps Script URL. If no calls appear, the integration is not live. |
 | **No cohort close-out flow** | Inactive/incomplete students accumulate in DB indefinitely after week 8 | Medium | Manually review and update student records at cohort end. Set `current_state = 'complete'` for students who should be closed out. |
-| **DM disabled — no fallback** | Students with DMs off never receive onboarding or agent responses; fails silently | Medium | Check for members who joined but have no `onboarding_complete` event after 48 hours. Reach out via public channel. |
+| **DM disabled — no fallback** | Students with DMs off never receive onboarding or agent responses | Medium | Check for members who joined but have no `onboarding_complete` event after 48 hours, then confirm DM warnings in Railway logs and have the student run `/onboarding` after enabling DMs. |
 | **Multi-cohort not supported** | Running two concurrent cohorts will break the scheduler and student routing | High (future) | Requires code changes to support `COHORT_2_START_DATE` and cohort-scoped scheduling before attempting. |

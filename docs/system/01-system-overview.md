@@ -16,11 +16,11 @@ K2M runs two applications that work together to deliver an 8-week cohort-based c
             ▼                                  ▼
 ┌─────────────────────┐            ┌───────────────────────────────┐
 │   K2M Landing Page  │            │     Discord (KIRA Bot)        │
-│   (Vercel/Next.js)  │            │     (Railway + PostgreSQL)    │
+│   (Vercel/Vite)     │            │     (Railway + PostgreSQL)    │
 │                     │            │                               │
-│ • Enrollment form   │            │ • 4 CIS thinking agents       │
-│ • Parent consent    │            │ • 8-week structured journey   │
-│ • Interest capture  │            │ • Daily prompts + scheduler   │
+│ • Interest form     │            │ • 4 CIS thinking agents       │
+│ • Enrollment form   │            │ • 8-week structured journey   │
+│ • Bot API bridge    │            │ • Daily prompts + scheduler   │
 │                     │            │ • Facilitator escalation      │
 └─────────────────────┘            │ • Safety & crisis handling    │
                                    └───────────┬───────────────────┘
@@ -42,16 +42,15 @@ K2M runs two applications that work together to deliver an 8-week cohort-based c
 
 **Location:** `k2m-landing/`
 **Deployed on:** Vercel
-**Built with:** Next.js
+**Built with:** Vite static frontend
 
 **Responsibilities:**
-- Student enrollment form
-- Parent/guardian consent capture
-- Interest and JTBD (Jobs-to-be-Done) feedback collection
+- Capture initial interest (`/api/interest`)
+- Capture full enrollment details (`/api/enroll`)
+- Hand students into the bot-operated invite, email, and payment flow
 
 **Does NOT:**
 - Run the programme (that's Discord)
-- Talk to the bot directly
 
 ---
 
@@ -81,7 +80,7 @@ There is also `/create-artifact` (Week 6) which assembles the student's 6-sectio
 |-----------|-------------|
 | **State machine** | Tracks where each student is in their thinking journey |
 | **Scheduler** | Posts daily prompts, reflection prompts, peer visibility snapshots on a fixed EAT timezone schedule |
-| **Onboarding** | Guided 4-stop setup that runs in DM when a student joins |
+| **Onboarding** | Guided DM setup that runs when a student joins; optional profile questions can be defaulted safely |
 | **Escalation system** | Watches for inactivity and crisis signals; pings Trevor at the right level |
 | **Safety filter** | Blocks comparison language and detects mental health crisis keywords |
 | **Context engine** | Fetches personalised examples from Google Sheets via Apps Script webhook |
@@ -95,10 +94,10 @@ There is also `/create-artifact` (Week 6) which assembles the student's 6-sectio
 | Layer | Technology | Notes |
 |-------|-----------|-------|
 | Bot runtime | Python 3 + discord.py 2.3.2 | Hosted on Railway |
-| AI provider | OpenAI `gpt-4o-mini` | Swappable via `AI_PROVIDER` env var |
+| AI provider | OpenAI by default | Runtime model selection is env-driven (`OPENAI_MODEL`, `OPENAI_FAST_MODEL`, `OPENAI_REASONING_MODEL`) |
 | Database (prod) | PostgreSQL | Railway-managed, connection pooling min=2 max=10 |
 | Database (dev/test) | SQLite | Automatic fallback if no `DATABASE_URL` set |
-| Landing page | Next.js | Hosted on Vercel |
+| Landing page | Vite | Hosted on Vercel |
 | Context engine | Google Apps Script | Webhook at `CONTEXT_ENGINE_WEBHOOK_URL` |
 | Email | Brevo (Sendinblue) | Parent notifications |
 | Timezone | EAT (Africa/Nairobi) | All scheduler times in EAT |
@@ -117,8 +116,9 @@ Full list is in `cis-discord-bot/.env.template`. The most important:
 | `AI_PROVIDER` | `openai` \| `anthropic` \| `zhipu` (default: `openai`) |
 | `CONTEXT_ENGINE_WEBHOOK_URL` | Apps Script endpoint |
 | `CONTEXT_ENGINE_WEBHOOK_TOKEN` | Must match Apps Script Script Property |
-| `FACILITATOR_DISCORD_ID` | Trevor's Discord ID — receives crisis and escalation DMs |
+| `FACILITATOR_DISCORD_ID` | Trevor's Discord ID — receives crisis DMs and dashboard-fallback alerts |
 | `BREVO_API_KEY` | Parent email delivery |
+| `WEBHOOK_SECRET` | Shared secret for Apps Script internal webhook calls into the bot |
 
 ---
 
@@ -133,7 +133,7 @@ k2m-edtech-program-/
 │   ├── database/           ← Models, SQLite store, PostgreSQL store
 │   ├── scheduler/          ← Daily prompts, cluster sessions, parent emails
 │   └── tests/              ← 80+ test files
-├── k2m-landing/            ← Enrollment landing page (Next.js)
+├── k2m-landing/            ← Enrollment landing page (Vite)
 ├── docs/
 │   ├── system/             ← You are here
 │   └── [curriculum docs]   ← AI framework, territory maps, etc.

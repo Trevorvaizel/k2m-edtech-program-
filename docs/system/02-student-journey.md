@@ -7,43 +7,53 @@
 ## Journey at a Glance
 
 ```
-ENROLL          ONBOARD              8-WEEK PROGRAMME              GRADUATE
+ENROLL          JOIN + ONBOARD         8-WEEK PROGRAMME              GRADUATE
    │                │                       │                          │
    ▼                ▼                       ▼                          ▼
-Landing      Discord DM           Daily prompts + agents        Artifact
-  Page       (4 Stops)            Weekly reflections           published
-             + Profile            Habit tracking               in showcase
+Landing      Discord invite +      Daily prompts + agents        Artifact
+  Page       Discord DM            Weekly reflections           published
+             onboarding            Habit tracking               in showcase
 ```
 
 ---
 
 ## Phase 1 — Enrollment (Landing Page)
 
-The student fills out the enrollment form on the K2M Landing Page (Vercel).
+The student starts on the K2M Landing Page (Vercel), which submits directly to bot-hosted HTTP APIs.
 
-**What is captured:**
-- Name, contact, Discord handle
-- Parent/guardian consent (for underage students)
-- JTBD — "What is the decision or challenge you want to think through?"
-- Interest and profession context
+**Step 1 — Interest capture (`/api/interest`):**
+- Name
+- Email
+- Phone number
+- Profession
+
+**Step 2 — Enrollment profile (`/api/enroll`):**
+- Email (used to link back to the interest record)
+- Zone
+- Situation / decision context
+- Goals
+- Emotional baseline
+- Optional baseline fields such as zone verification, anxiety, habits, and parent email
 
 **What happens next:**
-- Enrollment record written to Google Sheets (source of truth for enrollment)
-- Trevor adds the student to the Discord server via a tracked invite link, or manually adds them
+- Bot APIs write the enrollment record into Google Sheets
+- KIRA generates or looks up a tracked Discord invite and emails it to the student
+- The student joins Discord using that invite
 - KIRA detects the new member using an **invite snapshot diff** — it records invite use-counts on startup and on each member join, comparing before/after to identify which invite was used
+- Google Apps Script can also push preload, role-upgrade, and activation events back into the bot through internal webhook endpoints
 - The cohort clock does NOT start here — it is set globally via `COHORT_1_START_DATE`
 
-> **Operational note:** There is currently no automated bridge between the landing page and Discord. Trevor is the manual handoff. For a cohort of 200+, this is a bottleneck worth planning for.
+> **Identity note:** The landing flow does not capture a Discord handle. Identity is linked when the student joins Discord and the invite / Sheets / internal webhook data are reconciled.
 
 ---
 
 ## Phase 2 — Onboarding (Discord DM)
 
-When KIRA detects a new member joining the server, it opens a private DM and guides them through **4 Stops** (plus an optional Stop 0 profile).
+When KIRA detects a new member joining the server, it opens a private DM and guides them through the onboarding sequence. The optional profile questions may run, but they do not block progress.
 
-### Stop 0 — Optional Profile (2 min)
+### Optional Stop 0 — Profile (2 min)
 
-KIRA asks 4 short questions to personalise the experience. These never block progress — if the student skips or gives an unparseable answer, KIRA uses safe defaults and flags for manual review.
+KIRA may ask 4 short questions to personalise the experience. These never block progress — if the student skips or gives an unparseable answer, KIRA uses safe defaults and flags for manual review.
 
 | Question | What KIRA stores | Default if unparsed |
 |----------|-----------------|---------------------|
@@ -63,8 +73,8 @@ KIRA points to #resources and asks them to reply `continue`.
 ### Stop 3 — First Interaction
 KIRA invites the student to post their first `/frame` or drop a thought in #thinking-lab, then reply `continue`.
 
-### Stop 4 — Complete
-Onboarding is marked complete. The student's record is created in PostgreSQL with:
+### Complete
+Onboarding is marked complete. By this point the student's record often already exists in the runtime store, because KIRA may hydrate it from Sheets on member join or create it on first interaction if missing. The effective defaults are:
 - `current_week = 1`
 - `start_date = COHORT_1_START_DATE` (not their join date)
 - `current_state = "none"`
@@ -136,7 +146,7 @@ Every agent interaction builds habits. KIRA tracks practice counts and celebrate
 
 **A student's week only advances when they submit a Friday reflection.** The scheduler posts the reflection prompt; the student submits it; KIRA unlocks week N+1 for that student individually.
 
-This means two students in the same cohort can be on different weeks if one misses a reflection. See [Facilitator Guide](./03-facilitator-guide.md) for how Trevor manually advances students.
+This means two students in the same cohort can be on different weeks if one misses a reflection. See [Facilitator Guide](./03-facilitator-guide.md) for how Trevor manually advances students with `/unlock-week`.
 
 ---
 
