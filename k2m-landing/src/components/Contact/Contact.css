@@ -69,6 +69,29 @@
   color: var(--ocean-mint-glow);
 }
 
+.contact-phones {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+  font-size: 0.9rem;
+}
+
+.contact-phones a {
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+.contact-phones a:hover {
+  color: var(--ocean-mint-glow);
+}
+
+.contact-phones .phone-divider {
+  color: rgba(64, 224, 208, 0.3);
+}
+
 .social-links {
   display: flex;
   justify-content: center;

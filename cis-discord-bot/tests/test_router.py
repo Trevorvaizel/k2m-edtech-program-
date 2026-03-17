@@ -277,6 +277,40 @@ class TestRouterIngressContracts:
         bot.process_commands.assert_awaited_once_with(message)
 
     @pytest.mark.asyncio
+    async def test_welcome_lounge_message_consumed_before_command_routing(self):
+        bot = _FakeBot()
+        setup_bot_events(bot)
+
+        message = Mock(spec=discord.Message)
+        message.author = Mock()
+        message.author.bot = False
+        message.author.id = 999
+        message.content = "How long does payment verification take?"
+        message.channel = Mock()
+        message.channel.name = "welcome-lounge"
+        message.channel.send = AsyncMock()
+
+        with patch(
+            "cis_controller.router.safety_filter.detect_crisis",
+            return_value=None,
+        ), patch(
+            "cis_controller.router.safety_filter.validate_no_comparison",
+            return_value=True,
+        ), patch(
+            "cis_controller.router.handle_welcome_lounge_message",
+            new_callable=AsyncMock,
+            return_value=True,
+        ) as mock_lounge_handler, patch(
+            "cis_controller.router.route_student_interaction",
+            new_callable=AsyncMock,
+        ) as mock_route:
+            await bot.on_message(message)
+
+        mock_lounge_handler.assert_awaited_once_with(bot=bot, message=message)
+        mock_route.assert_not_awaited()
+        bot.process_commands.assert_not_awaited()
+
+    @pytest.mark.asyncio
     async def test_comparison_violation_triggers_alert_and_stops_processing(self):
         bot = _FakeBot()
         setup_bot_events(bot)

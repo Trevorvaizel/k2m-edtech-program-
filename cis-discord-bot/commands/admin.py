@@ -287,6 +287,39 @@ async def inspect_journey(
                 )
             elif event["event_type"] == "stuck_detected":
                 response += f"  inactive_days: {metadata.get('inactive_days')}\n"
+            elif event["event_type"] == "artifact_started":
+                response += (
+                    f"  week: {metadata.get('week', 'unknown')} | "
+                    f"status: {metadata.get('artifact_status', 'in_progress')}\n"
+                )
+            elif event["event_type"] == "artifact_section_saved":
+                response += (
+                    f"  section: {metadata.get('section', 'unknown')} | "
+                    f"status: {metadata.get('artifact_status', 'in_progress')}\n"
+                )
+            elif event["event_type"] == "artifact_completed":
+                response += (
+                    f"  completed_sections: {metadata.get('completed_sections', 'unknown')} | "
+                    f"status: {metadata.get('artifact_status', 'completed')}\n"
+                )
+            elif event["event_type"] == "artifact_publish_requested":
+                response += (
+                    f"  options: {metadata.get('options', 'public,anonymous,private')}\n"
+                )
+            elif event["event_type"] == "artifact_publish_confirmed":
+                response += f"  visibility: {metadata.get('visibility', 'unknown')}\n"
+            elif event["event_type"] == "artifact_published":
+                response += (
+                    f"  visibility: {metadata.get('visibility', 'unknown')} | "
+                    f"destination: {metadata.get('destination', 'unknown')}\n"
+                )
+            elif event["event_type"] == "artifact_publish_blocked":
+                response += f"  reason: {metadata.get('reason', 'unknown')}\n"
+            elif event["event_type"] == "artifact_publish_failed":
+                response += (
+                    f"  visibility: {metadata.get('visibility', 'unknown')} | "
+                    f"reason: {metadata.get('reason', 'unknown')}\n"
+                )
 
         if len(events) > 20:
             response += f"\n... and {len(events) - 20} more events\n"

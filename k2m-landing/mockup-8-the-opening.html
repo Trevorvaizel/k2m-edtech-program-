@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>K2M — Mockup 8: The Opening</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Space+Grotesk:wght@300;400;600;700;900&family=Lora:ital,wght@0,400;1,400;1,600&display=swap" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+  <style>
+    /* ── TOKENS ── */
+    :root {
+      --teal:          #40E0D0;
+      --teal-mid:      #20B2AA;
+      --teal-dark:     #008B8B;
+      --teal-glow:     rgba(64,224,208,0.25);
+      --teal-border:   rgba(64,224,208,0.18);
+      --amber:         #F59E0B;
+      --indigo:        #818CF8;
+      --grey:          #A0A0A0;
+    }
+
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+
+    body {
+      background:#000; color:#fff;
+      font-family:'Inter',sans-serif;
+      overflow-x:hidden;
+      -webkit-font-smoothing:antialiased;
+    }
+
+    .starfield { position:fixed; inset:0; pointer-events:none; z-index:0; }
+
+    /* ── KEYFRAMES ── */
+    @keyframes live-pulse {
+      0%,100% { box-shadow:0 0 0 0 rgba(64,224,208,0.7); }
+      50%      { box-shadow:0 0 0 7px rgba(64,224,208,0); }
+    }
+
+
+    /* ── HERO ── */
+    .hero {
+      min-height:100vh;
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      padding:80px 20px; text-align:center;
+      position:relative; z-index:10;
+      background:radial-gradient(ellipse at center, rgba(32,178,170,0.06) 0%, transparent 70%);
+    }
+    .hero-eyebrow { font-size:12px; color:var(--teal); letter-spacing:3px; text-transform:uppercase; margin-bottom:28px; }
+    .hero-title   { font-family:'Space Grotesk',sans-serif; font-size:clamp(28px,5vw,60px); font-weight:700; line-height:1.15; margin-bottom:28px; max-width:900px; }
+    .hero-title strong { color:var(--teal); }
+    .hero-sub     { font-size:clamp(16px,2vw,18px); color:var(--grey); line-height:1.7; max-width:640px; }
+
+    /* ── RESONANCE STUBS ── */
+    .resonance-stub {
+      min-height:55vh;
+      display:flex; align-items:center; justify-content:center;
+      text-align:center; padding:80px 20px;
+      border-top:1px solid rgba(64,224,208,0.07);
+      position:relative; z-index:10;
+    }
+    .stub-label { font-size:11px; letter-spacing:3px; text-transform:uppercase; color:var(--teal); margin-bottom:20px; }
+    .stub-quote { font-family:'Space Grotesk',sans-serif; font-size:clamp(20px,3.5vw,36px); font-weight:600; max-width:700px; line-height:1.35; }
+    .stub-echo  { margin-top:20px; font-size:14px; color:var(--teal); }
+
+    /* ── COHORT BADGE ── */
+    .cohort-badge {
+      position:fixed; top:20px; right:20px; z-index:7500;
+      display:flex; align-items:center; gap:9px;
+      padding:10px 16px 10px 12px;
+      background:rgba(4,4,4,0.94);
+      border:1px solid rgba(64,224,208,0.38); border-radius:100px;
+      font-size:12px; color:#ddd;
+      backdrop-filter:blur(14px);
+      box-shadow:0 4px 24px rgba(0,0,0,0.5);
+      opacity:0; pointer-events:none; cursor:pointer; white-space:nowrap;
+    }
+    .cohort-badge.cb-visible { pointer-events:all; }
+    .cohort-badge:hover { box-shadow:0 4px 24px rgba(0,0,0,0.5),0 0 0 6px rgba(64,224,208,0.08); }
+    .cb-dot   { width:7px; height:7px; border-radius:50%; background:var(--teal); box-shadow:0 0 8px var(--teal); animation:live-pulse 1.5s ease-in-out infinite; flex-shrink:0; }
+    .cb-text strong { color:#fff; font-weight:600; }
+    .cb-arrow { background:none; border:none; color:var(--teal); font-size:14px; cursor:pointer; padding:0; line-height:1; transition:transform 0.25s; }
+    .cohort-badge:hover .cb-arrow { transform:translateY(3px); }
+
+    /* ── BRIDGE HEADING ── */
+    .section-entry {
+      position:relative; z-index:10;
+      padding:0 20px; margin-top:80px;
+    }
+    .section-heading { max-width:1200px; margin:0 auto 80px; }
+    .section-heading-eyebrow { font-size:11px; letter-spacing:3px; text-transform:uppercase; color:rgba(64,224,208,0.6); margin-bottom:18px; }
+    .section-heading-title {
+      font-family:'Lora',serif;
+      font-size:clamp(28px,4vw,50px); font-weight:400;
+      font-style:italic; line-height:1.25;
+    }
+    .section-heading-title span { font-family:'Space Grotesk',sans-serif; font-style:normal; font-weight:700; color:var(--teal); }
+
+    /* ─────────────────────────────────────────
+       THE OPENING DOOR — Cohort 1
+    ───────────────────────────────────────── */
+
+    /* Spotlight: dims everything around Cohort 1 while it's the focus */
+    .spotlight-overlay {
+      position:fixed; inset:0; pointer-events:none; z-index:4;
+      background:radial-gradient(ellipse 1000px 700px at 50% 50%, transparent 40%, rgba(0,0,0,0.38) 100%);
+      opacity:0; transition:opacity 0.9s ease;
+    }
+    .spotlight-overlay.active { opacity:1; }
+
+    .cohort1-wrap {
+      position:relative; z-index:10;
+      max-width:1200px; margin:0 auto;
+      padding:0 20px;
+    }
+
+    /* Ambient cohort number — atmospheric, not decorative */
+    .ambient-num {
+      position:absolute;
+      right:-20px; top:-80px;
+      font-family:'Space Grotesk',sans-serif;
+      font-size:clamp(180px,18vw,300px); font-weight:900; line-height:1;
+      color:rgba(64,224,208,0.028);
+      user-select:none; pointer-events:none;
+      letter-spacing:-8px; z-index:0;
+    }
+
+
+    /* The content — clip-path set by JS on desktop */
+    .cohort1-content { position:relative; z-index:2; will-change:clip-path; }
+
+    /* Two-column grid */
+    .cohort1-inner {
+      display:grid;
+      grid-template-columns:300px 1fr;
+      align-items:start; gap:0;
+    }
+    @media (max-width:899px) { .cohort1-inner { display:block; } }
+
+    /* Identity panel */
+    .seg-identity {
+      padding:4px 40px 40px 0;
+      border-right:1px solid var(--teal-border);
+    }
+    @media (min-width:900px) { .seg-identity { position:sticky; top:80px; } }
+    @media (max-width:899px) { .seg-identity { padding:20px 0 28px; border-right:none; border-top:1px solid rgba(255,255,255,0.06); } }
+
+    .seg-desktop-mark { display:none; }
+    @media (min-width:900px) {
+      .seg-desktop-mark {
+        display:flex; width:64px; height:64px; border-radius:18px;
+        align-items:center; justify-content:center; font-size:28px;
+        background:rgba(64,224,208,0.07); border:1px solid rgba(64,224,208,0.22);
+        margin-bottom:20px;
+      }
+    }
+
+    .seg-identity-role    { font-size:10px; letter-spacing:3px; text-transform:uppercase; color:rgba(64,224,208,0.6); margin-bottom:10px; }
+    @media (max-width:899px) { .seg-identity-role { display:none; } }
+    .seg-identity-name    { font-family:'Space Grotesk',sans-serif; font-size:22px; font-weight:700; line-height:1.2; margin-bottom:8px; }
+    .seg-identity-tagline { font-size:13px; color:var(--grey); line-height:1.55; margin-bottom:24px; }
+
+    .seg-status-pill {
+      display:flex; align-items:center; gap:10px;
+      padding:12px 14px;
+      background:rgba(64,224,208,0.05); border:1px solid rgba(64,224,208,0.18);
+      border-radius:10px; margin-bottom:20px;
+    }
+    .pill-dot   { width:7px; height:7px; border-radius:50%; background:var(--teal); flex-shrink:0; animation:live-pulse 1.5s ease-in-out infinite; }
+    .pill-label { font-size:11px; font-weight:700; letter-spacing:0.5px; text-transform:uppercase; color:var(--teal); }
+    .pill-sub   { font-size:11px; color:var(--grey); margin-top:2px; }
+
+    .seg-cta {
+      padding:15px 20px; border:none; border-radius:10px;
+      font-family:'Inter',sans-serif; font-size:14px; font-weight:600;
+      cursor:pointer; width:100%; text-align:center; text-decoration:none;
+      display:block; margin-bottom:10px; transition:all 0.3s ease;
+    }
+    .seg-cta:hover { filter:brightness(1.08); transform:translateY(-2px); }
+
+    .seg-fine { font-size:11px; color:rgba(255,255,255,0.28); text-align:center; margin-bottom:8px; }
+    .seg-roadmap { width:100%; padding:8px; background:none; border:none; font-family:'Inter',sans-serif; font-size:12px; color:rgba(255,255,255,0.28); cursor:pointer; transition:color 0.2s; text-align:center; }
+    .seg-roadmap:hover { color:var(--grey); }
+
+    /* Prose panel */
+    .seg-prose { padding:0 0 0 52px; }
+    @media (max-width:899px) { .seg-prose { padding:0; } }
+
+    .prose-mark { font-family:'Lora',serif; font-size:80px; line-height:0.4; color:rgba(64,224,208,0.08); display:block; margin-bottom:16px; user-select:none; }
+    @media (max-width:899px) { .prose-mark { display:none; } }
+
+    /* Full desktop letter */
+    .prose-full { font-family:'Lora',serif; font-size:clamp(16px,1.7vw,18px); color:#d4d4d4; line-height:1.85; }
+    .prose-full p { margin-bottom:18px; }
+    .prose-full p:last-child { margin-bottom:0; }
+    .prose-full em     { color:#fff; font-style:italic; }
+    .prose-full strong { color:#fff; }
+
+    /* Word spans — inserted by JS for kinetic animation */
+    .kw { display:inline-block; }
+
+    /* Pullquote */
+    .prose-pullquote {
+      border-left:2px solid var(--teal);
+      padding:14px 18px; margin:22px 0;
+      background:rgba(64,224,208,0.04); border-radius:0 8px 8px 0;
+    }
+    .prose-pullquote p { font-family:'Lora',serif; font-size:clamp(14px,1.5vw,16px); font-style:italic; color:#e8e8e8; line-height:1.65; margin:0 !important; }
+
+    /* Desktop / mobile swap */
+    .prose-desktop { display:block; }
+    .prose-mobile  { display:none; }
+    @media (max-width:899px) { .prose-desktop { display:none; } .prose-mobile { display:block; } }
+
+    .mobile-letter { font-family:'Inter',sans-serif; font-size:15px; color:#c8c8c8; line-height:1.75; padding:4px 0 24px; }
+    .mobile-letter p { margin-bottom:14px; }
+    .mobile-letter em { color:#fff; font-style:italic; }
+    .mobile-cta-row { margin-top:24px; display:flex; flex-direction:column; gap:10px; }
+    .mobile-cta { padding:18px 20px; border:none; border-radius:12px; font-family:'Inter',sans-serif; font-size:16px; font-weight:600; cursor:pointer; text-align:center; text-decoration:none; display:block; transition:all 0.3s ease; }
+    .mobile-urgency { font-size:11px; color:rgba(255,255,255,0.3); text-align:center; }
+    .mobile-roadmap { font-size:13px; color:rgba(255,255,255,0.3); background:none; border:none; font-family:'Inter',sans-serif; cursor:pointer; padding:8px 0; text-align:center; width:100%; transition:color 0.2s; }
+    .mobile-roadmap:hover { color:var(--grey); }
+
+    /* Mobile accordion for Cohort 1 */
+    .seg-header { display:none; }
+    @media (max-width:899px) {
+      .seg-header {
+        display:flex; align-items:center; gap:14px;
+        padding:20px 0; cursor:pointer; user-select:none;
+        -webkit-tap-highlight-color:transparent;
+      }
+      .seg-content { max-height:0; overflow:hidden; transition:max-height 0.55s cubic-bezier(0.4,0,0.2,1); }
+      .cohort1-wrap.open .seg-content { max-height:1200px; }
+    }
+    .seg-header-mark   { width:52px; height:52px; border-radius:14px; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:24px; background:rgba(64,224,208,0.07); border:1px solid rgba(64,224,208,0.22); }
+    .seg-header-text   { flex:1; }
+    .seg-header-role   { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--teal); margin-bottom:3px; }
+    .seg-header-name   { font-family:'Space Grotesk',sans-serif; font-size:16px; font-weight:700; }
+    .seg-header-status { font-size:11px; color:var(--grey); margin-top:2px; }
+    .seg-header-right  { display:flex; align-items:center; gap:10px; flex-shrink:0; }
+    .seg-status-dot    { width:8px; height:8px; border-radius:50%; background:var(--teal); animation:live-pulse 1.5s ease-in-out infinite; }
+    .seg-chevron       { font-size:14px; color:var(--grey); transition:transform 0.35s cubic-bezier(0.4,0,0.2,1); }
+    .cohort1-wrap.open .seg-chevron { transform:rotate(180deg); color:var(--teal); }
+
+    /* ─────────────────────────────────────────
+       SEALED DOOR SEGMENTS — future programs
+       Compact horizontal cards. The door is closed.
+    ───────────────────────────────────────── */
+    .sealed-area {
+      max-width:1200px; margin:0 auto;
+      padding:0 20px; position:relative; z-index:10;
+    }
+
+    .sealed-label {
+      font-size:10px; letter-spacing:3px; text-transform:uppercase;
+      color:rgba(255,255,255,0.15); text-align:center;
+      margin:72px 0 32px; display:flex; align-items:center; gap:16px;
+    }
+    .sealed-label::before, .sealed-label::after {
+      content:''; flex:1; height:1px;
+      background:linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent);
+    }
+
+    .sealed-segment {
+      display:grid;
+      grid-template-columns:60px 1fr auto;
+      align-items:center; gap:20px;
+      padding:24px 28px;
+      border:1px dashed rgba(255,255,255,0.09);
+      border-radius:16px;
+      position:relative; overflow:hidden;
+      cursor:pointer;
+      transition:border-color 0.35s ease, background 0.35s ease;
+      margin-bottom:16px;
+    }
+    .sealed-segment--teacher      { border-color:rgba(245,158,11,0.18); }
+    .sealed-segment--professional { border-color:rgba(99,102,241,0.18); }
+
+    .sealed-segment:hover { border-style:solid; }
+    .sealed-segment--teacher:hover      { border-color:rgba(245,158,11,0.4); background:rgba(245,158,11,0.025); }
+    .sealed-segment--professional:hover { border-color:rgba(99,102,241,0.4); background:rgba(99,102,241,0.025); }
+
+    /* Keyhole hint — appears on hover */
+    .sealed-segment::after {
+      content:'◎';
+      position:absolute; right:100px; top:50%; transform:translateY(-50%);
+      font-size:11px; opacity:0;
+      transition:opacity 0.3s ease;
+      color:rgba(255,255,255,0.15);
+    }
+    .sealed-segment:hover::after { opacity:1; }
+
+    .sealed-mark {
+      width:52px; height:52px; border-radius:14px;
+      display:flex; align-items:center; justify-content:center; font-size:22px;
+      flex-shrink:0; opacity:0.7; transition:opacity 0.3s;
+    }
+    .sealed-segment:hover .sealed-mark { opacity:1; }
+    .sealed-segment--teacher .sealed-mark      { background:rgba(245,158,11,0.07); border:1px solid rgba(245,158,11,0.22); }
+    .sealed-segment--professional .sealed-mark { background:rgba(99,102,241,0.07); border:1px solid rgba(99,102,241,0.22); }
+
+    .sealed-role    { font-size:10px; letter-spacing:2px; text-transform:uppercase; margin-bottom:4px; opacity:0.7; }
+    .sealed-segment--teacher .sealed-role      { color:var(--amber); }
+    .sealed-segment--professional .sealed-role { color:var(--indigo); }
+    .sealed-name    { font-family:'Space Grotesk',sans-serif; font-size:17px; font-weight:700; margin-bottom:5px; }
+    .sealed-tagline { font-size:13px; color:var(--grey); line-height:1.45; }
+
+    .sealed-actions { display:flex; flex-direction:column; align-items:flex-end; gap:10px; flex-shrink:0; }
+
+    .sealed-badge {
+      font-size:10px; letter-spacing:1.5px; text-transform:uppercase; font-weight:700;
+      padding:4px 10px; border-radius:100px;
+    }
+    .sealed-segment--teacher .sealed-badge      { color:var(--amber); background:rgba(245,158,11,0.08); border:1px solid rgba(245,158,11,0.22); }
+    .sealed-segment--professional .sealed-badge { color:var(--indigo); background:rgba(99,102,241,0.08); border:1px solid rgba(99,102,241,0.22); }
+
+    .sealed-cta {
+      padding:10px 18px; border-radius:8px;
+      font-family:'Inter',sans-serif; font-size:13px; font-weight:600;
+      text-decoration:none; cursor:pointer; border:none; white-space:nowrap;
+      transition:all 0.25s ease;
+    }
+    .sealed-segment--teacher .sealed-cta      { background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.3); color:var(--amber); }
+    .sealed-segment--teacher .sealed-cta:hover { background:rgba(245,158,11,0.18); }
+    .sealed-segment--professional .sealed-cta      { background:rgba(99,102,241,0.1); border:1px solid rgba(99,102,241,0.3); color:var(--indigo); }
+    .sealed-segment--professional .sealed-cta:hover { background:rgba(99,102,241,0.18); }
+
+    @media (max-width:720px) {
+      .sealed-segment { grid-template-columns:48px 1fr; gap:14px; padding:18px; }
+      .sealed-actions { flex-direction:row; align-items:center; grid-column:1/-1; }
+    }
+
+    /* ── CLOSING ── */
+    .invitation-close {
+      max-width:1200px; margin:80px auto 0;
+      padding:60px 20px 20px;
+      border-top:1px solid rgba(255,255,255,0.06);
+      text-align:center;
+    }
+    .close-text { font-family:'Lora',serif; font-size:clamp(18px,2.5vw,24px); font-style:italic; color:var(--grey); line-height:1.65; margin-bottom:16px; }
+    .close-sig  { font-size:12px; color:rgba(64,224,208,0.45); letter-spacing:1px; }
+
+    /* ── ROADMAP MODAL ── */
+    .roadmap-overlay {
+      position:fixed; inset:0; background:rgba(0,0,0,0.93); z-index:9000;
+      display:flex; align-items:center; justify-content:center; padding:20px;
+      opacity:0; pointer-events:none; transition:opacity 0.3s ease;
+      backdrop-filter:blur(10px);
+    }
+    .roadmap-overlay.open { opacity:1; pointer-events:all; }
+
+    .roadmap-modal {
+      background:rgba(8,8,8,0.98); border:1px solid rgba(64,224,208,0.2);
+      border-radius:20px; padding:48px; max-width:680px; width:100%;
+      max-height:88vh; overflow-y:auto; position:relative;
+      transform:translateY(20px) scale(0.97);
+      transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    .roadmap-overlay.open .roadmap-modal { transform:translateY(0) scale(1); }
+
+    .roadmap-close { position:absolute; top:20px; right:20px; width:36px; height:36px; border-radius:50%; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:var(--grey); font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.2s; }
+    .roadmap-close:hover { background:rgba(255,255,255,0.12); color:#fff; }
+
+    .rm-eyebrow { font-size:10px; letter-spacing:3px; text-transform:uppercase; color:var(--teal); margin-bottom:12px; }
+    .rm-title   { font-family:'Space Grotesk',sans-serif; font-size:28px; font-weight:700; margin-bottom:8px; }
+    .rm-sub     { font-size:14px; color:var(--grey); line-height:1.65; margin-bottom:36px; }
+
+    .rm-phases  { display:flex; flex-direction:column; gap:16px; }
+    .rm-phase   { padding:20px 22px; border-radius:12px; border:1px solid var(--ph-border); background:var(--ph-bg); }
+    .rm-phase--live    { --ph-border:rgba(64,224,208,0.28);  --ph-bg:rgba(64,224,208,0.04); }
+    .rm-phase--build   { --ph-border:rgba(245,158,11,0.28);  --ph-bg:rgba(245,158,11,0.04); }
+    .rm-phase--planned { --ph-border:rgba(99,102,241,0.28);  --ph-bg:rgba(99,102,241,0.04); }
+    .rm-phase--explore { --ph-border:rgba(255,255,255,0.08); --ph-bg:rgba(255,255,255,0.02); }
+
+    .rm-phase-status { font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase; margin-bottom:6px; }
+    .rm-phase--live .rm-phase-status    { color:#40E0D0; }
+    .rm-phase--build .rm-phase-status   { color:#F59E0B; }
+    .rm-phase--planned .rm-phase-status { color:#818CF8; }
+    .rm-phase--explore .rm-phase-status { color:var(--grey); }
+
+    .rm-phase-name { font-family:'Space Grotesk',sans-serif; font-size:16px; font-weight:700; margin-bottom:5px; }
+    .rm-phase-desc { font-size:13px; color:var(--grey); line-height:1.6; margin-bottom:12px; }
+    .rm-bar      { height:3px; background:rgba(255,255,255,0.07); border-radius:2px; overflow:hidden; }
+    .rm-bar-fill { height:100%; border-radius:2px; transition:width 1.3s cubic-bezier(0.4,0,0.2,1); }
+    .rm-phase--live .rm-bar-fill    { background:#40E0D0; }
+    .rm-phase--build .rm-bar-fill   { background:#F59E0B; }
+    .rm-phase--planned .rm-bar-fill { background:#818CF8; }
+    .rm-phase--explore .rm-bar-fill { background:rgba(255,255,255,0.15); }
+
+    .rm-countdown-wrap { border-top:1px solid rgba(64,224,208,0.12); margin-top:24px; padding-top:20px; text-align:center; }
+    .rm-deadline-label { font-size:10px; letter-spacing:2.5px; text-transform:uppercase; color:rgba(64,224,208,0.55); margin-bottom:14px; }
+    .rm-countdown { display:flex; align-items:flex-start; justify-content:center; gap:6px; }
+    .countdown-unit { display:flex; flex-direction:column; align-items:center; min-width:56px; }
+    .countdown-num  { font-family:'Space Grotesk',sans-serif; font-size:38px; font-weight:700; color:var(--teal); line-height:1; font-variant-numeric:tabular-nums; letter-spacing:-1px; }
+    .countdown-lbl  { font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--grey); margin-top:5px; }
+    .countdown-sep  { font-family:'Space Grotesk',sans-serif; font-size:30px; font-weight:300; color:rgba(64,224,208,0.25); line-height:1; padding-top:3px; }
+
+    .rm-footer { margin-top:28px; padding-top:20px; border-top:1px solid rgba(255,255,255,0.07); font-size:13px; color:var(--grey); line-height:1.65; text-align:center; }
+
+    @media (max-width:640px) { .roadmap-modal { padding:28px 18px; } }
+
+    /* ── MOBILE SPACING ── */
+    @media (max-width:899px) {
+      .section-entry { padding:0 16px; margin-top:60px; }
+      .section-heading { margin-bottom:40px; }
+      .sealed-area   { padding:0 16px; }
+      .cohort1-wrap  { padding:0 16px; }
+      .ambient-num   { display:none; }
+      .invitation-close { padding:40px 16px 20px; }
+    }
+
+    /* ── MOCKUP LABEL ── */
+    .mockup-label { position:fixed; bottom:16px; right:16px; background:rgba(8,8,8,0.93); border:1px solid var(--teal); border-radius:8px; padding:12px 14px; font-size:11px; color:var(--grey); z-index:8000; max-width:280px; line-height:1.55; }
+    .mockup-label strong { display:block; color:var(--teal); font-size:12px; margin-bottom:5px; }
+    @media (max-width:640px) { .mockup-label { display:none; } }
+  </style>
+</head>
+<body>
+
+<div class="starfield" id="starfield"></div>
+<div class="spotlight-overlay" id="spotlight"></div>
+
+<!-- ══ BADGE — Component 1: Gradient Reveal ══ -->
+<div class="cohort-badge" id="cohort-badge"
+     onclick="document.getElementById('cohort1-wrap').scrollIntoView({behavior:'smooth',block:'start'})">
+  <span class="cb-dot"></span>
+  <span class="cb-text">Cohort 1 Open · <strong>Apply by Apr 30</strong></span>
+  <button class="cb-arrow" tabindex="-1">↓</button>
+</div>
+
+<!-- ══ HERO ══ -->
+<section class="hero">
+  <div class="hero-eyebrow">The walls fell.</div>
+  <h1 class="hero-title">
+    Intelligence used to be locked behind universities and expensive experts.<br>
+    <strong>Not anymore.</strong>
+  </h1>
+  <p class="hero-sub">
+    AI changed that. But access alone isn't enough. The question now is
+    whether you know how to <em>think</em> with what's on the other side.
+  </p>
+</section>
+
+<!-- ══ RESONANCE ZONES ══ -->
+<section class="resonance-stub">
+  <div>
+    <div class="stub-label">Zone 2</div>
+    <div class="stub-quote">"I keep starting over. It never feels quite right."</div>
+    <div class="stub-echo">Sound familiar?</div>
+  </div>
+</section>
+
+<section class="resonance-stub">
+  <div>
+    <div class="stub-label">Zone 4</div>
+    <div class="stub-quote">"I control the quality. AI accelerates my vision."</div>
+    <div class="stub-echo">Sound familiar?</div>
+  </div>
+</section>
+
+<!-- ══ BRIDGE HEADING ══ -->
+<div class="section-entry">
+  <div class="section-heading">
+    <div class="section-heading-eyebrow">You found yourself in those voices</div>
+    <h2 class="section-heading-title">
+      Here's what we built<br>
+      <span>for where you are.</span>
+    </h2>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     COHORT 1 — THE OPENING DOOR
+     Desktop: clip-path expands from center outward
+     Mobile:  tappable accordion
+══════════════════════════════════════════ -->
+<div class="cohort1-wrap" id="cohort1-wrap">
+
+  <span class="ambient-num" aria-hidden="true">01</span>
+
+  <!-- Mobile accordion trigger -->
+  <div class="seg-header" onclick="toggleCohort()">
+    <div class="seg-header-mark">🎓</div>
+    <div class="seg-header-text">
+      <div class="seg-header-role">For the student</div>
+      <div class="seg-header-name">Gap Year Accelerator</div>
+      <div class="seg-header-status">Cohort 1 — Open Now · April 30 deadline</div>
+    </div>
+    <div class="seg-header-right">
+      <div class="seg-status-dot"></div>
+      <span class="seg-chevron">↓</span>
+    </div>
+  </div>
+
+  <!-- Content — clip-path applied by JS on desktop -->
+  <div class="seg-content cohort1-content" id="cohort1-content">
+    <div class="cohort1-inner">
+
+      <!-- Identity Panel -->
+      <div class="seg-identity" id="cohort1-identity">
+        <div class="seg-desktop-mark">🎓</div>
+        <div class="seg-identity-role">For the student</div>
+        <div class="seg-identity-name" id="cohort1-name">Gap Year<br>Accelerator</div>
+        <div class="seg-identity-tagline">Navigate the professional world with AI as your edge — before the market even knows what hit it.</div>
+        <div class="seg-status-pill">
+          <div class="pill-dot"></div>
+          <div>
+            <div class="pill-label">Live — Open Now</div>
+            <div class="pill-sub">Applications close April 30, 2026</div>
+          </div>
+        </div>
+        <a href="#" class="seg-cta" style="background:linear-gradient(135deg,#20B2AA,#008B8B);color:#000;box-shadow:0 4px 20px rgba(32,178,170,0.28);">
+          Apply for Cohort 1 →
+        </a>
+        <div class="seg-fine">Full scholarship · No fee · Limited spots</div>
+        <button class="seg-roadmap" onclick="openRoadmap()">View full program roadmap →</button>
+      </div>
+
+      <!-- Prose Panel -->
+      <div class="seg-prose" id="cohort1-prose">
+        <span class="prose-mark">"</span>
+
+        <!-- Desktop: full letter with kinetic targets -->
+        <div class="prose-desktop">
+          <div class="prose-full" id="cohort1-letter">
+            <p class="split-target">
+              You're at a threshold — between what you were taught
+              and what the world is now demanding. That gap is real.
+              You've felt it. The CV they told you to build doesn't
+              quite match the world that's moving past it.
+            </p>
+            <div class="prose-pullquote">
+              <p id="cohort1-pullquote">"Skills used by top-tier global professionals." Every student we met in the field said: <em>I'm in.</em></p>
+            </div>
+            <p class="split-target">
+              Cohort 1 wasn't built to teach you AI tools.
+              It was built to teach you to <strong>navigate with intelligence as your advantage</strong> —
+              the way the most capable people in every field you're looking at
+              actually think. We'll show you how.
+            </p>
+            <p class="split-target">
+              No prerequisites. Full scholarship.
+              A structured acceleration from wherever you are
+              to professional-grade capability.
+            </p>
+          </div>
+        </div>
+
+        <!-- Mobile: compressed -->
+        <div class="prose-mobile">
+          <div class="mobile-letter">
+            <p>You're between what you were taught and what the world is demanding. That gap is real — and it can be closed.</p>
+            <p>Cohort 1 doesn't teach you AI tools. It teaches you to <em>navigate with intelligence as your advantage</em> — the way top professionals actually think. No prerequisites. Full scholarship.</p>
+          </div>
+          <div class="mobile-cta-row">
+            <a href="#" class="mobile-cta" style="background:linear-gradient(135deg,#20B2AA,#008B8B);color:#000;">
+              Apply for Cohort 1 →
+            </a>
+            <div class="mobile-urgency">Full scholarship · April 30 deadline · Limited spots</div>
+            <button class="mobile-roadmap" onclick="openRoadmap()">View full program roadmap →</button>
+          </div>
+        </div>
+
+      </div><!-- /.seg-prose -->
+    </div><!-- /.cohort1-inner -->
+  </div><!-- /.cohort1-content -->
+</div><!-- /.cohort1-wrap -->
+
+
+<!-- ══════════════════════════════════════════
+     SEALED DOORS — future programs
+     Compact cards. The door is not yet open.
+══════════════════════════════════════════ -->
+<div class="sealed-area">
+
+  <div class="sealed-label">More doors are opening</div>
+
+  <!-- Teacher: sealed -->
+  <div class="sealed-segment sealed-segment--teacher" onclick="openRoadmap()">
+    <div class="sealed-mark">📐</div>
+    <div>
+      <div class="sealed-role">For the educator</div>
+      <div class="sealed-name">AI for Teachers</div>
+      <div class="sealed-tagline">Lead the AI conversation in your classroom — before your students do.</div>
+    </div>
+    <div class="sealed-actions">
+      <span class="sealed-badge">In Development</span>
+      <a href="#" class="sealed-cta" onclick="event.stopPropagation()">Join Priority Waitlist →</a>
+    </div>
+  </div>
+
+  <!-- Professional: sealed -->
+  <div class="sealed-segment sealed-segment--professional" onclick="openRoadmap()">
+    <div class="sealed-mark">⚡</div>
+    <div>
+      <div class="sealed-role">For the professional</div>
+      <div class="sealed-name">AI for Professionals</div>
+      <div class="sealed-tagline">Everything you've built — multiplied by intelligence you actually know how to wield.</div>
+    </div>
+    <div class="sealed-actions">
+      <span class="sealed-badge">Coming 2026</span>
+      <a href="#" class="sealed-cta" onclick="event.stopPropagation()">Signal Interest →</a>
+    </div>
+  </div>
+
+  <!-- Closing -->
+  <div class="invitation-close">
+    <p class="close-text">
+      "Wherever you are on this journey — you found us.<br>
+      That means something."
+    </p>
+    <div class="close-sig">— The K2M Team</div>
+  </div>
+
+</div><!-- /.sealed-area -->
+
+
+<!-- ══ ROADMAP MODAL ══ -->
+<div class="roadmap-overlay" id="roadmapOverlay" onclick="handleOverlayClick(event)">
+  <div class="roadmap-modal">
+    <button class="roadmap-close" onclick="closeRoadmap()">×</button>
+    <div class="rm-eyebrow">K2M Program Roadmap</div>
+    <h2 class="rm-title">Where we're going.</h2>
+    <p class="rm-sub">We build in public. Announced before built. Launched to sold-out waitlists.</p>
+
+    <div class="rm-phases">
+      <div class="rm-phase rm-phase--live">
+        <div class="rm-phase-status">✅ Live Now</div>
+        <div class="rm-phase-name">Cohort 1: Gap Year Cognitive Accelerator</div>
+        <p class="rm-phase-desc">Full scholarship. Applications open. Closes April 30, 2026.</p>
+        <div class="rm-bar"><div class="rm-bar-fill" data-w="100%"></div></div>
+      </div>
+      <div class="rm-phase rm-phase--build">
+        <div class="rm-phase-status">🔨 In Development</div>
+        <div class="rm-phase-name">AI for Teachers</div>
+        <p class="rm-phase-desc">For educators who want to lead the AI conversation. Priority waitlist open — you shape what we build.</p>
+        <div class="rm-bar"><div class="rm-bar-fill" data-w="40%"></div></div>
+      </div>
+      <div class="rm-phase rm-phase--planned">
+        <div class="rm-phase-status">📅 Planned — 2026</div>
+        <div class="rm-phase-name">AI for Professionals</div>
+        <p class="rm-phase-desc">Not catching up — multiplying what you've built. Signal interest to be first in the cohort.</p>
+        <div class="rm-bar"><div class="rm-bar-fill" data-w="10%"></div></div>
+      </div>
+      <div class="rm-phase rm-phase--explore">
+        <div class="rm-phase-status">💭 Exploring</div>
+        <div class="rm-phase-name">Corporate &amp; Team Training</div>
+        <p class="rm-phase-desc">Custom enterprise cohorts. Reach out if your organisation is ready.</p>
+        <div class="rm-bar"><div class="rm-bar-fill" data-w="5%"></div></div>
+      </div>
+    </div>
+
+    <div class="rm-countdown-wrap">
+      <div class="rm-deadline-label">Cohort 1 applications close in</div>
+      <div class="rm-countdown">
+        <div class="countdown-unit"><div class="countdown-num" id="cd-days">--</div><div class="countdown-lbl">days</div></div>
+        <div class="countdown-sep">:</div>
+        <div class="countdown-unit"><div class="countdown-num" id="cd-hrs">--</div><div class="countdown-lbl">hrs</div></div>
+        <div class="countdown-sep">:</div>
+        <div class="countdown-unit"><div class="countdown-num" id="cd-mins">--</div><div class="countdown-lbl">min</div></div>
+        <div class="countdown-sep">:</div>
+        <div class="countdown-unit"><div class="countdown-num" id="cd-secs">--</div><div class="countdown-lbl">sec</div></div>
+      </div>
+    </div>
+
+    <div class="rm-footer">
+      Join a waitlist. You don't just attend the program — you help create it.
+    </div>
+  </div>
+</div>
+
+<div class="mockup-label">
+  <strong>Mockup 8 — The Opening</strong>
+  Technique 1: clip-path door opens from center → full reveal.<br>
+  Technique 2: word-by-word kinetic text after door opens.<br>
+  Future cohorts: sealed horizontal cards with dashed door frame.<br>
+  Mobile: accordion unchanged.
+</div>
+
+<script>
+  gsap.registerPlugin(ScrollTrigger);
+
+  /* ── Starfield ── */
+  const sf = document.getElementById('starfield');
+  for (let i = 0; i < 110; i++) {
+    const s = document.createElement('div');
+    s.style.cssText = `position:absolute;border-radius:50%;background:#fff;
+      width:${1+Math.random()*1.8}px;height:${1+Math.random()*1.8}px;
+      left:${Math.random()*100}%;top:${Math.random()*100}%;
+      opacity:${0.04+Math.random()*0.28};`;
+    sf.appendChild(s);
+  }
+
+  /* ── Hero ── */
+  gsap.timeline({ delay: 0.3 })
+    .from('.hero-eyebrow', { opacity:0, y:-12, duration:0.6, ease:'power2.out' })
+    .from('.hero-title',   { opacity:0, x:-45, duration:0.9, ease:'power3.out' }, '-=0.2')
+    .from('.hero-sub',     { opacity:0, x:30,  duration:0.8, ease:'power2.out' }, '-=0.5');
+
+  /* ── Resonance stubs ── */
+  gsap.utils.toArray('.resonance-stub').forEach(stub => {
+    gsap.from(stub.querySelectorAll('.stub-label,.stub-quote,.stub-echo'), {
+      opacity:0, y:18, stagger:0.1, duration:0.7, ease:'power2.out',
+      scrollTrigger: { trigger:stub, start:'top 82%', once:true }
+    });
+  });
+
+  /* ── Bridge heading ── */
+  gsap.from('.section-heading > *', {
+    opacity:0, y:14, stagger:0.1, duration:0.7, ease:'power2.out',
+    scrollTrigger: { trigger:'.section-heading', start:'top 82%', once:true }
+  });
+
+  /* ── Sealed segments ── */
+  gsap.from('.sealed-label', {
+    opacity:0, duration:0.6, ease:'power2.out',
+    scrollTrigger: { trigger:'.sealed-label', start:'top 85%', once:true }
+  });
+
+  gsap.utils.toArray('.sealed-segment').forEach((seg, i) => {
+    gsap.from(seg, {
+      opacity:0, y:20, duration:0.7, ease:'power2.out', delay: i * 0.15,
+      scrollTrigger: { trigger:seg, start:'top 85%', once:true }
+    });
+  });
+
+  gsap.from('.invitation-close > *', {
+    opacity:0, y:14, stagger:0.12, duration:0.7, ease:'power2.out',
+    scrollTrigger: { trigger:'.invitation-close', start:'top 85%', once:true }
+  });
+
+  /* ─────────────────────────────────────────
+     BADGE — Gradient Reveal Component 1
+  ───────────────────────────────────────── */
+  const badge = document.getElementById('cohort-badge');
+
+  ScrollTrigger.create({
+    trigger: '.hero', start: 'bottom 90%',
+    onEnter: () => {
+      badge.classList.add('cb-visible');
+      gsap.to(badge, { opacity:1, duration:0.6, ease:'power2.out' });
+    },
+    onLeaveBack: () => {
+      badge.classList.remove('cb-visible');
+      gsap.to(badge, { opacity:0, duration:0.3 });
+    }
+  });
+
+  ScrollTrigger.create({
+    trigger: '#cohort1-wrap', start: 'top 65%', once: true,
+    onEnter: () => {
+      gsap.to(badge, { opacity:0, y:-8, duration:0.5, ease:'power2.in',
+        onComplete: () => badge.classList.remove('cb-visible') });
+    }
+  });
+
+  /* ─────────────────────────────────────────
+     THE OPENING DOOR — Component 2
+     Two acts: Door Opens from center → Kinetic Text
+  ───────────────────────────────────────── */
+  const content  = document.getElementById('cohort1-content');
+  const spotlight = document.getElementById('spotlight');
+
+  const isDesktop = () => window.innerWidth >= 900;
+
+  /* Set initial clip-path only on desktop — JS-controlled, visible without JS */
+  function initDoor() {
+    if (isDesktop()) {
+      gsap.set(content, { clipPath: 'polygon(50% 0%, 50% 0%, 50% 100%, 50% 100%)' });
+    } else {
+      gsap.set(content, { clipPath: 'none' });
+    }
+  }
+  initDoor();
+  window.addEventListener('resize', () => { initDoor(); ScrollTrigger.refresh(); });
+
+  /* Word splitting — no paid plugin needed */
+  function splitWords(el) {
+    if (!el || el.dataset.split) return;
+    el.dataset.split = '1';
+    // Walk text nodes and wrap words
+    const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    let node;
+    while ((node = walker.nextNode())) nodes.push(node);
+    nodes.forEach(n => {
+      const span = document.createElement('span');
+      span.innerHTML = n.textContent
+        .split(/(\s+)/)
+        .map(t => t.trim() ? `<span class="kw" style="display:inline-block">${t}</span>` : t)
+        .join('');
+      n.parentNode.replaceChild(span, n);
+    });
+  }
+
+  /* Typewriter — character by character */
+  function typewriter(el, delay) {
+    if (!el || el.dataset.tw) return;
+    el.dataset.tw = '1';
+    // Preserve HTML (em tags etc) — work with text content of each child
+    const html = el.innerHTML;
+    el.innerHTML = '';
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    // Flatten to char spans, preserving element boundaries
+    function flattenToChars(node, out) {
+      if (node.nodeType === 3) {
+        [...node.textContent].forEach(ch => {
+          const s = document.createElement('span');
+          s.style.opacity = '0';
+          s.textContent = ch;
+          out.push(s);
+          el.appendChild(s);
+        });
+      } else {
+        // For element nodes (em, strong), wrap in a cloned element
+        [...node.childNodes].forEach(child => {
+          if (child.nodeType === 3) {
+            const wrapper = node.cloneNode(false);
+            wrapper.textContent = '';
+            [...child.textContent].forEach(ch => {
+              const s = document.createElement('span');
+              s.style.opacity = '0';
+              s.textContent = ch;
+              wrapper.appendChild(s);
+              out.push(s);
+            });
+            el.appendChild(wrapper);
+          } else {
+            flattenToChars(child, out);
+          }
+        });
+      }
+    }
+    const chars = [];
+    [...tmp.childNodes].forEach(n => flattenToChars(n, chars));
+
+    gsap.to(chars, { opacity:1, duration:0.01, stagger:0.024, ease:'none', delay });
+  }
+
+  /* THE DOOR SEQUENCE */
+  ScrollTrigger.create({
+    trigger: '#cohort1-wrap',
+    start: 'top 78%',
+    once: true,
+    onEnter: () => {
+      if (!isDesktop()) {
+        // Mobile: simple reveal
+        gsap.from(content, { opacity:0, y:24, duration:0.8, ease:'power3.out' });
+        return;
+      }
+
+      const tl = gsap.timeline();
+
+      /* ACT 1 — Door opens from center */
+      tl.to(content, {
+        clipPath: 'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%)',
+        duration: 1.3, ease: 'power3.inOut'
+      }, 0)
+
+      /* Spotlight breathes in with the opening */
+      .call(() => spotlight.classList.add('active'), [], 0.1)
+
+      /* ACT 2 — Identity + prose slide in as door reaches full width */
+      .from('#cohort1-identity', { opacity:0, x:-30, duration:0.8, ease:'power3.out' }, 0.65)
+      .from('#cohort1-prose',    { opacity:0, x:30,  duration:0.8, ease:'power3.out' }, 0.75)
+
+      /* Paragraphs: word by word */
+      .call(() => {
+        document.querySelectorAll('#cohort1-letter .split-target').forEach((p, i) => {
+          splitWords(p);
+          gsap.from(p.querySelectorAll('.kw'), {
+            opacity:0, y:12, rotateX:-18,
+            stagger:0.04, duration:0.45, ease:'back.out(1.4)',
+            delay: i * 0.22
+          });
+        });
+      }, [], 0.85)
+
+      /* Pullquote: typewriter */
+      .call(() => {
+        typewriter(document.getElementById('cohort1-pullquote'), 0);
+      }, [], 1.25);
+
+      /* Spotlight fades after user has had reading time */
+      setTimeout(() => spotlight.classList.remove('active'), 4500);
+    }
+  });
+
+  /* ─────────────────────────────────────────
+     MOBILE ACCORDION — Cohort 1
+  ───────────────────────────────────────── */
+  function toggleCohort() {
+    if (isDesktop()) return;
+    const wrap = document.getElementById('cohort1-wrap');
+    wrap.classList.toggle('open');
+  }
+
+  /* ─────────────────────────────────────────
+     ROADMAP MODAL
+  ───────────────────────────────────────── */
+  function openRoadmap() {
+    const overlay = document.getElementById('roadmapOverlay');
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => {
+      document.querySelectorAll('.rm-bar-fill').forEach(bar => {
+        bar.style.width = '0%';
+        bar.style.transition = 'none';
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          bar.style.transition = 'width 1.3s cubic-bezier(0.4,0,0.2,1)';
+          bar.style.width = bar.dataset.w;
+        }));
+      });
+    }, 250);
+  }
+
+  function closeRoadmap() {
+    document.getElementById('roadmapOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function handleOverlayClick(e) {
+    if (e.target === document.getElementById('roadmapOverlay')) closeRoadmap();
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeRoadmap(); });
+
+  /* ─────────────────────────────────────────
+     COUNTDOWN — April 30, 2026 EAT
+  ───────────────────────────────────────── */
+  (function startCountdown() {
+    const DEADLINE = new Date('2026-04-30T23:59:59+03:00');
+    const pad = n => String(Math.max(0, n)).padStart(2, '0');
+
+    function tick() {
+      const diff = DEADLINE - Date.now();
+      const dEl = document.getElementById('cd-days');
+      const hEl = document.getElementById('cd-hrs');
+      const mEl = document.getElementById('cd-mins');
+      const sEl = document.getElementById('cd-secs');
+      if (!dEl) return;
+
+      if (diff <= 0) {
+        [dEl,hEl,mEl,sEl].forEach(el => { el.textContent = '00'; });
+        return;
+      }
+
+      const totalSecs = Math.floor(diff / 1000);
+      dEl.textContent = pad(Math.floor(totalSecs / 86400));
+      hEl.textContent = pad(Math.floor((totalSecs % 86400) / 3600));
+      mEl.textContent = pad(Math.floor((totalSecs % 3600) / 60));
+      sEl.textContent = pad(totalSecs % 60);
+    }
+
+    tick();
+    setInterval(tick, 1000);
+  })();
+
+  /* Expose to onclick */
+  window.toggleCohort       = toggleCohort;
+  window.openRoadmap        = openRoadmap;
+  window.closeRoadmap       = closeRoadmap;
+  window.handleOverlayClick = handleOverlayClick;
+</script>
+</body>
+</html>

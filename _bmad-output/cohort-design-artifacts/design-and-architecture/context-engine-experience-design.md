@@ -667,7 +667,7 @@ sessions. Ask what insight sits at the center of all their work so far.]
 
 ### Trigger 1: Student Joins as @Guest (Not Preloaded)
 
-**When:** Student joins Discord but has no record in SQLite database
+**When:** Student joins Discord but has no record in PostgreSQL runtime database
 
 **Scenario:** They clicked the Discord invite from Step 1 (/join landing page) but haven't enrolled yet
 
@@ -699,7 +699,7 @@ If you have any questions, just ask me here or type /help.
 
 ### Trigger 2: Student Joins as @Guest (Preloaded, Awaiting Payment)
 
-**When:** Student has SQLite record but `payment_status != "Confirmed"`
+**When:** Student has PostgreSQL record but `payment_status != "Confirmed"`
 
 **Scenario:** They enrolled (Step 2) and received the payment email (Step 3), but haven't paid yet
 
@@ -772,7 +772,7 @@ I'll be right here when you're ready.
 
 **Action sequence:**
 1. Apps Script triggers role upgrade (Guest â†’ Student)
-2. Apps Script calls `preload_students.py` â†’ SQLite pre-load
+2. Apps Script calls `preload_students.py` â†’ PostgreSQL pre-load
 3. Apps Script sends activation email
 4. Apps Script triggers bot DM via webhook
 5. Bot sends above DM

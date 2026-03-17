@@ -35,12 +35,13 @@
   width: 80px;
   height: 80px;
   cursor: pointer;
-  transition: transform 0.3s ease;
   filter: drop-shadow(0 0 10px rgba(6, 182, 212, 0.3));
+  animation: revolve 12s linear infinite;
 }
 
 .k2m-logo:hover {
   filter: drop-shadow(0 0 20px rgba(6, 182, 212, 0.6));
+  animation-duration: 4s;
 }
 
 /* Logo animation classes - added by GSAP */
@@ -82,7 +83,6 @@
   background-clip: text;
   margin-bottom: 1.5rem;
   opacity: 0;
-  animation: fade-up 0.8s ease forwards 0.3s;
   will-change: opacity, transform;
 }
 
@@ -95,7 +95,6 @@
   margin-bottom: 1.5rem;
   color: var(--text-primary);
   opacity: 0;
-  animation: fade-up 0.8s ease forwards 0.5s;
   will-change: opacity, transform;
 }
 
@@ -111,6 +110,14 @@
   filter: drop-shadow(0 0 10px rgba(6, 182, 212, 0.4));
 }
 
+/* ScrambleText scrambling chars inherit gradient */
+.hero-title strong .scramble-active {
+  background: inherit;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
 /* Hero Sub - Descriptive paragraph */
 .hero-sub {
   font-family: 'Inter', sans-serif;
@@ -120,7 +127,6 @@
   margin: 0 auto 2rem;
   line-height: 1.7;
   opacity: 0;
-  animation: fade-up 0.8s ease forwards 0.7s;
   will-change: opacity, transform;
 }
 
@@ -130,7 +136,6 @@
   color: var(--text-muted);
   font-style: italic;
   opacity: 0;
-  animation: fade-up 0.8s ease forwards 0.9s;
   will-change: opacity, transform;
 }
 

@@ -28,6 +28,9 @@ def get_store(database_url: str = None):
     The returned instance is NOT cached here — callers may create their own
     instances. Use set_runtime_store / get_runtime_store for the shared bot instance.
     """
+    if database_url is None and _runtime_store is not None:
+        return _runtime_store
+
     url = database_url or os.getenv("DATABASE_URL", "").strip()
 
     if url.startswith("postgresql://") or url.startswith("postgres://"):

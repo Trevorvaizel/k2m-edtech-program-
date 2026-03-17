@@ -523,6 +523,137 @@ a { color: #13d7d0; }
         return html.strip()
 
     @staticmethod
+    def student_activation_email(
+        student_name: str,
+        cohort_start_date: str,
+        discord_invite_url: str,
+    ) -> str:
+        """
+        Brevo Email #4: Student activation/welcome email after payment verification.
+        Sent after Trevor verifies payment and activates the student.
+
+        Args:
+            student_name: Student's first name
+            cohort_start_date: Cohort start date (ISO format or human-readable)
+            discord_invite_url: Direct Discord invite link
+
+        Returns:
+            HTML email content with refund policy
+        """
+        # Parse and format date if ISO format
+        try:
+            from datetime import datetime
+            if 'T' in cohort_start_date:
+                parsed_date = datetime.fromisoformat(cohort_start_date.replace('Z', '+00:00'))
+                formatted_date = parsed_date.strftime('%B %d, %Y')
+            else:
+                formatted_date = cohort_start_date
+        except Exception:
+            formatted_date = cohort_start_date
+
+        logo_html = ParentEmailTemplates._brand_logo_html()
+        cta_url = ParentEmailTemplates._cta_url()
+        social_links = ParentEmailTemplates._social_links_html()
+
+        html = f"""
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>You're In! Welcome to K2M</title>
+    {ParentEmailTemplates._base_styles()}
+</head>
+<body>
+  <div class="outer">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+      <tr>
+        <td align="center">
+          <div class="card">
+            <div class="inner">
+              <div style="text-align:center;">{logo_html}</div>
+              <div class="divider"></div>
+
+              <p class="kicker">Payment confirmed</p>
+              <h1 class="title">You're In! <span class="title-accent">Welcome to K2M</span></h1>
+              <p class="subdate">Cohort starts {formatted_date}</p>
+
+              <p class="copy">
+                Hey <strong>{student_name}</strong>!
+              </p>
+
+              <p class="copy">
+                Great news — your payment has been verified and your spot in the cohort is officially <strong>confirmed</strong>.
+              </p>
+
+              <p class="copy">
+                You now have full access to the Discord server and can join your fellow students in the <code>#welcome-lounge</code> channel.
+              </p>
+
+              <h2 class="section-title">What happens next</h2>
+              <ul class="list">
+                <li><strong>Join Discord:</strong> Use the link below to access the full server</li>
+                <li><strong>Introduce yourself:</strong> Share a quick hello in <code>#introductions</code></li>
+                <li><strong>Start exploring:</strong> Check out <code>#welcome-lounge</code> for previews of what's coming</li>
+                <li><strong>Mark your calendar:</strong> Cohort starts on {formatted_date}</li>
+              </ul>
+
+              <div class="panel">
+                <p><strong>Your Discord invite link</strong></p>
+                <p>This single-use link grants you full access to the cohort server:</p>
+                <p style="text-align:center; margin:16px 0;">
+                  <a href="{discord_invite_url}" style="color:#13d7d0; word-break:break-all;">{discord_invite_url}</a>
+                </p>
+                <p style="font-size:13px; color:#9ca3af;">Link expires in 7 days. If you need a fresh one, just reply to this email.</p>
+              </div>
+
+              <h2 class="section-title">Before the cohort begins</h2>
+              <div class="panel">
+                <p><strong>In the meantime:</strong></p>
+                <p>1. Explore the <code>#welcome-lounge</code> — get a taste of the thinking practices you'll develop</p>
+                <p>2. Connect with fellow students in <code>#introductions</code></p>
+                <p>3. Review the <code>#program-guide</code> channel for the full schedule and expectations</p>
+              </div>
+
+              <h2 class="section-title">Refund policy</h2>
+              <div class="panel">
+                <p><strong>100% refund guarantee — no questions asked</strong></p>
+                <p>If you decide this program isn't right for you, you can request a full refund:</p>
+                <p>• <strong>Before cohort start:</strong> Full refund, 100%</p>
+                <p>• <strong>Week 1:</strong> Full refund, no questions asked</p>
+                <p>• <strong>After Week 1:</strong> Refunds reviewed case-by-case</p>
+                <p style="margin-top:12px; font-size:14px; color:#9ca3af;">
+                  To request a refund, simply reply to this email or DM <strong>@Trevor</strong> on Discord.
+                  Refunds are processed within 5 business days via M-Pesa.
+                </p>
+              </div>
+
+              <div class="cta-wrap">
+                <a class="cta-btn" href="{discord_invite_url}">Join Discord Now</a>
+              </div>
+
+              <p class="copy">
+                Questions? Just reply to this email — I read every message personally.
+              </p>
+
+              <div class="footer">
+                {social_links}
+                <p>Nairobi, Kenya</p>
+                <p>You're receiving this because you enrolled in K2M's AI Thinking Skills Cohort.</p>
+                <p class="meta">&copy; {datetime.now().year} K2M Labs. All rights reserved.</p>
+              </div>
+            </div>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>
+        """
+        return html.strip()
+
+    @staticmethod
     def plain_text_fallback(html_content: str) -> str:
         """
         Extract plain text from HTML for email clients that do not render HTML.

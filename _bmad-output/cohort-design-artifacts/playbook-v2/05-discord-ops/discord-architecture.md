@@ -8,6 +8,20 @@
 
 ---
 
+## Addendum — 2026-03-04 Execution Contract Alignment
+
+For Cohort 1 execution and auditability, implement with these companion source documents:
+- `_bmad-output/cohort-design-artifacts/design-and-architecture/student-onboarding-and-enrollment-flow.md`
+- `_bmad-output/cohort-design-artifacts/design-and-architecture/context-engine-experience-design.md`
+- `_bmad-output/cohort-design-artifacts/design-and-architecture/discord-community-culture-and-architecture.md`
+- `_bmad-output/cohort-design-artifacts/operations/sprint/discord-implementation-sprint.yaml`
+
+Precedence rule:
+- Use this playbook story for base Discord architecture patterns.
+- If onboarding/payment/context behavior conflicts arise, follow the execution contract in the sprint YAML.
+
+---
+
 ## Story
 
 As a **Cohort Facilitation System Designer**,
@@ -1241,7 +1255,7 @@ Bot Performance Requirements:
   - Response time: <5 seconds for CIS agent responses
   - Concurrent DMs: Support 50+ simultaneous conversations
   - API rate limits: 50 requests/second (Discord.py handles this)
-  - Database queries: SQLite optimized with indexes (see Story 4.7)
+  - Database queries: PostgreSQL (Railway) with connection pool min=2 max=10 (Task 7.6)
 
 Cost Management:
   - Discord hosting: FREE (no server costs)
@@ -1254,7 +1268,7 @@ Option 1: Copy-Paste Deployment (Recommended)
   - Create Discord server template
   - Duplicate for each new cohort
   - Bot code reused (no changes)
-  - Database: Separate SQLite per cohort (isolated data)
+  - Database: PostgreSQL with cohort_id isolation (Railway plugin per cohort, or schema separation)
   - Cost: Linear scaling ($40-50 per cohort)
 
 Option 2: Single Server, Multiple Cohorts

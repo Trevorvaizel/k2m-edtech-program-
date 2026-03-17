@@ -110,7 +110,7 @@ k2m-edtech-program-/
 - [ ] 1.6 - Implement rate limiting + cost controls
 - [ ] 1.7 - Implement observability infrastructure
 
-See `_bmad-output/cohort-design-artifacts/discord-implementation-sprint.yaml` for full sprint plan.
+See `_bmad-output/cohort-design-artifacts/operations/sprint/discord-implementation-sprint.yaml` for full sprint plan.
 
 ## Architecture
 
@@ -216,10 +216,10 @@ After running `setup_discord_server.py`, a template is created automatically.
 - Story 4.7: Bot Technical Specification
 
 **Implementation Tracker:**
-- `_bmad-output/cohort-design-artifacts/discord-implementation-sprint.yaml`
+- `_bmad-output/cohort-design-artifacts/operations/sprint/discord-implementation-sprint.yaml`
 
 **Adversarial Review:**
-- `_bmad-output/cohort-design-artifacts/adversarial-review-sprint-0-discord-setup.md`
+- `_bmad-output/cohort-design-artifacts/reviews/adversarial/adversarial-review-sprint-0-discord-setup.md`
 
 ## Support
 

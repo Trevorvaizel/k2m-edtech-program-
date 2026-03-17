@@ -124,7 +124,7 @@ The `/join` Discord slash command is **removed from the bot entirely** (Sprint 7
 **Previous design:** SQLite. Unsuitable for concurrent writes during enrollment surge.
 
 **New:** PostgreSQL (Railway plugin). Full migration in Sprint 7 task 7.6.
-- Replaces ALL SQLite references in codebase
+- Replaces SQLite as the production runtime database (SQLite may remain for local/test tooling)
 - Google Sheets Column map and Apps Script contract unchanged (Sheets is still enrollment truth)
 - `preload_students.py` writes to PostgreSQL, not SQLite
 
@@ -1119,15 +1119,15 @@ Ready? Let's do this! ðŸ’ª
 ```python
 # cis-discord-bot/scripts/preload_students.py
 # Called by: Apps Script webhook on payment confirmation
-# Upserts one student row from Google Sheets into SQLite
+# Upserts one student row from Google Sheets into PostgreSQL runtime store
 
 def preload_student(sheet_row: dict) -> dict:
     """
-    Upserts student into SQLite from Sheets data.
+    Upserts student into PostgreSQL from Sheets data.
     Returns {"success": True} or {"success": False, "error": str}.
     """
     try:
-        conn = sqlite3.connect('cohort-1.db')
+        conn = psycopg2.connect(os.getenv("DATABASE_URL"))
         cursor = conn.cursor()
 
         zone = int(sheet_row.get('zone', 1))
@@ -1631,7 +1631,7 @@ I'll guide you through it! ðŸš€
            â”œâ”€â”€> Apps Script trigger (onEdit)
            â”‚   â””â”€â”€> Discord bot API (role upgrade)
            â”‚   â””â”€â”€> Email service (Activation)
-           â”‚   â””â”€â”€> Pre-load script (SQLite)
+           â”‚   â””â”€â”€> Pre-load script (PostgreSQL)
            â”‚
            â””â”€â”€> Manual Trevor access
 
@@ -1898,7 +1898,7 @@ async def _apply_student_role(member):
 > - Previous version used `bot.wait_for('message', timeout=86400)` â€” 24-hour timeout, after which the onboarding sequence terminated permanently. Students returning after 25+ hours had no recovery path.
 > - "done" exact keyword replaced with intent matching (`is_continue_signal()`).
 > - Stop 2 (public intro post) is now optional â€” student can type "skip" to proceed.
-> - Onboarding state persisted in SQLite (`students.onboarding_stop`) so it survives bot restarts.
+> - Onboarding state persisted in PostgreSQL (`students.onboarding_stop`) so it survives bot restarts.
 > - `/onboarding` command re-enters the flow at the student's current stop.
 
 ```python
@@ -2121,7 +2121,7 @@ async def send_activation_dm(studentData):
 3. M-Pesa code received email
 4. Activation email
 
-### **Database (SQLite):**
+### **Database (PostgreSQL):**
 
 1. **New columns for students table:**
    - All 17 columns from context-engine-experience-design.md
@@ -2253,7 +2253,7 @@ ScriptApp.newTrigger('checkPayments')
   - Late joiners: assigned to the cluster with fewest members at time of activation
 - **Trevor override:**
   - Trevor sees all cluster assignments in #facilitator-dashboard before Discord invites go out
-  - Command: `/move-cluster @Student [cluster_number]` â€” bot reassigns role, updates SQLite, confirms in dashboard
+  - Command: `/move-cluster @Student [cluster_number]` â€” bot reassigns role, updates PostgreSQL, confirms in dashboard
   - No time limit on override â€” can adjust anytime during Week 1
 - **Column U:** No longer a Sheets formula. Written by `preload_student()` webhook at activation time.
 - **Activation email:** Now includes cluster field â€” unblocked.

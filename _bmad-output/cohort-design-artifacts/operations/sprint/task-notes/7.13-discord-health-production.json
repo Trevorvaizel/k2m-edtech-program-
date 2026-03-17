@@ -1,0 +1,62 @@
+﻿{
+  "passes": [
+    "[PASS] provider: openai / gpt-4o-mini",
+    "[PASS] DISCORD_TOKEN: configured",
+    "[PASS] discord_auth: bot=Kira, status=200",
+    "[PASS] DISCORD_GUILD_ID: 1472960257562251395",
+    "[PASS] guild_access: K2M Cohort #1 - AI Thinking Skills (1472960257562251395)",
+    "[PASS] CHANNEL_THINKING_LAB: id=1472966046498422795, name=#\ud83e\uddeathinking-lab",
+    "[PASS] CHANNEL_BOT_TESTING: id=1472966859551801568, name=#\ud83e\udd16bot-testing",
+    "[PASS] CHANNEL_THINKING_SHOWCASE: id=1472966052634820743, name=#\u2728thinking-showcase",
+    "[PASS] CHANNEL_FACILITATOR_DASHBOARD: id=1472966111728242800, name=#\ud83d\udccafacilitator-dashboard",
+    "[PASS] CHANNEL_WELCOME_LOUNGE: id=1481153734363840613, name=#welcome-lounge",
+    "[PASS] slash_commands: all 17 required commands present"
+  ],
+  "warnings": [],
+  "failures": [],
+  "provider": {
+    "name": "openai",
+    "model": "gpt-4o-mini",
+    "ok": true,
+    "details": "provider=openai, model=gpt-4o-mini, base_url=https://api.openai.com/v1"
+  },
+  "discord": {
+    "bot_user": "Kira",
+    "guild": {
+      "id": "1472960257562251395",
+      "name": "K2M Cohort #1 - AI Thinking Skills"
+    },
+    "registered_commands": [
+      "all-cluster-rosters",
+      "challenge",
+      "cluster-roster",
+      "create-artifact",
+      "diverge",
+      "edit",
+      "frame",
+      "framer",
+      "inspect-journey",
+      "onboarding",
+      "parent-consent",
+      "ping",
+      "post-session-summary",
+      "publish",
+      "recover-member",
+      "renew",
+      "review",
+      "save",
+      "show-aggregate-patterns",
+      "show-milestones",
+      "show-stuck-students",
+      "show-zone-shifts",
+      "showcase-preference",
+      "status",
+      "submit-reflection",
+      "switch-cluster",
+      "synthesize",
+      "unlock-week",
+      "update-parent-consent",
+      "view-parent-consent"
+    ]
+  }
+}

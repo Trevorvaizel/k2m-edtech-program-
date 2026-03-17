@@ -1,11 +1,11 @@
-"""
+﻿"""
 KIRA Discord Server Setup Automation
 Implements Story 5.1 Complete Discord Server Architecture
 
 This script creates the entire K2M Cohort #1 Discord server structure:
 - 4 channel categories
-- 14 channels with permissions
-- 3 roles (Student, Trevor, CIS Bot)
+- 15 channels with permissions
+- 4 roles (Guest, Student, Trevor, CIS Bot)
 - Welcome & resources content
 - Weekly channel visibility controls
 
@@ -40,45 +40,46 @@ bot = commands.Bot(command_prefix="/", intents=intents)
 
 # Server architecture from Story 5.1
 CATEGORIES = {
-    "📚 INFORMATION & ONBOARDING": {
+    "ðŸ“š INFORMATION & ONBOARDING": {
         "position": 0,
         "channels": [
-            {"name": "welcome", "emoji": "👋", "topic": "Welcome & Getting Started"},
-            {"name": "announcements", "emoji": "📢", "topic": "Important Updates"},
-            {"name": "resources", "emoji": "📚", "topic": "Resources & Guides"},
-            {"name": "introductions", "emoji": "👋", "topic": "Introduce Yourself"}
+            {"name": "welcome", "emoji": "ðŸ‘‹", "topic": "Welcome & Getting Started"},
+            {"name": "announcements", "emoji": "ðŸ“¢", "topic": "Important Updates"},
+            {"name": "welcome-lounge", "emoji": "ðŸ•’", "topic": "Guest waiting room while payment verification completes"},
+            {"name": "resources", "emoji": "ðŸ“š", "topic": "Resources & Guides"},
+            {"name": "introductions", "emoji": "ðŸ‘‹", "topic": "Introduce Yourself"}
         ]
     },
-    "💬 CORE INTERACTION SPACES": {
+    "ðŸ’¬ CORE INTERACTION SPACES": {
         "position": 1,
         "channels": [
-            {"name": "thinking-lab", "emoji": "🧪", "topic": "Thinking Lab - CIS Agent Entry Point"},
-            {"name": "thinking-showcase", "emoji": "🌟", "topic": "Thinking Showcase - Published Artifacts"},
-            {"name": "general", "emoji": "💬", "topic": "General Discussion"}
+            {"name": "thinking-lab", "emoji": "ðŸ§ª", "topic": "Thinking Lab - CIS Agent Entry Point"},
+            {"name": "thinking-showcase", "emoji": "ðŸŒŸ", "topic": "Thinking Showcase - Published Artifacts"},
+            {"name": "general", "emoji": "ðŸ’¬", "topic": "General Discussion"}
         ]
     },
-    "🗓️ WEEK-SPECIFIC PROGRESSION": {
+    "ðŸ—“ï¸ WEEK-SPECIFIC PROGRESSION": {
         "position": 2,
         "channels": [
-            {"name": "week-1-wonder", "emoji": "✨", "topic": "Week 1: Wonder (Zone 0→1)", "visible": True},
-            {"name": "week-2-3-trust", "emoji": "🤝", "topic": "Weeks 2-3: Trust (Zone 1→2)", "visible": False},
-            {"name": "week-4-5-converse", "emoji": "💭", "topic": "Weeks 4-5: Converse (Zone 2→3)", "visible": False},
-            {"name": "week-6-7-direct", "emoji": "🎯", "topic": "Weeks 6-7: Direct (Zone 3→4)", "visible": False},
-            {"name": "week-8-showcase", "emoji": "🏆", "topic": "Week 8: Artifact Showcase", "visible": False}
+            {"name": "week-1-wonder", "emoji": "âœ¨", "topic": "Week 1: Wonder (Zone 0â†’1)", "visible": True},
+            {"name": "week-2-3-trust", "emoji": "ðŸ¤", "topic": "Weeks 2-3: Trust (Zone 1â†’2)", "visible": False},
+            {"name": "week-4-5-converse", "emoji": "ðŸ’­", "topic": "Weeks 4-5: Converse (Zone 2â†’3)", "visible": False},
+            {"name": "week-6-7-direct", "emoji": "ðŸŽ¯", "topic": "Weeks 6-7: Direct (Zone 3â†’4)", "visible": False},
+            {"name": "week-8-showcase", "emoji": "ðŸ†", "topic": "Week 8: Artifact Showcase", "visible": False}
         ]
     },
-    "🔧 ADMIN & OPERATIONS": {
+    "ðŸ”§ ADMIN & OPERATIONS": {
         "position": 3,
         "channels": [
-            {"name": "facilitator-dashboard", "emoji": "📊", "topic": "Trevor's Dashboard - PRIVATE"},
-            {"name": "bot-testing", "emoji": "🤖", "topic": "Bot Development - PRIVATE"},
-            {"name": "moderation-logs", "emoji": "⚖️", "topic": "Safety & Moderation - PRIVATE"}
+            {"name": "facilitator-dashboard", "emoji": "ðŸ“Š", "topic": "Trevor's Dashboard - PRIVATE"},
+            {"name": "bot-testing", "emoji": "ðŸ¤–", "topic": "Bot Development - PRIVATE"},
+            {"name": "moderation-logs", "emoji": "âš–ï¸", "topic": "Safety & Moderation - PRIVATE"}
         ]
     }
 }
 
 # Welcome channel content (Story 5.1 spec)
-WELCOME_CONTENT = """# 👋 Welcome to K2M's AI Thinking Skills Cohort!
+WELCOME_CONTENT = """# ðŸ‘‹ Welcome to K2M's AI Thinking Skills Cohort!
 
 ## It's Okay to Feel Anxious About AI
 
@@ -91,15 +92,15 @@ This cohort is designed for people who feel exactly that way. We move at your pa
 This cohort is about building thinking skills that work with AI.
 Not "learning to use AI tools." Building mental models that transfer forever.
 
-Tools change. These 4 habits follow you. ⏸️ 🎯 🔄 🧠
+Tools change. These 4 habits follow you. â¸ï¸ ðŸŽ¯ ðŸ”„ ðŸ§ 
 
 ## What Happens Here
 
 **8-Week Journey:**
-- Week 1: Wonder (Zone 0→1) - Notice AI is already around you
-- Weeks 2-3: Trust (Zone 1→2) - Build confidence through small wins
-- Weeks 4-5: Converse (Zone 2→3) - Learn to think WITH AI
-- Weeks 6-7: Direct (Zone 3→4) - Direct AI toward quality
+- Week 1: Wonder (Zone 0â†’1) - Notice AI is already around you
+- Weeks 2-3: Trust (Zone 1â†’2) - Build confidence through small wins
+- Weeks 4-5: Converse (Zone 2â†’3) - Learn to think WITH AI
+- Weeks 6-7: Direct (Zone 3â†’4) - Direct AI toward quality
 - Week 8: Showcase - Prove your transformation
 
 **Daily Rhythm:**
@@ -134,15 +135,21 @@ When you're ready, you can publish your finished thinking to #thinking-showcase.
 This creates psychological safety. No judgment while you're learning.
 Celebration when you've proven your growth.
 
+## Refund Policy
+
+- Full refund available up to 7 days before cohort start.
+- During Week 1, full refund is still available if the program is not a fit.
+- After Week 1, refunds are reviewed case-by-case.
+- To request a refund, DM Trevor or reply to the enrollment email.
 ## Community Norms
 
-✅ **What we do:**
+âœ… **What we do:**
 - Celebrate growth (not speed)
 - Share finished work (not messy drafts)
 - Support each other (no comparison)
 - Practice habits (repetition over novelty)
 
-❌ **What we don't do:**
+âŒ **What we don't do:**
 - Compare or rank students
 - Pressure to be "best"
 - Judge early attempts
@@ -156,18 +163,25 @@ Celebration when you've proven your growth.
 
 **Questions?** Trevor is here to help. DM him anytime.
 
-Let's build thinking skills that last. 🌟
+Let's build thinking skills that last. ðŸŒŸ
 """
 
-RESOURCES_CONTENT = """# 📚 Resources & Guides
+WELCOME_REFUND_PIN = """📌 **Refund Policy (Cohort 1)**
+
+- Full refund up to 7 days before cohort start.
+- Full refund during Week 1 if the program is not a fit.
+- After Week 1, refunds are reviewed case-by-case.
+- Request path: DM Trevor or reply to your enrollment email.
+"""
+RESOURCES_CONTENT = """# ðŸ“š Resources & Guides
 
 ## Essential Reading
 
 **[The 4 Habits Guide]**
-- ⏸️ Habit 1: Pause Before Asking
-- 🎯 Habit 2: Explain Context First
-- 🔄 Habit 3: Change One Thing at a Time
-- 🧠 Habit 4: Use AI Before Decisions
+- â¸ï¸ Habit 1: Pause Before Asking
+- ðŸŽ¯ Habit 2: Explain Context First
+- ðŸ”„ Habit 3: Change One Thing at a Time
+- ðŸ§  Habit 4: Use AI Before Decisions
 
 **[CIS Agent Guide]** (How to use /frame, /diverge, /challenge, /synthesize)
 - When to use each agent
@@ -206,48 +220,53 @@ async def setup_server():
     # Find the server
     guild = discord.utils.get(bot.guilds, name=SERVER_NAME)
     if not guild:
-        print(f"❌ Error: Server '{SERVER_NAME}' not found!")
+        print(f"âŒ Error: Server '{SERVER_NAME}' not found!")
         print(f"Available servers: {[g.name for g in bot.guilds]}")
         await bot.close()
         return
 
-    print(f"✅ Found server: {guild.name}")
-    print(f"📊 Current channels: {len(guild.channels)}")
-    print(f"👥 Current roles: {len(guild.roles)}")
+    print(f"âœ… Found server: {guild.name}")
+    print(f"ðŸ“Š Current channels: {len(guild.channels)}")
+    print(f"ðŸ‘¥ Current roles: {len(guild.roles)}")
 
     # Step 1: Create roles
-    print("\n🎭 Creating roles...")
+    print("\nðŸŽ­ Creating roles...")
     roles = await create_roles(guild)
 
     # Step 2: Create categories and channels
-    print("\n📁 Creating categories and channels...")
+    print("\nðŸ“ Creating categories and channels...")
     await create_channels(guild, roles)
 
     # Step 3: Post welcome content
-    print("\n📝 Posting welcome content...")
+    print("\nðŸ“ Posting welcome content...")
     await post_welcome_content(guild)
 
     # Step 4: Create server template for future cohorts
-    print("\n📋 Creating server template...")
+    print("\nðŸ“‹ Creating server template...")
     await create_server_template(guild)
 
-    print("\n✅ ========== SERVER SETUP COMPLETE ==========")
-    print(f"✅ Server: {guild.name}")
-    print(f"✅ Channels created: {len(guild.channels)}")
-    print(f"✅ Roles configured: {len(roles)} custom roles")
-    print("\n🎉 Server ready for Cohort #1!")
-    print("\n💡 Next step: Verify manually in Discord, then mark task 0.4 complete")
+    print("\nâœ… ========== SERVER SETUP COMPLETE ==========")
+    print(f"âœ… Server: {guild.name}")
+    print(f"âœ… Channels created: {len(guild.channels)}")
+    print(f"âœ… Roles configured: {len(roles)} custom roles")
+    print("\nðŸŽ‰ Server ready for Cohort #1!")
+    print("\nðŸ’¡ Next step: Verify manually in Discord, then mark task 0.4 complete")
 
     await bot.close()
 
 
 async def create_roles(guild):
-    """Create @Student, @Trevor, @CIS Bot roles with correct permissions"""
+    """Create @Guest, @Student, @Trevor, @CIS Bot roles with correct permissions"""
 
     roles = {}
 
     # Define role configurations
     role_configs = {
+        "Guest": {
+            "color": discord.Color.light_grey(),
+            # Keep base role neutral; channel/category overwrites define Guest access.
+            "permissions": discord.Permissions.none()
+        },
         "Student": {
             "color": discord.Color.blue(),
             "permissions": discord.Permissions(
@@ -285,7 +304,17 @@ async def create_roles(guild):
         existing_role = discord.utils.get(guild.roles, name=role_name)
 
         if existing_role:
-            print(f"  ✓ Role '{role_name}' already exists")
+            print(f"  âœ“ Role '{role_name}' already exists")
+            if (
+                existing_role.permissions != config["permissions"]
+                or existing_role.color != config["color"]
+            ):
+                await existing_role.edit(
+                    color=config["color"],
+                    permissions=config["permissions"],
+                    reason="Task 7.12: reconcile role permissions with canonical setup",
+                )
+                print(f"    âœ… Updated role settings for '{role_name}'")
             roles[role_name] = existing_role
         else:
             role = await guild.create_role(
@@ -294,7 +323,7 @@ async def create_roles(guild):
                 permissions=config["permissions"]
             )
             roles[role_name] = role
-            print(f"  ✅ Created role: {role_name}")
+            print(f"  âœ… Created role: {role_name}")
 
     return roles
 
@@ -308,13 +337,24 @@ async def create_channels(guild, roles):
 
         if existing_category:
             category = existing_category
-            print(f"  ✓ Category '{category_name}' already exists")
+            print(f"  âœ“ Category '{category_name}' already exists")
         else:
             category = await guild.create_category(
                 name=category_name,
                 position=category_data["position"]
             )
-            print(f"  ✅ Created category: {category_name}")
+            print(f"  âœ… Created category: {category_name}")
+
+        # Task 7.12 boundary hardening baseline:
+        # deny @Guest at category level; #welcome-lounge gets explicit allow.
+        guest_role = roles.get("Guest")
+        if guest_role is not None:
+            await category.set_permissions(
+                guest_role,
+                read_messages=False,
+                send_messages=False,
+                read_message_history=False,
+            )
 
         # Create channels in category
         for channel_config in category_data["channels"]:
@@ -330,14 +370,14 @@ async def create_channels(guild, roles):
             )
 
             if existing_channel:
-                print(f"    ✓ Channel '{channel_name}' already exists")
+                print(f"    âœ“ Channel '{channel_name}' already exists")
                 channel = existing_channel
             else:
                 channel = await category.create_text_channel(
                     name=channel_name_with_emoji,
                     topic=channel_config["topic"]
                 )
-                print(f"    ✅ Created channel: #{channel_name}")
+                print(f"    âœ… Created channel: #{channel_name}")
 
             # Set permissions based on channel type
             await set_channel_permissions(channel, roles, channel_config, guild)
@@ -347,10 +387,48 @@ async def set_channel_permissions(channel, roles, channel_config, guild):
     """Set role-based permissions for each channel"""
 
     student_role = roles["Student"]
+    guest_role = roles.get("Guest")
     trevor_role = roles["Trevor"]
     bot_role = roles["CIS Bot"]
 
     channel_name = channel_config["name"]
+
+    # Guest waiting room (Task 7.12)
+    if channel_name == "welcome-lounge":
+        await channel.set_permissions(guild.default_role,  # @everyone
+            read_messages=False,
+            send_messages=False
+        )
+        if guest_role is not None:
+            await channel.set_permissions(guest_role,
+                read_messages=True,
+                send_messages=True,
+                read_message_history=True
+            )
+        await channel.set_permissions(student_role,
+            read_messages=True,
+            send_messages=False,
+            read_message_history=True
+        )
+        await channel.set_permissions(bot_role,
+            read_messages=True,
+            send_messages=True
+        )
+        # Trevor always has full access
+        await channel.set_permissions(trevor_role,
+            read_messages=True,
+            send_messages=True,
+            manage_messages=True
+        )
+        return
+
+    # Everywhere else: explicitly deny @Guest.
+    if guest_role is not None:
+        await channel.set_permissions(guest_role,
+            read_messages=False,
+            send_messages=False,
+            read_message_history=False
+        )
 
     # Read-only channels
     if channel_name in ["welcome", "announcements", "resources", "thinking-showcase"]:
@@ -430,7 +508,7 @@ async def post_welcome_content(guild):
         # Check if content already posted
         async for message in welcome_channel.history(limit=10):
             if "Welcome to K2M's AI Thinking Skills Cohort" in message.content:
-                print("  ✓ Welcome content already posted")
+                print("  âœ“ Welcome content already posted")
                 break
         else:
             # Split content into chunks (2000 char limit)
@@ -438,7 +516,22 @@ async def post_welcome_content(guild):
             for chunk in chunks:
                 await welcome_channel.send(chunk)
                 await asyncio.sleep(0.5)  # Small delay between messages
-            print(f"  ✅ Posted welcome content to #welcome ({len(chunks)} messages)")
+            print(f"  âœ… Posted welcome content to #welcome ({len(chunks)} messages)")
+
+        # Ensure refund policy pin exists (Task 7.1 contract)
+        refund_pin_exists = False
+        async for pinned in welcome_channel.pins():
+            if "Refund Policy (Cohort 1)" in pinned.content:
+                refund_pin_exists = True
+                break
+
+        if not refund_pin_exists:
+            try:
+                refund_msg = await welcome_channel.send(WELCOME_REFUND_PIN)
+                await refund_msg.pin(reason="Task 7.1 refund policy visibility")
+                print("  âœ… Posted and pinned refund policy in #welcome")
+            except Exception as pin_exc:
+                print(f"  âš ï¸ Could not pin refund policy message: {pin_exc}")
 
     # Post to #resources
     resources_channel = find_existing_text_channel(guild, "resources")
@@ -446,7 +539,7 @@ async def post_welcome_content(guild):
         # Check if content already posted
         async for message in resources_channel.history(limit=10):
             if "Resources & Guides" in message.content:
-                print("  ✓ Resources content already posted")
+                print("  âœ“ Resources content already posted")
                 break
         else:
             # Split content into chunks (2000 char limit)
@@ -454,7 +547,7 @@ async def post_welcome_content(guild):
             for chunk in chunks:
                 await resources_channel.send(chunk)
                 await asyncio.sleep(0.5)  # Small delay between messages
-            print(f"  ✅ Posted resources content to #resources ({len(chunks)} messages)")
+            print(f"  âœ… Posted resources content to #resources ({len(chunks)} messages)")
 
 
 def split_message(content, max_length=2000):
@@ -485,8 +578,8 @@ def normalize_channel_slug(name: str) -> str:
     Normalize Discord channel names to the canonical slug used in config.
 
     Examples:
-    - "👋welcome" -> "welcome"
-    - "⚖️moderation-logs" -> "moderation-logs"
+    - "ðŸ‘‹welcome" -> "welcome"
+    - "âš–ï¸moderation-logs" -> "moderation-logs"
     - "welcome" -> "welcome"
     """
     normalized = re.sub(r"^[^a-zA-Z0-9]+", "", name or "")
@@ -534,7 +627,7 @@ def find_existing_text_channel(guild, channel_slug: str, category=None):
 
     if len(candidates) > 1:
         print(
-            f"  ⚠️ Multiple channels found for '{channel_slug}'. "
+            f"  âš ï¸ Multiple channels found for '{channel_slug}'. "
             f"Using #{getattr(candidates[0], 'name', channel_slug)}"
         )
 
@@ -548,7 +641,7 @@ async def create_server_template(guild):
         templates = await guild.templates()
         for template in templates:
             if "K2M Cohort Template" in template.name:
-                print(f"  ✓ Server template already exists: {template.code}")
+                print(f"  âœ“ Server template already exists: {template.code}")
                 return
 
         # Create new template
@@ -556,20 +649,20 @@ async def create_server_template(guild):
             name="K2M Cohort Template",
             description="K2M AI Thinking Skills cohort server. 4 categories, 14 channels, 3 roles. Deploy in ~30 min."
         )
-        print(f"  ✅ Server template created: https://discord.new/{template.code}")
+        print(f"  âœ… Server template created: https://discord.new/{template.code}")
         print(f"     Template code: {template.code}")
         print(f"     Use this to deploy future cohorts!")
     except Exception as e:
-        print(f"  ⚠️ Template creation failed: {e}")
-        print(f"     You can create manually in Server Settings → Server Template")
+        print(f"  âš ï¸ Template creation failed: {e}")
+        print(f"     You can create manually in Server Settings â†’ Server Template")
 
 
 @bot.event
 async def on_ready():
     """Bot ready event - triggers server setup"""
-    print(f"\n🤖 KIRA bot connected as {bot.user}")
-    print(f"🌐 Connected to {len(bot.guilds)} server(s)")
-    print("\n🚀 Starting server setup automation...\n")
+    print(f"\nðŸ¤– KIRA bot connected as {bot.user}")
+    print(f"ðŸŒ Connected to {len(bot.guilds)} server(s)")
+    print("\nðŸš€ Starting server setup automation...\n")
 
     await setup_server()
 
@@ -577,8 +670,8 @@ async def on_ready():
 # Run the bot
 if __name__ == "__main__":
     if not DISCORD_TOKEN:
-        print("❌ Error: DISCORD_TOKEN not found in .env file")
-        print("💡 Add your bot token to .env file: DISCORD_TOKEN=your_token_here")
+        print("âŒ Error: DISCORD_TOKEN not found in .env file")
+        print("ðŸ’¡ Add your bot token to .env file: DISCORD_TOKEN=your_token_here")
         exit(1)
 
     print("=" * 60)
@@ -587,18 +680,19 @@ if __name__ == "__main__":
     print("=" * 60)
     print(f"\nTarget Server: {SERVER_NAME}")
     print("This script will create:")
-    print("  ✓ 4 channel categories")
-    print("  ✓ 14 channels with permissions")
-    print("  ✓ 3 roles (Student, Trevor, CIS Bot)")
-    print("  ✓ Welcome & resources content")
-    print("  ✓ Weekly channel visibility controls")
+    print("  âœ“ 4 channel categories")
+    print("  âœ“ 15 channels with permissions")
+    print("  âœ“ 4 roles (Guest, Student, Trevor, CIS Bot)")
+    print("  âœ“ Welcome & resources content")
+    print("  âœ“ Weekly channel visibility controls")
     print("\nIdempotent: Safe to run multiple times.\n")
 
     try:
         bot.run(DISCORD_TOKEN)
     except Exception as e:
-        print(f"\n❌ Error: {e}")
-        print("\n💡 Make sure:")
+        print(f"\nâŒ Error: {e}")
+        print("\nðŸ’¡ Make sure:")
         print("  1. DISCORD_TOKEN is correct in .env")
         print("  2. Bot has admin permissions")
         print("  3. Bot is invited to the server")
+

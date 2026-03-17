@@ -6,10 +6,12 @@ This bot implements the complete CIS Agent System for Discord-based cohort facil
 Bot Name: KIRA (K2M Interactive Reasoning Agent)
 """
 
+import asyncio
 import logging
 import os
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
+from typing import Dict, Optional
 
 import discord
 from discord import app_commands
@@ -23,6 +25,17 @@ from cis_controller.llm_integration import (
     set_runtime_failure_notifier,
     validate_provider_configuration,
 )
+from cis_controller.onboarding import (
+    DEFAULT_STOP0_PROFILE,
+    build_reentry_dm,
+    build_stop0_intro,
+    build_stop0_question,
+    build_stop_message,
+    is_continue_signal,
+    is_skip_signal,
+    parse_stop0_profile_answers,
+)
+from cis_controller.welcome_lounge import upsert_welcome_lounge_content
 from cis_controller.router import route_slash_command, setup_bot_events, set_runtime_services
 
 # Load environment variables
@@ -68,6 +81,17 @@ WEEKLY_CHANNEL_MAPPING = {
 daily_prompt_scheduler = None
 health_monitor = None
 parent_unsubscribe_server = None
+interest_api_server = None
+internal_webhook_server = None  # Task 7.11: HMAC-authenticated Apps Script → bot endpoints
+
+# Task 7.2 — Decision N-07: asyncio.Lock + invite snapshot for on_member_join diff
+# Dict shape: { guild_id: { invite_code: uses_count } }
+_guild_invite_snapshot: dict = {}
+_member_join_lock = asyncio.Lock()
+
+# Task 7.7 Stop 0 in-memory questionnaire sessions.
+# Key: discord_id, Value: {"answers": [str, ...], "started_at": datetime}
+_stop0_sessions: Dict[str, dict] = {}
 
 # Validate required environment variables
 if not DISCORD_TOKEN:
@@ -77,11 +101,11 @@ if not DISCORD_TOKEN:
     )
 
 if not os.environ.get("COHORT_1_START_DATE"):
-    raise EnvironmentError("COHORT_1_START_DATE not set â€” bot refusing to start")
+    raise EnvironmentError("COHORT_1_START_DATE not set - bot refusing to start")
 
 if not os.environ.get("COHORT_1_FIRST_SESSION_DATE"):
     logger.warning(
-        "COHORT_1_FIRST_SESSION_DATE not set â€” using COHORT_1_START_DATE as fallback"
+        "COHORT_1_FIRST_SESSION_DATE not set - using COHORT_1_START_DATE as fallback"
     )
 
 if ENVIRONMENT in {"production", "prod"} and not (
@@ -116,6 +140,337 @@ def _get_store():
     from database import get_runtime_store, get_store
 
     return get_runtime_store() or get_store()
+
+
+def _is_facilitator_member(member: Optional[discord.Member]) -> bool:
+    """Role gate for facilitator-only slash commands."""
+    if member is None or member.guild is None:
+        return False
+    # Allow true Discord admins even if role naming changes over time.
+    if getattr(member.guild_permissions, "administrator", False):
+        return True
+    facilitator_role = discord.utils.get(member.guild.roles, name="Facilitator")
+    if facilitator_role is None:
+        return False
+    return facilitator_role in getattr(member, "roles", [])
+
+
+def _row_value(row, key: str, default=None):
+    if row is None:
+        return default
+    if isinstance(row, dict):
+        return row.get(key, default)
+    try:
+        return row[key]
+    except Exception:
+        return default
+
+
+def _row_int(row, key: str, default: int = 0) -> int:
+    try:
+        return int(_row_value(row, key, default))
+    except (TypeError, ValueError):
+        return default
+
+
+def _row_bool(row, key: str, default: bool = False) -> bool:
+    value = _row_value(row, key, default)
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return value != 0
+    if isinstance(value, str):
+        return value.strip().lower() in {"1", "true", "yes", "on", "t"}
+    return bool(value)
+
+
+def _student_first_name(student, fallback_name: str) -> str:
+    full_name = (
+        _row_value(student, "enrollment_name")
+        or _row_value(student, "discord_username")
+        or fallback_name
+    )
+    full_name = (full_name or "").strip()
+    return full_name.split()[0] if full_name else fallback_name
+
+
+def _touch_last_active(store, discord_id: str) -> None:
+    if hasattr(store, "touch_student_last_active"):
+        store.touch_student_last_active(discord_id)
+
+
+async def _send_onboarding_stop_message(user: discord.abc.User, stop: int) -> None:
+    await user.send(build_stop_message(stop))
+
+
+async def _start_stop0_flow(
+    user: discord.abc.User,
+    store,
+    discord_id: str,
+    send_intro: bool = True,
+) -> None:
+    if hasattr(store, "start_onboarding_stop_0"):
+        store.start_onboarding_stop_0(discord_id)
+    _stop0_sessions[discord_id] = {
+        "answers": [],
+        "started_at": datetime.now(timezone.utc),
+    }
+    if send_intro:
+        await user.send(build_stop0_intro())
+
+
+async def _advance_onboarding_after_continue(
+    user: discord.abc.User,
+    store,
+    student,
+) -> None:
+    discord_id = str(user.id)
+    current_stop = _row_int(student, "onboarding_stop", 1)
+
+    if current_stop <= 1:
+        if hasattr(store, "update_onboarding_stop"):
+            store.update_onboarding_stop(discord_id, 2)
+        _touch_last_active(store, discord_id)
+        await _send_onboarding_stop_message(user, 2)
+        return
+
+    if current_stop == 2:
+        if hasattr(store, "update_onboarding_stop"):
+            store.update_onboarding_stop(discord_id, 3)
+        _touch_last_active(store, discord_id)
+        await _send_onboarding_stop_message(user, 3)
+        return
+
+    if current_stop == 3:
+        if hasattr(store, "update_onboarding_stop"):
+            store.update_onboarding_stop(discord_id, 4)
+        _touch_last_active(store, discord_id)
+        await user.send(
+            "Nice work. Core setup is complete, so now we can do your optional profile step."
+        )
+        await _start_stop0_flow(user, store, discord_id, send_intro=True)
+
+
+async def _finalize_stop0_with_defaults(
+    user: discord.abc.User,
+    store,
+    discord_id: str,
+    reason: str,
+) -> None:
+    defaults = DEFAULT_STOP0_PROFILE
+    if hasattr(store, "save_stop_0_profile"):
+        store.save_stop_0_profile(
+            discord_id=discord_id,
+            primary_device_context=str(defaults["primary_device_context"]),
+            study_hours_per_week=int(defaults["study_hours_per_week"]),
+            confidence_level=int(defaults["confidence_level"]),
+            family_obligations_hint=str(defaults["family_obligations_hint"]),
+            profile_complete=False,
+        )
+    _touch_last_active(store, discord_id)
+    _stop0_sessions.pop(discord_id, None)
+    if hasattr(store, "log_observability_event"):
+        store.log_observability_event(
+            discord_id=discord_id,
+            event_type=reason,
+            metadata={"defaulted": True},
+        )
+    await user.send(
+        "No pressure. I saved default profile values so setup keeps moving. "
+        "You can update this later with `/onboarding`."
+    )
+
+
+async def _handle_stop0_response(message: discord.Message, store) -> bool:
+    discord_id = str(message.author.id)
+    content = (message.content or "").strip()
+    if not content:
+        return False
+    if content.startswith("/"):
+        return False
+
+    if is_skip_signal(content):
+        await _finalize_stop0_with_defaults(
+            user=message.author,
+            store=store,
+            discord_id=discord_id,
+            reason="onboarding_stop_0_skipped",
+        )
+        return True
+
+    session = _stop0_sessions.get(discord_id)
+    if session is None:
+        session = {"answers": [], "started_at": datetime.now(timezone.utc)}
+        _stop0_sessions[discord_id] = session
+        if is_continue_signal(message, bot.user, expected_discord_id=discord_id):
+            await message.author.send(build_stop0_intro())
+            return True
+
+    answers = session.setdefault("answers", [])
+    answers.append(content)
+
+    if len(answers) < 4:
+        _touch_last_active(store, discord_id)
+        await message.author.send(build_stop0_question(len(answers)))
+        return True
+
+    profile, parse_flags = parse_stop0_profile_answers(answers[:4])
+    if hasattr(store, "save_stop_0_profile"):
+        store.save_stop_0_profile(
+            discord_id=discord_id,
+            primary_device_context=str(profile["primary_device_context"]),
+            study_hours_per_week=int(profile["study_hours_per_week"]),
+            confidence_level=int(profile["confidence_level"]),
+            family_obligations_hint=str(profile["family_obligations_hint"]),
+            profile_complete=True,
+        )
+    _touch_last_active(store, discord_id)
+    _stop0_sessions.pop(discord_id, None)
+
+    if parse_flags and hasattr(store, "log_observability_event"):
+        store.log_observability_event(
+            discord_id=discord_id,
+            event_type="profile_parse_flagged",
+            metadata={
+                "parse_flags": parse_flags,
+                "raw_response_text": " | ".join(answers[:4]),
+            },
+        )
+
+    await message.author.send(
+        "Thanks. Your profile context is saved. You are all set for the next cohort steps."
+    )
+    return True
+
+
+async def _resume_onboarding(user: discord.abc.User, store) -> None:
+    discord_id = str(user.id)
+    student = store.get_student(discord_id)
+    if not student:
+        await user.send(
+            "I could not find your onboarding record yet. If you just joined, wait a moment and try again."
+        )
+        return
+
+    stop = _row_int(student, "onboarding_stop", 0)
+    stop0_complete = _row_bool(student, "onboarding_stop_0_complete", False)
+
+    if stop <= 0:
+        if hasattr(store, "update_onboarding_stop"):
+            store.update_onboarding_stop(discord_id, 1)
+        _touch_last_active(store, discord_id)
+        await _send_onboarding_stop_message(user, 1)
+        return
+
+    if stop < 4:
+        _touch_last_active(store, discord_id)
+        await _send_onboarding_stop_message(user, stop)
+        return
+
+    if not stop0_complete:
+        await _start_stop0_flow(user, store, discord_id, send_intro=True)
+        return
+
+    await user.send("Your onboarding is complete. Use `/frame` any time to continue.")
+
+
+async def _handle_onboarding_message(message: discord.Message) -> bool:
+    """
+    Task 7.7 onboarding DM progression gate.
+    Returns True when the message was consumed by onboarding flow.
+    """
+    if not isinstance(message.channel, discord.DMChannel):
+        return False
+    if getattr(message.author, "bot", False):
+        return False
+
+    store = _get_store()
+    student = store.get_student(str(message.author.id))
+    if not student:
+        return False
+
+    discord_id = str(message.author.id)
+    onboarding_stop = _row_int(student, "onboarding_stop", 0)
+    stop0_complete = _row_bool(student, "onboarding_stop_0_complete", False)
+
+    # Stops 1-3 progress only on strict continue signal checks.
+    if 1 <= onboarding_stop < 4:
+        if not is_continue_signal(message, bot.user, expected_discord_id=discord_id):
+            return False
+        await _advance_onboarding_after_continue(message.author, store, student)
+        return True
+
+    # Stop 0 (profile) flow is active after Stop 3 completion.
+    if onboarding_stop >= 4 and not stop0_complete:
+        return await _handle_stop0_response(message, store)
+
+    return False
+
+
+async def _link_member_identity_to_roster(
+    invite_code: str,
+    member: discord.Member,
+) -> Optional[dict]:
+    """
+    Best-effort Sheets bridge update for Column D (discord_id|discord_username).
+    Returns roster payload when updated, else None.
+    """
+    spreadsheet_id = os.getenv("GOOGLE_SHEETS_ID", "").strip()
+    if not spreadsheet_id:
+        return None
+
+    from cis_controller.interest_api_server import (
+        link_roster_discord_identity_by_invite_code,
+    )
+
+    return await link_roster_discord_identity_by_invite_code(
+        invite_code=invite_code,
+        discord_id=str(member.id),
+        discord_username=str(member.name),
+        spreadsheet_id=spreadsheet_id,
+        sheet_range=os.getenv("GOOGLE_SHEETS_RANGE", "Student Roster!A:Z").strip(),
+        creds_path=os.getenv("GOOGLE_SHEETS_CREDENTIALS_PATH", "").strip() or None,
+    )
+
+
+def _select_unique_recent_unlinked_student(store, window_minutes: int = 90):
+    """
+    Invite-diff fallback candidate selector.
+
+    Handles the edge case where a one-use invite is created after the last
+    snapshot and consumed/deleted before on_member_join diffing sees it.
+    Returns a student row only when exactly one recent unlinked candidate exists.
+    """
+    if store is None:
+        return None
+
+    conn = getattr(store, "conn", None) or getattr(store, "db", None)
+    if conn is None or not hasattr(conn, "execute"):
+        return None
+
+    minutes = max(5, min(180, int(window_minutes)))
+    query = f"""
+        SELECT *
+          FROM students
+         WHERE (discord_id IS NULL
+                OR discord_id = ''
+                OR discord_id LIKE '__pending__%')
+           AND invite_code IS NOT NULL
+           AND invite_code != ''
+           AND created_at >= datetime('now', '-{minutes} minutes')
+         ORDER BY created_at DESC
+         LIMIT 2
+    """
+
+    try:
+        rows = conn.execute(query).fetchall()
+    except Exception as exc:
+        logger.warning("Invite fallback candidate scan failed: %s", exc)
+        return None
+
+    if len(rows) == 1:
+        return rows[0]
+    return None
 
 
 def build_status_embed() -> discord.Embed:
@@ -206,7 +561,7 @@ async def sync_slash_commands() -> None:
 @bot.event
 async def on_ready():
     """Bot startup initialization."""
-    global _slash_synced, daily_prompt_scheduler, health_monitor, parent_unsubscribe_server
+    global _slash_synced, daily_prompt_scheduler, health_monitor, parent_unsubscribe_server, interest_api_server, internal_webhook_server
 
     logger.info("%s has connected to Discord!", bot.user)
     logger.info("Serving %s guilds", len(bot.guilds))
@@ -219,7 +574,8 @@ async def on_ready():
     runtime_participation_tracker = None
     runtime_escalation_system = None
 
-    # Initialize database â€” PostgreSQL (Railway) if DATABASE_URL set, else SQLite (local/tests)
+    # Initialize database — PostgreSQL is the production primary.
+    # SQLite is retained only as a local/test fallback when DATABASE_URL is absent.
     try:
         from database import get_store, set_runtime_store
 
@@ -299,6 +655,7 @@ async def on_ready():
     set_runtime_services(
         escalation_system=runtime_escalation_system,
         participation_tracker=runtime_participation_tracker,
+        onboarding_message_handler=_handle_onboarding_message,
     )
 
     # Initialize health monitor (Task 4.5: Bot failure handling + health checks)
@@ -363,7 +720,66 @@ async def on_ready():
     except Exception as exc:
         logger.error("Failed to start daily prompt scheduler: %s", exc, exc_info=True)
 
+    # Task 7.12: ensure #welcome-lounge is seeded with pinned status + previews.
+    try:
+        lounge_guild_id = None
+        if DISCORD_GUILD_ID:
+            lounge_guild_id = int(DISCORD_GUILD_ID)
+        elif bot.guilds:
+            lounge_guild_id = int(bot.guilds[0].id)
+
+        lounge_result = await upsert_welcome_lounge_content(
+            bot=bot,
+            store=runtime_store,
+            guild_id=lounge_guild_id,
+            include_previews=True,
+        )
+        if lounge_result.get("ok"):
+            logger.info(
+                "Task 7.12: welcome-lounge initialized (confirmed=%s, previews_added=%s, status_changed=%s)",
+                lounge_result.get("confirmed_count"),
+                lounge_result.get("preview_posts_created"),
+                lounge_result.get("status_changed"),
+            )
+        else:
+            logger.warning(
+                "Task 7.12: welcome-lounge initialization skipped (%s)",
+                lounge_result.get("reason"),
+            )
+    except Exception as exc:
+        logger.error("Task 7.12: welcome-lounge initialization failed: %s", exc, exc_info=True)
+
     # Optional lightweight unsubscribe endpoint for parent email links.
+    enable_interest_api = os.getenv(
+        "ENABLE_INTEREST_API",
+        "true",
+    ).strip().lower() in {"1", "true", "yes", "on"}
+    mount_interest_on_parent = os.getenv(
+        "MOUNT_INTEREST_API_ON_PARENT_SERVER",
+        "true",
+    ).strip().lower() in {"1", "true", "yes", "on"}
+
+    if enable_interest_api and interest_api_server is None:
+        from cis_controller.interest_api_server import InterestAPIServer
+
+        interest_api_server = InterestAPIServer()
+
+    # Task 7.11 — Decision N-03: create InternalWebhookServer early so it can be
+    # mounted on the shared port-8080 server alongside interest/enroll routes.
+    if internal_webhook_server is None:
+        try:
+            from cis_controller.internal_api_server import InternalWebhookServer
+
+            internal_webhook_server = InternalWebhookServer(bot=bot)
+        except Exception as exc:
+            logger.error("Failed to create internal webhook server: %s", exc, exc_info=True)
+    else:
+        internal_webhook_server.set_bot(bot)
+
+    # Task 7.5: inject bot into InterestAPIServer so KIRA payment DMs can fire.
+    if interest_api_server is not None:
+        interest_api_server.set_bot(bot)
+
     try:
         enable_unsubscribe_server = os.getenv(
             "ENABLE_PARENT_UNSUBSCRIBE_SERVER",
@@ -378,8 +794,15 @@ async def on_ready():
             path = os.getenv("PARENT_UNSUBSCRIBE_PATH", "/parent/unsubscribe")
 
             if parent_unsubscribe_server is None:
+                mountable_interest_api = (
+                    interest_api_server
+                    if (enable_interest_api and mount_interest_on_parent)
+                    else None
+                )
                 parent_unsubscribe_server = ParentUnsubscribeServer(
                     store=runtime_store,
+                    interest_api_server=mountable_interest_api,
+                    internal_webhook_server=internal_webhook_server,
                     host=host,
                     port=port,
                     path=path,
@@ -389,6 +812,40 @@ async def on_ready():
             logger.info("Parent unsubscribe server disabled by ENABLE_PARENT_UNSUBSCRIBE_SERVER=false")
     except Exception as exc:
         logger.error("Failed to start parent unsubscribe server: %s", exc, exc_info=True)
+
+    # Initialize Interest API server (Task 7.1 - landing page enrollment endpoint)
+    try:
+        if enable_interest_api:
+            mounted_on_parent = bool(
+                parent_unsubscribe_server
+                and getattr(parent_unsubscribe_server, "interest_api_server", None) is not None
+            )
+            if mounted_on_parent:
+                logger.info(
+                    "Interest API mounted on parent unsubscribe server; standalone listener skipped."
+                )
+            elif interest_api_server is not None:
+                await interest_api_server.start()
+        elif not enable_interest_api:
+            logger.info("Interest API server disabled by ENABLE_INTEREST_API=false")
+    except Exception as exc:
+        logger.error("Failed to start interest API server: %s", exc, exc_info=True)
+
+    # Task 7.2 — Decision B-01: snapshot guild invites for on_member_join diff matching
+    for guild in bot.guilds:
+        try:
+            invites = await guild.invites()
+            _guild_invite_snapshot[guild.id] = {inv.code: inv.uses for inv in invites}
+            logger.info(
+                "Invite snapshot: %d invites cached for guild %s", len(invites), guild.id
+            )
+        except discord.Forbidden:
+            logger.warning(
+                "Missing Manage Guild permission — invite tracking unavailable for guild %s",
+                guild.id,
+            )
+        except Exception as exc:
+            logger.warning("Could not snapshot invites for guild %s: %s", guild.id, exc)
 
     # Set bot status
     await bot.change_presence(
@@ -465,6 +922,41 @@ async def synthesize_slash(interaction: discord.Interaction):
 @bot.tree.command(name="create-artifact", description="Start artifact workflow (Week 6+).")
 async def create_artifact_slash(interaction: discord.Interaction):
     await route_slash_command(interaction, "create-artifact")
+
+
+@bot.tree.command(
+    name="onboarding",
+    description="Resume your onboarding steps from where you left off.",
+)
+async def onboarding_slash(interaction: discord.Interaction):
+    await interaction.response.defer(ephemeral=interaction.guild is not None)
+
+    store = _get_store()
+    user = interaction.user
+    if not isinstance(user, (discord.Member, discord.User)):
+        await interaction.followup.send(
+            "I could not resolve your account for onboarding.",
+            ephemeral=interaction.guild is not None,
+        )
+        return
+
+    if interaction.guild is not None:
+        try:
+            await user.create_dm()
+            await _resume_onboarding(user, store)
+            await interaction.followup.send(
+                "I sent your onboarding continuation to DM.",
+                ephemeral=True,
+            )
+        except discord.Forbidden:
+            await interaction.followup.send(
+                "I could not DM you. Enable DMs and retry `/onboarding`.",
+                ephemeral=True,
+            )
+        return
+
+    await _resume_onboarding(user, store)
+    await interaction.followup.send("Onboarding status refreshed in this DM.")
 
 
 @bot.tree.command(
@@ -746,101 +1238,456 @@ async def post_session_summary_slash(
     await post_session_summary(interaction, store, cluster_id, session_notes, attendance_count)
 
 
-@bot.event
-async def on_member_join(member: discord.Member):
-    """
-    Handle new member joining - auto-assign cluster (Task 4.3).
+# ============================================================
+# Task 7.2 — !recover_member (Decision B-01, GAP FIX #8)
+# Temporal fallback for members who joined without their invite
+# ============================================================
 
-    Per Story 5.1:
-    1. Extract last name from display_name
-    2. Auto-assign to cluster based on last name (8 clusters)
-    3. Assign @Student role
-    4. Assign @Cluster-X role
-    5. Send welcome DM with cluster info
+@bot.tree.command(
+    name="recover-member",
+    description="Manually link a member who joined without their unique invite (Trevor only).",
+)
+@app_commands.describe(
+    member="The Discord member to recover",
+    invite_code="Invite code from their enrollment email (Column R). Omit to use 24h temporal fallback.",
+)
+async def recover_member_slash(
+    interaction: discord.Interaction,
+    member: discord.Member,
+    invite_code: Optional[str] = None,
+):
     """
-    # Skip bots
-    if member.bot:
+    Task 7.2 Decision B-01 + GAP FIX #8: Temporal fallback for unmatched joins.
+    - With invite_code: exact match against students table
+    - Without invite_code: finds most recently enrolled unlinked student within 24h
+    Trevor-only.
+    """
+    await interaction.response.defer(ephemeral=True)
+
+    caller = interaction.user if isinstance(interaction.user, discord.Member) else None
+    if not _is_facilitator_member(caller):
+        await interaction.followup.send(
+            "This command requires the @Facilitator role.",
+            ephemeral=True,
+        )
+        return
+
+    store = _get_store()
+    student = None
+
+    if not hasattr(store, "get_student_by_invite_code") or not hasattr(store, "link_student_by_invite"):
+        await interaction.followup.send(
+            "Invite recovery requires PostgreSQL runtime store methods (`get_student_by_invite_code`, `link_student_by_invite`).",
+            ephemeral=True,
+        )
+        return
+
+    if invite_code:
+        student = store.get_student_by_invite_code(invite_code.strip())
+        if not student:
+            await interaction.followup.send(
+                f"No enrolled student found with invite code `{invite_code}`.",
+                ephemeral=True,
+            )
+            return
+    else:
+        # Temporal fallback: most recent unlinked student enrolled within 24h
+        try:
+            student = store.get_recent_unlinked_student(hours=24)
+        except Exception as exc:
+            logger.error("recover_member temporal fallback failed: %s", exc, exc_info=True)
+            student = None
+        if not student:
+            await interaction.followup.send(
+                "No unlinked student found enrolled within the last 24 hours. "
+                "Provide the `invite_code` to match explicitly.",
+                ephemeral=True,
+            )
+            return
+
+    used_code = student.get("invite_code", "") or ""
+    linked = store.link_student_by_invite(
+        invite_code=used_code,
+        discord_id=str(member.id),
+        discord_username=str(member.name),
+    )
+
+    if linked:
+        roster_payload = None
+        if used_code:
+            try:
+                roster_payload = await _link_member_identity_to_roster(used_code, member)
+            except Exception as roster_exc:
+                logger.warning("recover_member: roster sync failed: %s", roster_exc)
+
+        guest_role = discord.utils.get(member.guild.roles, name="Guest")
+        if guest_role and guest_role not in member.roles:
+            try:
+                await member.add_roles(guest_role)
+            except Exception as role_exc:
+                logger.warning("recover_member: could not assign @Guest: %s", role_exc)
+
+        logger.info(
+            "recover_member: linked discord_id=%s to email=%s invite=%s",
+            member.id,
+            student.get("enrollment_email", "?"),
+            used_code,
+        )
+        if roster_payload:
+            logger.info(
+                "recover_member: roster row %s linked for invite=%s",
+                roster_payload.get("row_number"),
+                used_code,
+            )
+        await interaction.followup.send(
+            f"**Member recovered.**\n"
+            f"Linked {member.mention} → `{student.get('enrollment_email', '?')}` "
+            f"(invite: `{used_code}`)",
+            ephemeral=True,
+        )
+    else:
+        await interaction.followup.send(
+            "Link failed — the student row may already be claimed by another Discord account. "
+            "Check the database or contact Trevor.",
+            ephemeral=True,
+        )
+
+
+# ============================================================
+# Task 7.4 — /renew (Decision H-01, GAP FIX #4)
+# Regenerate M-Pesa submit token for a student whose link expired
+# ============================================================
+
+@bot.tree.command(
+    name="renew",
+    description="Regenerate M-Pesa payment link for a student (Facilitator only).",
+)
+@app_commands.describe(
+    email="The student's enrollment email address (Column B in Sheets).",
+)
+async def renew_slash(interaction: discord.Interaction, email: str):
+    """
+    Task 7.4 / Decision H-01 + GAP FIX #4.
+    - Facilitator-only.
+    - Generates a new 7-day submit token for the given student email.
+    - Writes new token (Column P) + expiry (Column Q) to Google Sheets.
+    - Resets token_warning_sent = False in PostgreSQL so the warning cycle resets.
+    - Sends fresh Brevo Email #2 (enrollment payment email) to the student.
+    - Confirms action to the facilitator in Discord.
+    """
+    await interaction.response.defer(ephemeral=True)
+
+    caller = interaction.user if isinstance(interaction.user, discord.Member) else None
+    if not _is_facilitator_member(caller):
+        await interaction.followup.send(
+            "This command requires the @Facilitator role.",
+            ephemeral=True,
+        )
+        return
+
+    email = email.strip().lower()
+    if not email or "@" not in email:
+        await interaction.followup.send("Invalid email address.", ephemeral=True)
+        return
+
+    spreadsheet_id = os.getenv("GOOGLE_SHEETS_ID", "").strip()
+    if not spreadsheet_id:
+        await interaction.followup.send(
+            "Google Sheets is not configured (GOOGLE_SHEETS_ID missing).",
+            ephemeral=True,
+        )
         return
 
     try:
-        # Initialize store
-        store = _get_store()
+        from cis_controller.interest_api_server import (
+            read_roster_rows,
+            update_roster_cells,
+            send_enrollment_payment_email,
+            build_mpesa_submit_url,
+            _generate_submit_token,
+            _iso_utc,
+            _safe_get,
+            COL_EMAIL,
+            COL_NAME,
+            COL_SUBMIT_TOKEN,
+            COL_TOKEN_EXPIRY,
+            COL_DISCORD_ID,
+            TOKEN_TTL_DAYS,
+            _extract_discord_id,
+        )
+        from datetime import datetime, timezone, timedelta
+        import secrets
 
-        # Extract last name from display_name
-        # Format: "John Anderson" or "Anderson" or "John"
-        display_name = member.display_name or member.name
-        last_name = display_name.split()[-1] if display_name else None
+        sheet_range = os.getenv("GOOGLE_SHEETS_RANGE", "Student Roster!A:Z").strip()
+        creds_path = os.getenv("GOOGLE_SHEETS_CREDENTIALS_PATH", "").strip() or None
 
-        # Create student with cluster assignment
-        student = store.create_student(
-            discord_id=str(member.id),
-            last_name=last_name
+        rows = await read_roster_rows(
+            spreadsheet_id=spreadsheet_id,
+            sheet_range=sheet_range,
+            creds_path=creds_path,
         )
 
-        cluster_id = student["cluster_id"]
+        target_row_number = None
+        target_row = None
+        for row_number, row in enumerate(rows[1:], start=2):
+            if _safe_get(row, COL_EMAIL).strip().lower() == email:
+                target_row_number = row_number
+                target_row = row
+                break
 
-        # Assign @Student role
-        student_role = discord.utils.get(member.guild.roles, name="Student")
-        if student_role:
-            await member.add_roles(student_role)
-            logger.info(f"Assigned @Student role to {member.display_name}")
-        else:
-            logger.warning(f"@Student role not found for {member.display_name}")
+        if target_row is None:
+            await interaction.followup.send(
+                f"No enrolled student found with email `{email}`.",
+                ephemeral=True,
+            )
+            return
 
-        # Assign @Cluster-X role
-        cluster_role_name = f"Cluster-{cluster_id}"
-        cluster_role = discord.utils.get(member.guild.roles, name=cluster_role_name)
-        if cluster_role:
-            await member.add_roles(cluster_role)
-            logger.info(f"Assigned @{cluster_role_name} to {member.display_name}")
-        else:
-            logger.warning(f"@{cluster_role_name} role not found for {member.display_name}; creating role")
-            try:
-                cluster_role = await member.guild.create_role(name=cluster_role_name, mentionable=False)
-                await member.add_roles(cluster_role)
-                logger.info(f"Created and assigned @{cluster_role_name} to {member.display_name}")
-            except Exception as role_exc:
-                logger.error("Failed to create %s role: %s", cluster_role_name, role_exc, exc_info=True)
+        # Generate new token + expiry
+        new_token = _generate_submit_token()
+        new_expiry = _iso_utc(datetime.now(timezone.utc) + timedelta(days=TOKEN_TTL_DAYS))
+        new_url = build_mpesa_submit_url(new_token)
 
-        from scheduler.cluster_sessions import ClusterSessionScheduler
-
-        schedule_helper = ClusterSessionScheduler(
-            bot=bot,
-            store=store,
-            guild_id=member.guild.id,
-            channel_mapping=WEEKLY_CHANNEL_MAPPING,
-            cohort_start_date=COHORT_1_START_DATE,
+        # Write to Sheets
+        updated = await update_roster_cells(
+            row_number=target_row_number,
+            updates={
+                COL_SUBMIT_TOKEN: new_token,
+                COL_TOKEN_EXPIRY: new_expiry,
+            },
+            spreadsheet_id=spreadsheet_id,
+            sheet_range=sheet_range,
+            creds_path=creds_path,
         )
-        schedule_text = schedule_helper.get_cluster_schedule_text(cluster_id)
+        if not updated:
+            await interaction.followup.send(
+                "Failed to write new token to Google Sheets. Please retry.",
+                ephemeral=True,
+            )
+            return
 
-        # Send welcome DM
-        cluster_names = {
-            1: "A-F", 2: "G-L", 3: "M-R", 4: "S-Z",
-            5: "A-F (overflow)", 6: "G-L (overflow)", 7: "M-R (overflow)", 8: "S-Z (overflow)"
-        }
+        # Reset token_warning_sent in PG so the next nightly check can warn again
+        try:
+            store = _get_store()
+            if hasattr(store, "set_token_warning_sent"):
+                store.set_token_warning_sent(email, False)
+        except Exception as pg_exc:
+            logger.warning("renew: could not reset token_warning_sent for %s: %s", email, pg_exc)
 
-        welcome_message = f"""ðŸ‘‹ Welcome to K2M Cohort #1, **{member.display_name}**!
+        # Send fresh Email #2
+        student_name = _safe_get(target_row, COL_NAME) or email.split("@")[0]
+        discord_id = _extract_discord_id(_safe_get(target_row, COL_DISCORD_ID))
+        email_sent = await send_enrollment_payment_email(
+            to_email=email,
+            first_name=student_name,
+            submit_url=new_url,
+            discord_id=discord_id or None,
+        )
 
-You're in **Cluster {cluster_id}** (Last names: {cluster_names.get(cluster_id, 'Unknown')})
-
-ðŸ“… **Cluster Session Schedule:**
-Cluster {cluster_id} meets **{schedule_text}**
-
-ðŸŽ¯ **What to do now:**
-1. Introduce yourself in #week-1-wonder
-2. Check your daily prompts at 9:15 AM EAT
-3. Use `/frame` when you have a question to think through
-
-See you Monday! Let's build some thinking skills together ðŸš€
-
-â€” KIRA (K2M Interactive Reasoning Agent)
-"""
-
-        await member.send(welcome_message)
-        logger.info(f"Sent welcome DM to {member.display_name} (Cluster {cluster_id})")
+        status_line = "Email #2 sent." if email_sent else "Warning: Email #2 failed — check Brevo."
+        logger.info(
+            "renew: token regenerated for email=%s row=%s email_sent=%s",
+            email,
+            target_row_number,
+            email_sent,
+        )
+        await interaction.followup.send(
+            f"**Token renewed for `{email}`.**\n"
+            f"New link (expires {TOKEN_TTL_DAYS} days): {new_url}\n"
+            f"{status_line}",
+            ephemeral=True,
+        )
 
     except Exception as exc:
-        logger.error(f"Error handling member join for {member.display_name}: {exc}", exc_info=True)
+        logger.error("renew slash command failed: %s", exc, exc_info=True)
+        await interaction.followup.send(
+            f"Error during renewal: {exc}",
+            ephemeral=True,
+        )
+
+
+@bot.event
+async def on_member_join(member: discord.Member):
+    """
+    Task 7.2 — Decision B-01 + N-07.
+
+    Invite diff matching with asyncio.Lock:
+    1. Snapshot guild invites before/after diff to find which invite was used
+    2. Match invite_code → enrolled student in PostgreSQL
+    3. Assign @Guest only (Guardrail #8: @Student granted after payment)
+    4. Log student_linked or student_unmatched observability events
+    5. Send personalised DM if matched, generic DM if unmatched
+    """
+    if member.bot:
+        return
+
+    async with _member_join_lock:
+        try:
+            # Fetch current invites (post-join state)
+            try:
+                current_invites = await member.guild.invites()
+            except discord.Forbidden:
+                logger.warning(
+                    "Missing Manage Guild permission — invite diff unavailable for %s",
+                    member.name,
+                )
+                current_invites = []
+
+            current_map = {inv.code: inv.uses for inv in current_invites}
+            old_map = _guild_invite_snapshot.get(member.guild.id, {})
+
+            # Find the invite that was consumed:
+            # Case 1 — invite still exists but uses count incremented
+            # Case 2 — invite disappeared (max_uses=1 consumed and deleted by Discord)
+            used_code = None
+            for code, uses in current_map.items():
+                if uses > old_map.get(code, 0):
+                    used_code = code
+                    break
+            if used_code is None:
+                for code in old_map:
+                    if code not in current_map:
+                        used_code = code
+                        break
+
+            # Refresh snapshot for the next join event
+            _guild_invite_snapshot[member.guild.id] = current_map
+
+            # --- DB match ---
+            store = _get_store()
+            student = None
+            student_linked = False
+            has_invite_methods = hasattr(store, "get_student_by_invite_code") and hasattr(
+                store, "link_student_by_invite"
+            )
+
+            if not used_code:
+                fallback_student = _select_unique_recent_unlinked_student(
+                    store,
+                    window_minutes=90,
+                )
+                fallback_code = str(
+                    _row_value(fallback_student, "invite_code", "")
+                ).strip()
+                if fallback_code:
+                    used_code = fallback_code
+                    logger.warning(
+                        "Invite diff fallback engaged: discord_id=%s invite_code=%s",
+                        member.id,
+                        used_code,
+                    )
+
+            if used_code:
+                if has_invite_methods:
+                    student = store.get_student_by_invite_code(used_code)
+                    if student:
+                        student_linked = store.link_student_by_invite(
+                            invite_code=used_code,
+                            discord_id=str(member.id),
+                            discord_username=str(member.name),
+                        )
+
+                # Fallback bridge: if DB lookup/link fails, still write Column D in Sheets
+                # and hydrate runtime store from roster data when possible.
+                if not student_linked:
+                    roster_payload = await _link_member_identity_to_roster(used_code, member)
+                    if roster_payload:
+                        student_linked = True
+                        try:
+                            if hasattr(store, "upsert_student_from_sheets"):
+                                store.upsert_student_from_sheets(
+                                    enrollment_email=roster_payload.get("enrollment_email", ""),
+                                    enrollment_name=roster_payload.get("enrollment_name", ""),
+                                    invite_code=used_code,
+                                    enrollment_status="lead",
+                                    payment_status="lead",
+                                )
+                                store.link_student_by_invite(
+                                    invite_code=used_code,
+                                    discord_id=str(member.id),
+                                    discord_username=str(member.name),
+                                )
+                                student = store.get_student_by_invite_code(used_code)
+                        except Exception as hydrate_exc:
+                            logger.warning(
+                                "Could not hydrate runtime store from roster invite %s: %s",
+                                used_code,
+                                hydrate_exc,
+                            )
+
+                        if not student:
+                            student = {
+                                "enrollment_name": roster_payload.get("enrollment_name", ""),
+                                "enrollment_email": roster_payload.get("enrollment_email", ""),
+                                "profession": roster_payload.get("profession", ""),
+                            }
+
+            # --- Observability ---
+            event_type = "student_linked" if student_linked else "student_unmatched"
+            logger.info(
+                "%s: discord_id=%s invite_code=%s",
+                event_type, member.id, used_code,
+            )
+            try:
+                store.log_observability_event(
+                    discord_id=str(member.id),
+                    event_type=event_type,
+                    metadata={"invite_code": used_code, "guild_id": str(member.guild.id)},
+                )
+            except Exception:
+                pass  # Observability must not block onboarding
+
+            # --- Role assignment: @Guest only (Guardrail #8) ---
+            guest_role = discord.utils.get(member.guild.roles, name="Guest")
+            if guest_role:
+                await member.add_roles(guest_role)
+                logger.info("Assigned @Guest to %s", member.display_name)
+            else:
+                logger.warning("@Guest role not found for %s", member.display_name)
+
+            # --- Welcome DM ---
+            if student_linked:
+                if not student:
+                    student = store.get_student(str(member.id))
+                first_name = _student_first_name(student, member.display_name)
+                welcome_message = (
+                    f"Hey **{first_name}** - welcome to K2M Cohort #1!\n\n"
+                    "Step 2 complete - here's Step 3.\n\n"
+                    "Quick Discord guide on mobile:\n"
+                    "Tap the menu icon (top left) to see channels.\n"
+                    "Tap the inbox icon to see my messages.\n"
+                    "Swipe right to return to the channel list.\n"
+                    "The most important place right now is your DM with me (here).\n"
+                    "I will guide you through everything step by step.\n\n"
+                    "You are now on value-first onboarding:\n"
+                    "Stop 1 -> Stop 2 -> Stop 3 -> Stop 0 (optional profile)\n\n"
+                    f"{build_stop_message(1)}\n\n"
+                    "- KIRA"
+                )
+            else:
+                welcome_message = (
+                    f"Hey **{member.display_name}** — welcome!\n\n"
+                    "It looks like you joined without a personal invite link. "
+                    "To get full access, contact the program coordinator or use "
+                    "the invite link from your enrollment confirmation email.\n\n"
+                    "— KIRA"
+                )
+
+            try:
+                await member.send(welcome_message)
+                logger.info("Sent welcome DM to %s (linked=%s)", member.display_name, student_linked)
+                if student_linked:
+                    if hasattr(store, "update_onboarding_stop"):
+                        store.update_onboarding_stop(str(member.id), 1)
+                    _touch_last_active(store, str(member.id))
+                    logger.info(
+                        "Task 7.7: started value-first onboarding stop flow for %s",
+                        member.display_name,
+                    )
+            except discord.Forbidden:
+                logger.warning("Could not DM %s — DMs disabled", member.display_name)
+
+        except Exception as exc:
+            logger.error("Error in on_member_join for %s: %s", member.display_name, exc, exc_info=True)
 
 
 @bot.event
@@ -918,9 +1765,18 @@ def main():
             parent_unsubscribe_server.stop_sync()
             parent_unsubscribe_server = None
 
+        # Stop Interest API server when bot shuts down
+        if interest_api_server:
+            interest_api_server.stop_sync()
+            interest_api_server = None
+
+        # Stop internal webhook server when bot shuts down (Task 7.11)
+        if internal_webhook_server:
+            internal_webhook_server.stop_sync()
+            internal_webhook_server = None
+
         set_runtime_failure_notifier(None)
 
 
 if __name__ == "__main__":
     main()
-

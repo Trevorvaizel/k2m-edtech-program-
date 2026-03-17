@@ -94,3 +94,16 @@ Run this sequence for production readiness:
 
 ## 7. Open Item
 `COHORT_1_FIRST_SESSION_DATE` is still not locked. This must be set before final Brevo template publish and final launch smoke test.
+
+---
+
+## 8. Task 7.7 Operational Addendum (2026-03-10)
+1. `is_continue_signal()` progression is valid only when all are true:
+   - DM/private channel
+   - message author is not a bot
+   - DM recipient is this KIRA bot user
+2. Stop 0 free-text parsing is non-blocking. Parse failures are logged as `profile_parse_flagged` with raw text.
+3. Facilitator SOP: review `profile_parse_flagged` entries in `#facilitator-dashboard` weekly.
+4. Daily scheduler check:
+   - day-8 re-entry DM for `onboarding_stop < 4` and >7 days inactivity
+   - Stop 0 48h timeout fallback defaults (does not block cohort access)

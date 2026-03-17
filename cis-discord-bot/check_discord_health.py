@@ -20,10 +20,11 @@ import argparse
 import json
 import os
 import sys
+import time
 import urllib.error
 import urllib.request
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Tuple
 
 from dotenv import load_dotenv
 
@@ -44,6 +45,7 @@ REQUIRED_CHANNELS = {
     "CHANNEL_BOT_TESTING": "bot-testing",
     "CHANNEL_THINKING_SHOWCASE": "thinking-showcase",
     "CHANNEL_FACILITATOR_DASHBOARD": "facilitator-dashboard",
+    "CHANNEL_WELCOME_LOUNGE": "welcome-lounge",
 }
 
 REQUIRED_SLASH_COMMANDS = [
@@ -67,7 +69,11 @@ REQUIRED_SLASH_COMMANDS = [
 ]
 
 
-def discord_get(path: str, token: str) -> Tuple[bool, int | None, Dict[str, Any] | None, str | None]:
+def discord_get(
+    path: str,
+    token: str,
+    timeout_seconds: float = 20.0,
+) -> Tuple[bool, int | None, Dict[str, Any] | None, str | None]:
     url = f"{API_BASE}{path}"
     request = urllib.request.Request(
         url,
@@ -78,7 +84,7 @@ def discord_get(path: str, token: str) -> Tuple[bool, int | None, Dict[str, Any]
     )
 
     try:
-        with urllib.request.urlopen(request, timeout=20) as response:
+        with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
             body = response.read().decode("utf-8")
             data = json.loads(body) if body else {}
             return True, response.status, data, None
@@ -101,6 +107,62 @@ def discord_get(path: str, token: str) -> Tuple[bool, int | None, Dict[str, Any]
         return False, None, None, str(exc)
 
 
+def _is_transient_discord_error(status: int | None, error: str | None) -> bool:
+    if status in {429, 500, 502, 503, 504}:
+        return True
+    if not error:
+        return False
+
+    lowered = error.lower()
+    transient_markers = (
+        "timed out",
+        "temporary failure",
+        "temporarily unavailable",
+        "connection reset",
+        "connection aborted",
+        "connection refused",
+        "remote end closed connection",
+        "name resolution",
+        "network is unreachable",
+    )
+    return any(marker in lowered for marker in transient_markers)
+
+
+def discord_get_with_retry(
+    path: str,
+    token: str,
+    retries: int = 2,
+    retry_backoff_seconds: float = 1.5,
+    timeout_seconds: float = 20.0,
+    sleeper: Callable[[float], None] = time.sleep,
+    getter: Callable[[str, str, float], Tuple[bool, int | None, Dict[str, Any] | None, str | None]] = discord_get,
+) -> Tuple[bool, int | None, Dict[str, Any] | None, str | None]:
+    max_attempts = max(1, retries + 1)
+    last_result: Tuple[bool, int | None, Dict[str, Any] | None, str | None] = (
+        False,
+        None,
+        None,
+        "unknown error",
+    )
+
+    for attempt in range(1, max_attempts + 1):
+        result = getter(path, token, timeout_seconds)
+        last_result = result
+        ok, status, data, error = result
+
+        if ok:
+            return ok, status, data, error
+        if attempt >= max_attempts:
+            return ok, status, data, error
+        if not _is_transient_discord_error(status, error):
+            return ok, status, data, error
+
+        backoff = max(0.0, retry_backoff_seconds) * (2 ** (attempt - 1))
+        sleeper(backoff)
+
+    return last_result
+
+
 def _line(kind: str, name: str, detail: str) -> str:
     return f"[{kind}] {name}: {detail}"
 
@@ -114,13 +176,22 @@ def _safe_print(text: str) -> None:
         print(safe)
 
 
-def run_health_check() -> Dict[str, Any]:
+def run_health_check(
+    retries: int = 2,
+    retry_backoff_seconds: float = 1.5,
+    timeout_seconds: float = 20.0,
+) -> Dict[str, Any]:
     result: Dict[str, Any] = {
         "passes": [],
         "warnings": [],
         "failures": [],
         "provider": {},
         "discord": {},
+        "probe_config": {
+            "retries": max(0, retries),
+            "retry_backoff_seconds": retry_backoff_seconds,
+            "timeout_seconds": timeout_seconds,
+        },
     }
 
     def mark_pass(name: str, detail: str) -> None:
@@ -154,7 +225,16 @@ def run_health_check() -> Dict[str, Any]:
         return result
     mark_pass("DISCORD_TOKEN", "configured")
 
-    ok, status, me, error = discord_get("/users/@me", token)
+    def fetch(path: str) -> Tuple[bool, int | None, Dict[str, Any] | None, str | None]:
+        return discord_get_with_retry(
+            path=path,
+            token=token,
+            retries=max(0, retries),
+            retry_backoff_seconds=retry_backoff_seconds,
+            timeout_seconds=timeout_seconds,
+        )
+
+    ok, status, me, error = fetch("/users/@me")
     if not ok or not me:
         mark_fail("discord_auth", f"status={status}, error={error}")
         return result
@@ -168,7 +248,7 @@ def run_health_check() -> Dict[str, Any]:
         return result
     mark_pass("DISCORD_GUILD_ID", guild_id)
 
-    ok, status, guild_data, error = discord_get(f"/guilds/{guild_id}", token)
+    ok, status, guild_data, error = fetch(f"/guilds/{guild_id}")
     if not ok or not guild_data:
         mark_fail("guild_access", f"status={status}, error={error}")
         return result
@@ -176,7 +256,7 @@ def run_health_check() -> Dict[str, Any]:
     result["discord"]["guild"] = {"id": guild_id, "name": guild_name}
     mark_pass("guild_access", f"{guild_name} ({guild_id})")
 
-    ok, status, guild_channels, error = discord_get(f"/guilds/{guild_id}/channels", token)
+    ok, status, guild_channels, error = fetch(f"/guilds/{guild_id}/channels")
     if not ok or not isinstance(guild_channels, list):
         mark_fail("guild_channels", f"status={status}, error={error}")
         return result
@@ -189,7 +269,7 @@ def run_health_check() -> Dict[str, Any]:
     for env_key, slug in REQUIRED_CHANNELS.items():
         configured_id = os.getenv(env_key, "").strip()
         if configured_id:
-            ok, status, channel_data, error = discord_get(f"/channels/{configured_id}", token)
+            ok, status, channel_data, error = fetch(f"/channels/{configured_id}")
             if not ok or not channel_data:
                 mark_fail(env_key, f"id={configured_id}, status={status}, error={error}")
                 continue
@@ -221,10 +301,7 @@ def run_health_check() -> Dict[str, Any]:
             else:
                 mark_fail(env_key, "missing env value and no matching channel found")
 
-    ok, status, commands, error = discord_get(
-        f"/applications/{app_id}/guilds/{guild_id}/commands",
-        token,
-    )
+    ok, status, commands, error = fetch(f"/applications/{app_id}/guilds/{guild_id}/commands")
     if not ok or not isinstance(commands, list):
         mark_fail("slash_commands", f"status={status}, error={error}")
         return result
@@ -265,9 +342,31 @@ def main() -> int:
         action="store_true",
         help="Print JSON output instead of human-readable output.",
     )
+    parser.add_argument(
+        "--retries",
+        type=int,
+        default=int(os.getenv("DISCORD_HEALTH_RETRIES", "2")),
+        help="Number of retry attempts for transient Discord API failures (default: 2).",
+    )
+    parser.add_argument(
+        "--retry-backoff-seconds",
+        type=float,
+        default=float(os.getenv("DISCORD_HEALTH_RETRY_BACKOFF_SECONDS", "1.5")),
+        help="Base backoff for retries in seconds; exponential per retry (default: 1.5).",
+    )
+    parser.add_argument(
+        "--timeout-seconds",
+        type=float,
+        default=float(os.getenv("DISCORD_HEALTH_TIMEOUT_SECONDS", "20")),
+        help="Per-request timeout in seconds for Discord API calls (default: 20).",
+    )
     args = parser.parse_args()
 
-    result = run_health_check()
+    result = run_health_check(
+        retries=max(0, args.retries),
+        retry_backoff_seconds=max(0.0, args.retry_backoff_seconds),
+        timeout_seconds=max(1.0, args.timeout_seconds),
+    )
 
     if args.json:
         print(json.dumps(result, indent=2))

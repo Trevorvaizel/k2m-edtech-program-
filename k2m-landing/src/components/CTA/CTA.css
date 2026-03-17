@@ -11,29 +11,31 @@
 
 .fog-layer {
   position: absolute;
-  width: 300%;
-  height: 150%;
-  top: -25%;
+  width: 200%;
+  height: 120%;
+  top: -10%;
   left: -50%;
-  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 800 800' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.005' numOctaves='3' seed='1'/%3E%3CfeColorMatrix values='0 0 0 9 -4 0 0 0 9 -4 0 0 0 9 -4 0 0 0 0 0.15'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
+  background: url("data:image/svg+xml,%3Csvg viewBox='0 0 800 800' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.005' numOctaves='2' seed='1'/%3E%3CfeColorMatrix values='0 0 0 9 -4 0 0 0 9 -4 0 0 0 9 -4 0 0 0 0 0.15'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E");
   background-size: 900px 900px;
   opacity: 0.4;
   filter: blur(12px);
+  will-change: transform;
+  contain: layout style;
 }
 
 .fog-layer-1 {
-  top: -25%;
+  top: -10%;
   animation: fog-drift-1 80s linear infinite;
 }
 
 .fog-layer-2 {
-  top: -10%;
+  top: 0%;
   animation: fog-drift-2 100s linear infinite;
   opacity: 0.3;
 }
 
 .fog-layer-3 {
-  top: -15%;
+  top: -5%;
   animation: fog-drift-3 65s linear infinite;
   opacity: 0.35;
 }
@@ -144,5 +146,5 @@
 
 /* ===== MOBILE ===== */
 @media (max-width: 768px) {
-  .fog-layer { opacity: 0.2; filter: blur(16px); }
+  .fog-container { display: none; }
 }

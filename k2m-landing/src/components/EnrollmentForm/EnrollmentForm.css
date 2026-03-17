@@ -1,0 +1,382 @@
+/**
+ * Enrollment Form Modal - Task 7.1
+ * Dark theme, mobile-responsive, K2M brand aesthetic
+ */
+
+/* Modal Overlay */
+.enrollment-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.enrollment-modal[aria-hidden="false"] {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Backdrop */
+.modal-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(5, 6, 8, 0.85);
+  backdrop-filter: blur(8px);
+}
+
+/* Modal Container */
+.modal-container {
+  position: relative;
+  width: 90%;
+  max-width: 540px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #0b0f14;
+  border: 1px solid #1f2937;
+  border-radius: 16px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.8);
+  transform: scale(0.95) translateY(20px);
+  transition: transform 0.3s ease;
+}
+
+.enrollment-modal[aria-hidden="false"] .modal-container {
+  transform: scale(1) translateY(0);
+}
+
+/* Close Button */
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: #1f2937;
+  color: #9ca3af;
+  font-size: 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.modal-close:hover {
+  background: #374151;
+  color: #f9fafb;
+  transform: scale(1.05);
+}
+
+/* Modal Content */
+.modal-content {
+  padding: 40px 32px 32px;
+}
+
+/* Header */
+.modal-header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.modal-logo {
+  margin-bottom: 16px;
+  filter: drop-shadow(0 0 12px rgba(19, 215, 208, 0.3));
+}
+
+.modal-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 32px;
+  font-weight: 700;
+  color: #f9fafb;
+  margin: 0 0 8px 0;
+  line-height: 1.2;
+}
+
+.modal-subtitle {
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  color: #9ca3af;
+  margin: 0;
+}
+
+/* Urgency Badge */
+.modal-urgency {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 16px;
+  background: rgba(19, 215, 208, 0.08);
+  border: 1px solid rgba(19, 215, 208, 0.2);
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.urgency-dot {
+  width: 8px;
+  height: 8px;
+  background: #13d7d0;
+  border-radius: 50%;
+  animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.6; transform: scale(1.1); }
+}
+
+.urgency-text {
+  font-size: 13px;
+  color: #13d7d0;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+/* Form */
+.enrollment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  color: #d1d5db;
+}
+
+.form-input,
+.form-select {
+  width: 100%;
+  padding: 12px 16px;
+  background: #050608;
+  border: 1px solid #1f2937;
+  border-radius: 8px;
+  color: #f9fafb;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.form-input:focus,
+.form-select:focus {
+  outline: none;
+  border-color: #13d7d0;
+  box-shadow: 0 0 0 3px rgba(19, 215, 208, 0.1);
+}
+
+.form-input::placeholder {
+  color: #6b7280;
+}
+
+.form-select {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239ca3af'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 20px;
+  padding-right: 40px;
+}
+
+.form-hint {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 0;
+}
+
+/* Form Assurance */
+.form-assurance {
+  padding: 16px;
+  background: rgba(5, 6, 8, 0.6);
+  border: 1px dashed #1f2937;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.assurance-text {
+  font-size: 13px;
+  color: #9ca3af;
+  margin: 0;
+}
+
+/* Submit Button */
+.form-submit {
+  width: 100%;
+  padding: 16px 24px;
+  background: linear-gradient(90deg, #13d7d0 0%, #39e6de 100%);
+  border: none;
+  border-radius: 12px;
+  color: #041014;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(19, 215, 208, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.form-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(19, 215, 208, 0.4);
+}
+
+.form-submit:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.form-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.submit-loader {
+  display: inline-block;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Terms */
+.form-terms {
+  font-size: 12px;
+  color: #6b7280;
+  text-align: center;
+  margin: 0;
+}
+
+/* Success State */
+.form-success {
+  text-align: center;
+  padding: 32px 16px;
+}
+
+.success-icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 20px;
+  background: linear-gradient(90deg, #13d7d0 0%, #39e6de 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  color: #041014;
+  font-weight: 700;
+  box-shadow: 0 8px 20px rgba(19, 215, 208, 0.4);
+}
+
+.success-title {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: #f9fafb;
+  margin: 0 0 12px 0;
+}
+
+.success-message {
+  font-size: 16px;
+  color: #d1d5db;
+  margin: 0 0 8px 0;
+}
+
+.success-detail {
+  font-size: 14px;
+  color: #9ca3af;
+  margin: 0;
+}
+
+/* Error State */
+.form-error {
+  text-align: center;
+  padding: 24px 16px;
+}
+
+.error-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+.error-message {
+  font-size: 15px;
+  color: #fca5a5;
+  margin: 0 0 16px 0;
+}
+
+.error-retry {
+  padding: 12px 24px;
+  background: #1f2937;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  color: #f9fafb;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.error-retry:hover {
+  background: #374151;
+  border-color: #4b5563;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .modal-container {
+    width: 95%;
+    max-height: 95vh;
+  }
+
+  .modal-content {
+    padding: 32px 20px 24px;
+  }
+
+  .modal-title {
+    font-size: 26px;
+  }
+
+  .form-submit {
+    padding: 14px 20px;
+    font-size: 15px;
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .enrollment-modal,
+  .modal-container,
+  .urgency-dot,
+  .form-submit {
+    animation: none;
+    transition: none;
+  }
+}

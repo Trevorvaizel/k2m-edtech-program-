@@ -130,6 +130,15 @@ class StudentContext:
     unlocked_agents: List[str] = field(default_factory=lambda: ["frame"])
     interaction_count: int = 0
 
+    # Context engine fields (Sprint 6)
+    profession: str = ""
+    profession_inferred: str = ""
+    situation: str = ""
+    goals: str = ""
+    barrier_type: str = ""
+    cis_journey_summary: str = ""
+    last_frame_topic: str = ""
+
     def get_altitude(self) -> str:
         """
         Map week + zone to JTBD altitude level (1-5).
@@ -377,4 +386,11 @@ def build_student_context(
         current_state=_get_value(db_student, "current_state", "none") or "none",
         unlocked_agents=unlocked_agents,
         interaction_count=int(_get_value(db_student, "interaction_count", 0) or 0),
+        profession=_get_value(db_student, "profession", "") or "",
+        profession_inferred=_get_value(db_student, "profession_inferred", "") or "",
+        situation=_get_value(db_student, "situation", "") or "",
+        goals=_get_value(db_student, "goals", "") or "",
+        barrier_type=_get_value(db_student, "barrier_type", "") or "",
+        cis_journey_summary=_get_value(db_student, "cis_journey_summary", "") or "",
+        last_frame_topic=_get_value(db_student, "last_frame_topic", "") or "",
     )

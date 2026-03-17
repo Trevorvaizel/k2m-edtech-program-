@@ -1,0 +1,66 @@
+Task 7.14 live evidence snapshot
+Date (UTC): 2026-03-11
+
+1) Brevo template creation + test sends
+- Command:
+  python cis-discord-bot/scripts/task-714-brevo-templates.py --env-file cis-discord-bot/.env --apply --send-test --test-to k2m.labs@gmail.com --output _bmad-output/cohort-design-artifacts/operations/sprint/task-notes/7.14-brevo-templates.json
+- Result:
+  - overall_status=pass
+  - 7 templates upserted (created in first run, updated in idempotent re-run):
+    - BREVO_TEMPLATE_EMAIL_1=3
+    - BREVO_TEMPLATE_EMAIL_1_5=4
+    - BREVO_TEMPLATE_EMAIL_1_75=5
+    - BREVO_TEMPLATE_EMAIL_2=6
+    - BREVO_TEMPLATE_EMAIL_3=7
+    - BREVO_TEMPLATE_EMAIL_4=8
+    - BREVO_TEMPLATE_EMAIL_5=9
+  - each template test-send returned HTTP 201
+  - evidence file: task-notes/7.14-brevo-templates.json
+
+2) Railway production variable set
+- Command:
+  railway.cmd variables --service kira-bot --environment production --set "BREVO_TEMPLATE_EMAIL_1=3" --set "BREVO_TEMPLATE_EMAIL_1_5=4" --set "BREVO_TEMPLATE_EMAIL_1_75=5" --set "BREVO_TEMPLATE_EMAIL_2=6" --set "BREVO_TEMPLATE_EMAIL_3=7" --set "BREVO_TEMPLATE_EMAIL_4=8" --set "BREVO_TEMPLATE_EMAIL_5=9" --skip-deploys
+- Verification:
+  - evidence file: task-notes/7.14-railway-template-vars.json
+
+3) TD-7.13-01 resolution asset
+- Created:
+  cis-discord-bot/assets/email/email-1/discord-orientation-annotated.png
+- Embedded in Brevo Email #1 template (template ID 3).
+
+4) Runtime wiring validation tests
+- Command:
+  pytest cis-discord-bot/tests/test_parent_email_system.py::TestEmailServiceSemantics::test_brevo_template_send_uses_template_id_and_params cis-discord-bot/tests/test_interest_api_server.py::test_send_brevo_email_prefers_template_id_when_configured cis-discord-bot/tests/test_interest_api_server.py::test_send_enrollment_payment_email_prefers_template_id_when_configured
+- Result:
+  - 3 passed
+
+5) Visual shell refresh + full sequence resend (Ibrahim personalization preview)
+- Why:
+  - Inbox review flagged missing logo/line and weak style parity with canonical reference.
+- Template shell updates applied in:
+  - cis-discord-bot/scripts/task-714-brevo-templates.py
+  - switched to hosted logo fallback URL + explicit hero vertical line + divider refresh
+  - fixed Email #1.5 quote encoding to plain ASCII
+  - added CLI option: --test-first-name
+- Commands:
+  python cis-discord-bot/scripts/task-714-brevo-templates.py --env-file cis-discord-bot/.env --apply --send-test --test-to trevor@k2mlabs.com --test-first-name Ibrahim --output _bmad-output/cohort-design-artifacts/operations/sprint/task-notes/7.14-brevo-preview-ibrahim-trevor-k2mlabs.json
+  python cis-discord-bot/scripts/task-714-brevo-templates.py --env-file cis-discord-bot/.env --apply --send-test --test-to k2m.labs@gmail.com --test-first-name Ibrahim --output _bmad-output/cohort-design-artifacts/operations/sprint/task-notes/7.14-brevo-preview-ibrahim-k2m-labs.json
+- Result:
+  - both runs overall_status=pass
+  - all 7 templates updated and test-sent in each run
+  - all sends returned HTTP 201
+
+6) Active status verification in Brevo
+- Command:
+  python inline query against /v3/smtp/templates (filtered to 7.14 templates)
+- Result:
+  - template IDs 3..9 all return isActive=true
+  - evidence file: task-notes/7.14-brevo-template-active-status.json
+
+7) Live verification send to joytrevor.jt@gmail.com (Ibrahim personalization)
+- Command:
+  python cis-discord-bot/scripts/task-714-brevo-templates.py --env-file cis-discord-bot/.env --apply --send-test --test-to joytrevor.jt@gmail.com --test-first-name Ibrahim --output _bmad-output/cohort-design-artifacts/operations/sprint/task-notes/7.14-brevo-preview-ibrahim-joytrevor-jt.json
+- Result:
+  - overall_status=pass
+  - all 7 templates updated and test-sent
+  - all sends returned HTTP 201

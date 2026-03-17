@@ -18,8 +18,10 @@ import pytz
 
 from discord.ext import tasks
 
+from cis_controller.onboarding import DEFAULT_STOP0_PROFILE, build_reentry_dm
 from cis_controller.safety_filter import post_to_discord_safe
 from cis_controller.facilitator_dashboard import FacilitatorDashboard
+from cis_controller.welcome_lounge import refresh_welcome_lounge_status
 from scheduler.daily_prompts import DailyPromptLibrary, WeekDay
 from scheduler.cluster_sessions import ClusterSessionScheduler
 from scheduler.parent_email_scheduler import get_parent_email_scheduler
@@ -124,6 +126,13 @@ class DailyPromptScheduler:
         self._weekly_parent_emails_today = False  # Task 4.6: Monday weekly parent updates
         self._week8_parent_reports_today = False  # Task 4.6: Week 8 Friday parent report batch
         self._sheets_sync_today = False  # Task 7.6: nightly PostgreSQL -> Sheets sync
+        self._enroll_nudges_today = False  # Task 7.3: 48h enroll reminder DM
+        self._enroll_email_queue_last_run = None  # Task 7.3: Email #2 deferred queue drain
+        self._token_expiry_check_today = False  # Task 7.4: nightly M-Pesa token expiry warning
+        self._stage1_dropoff_check_today = False  # Task 7.9: nightly Stage 1->2 recovery emails
+        self._payment_silence_check_last_run = None  # Task 7.5: 6h payment feedback DM pass
+        self._onboarding_timeout_check_today = False  # Task 7.7: day-8 re-entry + Stop 0 timeout
+        self._welcome_lounge_refresh_today = False  # Task 7.12: nightly status pin refresh
 
         logger.info(f"Scheduler initialized for guild {guild_id}")
         logger.info(f"Cohort start date: {cohort_start_date}")
@@ -951,6 +960,289 @@ class DailyPromptScheduler:
         finally:
             self._artifact_inactivity_nudges_today = True
 
+    async def process_enrollment_email_queue(self) -> None:
+        """
+        Drain deferred Email #2 queue when discord_id linkage arrives (Task 7.3).
+        """
+        enabled = os.getenv("ENROLLMENT_EMAIL_QUEUE_ENABLED", "true").strip().lower() in {
+            "1", "true", "yes", "on"
+        }
+        if not enabled:
+            return
+
+        spreadsheet_id = os.getenv("GOOGLE_SHEETS_ID", "").strip()
+        if not spreadsheet_id:
+            logger.warning("Enrollment email queue drain skipped: GOOGLE_SHEETS_ID missing")
+            return
+
+        try:
+            from cis_controller.interest_api_server import process_pending_enrollment_payment_emails
+
+            stats = await process_pending_enrollment_payment_emails(
+                spreadsheet_id=spreadsheet_id,
+                sheet_range=os.getenv("GOOGLE_SHEETS_RANGE", "Student Roster!A:Z").strip(),
+                creds_path=os.getenv("GOOGLE_SHEETS_CREDENTIALS_PATH", "").strip() or None,
+            )
+            logger.info("Enrollment email queue drain stats: %s", stats)
+        except Exception as exc:
+            logger.error("Enrollment email queue drain failed: %s", exc, exc_info=True)
+
+    async def post_enroll_nudges(self) -> None:
+        """
+        Send 48h KIRA enroll nudges to linked students missing /api/enroll profile (Task 7.3).
+        """
+        enabled = os.getenv("ENROLL_NUDGE_ENABLED", "true").strip().lower() in {
+            "1", "true", "yes", "on"
+        }
+        if not enabled:
+            self._enroll_nudges_today = True
+            return
+
+        spreadsheet_id = os.getenv("GOOGLE_SHEETS_ID", "").strip()
+        if not spreadsheet_id:
+            logger.warning("48h enroll nudge scan skipped: GOOGLE_SHEETS_ID missing")
+            self._enroll_nudges_today = True
+            return
+
+        try:
+            from cis_controller.interest_api_server import send_48h_enroll_nudges
+
+            stats = await send_48h_enroll_nudges(
+                bot=self.bot,
+                spreadsheet_id=spreadsheet_id,
+                sheet_range=os.getenv("GOOGLE_SHEETS_RANGE", "Student Roster!A:Z").strip(),
+                creds_path=os.getenv("GOOGLE_SHEETS_CREDENTIALS_PATH", "").strip() or None,
+                age_hours=48,
+            )
+            logger.info("48h enroll nudge stats: %s", stats)
+        except Exception as exc:
+            logger.error("48h enroll nudge scan failed: %s", exc, exc_info=True)
+        finally:
+            self._enroll_nudges_today = True
+
+    async def onboarding_timeout_check(self) -> None:
+        """
+        Task 7.7 daily onboarding timeout checks.
+
+        1) Day-8 re-entry DM: onboarding_stop < 4 and inactive for > 7 days.
+        2) Stop 0 timeout fallback: if Stop 0 unanswered for >= 48h, persist defaults.
+        """
+
+        def _row_get(row, key, default=None):
+            if isinstance(row, dict):
+                return row.get(key, default)
+            try:
+                return row[key]
+            except Exception:
+                return default
+
+        stats = {
+            "reentry_candidates": 0,
+            "reentry_sent": 0,
+            "reentry_failed": 0,
+            "stop0_timed_out": 0,
+            "stop0_defaulted": 0,
+        }
+
+        try:
+            if not hasattr(self.store, "get_students_pending_onboarding_reentry"):
+                logger.info("Task 7.7 onboarding timeout check skipped: store methods unavailable")
+                return
+
+            # PART A: Stop 0 timeout defaulting (non-blocking).
+            timeout_rows = []
+            if hasattr(self.store, "get_stop_0_timeout_candidates"):
+                timeout_rows = self.store.get_stop_0_timeout_candidates(timeout_hours=48)
+
+            stats["stop0_timed_out"] = len(timeout_rows)
+            for row in timeout_rows:
+                discord_id = str(_row_get(row, "discord_id", ""))
+                if not discord_id:
+                    continue
+
+                if hasattr(self.store, "apply_stop_0_timeout_defaults"):
+                    self.store.apply_stop_0_timeout_defaults(
+                        discord_id=discord_id,
+                        primary_device_context=str(DEFAULT_STOP0_PROFILE["primary_device_context"]),
+                        study_hours_per_week=int(DEFAULT_STOP0_PROFILE["study_hours_per_week"]),
+                        confidence_level=int(DEFAULT_STOP0_PROFILE["confidence_level"]),
+                        family_obligations_hint=str(DEFAULT_STOP0_PROFILE["family_obligations_hint"]),
+                    )
+                    stats["stop0_defaulted"] += 1
+
+                if hasattr(self.store, "log_observability_event"):
+                    self.store.log_observability_event(
+                        discord_id=discord_id,
+                        event_type="onboarding_stop_0_timeout_defaulted",
+                        metadata={"timeout_hours": 48},
+                    )
+
+                try:
+                    user = await self.bot.fetch_user(int(discord_id))
+                    await user.send(
+                        "I went ahead and used default profile settings because Stop 0 timed out. "
+                        "Reply `/onboarding` any time to update your profile details."
+                    )
+                except Exception:
+                    # DM failure should not block timeout defaulting.
+                    pass
+
+            # PART B: Day-8 re-entry DM for students stuck before Stop 4.
+            reentry_rows = self.store.get_students_pending_onboarding_reentry(inactive_days=7)
+            stats["reentry_candidates"] = len(reentry_rows)
+
+            for row in reentry_rows:
+                discord_id = str(_row_get(row, "discord_id", ""))
+                if not discord_id:
+                    continue
+
+                name = (
+                    _row_get(row, "enrollment_name")
+                    or _row_get(row, "discord_username")
+                    or "there"
+                )
+                stop = int(_row_get(row, "onboarding_stop", 0) or 0)
+                try:
+                    user = await self.bot.fetch_user(int(discord_id))
+                    await user.send(build_reentry_dm(str(name)))
+                    stats["reentry_sent"] += 1
+                    if hasattr(self.store, "log_observability_event"):
+                        self.store.log_observability_event(
+                            discord_id=discord_id,
+                            event_type="onboarding_reentry_dm_sent",
+                            metadata={"onboarding_stop": stop, "inactive_days": 7},
+                        )
+                except Exception:
+                    stats["reentry_failed"] += 1
+
+            logger.info("Task 7.7 onboarding timeout stats: %s", stats)
+        except Exception as exc:
+            logger.error("Task 7.7 onboarding timeout check failed: %s", exc, exc_info=True)
+        finally:
+            self._onboarding_timeout_check_today = True
+
+    async def post_token_expiry_warnings(self) -> None:
+        """
+        Nightly M-Pesa token expiry warning (Task 7.4, Decision H-01 + GAP FIX #4).
+
+        Scans Google Sheets for students whose payment submit token (Column Q) expires
+        within 48 hours. For each:
+          - If discord_id is linked: sends a KIRA DM and marks token_warning_sent=True in PG.
+          - If not yet on Discord: falls back to a Brevo warning email.
+          - If token_warning_sent is already True: skips (idempotency guard).
+        """
+        enabled = os.getenv("TOKEN_EXPIRY_WARN_ENABLED", "true").strip().lower() in {
+            "1", "true", "yes", "on"
+        }
+        if not enabled:
+            return
+
+        spreadsheet_id = os.getenv("GOOGLE_SHEETS_ID", "").strip()
+        if not spreadsheet_id:
+            logger.warning("Token expiry check skipped: GOOGLE_SHEETS_ID missing")
+            return
+
+        try:
+            from cis_controller.interest_api_server import send_token_expiry_warnings
+
+            stats = await send_token_expiry_warnings(
+                bot=self.bot,
+                spreadsheet_id=spreadsheet_id,
+                sheet_range=os.getenv("GOOGLE_SHEETS_RANGE", "Student Roster!A:Z").strip(),
+                creds_path=os.getenv("GOOGLE_SHEETS_CREDENTIALS_PATH", "").strip() or None,
+                warn_within_hours=48,
+            )
+            logger.info("Token expiry warning stats: %s", stats)
+        except Exception as exc:
+            logger.error("Token expiry warning check failed: %s", exc, exc_info=True)
+
+    async def post_stage1_dropoff_nudges(self) -> None:
+        """
+        Task 7.9 nightly Stage 1->2 recovery worker.
+
+        Sends:
+          - Email #1.5 at 48h for not-yet-joined students
+          - Email #1.75 at day 5 for still-not-joined students
+        Uses Column V idempotency marker in the Student Roster.
+        """
+        enabled = os.getenv("STAGE1_DROPOFF_NUDGE_ENABLED", "true").strip().lower() in {
+            "1", "true", "yes", "on"
+        }
+        if not enabled:
+            self._stage1_dropoff_check_today = True
+            return
+
+        spreadsheet_id = os.getenv("GOOGLE_SHEETS_ID", "").strip()
+        if not spreadsheet_id:
+            logger.warning("Task 7.9: Stage 1 drop-off check skipped — GOOGLE_SHEETS_ID missing")
+            self._stage1_dropoff_check_today = True
+            return
+
+        try:
+            from cis_controller.interest_api_server import check_stage1_dropoff
+
+            stats = await check_stage1_dropoff(
+                spreadsheet_id=spreadsheet_id,
+                sheet_range=os.getenv("GOOGLE_SHEETS_RANGE", "Student Roster!A:Z").strip(),
+                creds_path=os.getenv("GOOGLE_SHEETS_CREDENTIALS_PATH", "").strip() or None,
+            )
+            logger.info("Task 7.9: Stage 1 drop-off recovery stats: %s", stats)
+        except Exception as exc:
+            logger.error("Task 7.9: Stage 1 drop-off recovery failed: %s", exc, exc_info=True)
+        finally:
+            self._stage1_dropoff_check_today = True
+
+    async def post_payment_silence_check(self) -> None:
+        """
+        6h payment feedback DM pass (Task 7.5, Decisions H-02, M-01, N-23).
+
+        Three scan passes:
+          A) 24h silence DM: Pending > 24h → student KIRA DM (once, guarded by PG flag).
+          B) Unverifiable DM: Column L = 'Unverifiable' → student KIRA DM + dashboard alert.
+          C) N-23 escalation: Pending > 8h during business hours → DM ALL @Facilitator members (once).
+        """
+        spreadsheet_id = os.getenv("GOOGLE_SHEETS_ID", "").strip()
+        if not spreadsheet_id:
+            logger.warning("Task 7.5: payment silence check skipped — GOOGLE_SHEETS_ID missing")
+            return
+
+        try:
+            from cis_controller.interest_api_server import send_payment_feedback_dms
+
+            stats = await send_payment_feedback_dms(
+                bot=self.bot,
+                spreadsheet_id=spreadsheet_id,
+                sheet_range=os.getenv("GOOGLE_SHEETS_RANGE", "Student Roster!A:Z").strip(),
+                creds_path=os.getenv("GOOGLE_SHEETS_CREDENTIALS_PATH", "").strip() or None,
+            )
+            logger.info("Task 7.5: payment feedback DM pass stats: %s", stats)
+        except Exception as exc:
+            logger.error("Task 7.5: payment feedback DM pass failed: %s", exc, exc_info=True)
+
+    async def post_welcome_lounge_status_refresh(self) -> None:
+        """
+        Task 7.12 nightly refresh for #welcome-lounge confirmed-student count.
+        """
+        try:
+            result = await refresh_welcome_lounge_status(
+                bot=self.bot,
+                store=self.store,
+                guild_id=self.guild_id,
+            )
+            if result.get("ok"):
+                logger.info(
+                    "Task 7.12: welcome-lounge status refreshed (confirmed=%s, changed=%s)",
+                    result.get("confirmed_count"),
+                    result.get("status_changed"),
+                )
+            else:
+                logger.warning(
+                    "Task 7.12: welcome-lounge status refresh skipped (%s)",
+                    result.get("reason"),
+                )
+        except Exception as exc:
+            logger.error("Task 7.12: welcome-lounge status refresh failed: %s", exc, exc_info=True)
+
     async def _send_public_message(self, channel, message_text: str):
         """Route student-facing public posts through Guardrail #3 safety checks."""
         await post_to_discord_safe(
@@ -1102,6 +1394,11 @@ class DailyPromptScheduler:
             self._weekly_parent_emails_today = False  # Task 4.6
             self._week8_parent_reports_today = False  # Task 4.6
             self._sheets_sync_today = False  # Task 7.6
+            self._enroll_nudges_today = False  # Task 7.3
+            self._token_expiry_check_today = False  # Task 7.4
+            self._stage1_dropoff_check_today = False  # Task 7.9
+            self._onboarding_timeout_check_today = False  # Task 7.7
+            self._welcome_lounge_refresh_today = False  # Task 7.12
 
         week, day = self.get_week_day()
 
@@ -1155,6 +1452,23 @@ class DailyPromptScheduler:
             logger.info("Scheduled: 10:05 AM artifact inactivity nudges")
             await self.post_artifact_inactivity_nudges()
 
+        # :12 every hour - drain deferred /api/enroll Email #2 queue (Task 7.3).
+        if current_time.minute == 12:
+            run_key = now.strftime("%Y-%m-%d-%H")
+            if self._enroll_email_queue_last_run != run_key:
+                logger.info("Scheduled: :12 enrollment email queue drain")
+                await self.process_enrollment_email_queue()
+                self._enroll_email_queue_last_run = run_key
+
+        # Every 6h at :05 — payment feedback DMs (Task 7.5, Decisions H-02, M-01, N-23).
+        # Fires at 00:05, 06:05, 12:05, 18:05 EAT using 6h bucket key.
+        if current_time.minute == 5 and current_time.hour % 6 == 0:
+            run_key_6h = now.strftime("%Y-%m-%d-") + str(current_time.hour // 6)
+            if self._payment_silence_check_last_run != run_key_6h:
+                logger.info("Scheduled: %02d:05 EAT payment feedback DM pass (6h bucket)", current_time.hour)
+                await self.post_payment_silence_check()
+                self._payment_silence_check_last_run = run_key_6h
+
         # 12:00 PM EAT Saturday - Batch unlock next week (Task 2.5)
         if current_time.hour == 12 and current_time.minute == 0 and day == WeekDay.SATURDAY and not self._week_unlock_today:
             logger.info(f"Scheduled: 12:00 PM week {week} batch unlock")
@@ -1180,6 +1494,20 @@ class DailyPromptScheduler:
                 logger.info("Scheduled: 6:00 PM peer visibility snapshot to weekly channel")
                 await self.post_peer_visibility_snapshot(week)
 
+        # 6:05 PM EAT - 48h enroll nudge for linked-but-unenrolled students (Task 7.3)
+        if current_time.hour == 18 and current_time.minute == 5 and not self._enroll_nudges_today:
+            logger.info("Scheduled: 6:05 PM 48h enroll nudges")
+            await self.post_enroll_nudges()
+
+        # 7:00 PM EAT - onboarding timeout + day-8 re-entry checks (Task 7.7)
+        if (
+            current_time.hour == 19
+            and current_time.minute == 0
+            and not self._onboarding_timeout_check_today
+        ):
+            logger.info("Scheduled: 19:00 onboarding timeout check")
+            await self.onboarding_timeout_check()
+
         # Task 4.4: Cluster session automation
         # 6:00 PM EAT (18:00) - Schedule 24-hour announcements for tomorrow's sessions
         if current_time.hour == 18 and current_time.minute == 0:
@@ -1201,6 +1529,23 @@ class DailyPromptScheduler:
             logger.info("Scheduled: 00:10 AM nightly PostgreSQL -> Sheets sync")
             await self.run_nightly_sheets_sync()
             self._sheets_sync_today = True
+
+        # 23:00 EAT - Nightly M-Pesa token expiry warning (Task 7.4, Decision H-01 + GAP FIX #4)
+        if current_time.hour == 23 and current_time.minute == 0 and not self._token_expiry_check_today:
+            logger.info("Scheduled: 23:00 nightly token expiry warning check")
+            await self.post_token_expiry_warnings()
+            self._token_expiry_check_today = True
+
+        # 23:10 EAT - Nightly #welcome-lounge status refresh (Task 7.12)
+        if current_time.hour == 23 and current_time.minute == 10 and not self._welcome_lounge_refresh_today:
+            logger.info("Scheduled: 23:10 welcome-lounge status refresh")
+            await self.post_welcome_lounge_status_refresh()
+            self._welcome_lounge_refresh_today = True
+
+        # 23:20 EAT - Stage 1->2 drop-off recovery emails (Task 7.9)
+        if current_time.hour == 23 and current_time.minute == 20 and not self._stage1_dropoff_check_today:
+            logger.info("Scheduled: 23:20 Stage 1 drop-off recovery check")
+            await self.post_stage1_dropoff_nudges()
 
     async def run_nightly_sheets_sync(self) -> None:
         """Run nightly engagement sync with dashboard alerting on failure."""

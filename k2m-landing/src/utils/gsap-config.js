@@ -3,9 +3,10 @@
 
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import { ScrambleTextPlugin } from 'gsap/ScrambleTextPlugin';
 
-// Register ScrollTrigger plugin
-gsap.registerPlugin(ScrollTrigger);
+// Register plugins
+gsap.registerPlugin(ScrollTrigger, ScrambleTextPlugin);
 
 // Configure global defaults (AC: 2)
 gsap.defaults({
@@ -20,4 +21,4 @@ ScrollTrigger.config({
 });
 
 // Export for use in components
-export { gsap, ScrollTrigger };
+export { gsap, ScrollTrigger, ScrambleTextPlugin };

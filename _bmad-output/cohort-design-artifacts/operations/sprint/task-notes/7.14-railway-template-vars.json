@@ -1,0 +1,13 @@
+{
+  "service": "kira-bot",
+  "environment": "production",
+  "template_vars": {
+    "BREVO_TEMPLATE_EMAIL_1": "3",
+    "BREVO_TEMPLATE_EMAIL_1_5": "4",
+    "BREVO_TEMPLATE_EMAIL_1_75": "5",
+    "BREVO_TEMPLATE_EMAIL_2": "6",
+    "BREVO_TEMPLATE_EMAIL_3": "7",
+    "BREVO_TEMPLATE_EMAIL_4": "8",
+    "BREVO_TEMPLATE_EMAIL_5": "9"
+  }
+}

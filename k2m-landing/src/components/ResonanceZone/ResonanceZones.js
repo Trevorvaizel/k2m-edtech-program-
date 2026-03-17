@@ -1,4 +1,4 @@
-import { initResonanceZones } from './ResonanceZone.js';
+import { initResonanceZones } from './resonanceZone.js';
 import './ResonanceZones.css';
 
 /**

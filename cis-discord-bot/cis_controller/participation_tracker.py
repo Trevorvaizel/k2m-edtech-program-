@@ -344,6 +344,10 @@ class ParticipationTracker:
             discord_id: Student's Discord ID (as string)
             week: Current cohort week
         """
+        if not str(discord_id).isdigit():
+            logger.info("Skipping nudge DM for unlinked student id: %s", discord_id)
+            return
+
         try:
             # Get user
             user = await self.bot.fetch_user(int(discord_id))

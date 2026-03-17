@@ -79,5 +79,9 @@
   Summary: [done] Task 5.7 COMPLETE - Railway production deployment is live and stabilized, credential handoff finalized, invite + launch announcement posted, and go/no-go set to GO (2026-02-20).
 - `7.0` BLOCKING PRE-REQUISITE: Cohort launch date config -> `_bmad-output/cohort-design-artifacts/task-notes/7.0.md`
   Summary: Task 7.0 COMPLETE - startup date validation, facilitator role migration, and Railway cohort date configuration completed (2026-03-05).
+- `7.2` Unique per-student Discord invite links (on_member_join match key) -> `_bmad-output/cohort-design-artifacts/task-notes/7.2.md`
+  Summary: Task 7.2 RECONCILED COMPLETE - invite-code linkage now writes Sheets Column D fallback, handles `__pending__` PG placeholders, enforces @Facilitator on recovery, and passes focused regressions (24 tests) (2026-03-05).
+- `7.5` Payment feedback DMs: immediate + 24h silence + unverifiable path -> `_bmad-output/cohort-design-artifacts/operations/sprint/task-notes/7.5.md`
+  Summary: Task 7.5 COMPLETE - immediate KIRA DM after mpesa-submit, 24h silence DM, Unverifiable student DM + dashboard alert, N-23 @Facilitator escalation (ALL 3 facilitators at 8h+ pending). 6h scheduler. 623 tests (2026-03-10).
 - `7.6` PostgreSQL full production migration (truth reconciliation closeout) -> `_bmad-output/cohort-design-artifacts/task-notes/7.6.md`
   Summary: Task 7.6 COMPLETE - sprint truth reconciliation, PostgreSQL runtime/schema/sync completion, 516 tests passing, and production validation evidence recorded (2026-03-05).

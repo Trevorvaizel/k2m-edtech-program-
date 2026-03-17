@@ -410,7 +410,10 @@ async def handle_frame(message: discord.Message, student):
                 "week": student_context.current_week,
                 "zone": student_context.zone,
                 "cost_usd": cost_data.get("total_cost_usd", 0.0),
+                "provider": cost_data.get("provider", ""),
+                "model": cost_data.get("model", ""),
             },
+            model_used=cost_data.get("model", ""),
         )
 
         preference = store.get_publication_preference(discord_id)

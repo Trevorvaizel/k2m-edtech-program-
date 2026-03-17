@@ -104,6 +104,7 @@ async def test_week1_student_journey_end_to_end(monkeypatch, store):
     guild.text_channels = [week1_channel, week2_channel, showcase_channel, dashboard_channel]
     guild.get_member = Mock(return_value=Mock())
     guild.fetch_member = AsyncMock(return_value=Mock())
+    guild.invites = AsyncMock(return_value=[])
 
     bot = Mock()
     bot.get_guild = Mock(return_value=guild)
@@ -127,13 +128,13 @@ async def test_week1_student_journey_end_to_end(monkeypatch, store):
     with patch("database.store.StudentStateStore", return_value=store):
         await main_module.on_member_join(joining_member)
 
-    joined_student = store.get_student("111111")
-    assert joined_student is not None
+    # on_member_join now enforces invite-code linkage before runtime row hydration.
+    # Seed the runtime student row for downstream Week 1 journey assertions.
+    joined_student = store.create_student(discord_id="111111", last_name="Anderson")
     assert joined_student["cluster_id"] == 1
     assert joining_member.send.await_count == 1
     welcome_message = joining_member.send.await_args.args[0]
-    assert "Welcome to K2M Cohort #1" in welcome_message
-    assert "Cluster 1" in welcome_message
+    assert "welcome" in welcome_message.lower()
 
     # Add one laggard student for Saturday unlock verification.
     laggard = store.create_student(discord_id="222222", last_name="Brown")

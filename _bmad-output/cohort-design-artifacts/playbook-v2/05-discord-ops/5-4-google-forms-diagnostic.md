@@ -2,10 +2,33 @@
 
 **Epic:** 5 - Discord Architecture & Operations (Modules 4, 11)
 **Story:** 5.4 - Create Google Forms diagnostic
-**Status:** ✅ COMPLETE - Adversarial Review Fixed
+**Status:** ✅ UPDATED - Mixed audience + context engine revisions applied 2026-03-03
 **Created:** 2026-01-25
 **Reviewed:** 2026-01-25 (Adversarial review completed, all HIGH + MEDIUM fixes applied)
+**Updated:** 2026-03-03 (Mixed audience + Sprint 6.1 requirements applied — see changelog below)
 **Purpose:** Create comprehensive diagnostic form that captures Student Onboarding Profile (SOP 0), supports manual workflow decision (Decision 7, 16), and provides baseline data for Trevor's 10% interventions (Decision 2)
+
+---
+
+## Addendum — 2026-03-04 Execution Contract Alignment
+
+- Cohort 1 onboarding transport is now custom web forms (`/join`, `/enroll`, `/mpesa-submit`) per `student-onboarding-and-enrollment-flow.md`.
+- Discord username is auto-captured via `on_member_join` and is not a manually required form field.
+- This story remains valid for diagnostic question architecture, field semantics, and Google Sheets analysis logic.
+- If this story conflicts with onboarding/payment behavior, defer to `student-onboarding-and-enrollment-flow.md` and sprint execution contract.
+
+---
+
+## Changelog — 2026-03-03 (Sprint 6.1 Pre-launch Revisions)
+
+Changes applied based on architectural decisions from 2026-03-03 session:
+
+1. **Discord Username -> REQUIRED** (historical 2026-03-03 assumption; superseded by 2026-03-04 contract where username is auto-captured via `on_member_join`).
+2. **Profession added as REQUIRED structured dropdown** (was missing entirely — situation/goals were freeform but profession was never captured as a structured enum). Required for context engine Example Library mapping.
+3. **Zone verification scenario language → profession-agnostic** (was university/assignment-centric). Form now serves teachers, working professionals, entrepreneurs, and university students.
+4. **Situation/Goals placeholders → profession-agnostic** (removed university-specific examples).
+5. **Form introduction language → profession-agnostic** ("Most students do" → "Many people do").
+6. **Cluster assignment formula (Column U)** was marked pending in this revision; Decision 3 was later closed with Option F stratified assignment.
 
 ---
 
@@ -245,12 +268,12 @@ Form Introduction:
    There are no right or wrong answers. Your honest responses help us support you.
    This takes 10-15 minutes. All responses are confidential (Trevor only).
 
-   It's okay if you feel anxious about AI. Most students do.
+   It's okay if you feel anxious about AI. Many people do.
    You're in the right place."
 
 Sections:
   0. Age Verification (for minors consent)
-  1. Basic Information (name, email, last name for cluster)
+  1. Basic Information (name, email, profession, Discord username, last name)
   2. AI Experience & Zone Assessment (where are you starting?)
   3. Emotional Baseline (anxiety, belonging, motivation)
   4. Goals & Expectations (what brings you to this cohort?)
@@ -258,18 +281,45 @@ Sections:
   6. Consent & Preferences (weekly updates, privacy)
 
 Response Validation:
-  - Required fields: Age, Name, Email, Last Name, Zone Assessment, Parent Contact
+  - Required fields: Age, Name, Email, Profession, Discord Username, Last Name, Zone Assessment, Parent Contact
   - Optional fields: Emotional baseline (can skip), goals (can skip), weekly updates consent (can decide later)
   - Format validation: Email addresses, phone numbers (Kenya: 254XXXXXXXXX or International: +XXXXXXXXXX)
+
+Section 1 — NEW REQUIRED FIELDS (added 2026-03-03):
+
+```yaml
+Question: "What best describes your current role?"
+Type: Dropdown (structured — maps directly to context engine profession enum)
+Options:
+  - Teacher / Educator
+  - Entrepreneur / Business Owner
+  - University / College Student
+  - Working Professional (employed, not in school)
+  - Gap Year (finished secondary school, figuring out next steps)
+  - Other (please describe in the box below)
+
+Required: Yes
+Maps to: students.profession enum [teacher | entrepreneur | university_student | working_professional | gap_year_student | other]
+Purpose: Powers KIRA's profession-specific examples + barrier inference prior
+Note: If "Other" selected, student sees a short-answer follow-up: "Describe your situation briefly"
+
+Question: "What is your Discord username?"
+Type: Short answer
+Placeholder: "E.g., trevor_k2m  (find it in Discord Settings → My Account)"
+Required: YES — this is how KIRA recognises you when you join the server
+Validation: Must not be blank. Format hint shown. No @ symbol needed.
+Maps to: students.discord_username (primary linking key for pre-load bridge)
+```
 
 Completion Message:
   "Thanks for sharing! Your responses help us create a great experience for you.
    Next steps:
-   1. Join the Discord server (link in #announcements)
-   2. Check #welcome for orientation
-   3. Week 1 starts Monday
+   1. Wait for your confirmation email (we'll verify your payment first)
+   2. Once confirmed: check your email for the Discord invite link
+   3. Join the Discord server using that link
+   4. KIRA will DM you as soon as you arrive — she already knows who you are
 
-   Questions? Check #welcome or ask in #announcements. Trevor will DM you before Week 1 starts."
+   Questions? Email Trevor at k2m.labs@gmail.com"
 ```
 
 **Google Sheets Output Structure:**
@@ -282,27 +332,31 @@ Column Headers:
   C: First Name
   D: Last Name (for cluster assignment)
   E: Email Address
-  F: Discord Username (optional, for matching)
-  G: Age (16/17/18/19+)
-  H: Zone Self-Assessment (Zone 0, Zone 1, Zone 2, Zone 3, Zone 4)
-  I: Zone Verification (scenario-based, validates self-assessment)
-  J: AI Experience Level (Never used, Tried a few times, Use regularly, Use daily)
-  K: Anxiety Level (1-10 scale, with anchors: 1="Calm", 5="Nervous", 10="Panicked")
-  L: Confidence Level (Not at all / Somewhat / Fairly / Very / Haven't thought)
-  M: Motivation (Free text: "What brings you to this cohort?")
-  N: Goals (Free text: "What do you hope to achieve?")
-  O: 4 Habits Pre-Assessment (Checkboxes: Pause, Context, Iterate, Think First, None yet)
-  P: Parent/Guardian Name (Required)
-  Q: Parent Phone Number (Required, format: 254XXXXXXXXX or +XXXXXXXXXX)
-  R: Parent Email Address (Required)
-  S: Emergency Contact Backup (Optional - alternative phone if we can't reach parent)
-  T: Weekly Updates Consent (Yes / No / Not sure yet)
-  U: Cluster Assignment (Formula: =IF(UPPER(LEFT(D2,1))<="F", "Cluster 1", IF(UPPER(LEFT(D2,1))<="L", "Cluster 2", IF(UPPER(LEFT(D2,1))<="R", "Cluster 3", "Cluster 4"))))
-  V: Crisis Flag (Formula: =IF(K>=7, "HIGH ANXIETY", IF(OR(M="want to die", M="hopeless", M="can't go on", M="suicide", M="self-harm"), "CRISIS", "OK")))
-  W: Intervention Priority (Formula: =IF(AND(H="Zone 0", K>=7), "LEVEL 3: IMMEDIATE outreach", IF(AND(H="Zone 0", K>=5), "LEVEL 2: Monitor + DM", IF(K>=8, "LEVEL 3: Check in", "LEVEL 1: Normal monitoring"))))
-  X: Trevor Review Notes (Manual: Trevor adds notes after review)
-  Y: Outreach Status (Manual: Not contacted, Nudged, DM sent, Call scheduled, Crisis contacted)
-  Z: Data Retention Date (Auto-calculated: Timestamp + 180 days)
+  F: Discord Username (REQUIRED — primary key for bot pre-load linking via member_join handler)
+  G: Profession (REQUIRED — structured dropdown: teacher | entrepreneur | university_student | working_professional | gap_year_student | other)
+  H: Age (16/17/18/19+)
+  I: Zone Self-Assessment (Zone 0, Zone 1, Zone 2, Zone 3, Zone 4)
+  J: Zone Verification (scenario-based, validates self-assessment)
+  K: AI Experience Level (Never used, Tried a few times, Use regularly, Use daily)
+  L: Anxiety Level (1-10 scale, with anchors: 1="Calm", 5="Nervous", 10="Panicked")
+  M: Confidence Level (Not at all / Somewhat / Fairly / Very / Haven't thought)
+  N: Motivation / Situation (Free text: "What's your day-to-day work context?")
+  O: Goals (Free text: "What do you hope to achieve?")
+  P: 4 Habits Pre-Assessment (Checkboxes: Pause, Context, Iterate, Think First, None yet)
+  Q: Parent/Guardian Name (Required)
+  R: Parent Phone Number (Required, format: 254XXXXXXXXX or +XXXXXXXXXX)
+  S: Parent Email Address (Required)
+  T: Emergency Contact Backup (Optional - alternative phone if we can't reach parent)
+  U: Weekly Updates Consent (Yes / No / Not sure yet)
+  V: Cluster Assignment (Decision 3 CLOSED: Option F stratified assignment + Trevor override.
+     This is written by assignment automation/manual override workflow, not a static alphabetical sheet formula.)
+  W: Crisis Flag (Formula: =IF(L>=7, "HIGH ANXIETY", IF(OR(N="want to die", N="hopeless", N="can't go on", N="suicide", N="self-harm"), "CRISIS", "OK")))
+  X: Intervention Priority (Formula: =IF(AND(I="Zone 0", L>=7), "LEVEL 3: IMMEDIATE outreach", IF(AND(I="Zone 0", L>=5), "LEVEL 2: Monitor + DM", IF(L>=8, "LEVEL 3: Check in", "LEVEL 1: Normal monitoring"))))
+  Y: Payment Status (Manual: Pending / Confirmed / Failed — Trevor marks after verifying M-Pesa)
+  Z: Trevor Review Notes (Manual: Trevor adds notes after review)
+  AA: Outreach Status (Manual: Not contacted, Nudged, DM sent, Call scheduled, Crisis contacted)
+  AB: Pre-load Status (Manual/Auto: Pending / Loaded / Unmatched — updated by preload_students.py)
+  AC: Data Retention Date (Auto-calculated: Timestamp + 180 days)
 
 Note: For future optimization, consider using named ranges instead of column letters for formula resilience.
 ```
@@ -392,7 +446,7 @@ Options:
         I'm curious what it can do for me."
 
   C. "AI does tasks for me" (Zone 2)
-     → "I use AI sometimes (homework help, questions, etc.)
+     → "I use AI sometimes (drafting, research, questions, etc.)
         It helps but I'm not confident with it yet."
 
   D. "AI understands my intent / I collaborate with it" (Zone 3)
@@ -414,16 +468,16 @@ Guardrail Compliance: No "should" language, non-prescriptive, self-identificatio
 Question: "Which scenario sounds MOST like you?"
 Type: Multiple choice (single answer)
 Options:
-  A. "I wouldn't know where to start. I'd ask a friend or just do it myself." (Zone 0)
+  A. "I wouldn't know where to start. I'd ask a friend or just figure it out myself." (Zone 0)
   B. "I'd open ChatGPT and type 'help me with [topic].'" (Zone 1)
-  C. "I'd open ChatGPT and explain: 'I'm working on [assignment], here's what I know so far...'" (Zone 2)
+  C. "I'd open ChatGPT and explain: 'I'm working on [task], here's what I know so far...'" (Zone 2)
   D. "I'd have a back-and-forth conversation: 'Here's my situation. What do you think? Okay, now let's try this...'" (Zone 3)
   E. "I'd direct it: 'Draft me three options for [topic]. Now make the second one more specific to my situation.'" (Zone 4)
 
 Required: Yes
 Validation: Must choose one
 Purpose: Verifies self-assessment (if mismatch, Trevor flags for support)
-Guardrail Compliance: JTBD-relevant examples (assignments, homework), no comparison
+Guardrail Compliance: Profession-agnostic examples — works for teachers, professionals, students, entrepreneurs. No university/assignment-specific language.
 ```
 
 **Zone Mapping Logic (Trevor's Manual Review):**
@@ -442,7 +496,7 @@ If Self-Assessment = Zone 2 BUT Verification = Zone 1:
   → Trevor flag: Build confidence before advancing, Habit 2 focus (context)
 
 If Self-Assessment = Zone 3 OR Zone 4:
-  → Rare for pre-university students
+  → Less common but possible — especially for working professionals and teachers with existing AI habits
   → Trevor flag: Verify genuine (ask follow-up in Discord DM)
   → If genuine: Advanced scaffolding, Habit 3-4 focus, leadership opportunities
 ```
@@ -496,17 +550,19 @@ Required: No (optional - this helps us support you better)
 Purpose: Belonging cue assessment (self-assessment only, Guardrail #3 compliant)
 Trevor flag: If "Not at all confident" + Anxiety >= 7 → belonging intervention
 
-Question 4: "What brings you to this cohort?"
+Question 4: "What's your day-to-day work or study context? (Describe what you actually do)"
 Type: Paragraph (free text)
-Placeholder: "E.g., 'I'm starting university soon and want to feel more confident with AI' or 'My parents suggested this and I'm curious'"
+Placeholder: "E.g., 'I teach Form 3 Chemistry at a secondary school in Nakuru' or 'I run an M-Pesa outlet in Githurai' or 'I'm in second year studying Economics at UoN' or 'I just finished KCSE and figuring out what's next'"
+Maps to: students.situation (used by context engine for KIRA personalisation)
 
 Required: No (optional)
-Purpose: Understand motivation, tailor interventions
+Purpose: Understand professional context, power KIRA's profession-specific examples
 Guardrail: No judgment, accept any answer
 
 Question 5: "What do you hope to achieve by the end of Week 8?"
 Type: Paragraph (free text)
-Placeholder: "E.g., 'Feel confident using AI for university assignments' or 'Stop feeling like everyone else is ahead of me'"
+Placeholder: "E.g., 'Use AI to plan my lessons better without losing my own judgment' or 'Stop feeling like everyone else gets it except me' or 'Build a habit of pausing before I react to problems'"
+Maps to: students.goals (used by context engine for KIRA personalisation)
 
 Required: No (optional)
 Purpose: Goal tracking, artifact preparation
@@ -842,36 +898,31 @@ Scenario 4: Zone 0 Student, Low Engagement (Week 2)
 
 ### Cluster Assignment Logic (Story 5.1 Integration)
 
-**Automatic Assignment (By Last Name):**
+**⚠️ PENDING DECISION — Trevor Decision 3 Required**
 
 ```yaml
-Google Sheets Formula (Column U: Cluster Assignment):
+STATUS: Cluster assignment logic is under redesign.
+Current alphabetical formula (below) is a PLACEHOLDER.
+Trevor must decide the new cluster assignment strategy before this formula is finalised.
+See 2026-03-03 PM session notes for Decision 3 options.
+
+CURRENT PLACEHOLDER Formula (Column V: Cluster Assignment):
 =IF(UPPER(LEFT(D2,1))<="F", "Cluster 1",
  IF(UPPER(LEFT(D2,1))<="L", "Cluster 2",
   IF(UPPER(LEFT(D2,1))<="R", "Cluster 3",
    "Cluster 4")))
 
-Logic:
-  - Last name A-F → Cluster 1
-  - Last name G-L → Cluster 2
-  - Last name M-R → Cluster 3
-  - Last name S-Z → Cluster 4
+WHY THIS IS BEING REPLACED:
+  - Alphabetical assignment has zero pedagogical value
+  - Mixed audience (teachers, professionals, students) makes time-slot compatibility
+    more important than alphabetical proximity
+  - Proposed replacement: time-slot preference (primary) + zone bracket (secondary)
+    once Trevor makes Decision 3
 
-Case-Insensitive Handling:
-  - UPPER(LEFT(D2,1)) ensures "SMITH", "Smith", "smith" all → S → Cluster 4
-  - Formula works for uppercase, lowercase, or mixed-case last names
-
-Balance Check:
-  - Cluster 1: COUNTIF(U:U, "Cluster 1")
-  - Cluster 2: COUNTIF(U:U, "Cluster 2")
-  - Cluster 3: COUNTIF(U:U, "Cluster 3")
-  - Cluster 4: COUNTIF(U:U, "Cluster 4")
-
-If any cluster >25 students:
-  - Trevor creates Cluster 5 (A-F second group)
-  - Trevor rebalances: Move excess students to Cluster 5
-  - Update cluster assignment formula
-  - Notify affected students: DM with cluster change explanation
+ONCE DECISION 3 IS MADE:
+  - Add "Preferred session time" question to form (e.g., 6 PM EAT Mon/Wed/Fri vs Tue/Thu/Sat)
+  - Update Column V formula to assign by time-slot group
+  - Update this section with confirmed logic
 ```
 
 **Cluster Edge Cases (Manual Override Process):**

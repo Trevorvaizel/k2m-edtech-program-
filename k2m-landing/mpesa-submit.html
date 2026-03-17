@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>K2M M-Pesa Submission</title>
+  </head>
+  <body class="k2m-form-page">
+    <main class="k2m-form-shell">
+      <h1>Step 3 of 4: Submit M-Pesa Code</h1>
+      <p class="lead">
+        Paste the M-Pesa confirmation code from your payment message.
+      </p>
+      <p class="k2m-note">
+        Codes are 10 letters/numbers (example: <strong>QGJ8YOAT3T</strong>).
+      </p>
+
+      <form id="mpesaForm" class="k2m-form" novalidate>
+        <div>
+          <label for="token">Secure token</label>
+          <input id="token" type="text" readonly />
+        </div>
+
+        <div>
+          <label for="mpesaCode">M-Pesa code *</label>
+          <input
+            id="mpesaCode"
+            type="text"
+            maxlength="10"
+            pattern="[A-Za-z0-9]{10}"
+            placeholder="e.g. QGJ8YOAT3T"
+            required
+          />
+        </div>
+
+        <button id="submitMpesa" type="submit">Submit M-Pesa Code</button>
+      </form>
+
+      <p id="tokenHint" class="k2m-note"></p>
+      <div id="mpesaStatus" class="k2m-status" hidden></div>
+    </main>
+
+    <script type="module" src="/src/forms/mpesa-submit.js"></script>
+  </body>
+</html>

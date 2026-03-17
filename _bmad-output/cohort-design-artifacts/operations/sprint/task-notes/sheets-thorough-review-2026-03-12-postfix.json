@@ -1,0 +1,315 @@
+{
+  "spreadsheet_title": "K2M Cohort #1 - Operations Templates",
+  "spreadsheet_id": "16tLQbGUF9mI2z2cHxlwmGce6Npui0C5w8e1y46uanH0",
+  "structure": {
+    "expected_tabs": [
+      "Student Roster",
+      "Submissions Log",
+      "Intervention Tracking",
+      "Progress Dashboard",
+      "Summary",
+      "Example_Library",
+      "Intervention_Library"
+    ],
+    "actual_tabs": [
+      "Student Roster",
+      "Submissions Log",
+      "Intervention Tracking",
+      "Progress Dashboard",
+      "Summary",
+      "Example_Library",
+      "Intervention_Library"
+    ],
+    "missing_tabs": [],
+    "extra_tabs": [],
+    "hidden_tabs": []
+  },
+  "headers": {
+    "Student Roster": {
+      "expected": [
+        "enrollment_name",
+        "enrollment_email",
+        "phone_number",
+        "discord_id",
+        "profession",
+        "zone",
+        "situation",
+        "goals",
+        "emotional_baseline",
+        "parent_email",
+        "mpesa_code",
+        "payment_status",
+        "notes",
+        "created_at",
+        "activated_at",
+        "submit_token",
+        "token_expiry",
+        "invite_code",
+        "zone_verification",
+        "anxiety_level",
+        "habits_baseline",
+        "stage1_nudge_email_sent"
+      ],
+      "actual": [
+        "enrollment_name",
+        "enrollment_email",
+        "phone_number",
+        "discord_id",
+        "profession",
+        "zone",
+        "situation",
+        "goals",
+        "emotional_baseline",
+        "parent_email",
+        "mpesa_code",
+        "payment_status",
+        "notes",
+        "created_at",
+        "activated_at",
+        "submit_token",
+        "token_expiry",
+        "invite_code",
+        "zone_verification",
+        "anxiety_level",
+        "habits_baseline",
+        "stage1_nudge_email_sent"
+      ],
+      "matches": true
+    },
+    "Example_Library": {
+      "expected": [
+        "id",
+        "profession",
+        "example_text",
+        "week_relevant",
+        "habit_tag"
+      ],
+      "actual": [
+        "id",
+        "profession",
+        "example_text",
+        "week_relevant",
+        "habit_tag"
+      ],
+      "matches": true
+    },
+    "Intervention_Library": {
+      "expected": [
+        "id",
+        "barrier_type",
+        "week_range",
+        "intervention_text"
+      ],
+      "actual": [
+        "id",
+        "barrier_type",
+        "week_range",
+        "intervention_text"
+      ],
+      "matches": true
+    }
+  },
+  "errors": {
+    "Student Roster": {
+      "count": 0,
+      "sample": []
+    },
+    "Submissions Log": {
+      "count": 0,
+      "sample": []
+    },
+    "Intervention Tracking": {
+      "count": 0,
+      "sample": []
+    },
+    "Progress Dashboard": {
+      "count": 0,
+      "sample": []
+    },
+    "Summary": {
+      "count": 0,
+      "sample": []
+    },
+    "Example_Library": {
+      "count": 0,
+      "sample": []
+    },
+    "Intervention_Library": {
+      "count": 0,
+      "sample": []
+    }
+  },
+  "roster_quality": {
+    "data_rows": 16,
+    "duplicate_emails": [],
+    "duplicate_discord_ids": [],
+    "invalid_dropdown_values": {},
+    "confirmed_rows_missing_required": [
+      {
+        "row": 3,
+        "missing": [
+          "discord_id",
+          "activated_at"
+        ]
+      },
+      {
+        "row": 4,
+        "missing": [
+          "discord_id"
+        ]
+      },
+      {
+        "row": 12,
+        "missing": [
+          "discord_id",
+          "activated_at"
+        ]
+      }
+    ]
+  },
+  "dropdown_validation": {
+    "E": {
+      "expected": [
+        "teacher",
+        "entrepreneur",
+        "university_student",
+        "working_professional",
+        "gap_year_student",
+        "other"
+      ],
+      "actual": [
+        "teacher",
+        "entrepreneur",
+        "university_student",
+        "working_professional",
+        "gap_year_student",
+        "other"
+      ],
+      "matches": true
+    },
+    "F": {
+      "expected": [
+        "Zone 0",
+        "Zone 1",
+        "Zone 2",
+        "Zone 3",
+        "Zone 4"
+      ],
+      "actual": [
+        "Zone 0",
+        "Zone 1",
+        "Zone 2",
+        "Zone 3",
+        "Zone 4"
+      ],
+      "matches": true
+    },
+    "I": {
+      "expected": [
+        "excited",
+        "nervous",
+        "curious",
+        "skeptical",
+        "overwhelmed"
+      ],
+      "actual": [
+        "excited",
+        "nervous",
+        "curious",
+        "skeptical",
+        "overwhelmed"
+      ],
+      "matches": true
+    },
+    "L": {
+      "expected": [
+        "Lead",
+        "Waitlisted",
+        "Enrolled",
+        "Pending",
+        "Unverifiable",
+        "Confirmed"
+      ],
+      "actual": [
+        "Lead",
+        "Waitlisted",
+        "Enrolled",
+        "Pending",
+        "Unverifiable",
+        "Confirmed"
+      ],
+      "matches": true
+    },
+    "S": {
+      "expected": [
+        "Zone 0",
+        "Zone 1",
+        "Zone 2",
+        "Zone 3",
+        "Zone 4"
+      ],
+      "actual": [
+        "Zone 0",
+        "Zone 1",
+        "Zone 2",
+        "Zone 3",
+        "Zone 4"
+      ],
+      "matches": true
+    },
+    "T": {
+      "expected": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "actual": [
+        "1",
+        "2",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10"
+      ],
+      "matches": true
+    },
+    "U": {
+      "expected": [
+        "Pause",
+        "Context",
+        "Iterate",
+        "Think First",
+        "None yet"
+      ],
+      "actual": [
+        "Pause",
+        "Context",
+        "Iterate",
+        "Think First",
+        "None yet"
+      ],
+      "matches": true
+    }
+  },
+  "libraries": {
+    "Example_Library": {
+      "data_rows": 0,
+      "issues": []
+    },
+    "Intervention_Library": {
+      "data_rows": 0,
+      "issues": []
+    }
+  }
+}

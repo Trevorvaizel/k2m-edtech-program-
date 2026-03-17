@@ -28,6 +28,7 @@ from cis_controller.safety_filter import (
     safety_filter,
     notify_trevor_safety_violation,
 )
+from cis_controller.welcome_lounge import handle_welcome_lounge_message
 import logging
 
 logger = logging.getLogger(__name__)
@@ -36,6 +37,7 @@ logger = logging.getLogger(__name__)
 store = get_store()
 _escalation_system = None
 _participation_tracker = None
+_onboarding_message_handler = None
 
 # Commands managed by CIS Controller (non-core bot commands like /ping bypass this).
 CONTROLLED_COMMANDS = {
@@ -338,7 +340,7 @@ async def route_student_interaction(message: discord.Message, bot=None):
                     source="student_dm_phrase",
                 )
                 await message.reply(
-                    "âœ… Consent recorded for journey inspection (valid for 24 hours). "
+                    "Consent recorded for journey inspection (valid for 24 hours). "
                     "You can revoke anytime by sending: `revoke journey inspection consent`."
                 )
                 return
@@ -348,7 +350,7 @@ async def route_student_interaction(message: discord.Message, bot=None):
                     discord_id=discord_id,
                     consent_type="journey_inspection",
                 )
-                await message.reply("âœ… Journey inspection consent revoked.")
+                await message.reply("Journey inspection consent revoked.")
                 return
 
             from commands.frame import (
@@ -479,7 +481,7 @@ async def handle_command(
     except Exception as e:
         logger.error(f"Error handling command {command}: {e}")
         await message.reply(
-            "**âš ï¸ Something went wrong.**\n\n"
+            "**Something went wrong.**\n\n"
             "The bot encountered an error. Try again in a moment."
         )
 
@@ -533,7 +535,7 @@ async def friendly_lockout_message(message: discord.Message, student, agent: str
     available = get_unlocked_agents(current_week)
     available_cmds = ", ".join([f"/{cmd}" for cmd in available])
 
-    response = f"""ðŸ”’ **{agent.capitalize()} unlocks Week {unlock_week}!**
+    response = f"""[LOCKED] **{agent.capitalize()} unlocks Week {unlock_week}!**
 
 You're currently in Week {current_week} - exactly where you should be.
 
@@ -542,14 +544,14 @@ You're currently in Week {current_week} - exactly where you should be.
 
 **Why the sequence matters:**
 Each agent builds on the 4 Habits you're learning:
-- â¸ï¸ **Pause** (Week 1): Know what you want
-- ðŸŽ¯ **Context** (Week 2): AI responds to YOUR situation
-- ðŸ”„ **Iterate** (Week 4): Explore one thing at a time
-- ðŸ§  **Think First** (Week 6): Use AI before decisions
+- **Pause** (Week 1): Know what you want
+- **Context** (Week 2): AI responds to YOUR situation
+- **Iterate** (Week 4): Explore one thing at a time
+- **Think First** (Week 6): Use AI before decisions
 
 The {agent.capitalize()} will make more sense after practicing the earlier ones.
 
-**You're on track. Keep going!** âœ¨"""
+**You're on track. Keep going!**"""
 
     await message.reply(response)
 
@@ -576,6 +578,20 @@ def setup_bot_events(bot: commands.Bot):
         # Ignore bot's own messages
         if message.author.bot:
             return
+
+        # Task 7.7: onboarding DM progression handler with strict DM scoping.
+        if _onboarding_message_handler:
+            try:
+                handled = await _onboarding_message_handler(message)
+                if handled:
+                    return
+            except Exception as onboarding_error:
+                logger.error(
+                    "Onboarding message handler failed for %s: %s",
+                    message.author.id,
+                    onboarding_error,
+                    exc_info=True,
+                )
 
         # Track participation/reactions for weekly channels when enabled.
         if _participation_tracker:
@@ -640,6 +656,19 @@ def setup_bot_events(bot: commands.Bot):
                 )
                 return
 
+        # Task 7.12: handle guest Q&A in #welcome-lounge before command routing.
+        try:
+            lounge_handled = await handle_welcome_lounge_message(bot=bot, message=message)
+            if lounge_handled:
+                return
+        except Exception as lounge_error:
+            logger.error(
+                "Welcome lounge handler failed for %s: %s",
+                message.author.id,
+                lounge_error,
+                exc_info=True,
+            )
+
         # Only process DMs or messages in designated channels
         if isinstance(message.channel, discord.DMChannel) or _is_designated_channel(message.channel):
             await route_student_interaction(message, bot=bot)
@@ -648,13 +677,18 @@ def setup_bot_events(bot: commands.Bot):
         await bot.process_commands(message)
 
 
-def set_runtime_services(escalation_system=None, participation_tracker=None):
+def set_runtime_services(
+    escalation_system=None,
+    participation_tracker=None,
+    onboarding_message_handler=None,
+):
     """
     Inject runtime services created in main.py after bot startup.
     """
-    global _escalation_system, _participation_tracker
+    global _escalation_system, _participation_tracker, _onboarding_message_handler
     _escalation_system = escalation_system
     _participation_tracker = participation_tracker
+    _onboarding_message_handler = onboarding_message_handler
 
 
 async def _collect_recent_public_messages(

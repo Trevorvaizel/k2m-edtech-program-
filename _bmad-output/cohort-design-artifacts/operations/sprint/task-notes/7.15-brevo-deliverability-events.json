@@ -1,0 +1,363 @@
+{
+  "timestamp_utc": "2026-03-12T05:06:29Z",
+  "task_id": "7.15",
+  "provider_scope": [
+    "gmail",
+    "k2mlabs_domain_mailbox"
+  ],
+  "method": "message considered delivered if Brevo event stream for that message contains at least one delivered event",
+  "events": [
+    {
+      "source_file": "_bmad-output/cohort-design-artifacts/operations/sprint/task-notes/7.15-brevo-preview-k2m-labs-gmail.json",
+      "template_key": "email_1",
+      "template_id": 3,
+      "message_id": "<202603120456.31369306823@smtp-relay.mailin.fr>",
+      "has_delivered_event": true,
+      "event_types": [
+        "delivered",
+        "requests"
+      ],
+      "latest_event": "delivered",
+      "latest_event_at": "2026-03-12T05:56:47+01:00",
+      "recipient": "k2m.labs@gmail.com",
+      "subject": "Your spot in the AI Confidence Cohort is waiting \ud83d\ude80",
+      "events_count": 2
+    },
+    {
+      "source_file": "_bmad-output/cohort-design-artifacts/operations/sprint/task-notes/7.15-brevo-preview-k2m-labs-gmail.json",
+      "template_key": "email_1_5",
+      "template_id": 4,
+      "message_id": "<202603120456.78381954191@smtp-relay.mailin.fr>",
+      "has_delivered_event": true,
+      "event_types": [
+        "delivered",
+        "requests"
+      ],
+      "latest_event": "delivered",
+      "latest_event_at": "2026-03-12T05:56:48+01:00",
+      "recipient": "k2m.labs@gmail.com",
+      "subject": "We're holding your spot \u2014 join Discord to continue (Step 2 of 4)",
+      "events_count": 2
+    },
+    {
+      "source_file": "_bmad-output/cohort-design-artifacts/operations/sprint/task-notes/7.15-brevo-preview-k2m-labs-gmail.json",
+      "template_key": "email_1_75",
+      "template_id": 5,
+      "message_id": "<202603120456.56381608858@smtp-relay.mailin.fr>",
+      "has_delivered_event": true,
+      "event_types": [
+        "delivered",
+        "requests"
+      ],
+      "latest_event": "delivered",
+      "latest_event_at": "2026-03-12T05:56:49+01:00",
+      "recipient": "k2m.labs@gmail.com",
+      "subject": "Last chance \u2014 your Discord invite expires soon (Step 2 of 4)",
+      "events_count": 2
+    },
+    {
+      "source_file": "_bmad-output/cohort-design-artifacts/operations/sprint/task-notes/7.15-brevo-preview-k2m-labs-gmail.json",
+      "template_key": "email_2",
+      "template_id": 6,
+      "message_id": "<202603120456.49491957114@smtp-relay.mailin.fr>",
+      "has_delivered_event": true,
+      "event_types": [
+        "delivered",
+        "requests"
+      ],
+      "latest_event": "delivered",
+      "latest_event_at": "2026-03-12T05:56:50+01:00",
+      "recipient": "k2m.labs@gmail.com",
+      "subject": "One step left \u2014 complete your payment to lock in your spot (Step 3 of 4)",
+      "events_count": 2
+    },
+    {
+      "source_file": "_bmad-output/cohort-design-artifacts/operations/sprint/task-notes/7.15-brevo-preview-k2m-labs-gmail.json",
+      "template_key": "email_3",
+      "template_id": 7,
+      "message_id": "<202603120456.11097657999@smtp-relay.mailin.fr>",
+      "has_delivered_event": true,
+      "event_types": [
+        "opened",
+        "opened",
+        "delivered",
+        "requests"
+      ],
+      "latest_event": "opened",
+      "latest_event_at": "2026-03-12T06:01:23.685+01:00",
+      "recipient": "k2m.labs@gmail.com",
+      "subject": "Payment received \u2014 verification in progress (Step 4 of 4)",
+      "events_count": 4
+    },
+    {
+      "source_file": "_bmad-output/cohort-design-artifacts/operations/sprint/task-notes/7.15-brevo-preview-k2m-labs-gmail.json",
+      "template_key": "email_4",
+      "template_id": 8,
+      "message_id": "<202603120456.15825688911@smtp-relay.mailin.fr>",
+      "has_delivered_event": true,
+      "event_types": [
+        "opened",
+        "opened",
+        "delivered",
+        "requests"
+      ],
+      "latest_event": "opened",
+      "latest_event_at": "2026-03-12T06:01:23.203+01:00",
+      "recipient": "k2m.labs@gmail.com",
+      "subject": "You're in \u2014 Welcome to Cohort 1! \ud83c\udf89",
+      "events_count": 4
+    },
+    {
+      "source_file": "_bmad-output/cohort-design-artifacts/operations/sprint/task-notes/7.15-brevo-preview-k2m-labs-gmail.json",
+      "template_key": "email_5",
+      "template_id": 9,
+      "message_id": "<202603120456.54638705060@smtp-relay.mailin.fr>",
+      "has_delivered_event": true,
+      "event_types": [
+        "opened",
+        "delivered",
+        "requests"
+      ],
+      "latest_event": "opened",
+      "latest_event_at": "2026-03-12T06:01:06.289+01:00",
+      "recipient": "k2m.labs@gmail.com",
+      "subject": "You're on the priority list \u2014 we'll notify you first",
+      "events_count": 3
+    },
+    {
+      "source_file": "_bmad-output/cohort-design-artifacts/operations/sprint/task-notes/7.15-brevo-preview-trevor-k2mlabs.json",
+      "template_key": "email_1",
+      "template_id": 3,
+      "message_id": "<202603120457.42359853941@smtp-relay.mailin.fr>",
+      "has_delivered_event": true,
+      "event_types": [
+        "delivered",
+        "requests"
+      ],
+      "latest_event": "delivered",
+      "latest_event_at": "2026-03-12T05:57:06+01:00",
+      "recipient": "trevor@k2mlabs.com",
+      "subject": "Your spot in the AI Confidence Cohort is waiting \ud83d\ude80",
+      "events_count": 2
+    },
+    {
+      "source_file": "_bmad-output/cohort-design-artifacts/operations/sprint/task-notes/7.15-brevo-preview-trevor-k2mlabs.json",
+      "template_key": "email_1_5",
+      "template_id": 4,
+      "message_id": "<202603120457.23734417604@smtp-relay.mailin.fr>",
+      "has_delivered_event": true,
+      "event_types": [
+        "delivered",
+        "requests"
+      ],
+      "latest_event": "delivered",
+      "latest_event_at": "2026-03-12T05:57:07+01:00",
+      "recipient": "trevor@k2mlabs.com",
+      "subject": "We're holding your spot \u2014 join Discord to continue (Step 2 of 4)",
+      "events_count": 2
+    },
+    {
+      "source_file": "_bmad-output/cohort-design-artifacts/operations/sprint/task-notes/7.15-brevo-preview-trevor-k2mlabs.json",
+      "template_key": "email_1_75",
+      "template_id": 5,
+      "message_id": "<202603120457.49849104498@smtp-relay.mailin.fr>",
+      "has_delivered_event": true,
+      "event_types": [
+        "delivered",
+        "requests"
+      ],
+      "latest_event": "delivered",
+      "latest_event_at": "2026-03-12T05:57:09+01:00",
+      "recipient": "trevor@k2mlabs.com",
+      "subject": "Last chance \u2014 your Discord invite expires soon (Step 2 of 4)",
+      "events_count": 2
+    },
+    {
+      "source_file": "_bmad-output/cohort-design-artifacts/operations/sprint/task-notes/7.15-brevo-preview-trevor-k2mlabs.json",
+      "template_key": "email_2",
+      "template_id": 6,
+      "message_id": "<202603120457.33284646103@smtp-relay.mailin.fr>",
+      "has_delivered_event": true,
+      "event_types": [
+        "delivered",
+        "requests"
+      ],
+      "latest_event": "delivered",
+      "latest_event_at": "2026-03-12T05:57:10+01:00",
+      "recipient": "trevor@k2mlabs.com",
+      "subject": "One step left \u2014 complete your payment to lock in your spot (Step 3 of 4)",
+      "events_count": 2
+    },
+    {
+      "source_file": "_bmad-output/cohort-design-artifacts/operations/sprint/task-notes/7.15-brevo-preview-trevor-k2mlabs.json",
+      "template_key": "email_3",
+      "template_id": 7,
+      "message_id": "<202603120457.21367804249@smtp-relay.mailin.fr>",
+      "has_delivered_event": true,
+      "event_types": [
+        "delivered",
+        "requests"
+      ],
+      "latest_event": "delivered",
+      "latest_event_at": "2026-03-12T05:57:11+01:00",
+      "recipient": "trevor@k2mlabs.com",
+      "subject": "Payment received \u2014 verification in progress (Step 4 of 4)",
+      "events_count": 2
+    },
+    {
+      "source_file": "_bmad-output/cohort-design-artifacts/operations/sprint/task-notes/7.15-brevo-preview-trevor-k2mlabs.json",
+      "template_key": "email_4",
+      "template_id": 8,
+      "message_id": "<202603120457.77207758302@smtp-relay.mailin.fr>",
+      "has_delivered_event": true,
+      "event_types": [
+        "delivered",
+        "requests"
+      ],
+      "latest_event": "delivered",
+      "latest_event_at": "2026-03-12T05:57:11+01:00",
+      "recipient": "trevor@k2mlabs.com",
+      "subject": "You're in \u2014 Welcome to Cohort 1! \ud83c\udf89",
+      "events_count": 2
+    },
+    {
+      "source_file": "_bmad-output/cohort-design-artifacts/operations/sprint/task-notes/7.15-brevo-preview-trevor-k2mlabs.json",
+      "template_key": "email_5",
+      "template_id": 9,
+      "message_id": "<202603120457.53324836789@smtp-relay.mailin.fr>",
+      "has_delivered_event": true,
+      "event_types": [
+        "delivered",
+        "requests"
+      ],
+      "latest_event": "delivered",
+      "latest_event_at": "2026-03-12T05:57:12+01:00",
+      "recipient": "trevor@k2mlabs.com",
+      "subject": "You're on the priority list \u2014 we'll notify you first",
+      "events_count": 2
+    },
+    {
+      "source_file": "_bmad-output/cohort-design-artifacts/operations/sprint/task-notes/7.15-brevo-preview-joytrevor-gmail.json",
+      "template_key": "email_1",
+      "template_id": 3,
+      "message_id": "<202603120457.56683227576@smtp-relay.mailin.fr>",
+      "has_delivered_event": true,
+      "event_types": [
+        "delivered",
+        "requests"
+      ],
+      "latest_event": "delivered",
+      "latest_event_at": "2026-03-12T05:57:21+01:00",
+      "recipient": "joytrevor.jt@gmail.com",
+      "subject": "Your spot in the AI Confidence Cohort is waiting \ud83d\ude80",
+      "events_count": 2
+    },
+    {
+      "source_file": "_bmad-output/cohort-design-artifacts/operations/sprint/task-notes/7.15-brevo-preview-joytrevor-gmail.json",
+      "template_key": "email_1_5",
+      "template_id": 4,
+      "message_id": "<202603120457.86173745170@smtp-relay.mailin.fr>",
+      "has_delivered_event": true,
+      "event_types": [
+        "delivered",
+        "requests"
+      ],
+      "latest_event": "delivered",
+      "latest_event_at": "2026-03-12T05:57:22+01:00",
+      "recipient": "joytrevor.jt@gmail.com",
+      "subject": "We're holding your spot \u2014 join Discord to continue (Step 2 of 4)",
+      "events_count": 2
+    },
+    {
+      "source_file": "_bmad-output/cohort-design-artifacts/operations/sprint/task-notes/7.15-brevo-preview-joytrevor-gmail.json",
+      "template_key": "email_1_75",
+      "template_id": 5,
+      "message_id": "<202603120457.81317367906@smtp-relay.mailin.fr>",
+      "has_delivered_event": true,
+      "event_types": [
+        "requests",
+        "delivered"
+      ],
+      "latest_event": "requests",
+      "latest_event_at": "2026-03-12T05:57:22.087+01:00",
+      "recipient": "joytrevor.jt@gmail.com",
+      "subject": "Last chance \u2014 your Discord invite expires soon (Step 2 of 4)",
+      "events_count": 2
+    },
+    {
+      "source_file": "_bmad-output/cohort-design-artifacts/operations/sprint/task-notes/7.15-brevo-preview-joytrevor-gmail.json",
+      "template_key": "email_2",
+      "template_id": 6,
+      "message_id": "<202603120457.19099769712@smtp-relay.mailin.fr>",
+      "has_delivered_event": true,
+      "event_types": [
+        "delivered",
+        "requests"
+      ],
+      "latest_event": "delivered",
+      "latest_event_at": "2026-03-12T05:57:24+01:00",
+      "recipient": "joytrevor.jt@gmail.com",
+      "subject": "One step left \u2014 complete your payment to lock in your spot (Step 3 of 4)",
+      "events_count": 2
+    },
+    {
+      "source_file": "_bmad-output/cohort-design-artifacts/operations/sprint/task-notes/7.15-brevo-preview-joytrevor-gmail.json",
+      "template_key": "email_3",
+      "template_id": 7,
+      "message_id": "<202603120457.42091553466@smtp-relay.mailin.fr>",
+      "has_delivered_event": true,
+      "event_types": [
+        "delivered",
+        "requests"
+      ],
+      "latest_event": "delivered",
+      "latest_event_at": "2026-03-12T05:57:25+01:00",
+      "recipient": "joytrevor.jt@gmail.com",
+      "subject": "Payment received \u2014 verification in progress (Step 4 of 4)",
+      "events_count": 2
+    },
+    {
+      "source_file": "_bmad-output/cohort-design-artifacts/operations/sprint/task-notes/7.15-brevo-preview-joytrevor-gmail.json",
+      "template_key": "email_4",
+      "template_id": 8,
+      "message_id": "<202603120457.29458595380@smtp-relay.mailin.fr>",
+      "has_delivered_event": true,
+      "event_types": [
+        "requests",
+        "delivered"
+      ],
+      "latest_event": "requests",
+      "latest_event_at": "2026-03-12T05:57:25.019+01:00",
+      "recipient": "joytrevor.jt@gmail.com",
+      "subject": "You're in \u2014 Welcome to Cohort 1! \ud83c\udf89",
+      "events_count": 2
+    },
+    {
+      "source_file": "_bmad-output/cohort-design-artifacts/operations/sprint/task-notes/7.15-brevo-preview-joytrevor-gmail.json",
+      "template_key": "email_5",
+      "template_id": 9,
+      "message_id": "<202603120457.58483198228@smtp-relay.mailin.fr>",
+      "has_delivered_event": true,
+      "event_types": [
+        "delivered",
+        "requests"
+      ],
+      "latest_event": "delivered",
+      "latest_event_at": "2026-03-12T05:57:27+01:00",
+      "recipient": "joytrevor.jt@gmail.com",
+      "subject": "You're on the priority list \u2014 we'll notify you first",
+      "events_count": 2
+    }
+  ],
+  "summary": {
+    "total_messages": 21,
+    "delivered_by_any_event": 21,
+    "missing_delivered_event": 0,
+    "latest_event_breakdown": {
+      "delivered": 16,
+      "opened": 3,
+      "requests": 2
+    }
+  },
+  "overall_status": "pass"
+}

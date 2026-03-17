@@ -1,0 +1,94 @@
+{
+  "task": "7.13",
+  "timestamp_utc": "2026-03-11T14:02:00Z",
+  "base_url": "https://api.brevo.com/v3",
+  "domain": "k2m.edtech",
+  "sender_email": "trevor@k2m.edtech",
+  "sender_name": "Trevor from K2M",
+  "test_to": "trevor@k2m.edtech",
+  "actions": {
+    "ensure_domain": false,
+    "ensure_sender": false,
+    "send_test": true
+  },
+  "checks": {
+    "account": {
+      "status_code": 200,
+      "email": "k2m.labs@gmail.com",
+      "companyName": "K2M LABs"
+    },
+    "domain_detail": {
+      "status_code": 200,
+      "verified": false,
+      "authenticated": false,
+      "dns_records": {
+        "dkim_record": null,
+        "dkim1Record": {
+          "type": "CNAME",
+          "value": "b1.k2m-edtech.dkim.brevo.com",
+          "host_name": "brevo1._domainkey",
+          "status": false
+        },
+        "dkim2Record": {
+          "type": "CNAME",
+          "value": "b2.k2m-edtech.dkim.brevo.com",
+          "host_name": "brevo2._domainkey",
+          "status": false
+        },
+        "brevo_code": {
+          "type": "TXT",
+          "value": "brevo-code:a8500676b5dc8cf194ea2e605f995050",
+          "host_name": "@",
+          "status": false
+        },
+        "dmarc_record": {
+          "type": "TXT",
+          "value": "v=DMARC1; p=none; rua=mailto:rua@dmarc.brevo.com",
+          "host_name": "_dmarc",
+          "status": false
+        }
+      }
+    },
+    "sender": {
+      "exists": true,
+      "active": false,
+      "id": 2,
+      "email": "trevor@k2m.edtech"
+    },
+    "runtime_sender_env": {
+      "EMAIL_FROM": "trevor@k2mlabs.com",
+      "EMAIL_FROM_NAME": "Trevor from K2M",
+      "matches_target_sender": false
+    },
+    "test_send": {
+      "status_code": 201,
+      "messageId": "<202603111402.17389445624@smtp-relay.mailin.fr>",
+      "response": {
+        "messageId": "<202603111402.17389445624@smtp-relay.mailin.fr>"
+      },
+      "subject": "K2M Task 7.13 test send 2026-03-11T14:02:03Z"
+    },
+    "test_send_events": {
+      "status_code": 200,
+      "events": []
+    }
+  },
+  "blockers": [
+    "Brevo domain k2m.edtech is not authenticated.",
+    "Brevo domain k2m.edtech is not verified.",
+    "dkim1Record not verified (CNAME brevo1._domainkey)",
+    "dkim2Record not verified (CNAME brevo2._domainkey)",
+    "brevo_code not verified (TXT @)",
+    "dmarc_record not verified (TXT _dmarc)",
+    "Sender trevor@k2m.edtech exists but is not active.",
+    "EMAIL_FROM does not match target sender (trevor@k2m.edtech).",
+    "No Brevo event captured for test send."
+  ],
+  "next_actions": [
+    "Add/verify Brevo DNS records at your registrar, then re-run this script.",
+    "Activate/validate sender after domain authentication is complete.",
+    "After sender activation, set EMAIL_FROM to target sender in Railway and local env.",
+    "Re-run with --send-test and a longer --wait-seconds."
+  ],
+  "overall_status": "blocked"
+}

@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mockup 5: The Threshold</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Space+Grotesk:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --teal: #40E0D0;
+      --teal-border: rgba(64, 224, 208, 0.2);
+      --grey: #B0B0B0;
+    }
+
+    body {
+      background: #000;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+    }
+
+    .starfield { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 20px;
+      text-align: center;
+      position: relative;
+      z-index: 10;
+      background: radial-gradient(ellipse at center, rgba(32, 178, 170, 0.05) 0%, transparent 70%);
+    }
+
+    .hero-eyebrow {
+      font-size: 13px;
+      color: var(--teal);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      margin-bottom: 28px;
+    }
+
+    .hero-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(28px, 5vw, 60px);
+      font-weight: 700;
+      line-height: 1.15;
+      margin-bottom: 28px;
+      max-width: 900px;
+    }
+
+    .hero-title strong { color: var(--teal); }
+
+    .hero-sub {
+      font-size: clamp(16px, 2vw, 18px);
+      color: var(--grey);
+      line-height: 1.7;
+      max-width: 640px;
+    }
+
+    /* ── RESONANCE STUB ── */
+    .resonance-stub {
+      min-height: 55vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 80px 20px;
+      border-top: 1px solid rgba(64, 224, 208, 0.07);
+      position: relative;
+      z-index: 10;
+    }
+
+    .stub-label {
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--teal);
+      margin-bottom: 20px;
+    }
+
+    .stub-quote {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(20px, 3.5vw, 36px);
+      font-weight: 600;
+      max-width: 700px;
+      line-height: 1.35;
+    }
+
+    .stub-echo { margin-top: 20px; font-size: 14px; color: var(--teal); }
+
+    /* ── THRESHOLD SECTION ── */
+    /*
+     * Concept: One dramatic full-page moment. "Ready?" — and three vertical
+     * doorways open, each a distinct path. The user walks through theirs.
+     *
+     * No hover required. No modal. No orbit.
+     * Desktop: three side-by-side doorways.
+     * Mobile: full-width doorways stacked vertically — each is a tap target.
+     *
+     * The "wall" metaphor completes the hero's "the walls fell" narrative.
+     * The doorways ARE the walls falling. You step through.
+     */
+    .threshold-section {
+      position: relative;
+      z-index: 10;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 20px;
+      overflow: hidden;
+    }
+
+    /* Background text — very large, faint, behind the doors */
+    .threshold-bg-text {
+      position: absolute;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(80px, 20vw, 220px);
+      font-weight: 900;
+      color: rgba(255,255,255,0.02);
+      letter-spacing: -0.05em;
+      pointer-events: none;
+      user-select: none;
+      white-space: nowrap;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .threshold-heading {
+      text-align: center;
+      margin-bottom: 60px;
+      opacity: 0;
+      transform: translateY(40px);
+    }
+
+    .threshold-heading-eyebrow {
+      font-size: 11px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--teal);
+      margin-bottom: 16px;
+    }
+
+    .threshold-heading-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(36px, 6vw, 72px);
+      font-weight: 700;
+      line-height: 1.1;
+    }
+
+    .threshold-heading-sub {
+      margin-top: 16px;
+      font-size: 17px;
+      color: var(--grey);
+    }
+
+    /* The doorways */
+    .doorways {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      width: 100%;
+      max-width: 960px;
+    }
+
+    @media (min-width: 768px) {
+      .doorways {
+        flex-direction: row;
+        gap: 24px;
+        align-items: stretch;
+      }
+    }
+
+    .doorway {
+      position: relative;
+      flex: 1;
+      min-height: 360px;
+      border: 1px solid var(--card-border);
+      border-radius: 120px 120px 12px 12px; /* arch top */
+      overflow: hidden;
+      cursor: pointer;
+      opacity: 0;
+      transform: translateY(60px);
+      transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding: 0 28px 36px;
+    }
+
+    /* Mobile: flat rectangles feel like doors, not arches */
+    @media (max-width: 767px) {
+      .doorway {
+        min-height: 200px;
+        border-radius: 16px;
+        justify-content: center;
+        padding: 28px;
+      }
+    }
+
+    .doorway--student {
+      --card-border: rgba(64, 224, 208, 0.25);
+      --card-accent: #40E0D0;
+      --card-glow-color: rgba(64, 224, 208, 0.08);
+      background: radial-gradient(ellipse at 50% 0%, rgba(64, 224, 208, 0.08) 0%, transparent 70%);
+    }
+
+    .doorway--teacher {
+      --card-border: rgba(245, 158, 11, 0.25);
+      --card-accent: #F59E0B;
+      --card-glow-color: rgba(245, 158, 11, 0.08);
+      background: radial-gradient(ellipse at 50% 0%, rgba(245, 158, 11, 0.08) 0%, transparent 70%);
+    }
+
+    .doorway--professional {
+      --card-border: rgba(99, 102, 241, 0.25);
+      --card-accent: #818CF8;
+      --card-glow-color: rgba(99, 102, 241, 0.08);
+      background: radial-gradient(ellipse at 50% 0%, rgba(99, 102, 241, 0.08) 0%, transparent 70%);
+    }
+
+    .doorway:hover {
+      border-color: var(--card-accent);
+      box-shadow:
+        0 0 60px var(--card-glow-color),
+        0 0 0 1px var(--card-accent);
+      transform: translateY(-6px) scale(1.01);
+    }
+
+    /* The keyhole / light above each door */
+    .doorway-light {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 60px;
+      background: radial-gradient(circle, var(--card-accent) 0%, transparent 70%);
+      opacity: 0.15;
+      border-radius: 50%;
+      transition: opacity 0.4s ease, width 0.4s ease, height 0.4s ease;
+    }
+
+    .doorway:hover .doorway-light {
+      opacity: 0.4;
+      width: 120px;
+      height: 120px;
+    }
+
+    /* Door content */
+    .doorway-role {
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--card-accent);
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .doorway-name {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(20px, 2.5vw, 26px);
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 12px;
+      line-height: 1.2;
+    }
+
+    .doorway-promise {
+      font-size: 13px;
+      color: var(--grey);
+      text-align: center;
+      line-height: 1.6;
+      margin-bottom: 24px;
+    }
+
+    .doorway-status {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--card-accent);
+      margin-bottom: 20px;
+      text-align: center;
+      opacity: 0.8;
+    }
+
+    .doorway-btn {
+      padding: 14px 28px;
+      border: none;
+      border-radius: 10px;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-align: center;
+      display: block;
+      width: 100%;
+      text-decoration: none;
+    }
+
+    .doorway--student .doorway-btn {
+      background: linear-gradient(135deg, #20B2AA 0%, #008B8B 100%);
+      color: #000;
+      box-shadow: 0 4px 20px rgba(32, 178, 170, 0.3);
+    }
+
+    .doorway--teacher .doorway-btn {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      color: #F59E0B;
+    }
+
+    .doorway--professional .doorway-btn {
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      color: #818CF8;
+    }
+
+    .doorway-btn:hover {
+      filter: brightness(1.15);
+      transform: translateY(-1px);
+    }
+
+    /* Urgency note under student btn */
+    .doorway-urgency {
+      margin-top: 10px;
+      font-size: 11px;
+      color: rgba(255,255,255,0.35);
+      text-align: center;
+    }
+
+    /* The "floor" line — threshold you cross */
+    .threshold-floor {
+      width: 100%;
+      max-width: 960px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(64,224,208,0.3), transparent);
+      margin-top: 24px;
+      opacity: 0;
+    }
+
+    /* ── MOCKUP LABEL ── */
+    .mockup-label {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      background: rgba(10, 10, 10, 0.9);
+      border: 1px solid var(--teal);
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 11px;
+      color: var(--grey);
+      z-index: 9999;
+      max-width: 240px;
+      line-height: 1.5;
+    }
+
+    .mockup-label strong {
+      display: block;
+      color: var(--teal);
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    @media (max-width: 640px) { .mockup-label { display: none; } }
+  </style>
+</head>
+<body>
+
+  <div class="starfield" id="starfield"></div>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-eyebrow">The walls fell.</div>
+    <h1 class="hero-title">
+      Intelligence used to be locked behind universities and expensive experts.<br>
+      <strong>Not anymore.</strong>
+    </h1>
+    <p class="hero-sub">
+      AI changed that. But access alone isn't enough. The question now is
+      whether you know how to <em>think</em> with what's on the other side.
+    </p>
+  </section>
+
+  <!-- RESONANCE ZONES (stubs) -->
+  <section class="resonance-stub">
+    <div>
+      <div class="stub-label">Zone 0</div>
+      <div class="stub-quote">"I hear about it everywhere. But I don't know where to start."</div>
+      <div class="stub-echo">Sound familiar?</div>
+    </div>
+  </section>
+
+  <section class="resonance-stub">
+    <div>
+      <div class="stub-label">Zone 4</div>
+      <div class="stub-quote">"I control the quality. I direct, refine, and own the outcome."</div>
+      <div class="stub-echo">Sound familiar?</div>
+    </div>
+  </section>
+
+  <!-- THE THRESHOLD -->
+  <section class="threshold-section" id="threshold">
+
+    <div class="threshold-bg-text">READY</div>
+
+    <div class="threshold-heading">
+      <div class="threshold-heading-eyebrow">Your path is here</div>
+      <h2 class="threshold-heading-title">Walk through.</h2>
+      <p class="threshold-heading-sub">
+        Pick the door that was built for you.
+      </p>
+    </div>
+
+    <div class="doorways">
+
+      <!-- Door 1: Student / Gap Year -->
+      <div class="doorway doorway--student">
+        <div class="doorway-light"></div>
+        <div class="doorway-role">For the student</div>
+        <div class="doorway-name">The Gap Year<br>Cognitive Accelerator</div>
+        <p class="doorway-promise">
+          Navigate the professional market with AI as your edge.
+          Not just skills — the way the top people think.
+        </p>
+        <div class="doorway-status">● Live — Cohort 1 Now Open</div>
+        <a href="#" class="doorway-btn">Apply Now</a>
+        <div class="doorway-urgency">Full scholarship · April 30 deadline · Limited spots</div>
+      </div>
+
+      <!-- Door 2: Teacher -->
+      <div class="doorway doorway--teacher">
+        <div class="doorway-light"></div>
+        <div class="doorway-role">For the educator</div>
+        <div class="doorway-name">AI for Teachers</div>
+        <p class="doorway-promise">
+          Your students are already there. This is your map —
+          built so you can lead the room with confidence, not catch up to it.
+        </p>
+        <div class="doorway-status">◐ In Development — Priority Waitlist</div>
+        <a href="#" class="doorway-btn">Join Waitlist</a>
+      </div>
+
+      <!-- Door 3: Professional -->
+      <div class="doorway doorway--professional">
+        <div class="doorway-light"></div>
+        <div class="doorway-role">For the professional</div>
+        <div class="doorway-name">AI for Professionals</div>
+        <p class="doorway-promise">
+          You've earned your expertise. We're building what comes next —
+          for people who need more than a tutorial.
+        </p>
+        <div class="doorway-status">○ Coming 2026 — Signal Your Interest</div>
+        <a href="#" class="doorway-btn">Get Notified</a>
+      </div>
+
+    </div>
+
+    <div class="threshold-floor"></div>
+
+  </section>
+
+  <div class="mockup-label">
+    <strong>Mockup 5: The Threshold</strong>
+    Completes the hero's "walls fell" arc. Three archway doors.
+    No hover required. Big touch targets. Scroll-reveals cleanly.
+    Mobile: flat doors, stacked. Desktop: arched, dramatic.
+    Copy is "walk through," not "please fill this form."
+  </div>
+
+  <script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    // Starfield
+    const sf = document.getElementById('starfield');
+    for (let i = 0; i < 120; i++) {
+      const s = document.createElement('div');
+      s.style.cssText = `
+        position: absolute; border-radius: 50%; background: #fff;
+        width: ${1 + Math.random() * 2}px; height: ${1 + Math.random() * 2}px;
+        left: ${Math.random() * 100}%; top: ${Math.random() * 100}%;
+        opacity: ${0.05 + Math.random() * 0.35};
+      `;
+      sf.appendChild(s);
+    }
+
+    // Hero
+    gsap.timeline({ delay: 0.3 })
+      .from('.hero-eyebrow', { opacity: 0, y: -15, duration: 0.6, ease: 'power2.out' })
+      .from('.hero-title', { opacity: 0, x: -50, duration: 0.9, ease: 'power3.out' }, '-=0.2')
+      .from('.hero-sub', { opacity: 0, x: 30, duration: 0.8, ease: 'power2.out' }, '-=0.5');
+
+    // Resonance stubs
+    gsap.utils.toArray('.resonance-stub > div').forEach(z => {
+      gsap.from(z.children, {
+        opacity: 0, y: 30, stagger: 0.12, duration: 0.8, ease: 'power2.out',
+        scrollTrigger: { trigger: z, start: 'top 65%' }
+      });
+    });
+
+    // Threshold heading
+    gsap.to('.threshold-heading', {
+      opacity: 1, y: 0, duration: 1.2, ease: 'power3.out',
+      scrollTrigger: { trigger: '.threshold-heading', start: 'top 72%' }
+    });
+
+    // Doorways — staggered upward reveal
+    const doorways = gsap.utils.toArray('.doorway');
+    gsap.to(doorways, {
+      opacity: 1, y: 0,
+      duration: 0.9,
+      stagger: 0.15,
+      ease: 'power3.out',
+      scrollTrigger: { trigger: '.doorways', start: 'top 70%' }
+    });
+
+    // Floor line
+    gsap.to('.threshold-floor', {
+      opacity: 1, duration: 1, ease: 'power2.out',
+      scrollTrigger: { trigger: '.doorways', start: 'top 55%' }
+    });
+
+    // Background text — parallax
+    gsap.to('.threshold-bg-text', {
+      y: -60,
+      ease: 'none',
+      scrollTrigger: {
+        trigger: '.threshold-section',
+        start: 'top bottom',
+        end: 'bottom top',
+        scrub: 2
+      }
+    });
+
+    // Doorway click — close other doors slightly
+    doorways.forEach(door => {
+      door.addEventListener('click', () => {
+        doorways.forEach(d => {
+          if (d !== door) {
+            gsap.to(d, { opacity: 0.4, scale: 0.97, duration: 0.4, ease: 'power2.out' });
+          } else {
+            gsap.to(d, { opacity: 1, scale: 1.02, duration: 0.4, ease: 'power2.out' });
+          }
+        });
+      });
+    });
+  </script>
+
+</body>
+</html>

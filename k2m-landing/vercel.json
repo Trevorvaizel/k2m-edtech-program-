@@ -1,6 +1,19 @@
 {
+  "framework": "vite",
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "framework": null,
-  "installCommand": "npm install"
+  "rewrites": [
+    {
+      "source": "/join",
+      "destination": "/?join=1"
+    },
+    {
+      "source": "/enroll",
+      "destination": "/enroll.html"
+    },
+    {
+      "source": "/mpesa-submit",
+      "destination": "/mpesa-submit.html"
+    }
+  ]
 }

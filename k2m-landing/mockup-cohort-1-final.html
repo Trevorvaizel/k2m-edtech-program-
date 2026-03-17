@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>K2M — Final Mockup: The Invitation</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Space+Grotesk:wght@300;400;600;700;900&family=Lora:ital,wght@0,400;1,400;1,600&display=swap" rel="stylesheet">
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+  <style>
+    /* ─────────────────────────────────────────
+       TOKENS
+    ───────────────────────────────────────── */
+    :root {
+      --teal:         #40E0D0;
+      --teal-mid:     #20B2AA;
+      --teal-dark:    #008B8B;
+      --teal-glow:    rgba(64, 224, 208, 0.25);
+      --teal-dim:     rgba(64, 224, 208, 0.08);
+      --teal-border:  rgba(64, 224, 208, 0.18);
+      --amber:        #F59E0B;
+      --amber-dim:    rgba(245, 158, 11, 0.08);
+      --amber-border: rgba(245, 158, 11, 0.2);
+      --indigo:       #818CF8;
+      --indigo-dim:   rgba(99, 102, 241, 0.08);
+      --indigo-border:rgba(99, 102, 241, 0.2);
+      --grey:         #A0A0A0;
+      --grey-dim:     rgba(255,255,255,0.06);
+      --surface:      rgba(8, 8, 8, 0.88);
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: #000;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .starfield { position: fixed; inset: 0; pointer-events: none; z-index: 0; }
+
+    /* ─────────────────────────────────────────
+       HERO — unchanged
+    ───────────────────────────────────────── */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 80px 20px; text-align: center;
+      position: relative; z-index: 10;
+      background: radial-gradient(ellipse at center, rgba(32,178,170,0.06) 0%, transparent 70%);
+    }
+
+    .hero-eyebrow {
+      font-size: 12px; color: var(--teal);
+      letter-spacing: 3px; text-transform: uppercase; margin-bottom: 28px;
+    }
+
+    .hero-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: clamp(28px, 5vw, 60px); font-weight: 700;
+      line-height: 1.15; margin-bottom: 28px; max-width: 900px;
+    }
+
+    .hero-title strong { color: var(--teal); }
+
+    .hero-sub {
+      font-size: clamp(16px, 2vw, 18px); color: var(--grey);
+      line-height: 1.7; max-width: 640px;
+    }
+
+    /* ─────────────────────────────────────────
+       RESONANCE ZONES — stubs
+    ───────────────────────────────────────── */
+    .resonance-stub {
+      min-height: 55vh;
+      display: flex; align-items: center; justify-content: center;
+      text-align: center; padding: 80px 20px;
+      border-top: 1px solid rgba(64,224,208,0.07);
+      position: relative; z-index: 10;
+    }
+
+    .stub-label  { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--teal); margin-bottom: 20px; }
+    .stub-quote  { font-family: 'Space Grotesk', sans-serif; font-size: clamp(20px,3.5vw,36px); font-weight: 600; max-width: 700px; line-height: 1.35; }
+    .stub-echo   { margin-top: 20px; font-size: 14px; color: var(--teal); }
+
+    /* ─────────────────────────────────────────
+       SECTION ENTRY LINE
+    ───────────────────────────────────────── */
+    .section-entry {
+      position: relative; z-index: 10;
+      padding: 0 20px;
+      margin-top: 80px;
+    }
+
+    @keyframes live-pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(64,224,208,0.7); }
+      50%       { box-shadow: 0 0 0 7px rgba(64,224,208,0); }
+    }
+
+    /* Section heading */
+    .section-heading {
+      max-width: 1200px; margin: 0 auto 72px;
+    }
+
+    .section-heading-eyebrow {
+      font-size: 11px; letter-spacing: 3px; text-transform: uppercase;
+      color: rgba(64,224,208,0.6); margin-bottom: 18px;
+    }
+
+    .section-heading-title {
+      font-family: 'Lora', serif;
+      font-size: clamp(28px, 4vw, 50px); font-weight: 400;
+      font-style: italic; line-height: 1.25; color: #fff;
+    }
+
+    .section-heading-title span {
+      font-family: 'Space Grotesk', sans-serif;
+      font-style: normal; font-weight: 700; color: var(--teal);
+    }
+
+    /* ─────────────────────────────────────────
+       SEGMENT CARDS — the core component
+
+       DESKTOP (≥ 900px):
+         Each segment is a two-column row:
+         left = sticky identity panel
+         right = full letter prose
+         Header trigger is hidden
+
+       MOBILE (< 900px):
+         Each segment is an accordion:
+         Header tap = expand / collapse
+         Only prose summary shown (2 tight paras)
+         One segment open at a time
+    ───────────────────────────────────────── */
+    .segments {
+      max-width: 1200px; margin: 0 auto;
+      display: flex; flex-direction: column; gap: 0;
+    }
+
+    /* ── Divider between segments ── */
+    .segment-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(64,224,208,0.12), transparent);
+      margin: 64px 0;
+    }
+
+    /* ── The segment container ── */
+    .segment {
+      display: grid;
+      grid-template-columns: 1fr; /* mobile default */
+    }
+
+    @media (min-width: 900px) {
+      /* segment is just a block — seg-content owns the two-column layout */
+      .segment {
+        display: block;
+      }
+
+      /* Two-column grid: identity panel left, prose right */
+      .seg-content {
+        display: grid;
+        grid-template-columns: 300px 1fr;
+        align-items: start;
+        gap: 0;
+      }
+
+      .segment--reverse .seg-content {
+        grid-template-columns: 1fr 300px;
+      }
+
+      .segment--reverse .seg-identity { order: 2; border-right: none; border-left: 1px solid var(--teal-border); padding: 4px 0 40px 40px; }
+      .segment--reverse .seg-prose    { order: 1; padding: 0 48px 0 0; }
+    }
+
+    /* ─────────────────────────────────────────
+       MOBILE ACCORDION HEADER
+       Hidden on desktop
+    ───────────────────────────────────────── */
+    .seg-header {
+      display: none; /* shown only on mobile via media query */
+    }
+
+    @media (max-width: 899px) {
+      .seg-header {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 20px 0;
+        cursor: pointer;
+        user-select: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .seg-header:active { opacity: 0.85; }
+    }
+
+    .seg-header-mark {
+      width: 52px; height: 52px;
+      border-radius: 14px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px;
+      background: var(--seg-mark-bg);
+      border: 1px solid var(--seg-mark-border);
+      transition: box-shadow 0.3s ease;
+    }
+
+    .segment.open .seg-header-mark {
+      box-shadow: 0 0 20px var(--seg-accent-glow, rgba(64,224,208,0.2));
+    }
+
+    .seg-header-text { flex: 1; }
+
+    .seg-header-role {
+      font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--seg-accent); margin-bottom: 3px;
+    }
+
+    .seg-header-name {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 16px; font-weight: 700; line-height: 1.2;
+    }
+
+    .seg-header-status {
+      font-size: 11px; color: var(--grey); margin-top: 2px;
+    }
+
+    .seg-header-right {
+      display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+    }
+
+    .seg-status-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--seg-accent); flex-shrink: 0;
+    }
+
+    .segment--student .seg-status-dot { animation: live-pulse 1.5s ease-in-out infinite; }
+
+    .seg-chevron {
+      font-size: 14px; color: var(--grey);
+      transition: transform 0.35s cubic-bezier(0.4,0,0.2,1), color 0.2s ease;
+    }
+
+    .segment.open .seg-chevron { transform: rotate(180deg); color: var(--seg-accent); }
+
+    /* ─────────────────────────────────────────
+       MOBILE ACCORDION CONTENT
+       Collapses on mobile, always open on desktop
+    ───────────────────────────────────────── */
+    @media (max-width: 899px) {
+      .seg-content {
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.55s cubic-bezier(0.4,0,0.2,1);
+      }
+
+      .segment.open .seg-content { max-height: 900px; }
+    }
+
+    /* ─────────────────────────────────────────
+       IDENTITY PANEL (desktop left column)
+       Shows on all sizes but styled differently
+    ───────────────────────────────────────── */
+    .seg-identity {
+      padding: 0 40px 0 0;
+      border-right: 1px solid var(--teal-border);
+    }
+
+    @media (min-width: 900px) {
+      .seg-identity {
+        position: sticky;
+        top: 80px;
+        padding: 4px 40px 40px 0;
+      }
+    }
+
+    @media (max-width: 899px) {
+      .seg-identity {
+        padding: 20px 0 28px;
+        border-right: none;
+        border-top: 1px solid rgba(255,255,255,0.06);
+      }
+    }
+
+    /* Desktop mark — larger, shown on desktop */
+    .seg-desktop-mark {
+      display: none;
+    }
+
+    @media (min-width: 900px) {
+      .seg-desktop-mark {
+        display: flex;
+        width: 64px; height: 64px;
+        border-radius: 18px;
+        align-items: center; justify-content: center;
+        font-size: 28px;
+        background: var(--seg-mark-bg);
+        border: 1px solid var(--seg-mark-border);
+        margin-bottom: 20px;
+      }
+    }
+
+    .seg-identity-role {
+      font-size: 10px; letter-spacing: 3px; text-transform: uppercase;
+      color: rgba(var(--seg-accent-rgb), 0.6); margin-bottom: 10px;
+    }
+
+    @media (max-width: 899px) { .seg-identity-role { display: none; } }
+
+    .seg-identity-name {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 22px; font-weight: 700; line-height: 1.2; margin-bottom: 8px;
+    }
+
+    @media (max-width: 899px) {
+      .seg-identity-name { font-size: 18px; }
+    }
+
+    .seg-identity-tagline {
+      font-size: 13px; color: var(--grey); line-height: 1.55; margin-bottom: 24px;
+    }
+
+    /* Status pill */
+    .seg-status-pill {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 14px;
+      background: var(--seg-status-bg);
+      border: 1px solid var(--seg-status-border);
+      border-radius: 10px; margin-bottom: 20px;
+    }
+
+    .pill-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--seg-accent); flex-shrink: 0;
+    }
+
+    .segment--student .pill-dot { animation: live-pulse 1.5s ease-in-out infinite; }
+
+    .pill-text { flex: 1; }
+    .pill-label { font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: var(--seg-accent); }
+    .pill-sub   { font-size: 11px; color: var(--grey); margin-top: 2px; }
+
+    /* CTA */
+    .seg-cta {
+      padding: 15px 20px;
+      border: none; border-radius: 10px;
+      font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600;
+      cursor: pointer; width: 100%; text-align: center; text-decoration: none;
+      display: block; margin-bottom: 10px;
+      transition: all 0.3s ease;
+    }
+
+    .seg-cta:hover { filter: brightness(1.08); transform: translateY(-2px); }
+
+    .seg-roadmap {
+      width: 100%; padding: 8px; background: none; border: none;
+      font-family: 'Inter', sans-serif; font-size: 12px;
+      color: rgba(255,255,255,0.28); cursor: pointer;
+      transition: color 0.2s ease; text-align: center;
+    }
+
+    .seg-roadmap:hover { color: var(--grey); }
+
+    /* ─────────────────────────────────────────
+       PROSE PANEL (desktop right column)
+    ───────────────────────────────────────── */
+    .seg-prose {
+      padding: 0 0 0 48px;
+    }
+
+    @media (max-width: 899px) {
+      .seg-prose { padding: 0; }
+    }
+
+    .prose-mark {
+      font-family: 'Lora', serif; font-size: 72px; line-height: 0.4;
+      color: rgba(var(--seg-accent-rgb), 0.1); display: block;
+      margin-bottom: 16px; user-select: none;
+    }
+
+    @media (max-width: 899px) { .prose-mark { display: none; } }
+
+    /* Desktop prose — full letter */
+    .prose-full {
+      font-family: 'Lora', serif;
+      font-size: clamp(16px, 1.7vw, 18px); color: #d4d4d4;
+      line-height: 1.85;
+    }
+
+    .prose-full p { margin-bottom: 18px; }
+    .prose-full p:last-child { margin-bottom: 0; }
+    .prose-full em   { color: #fff; font-style: italic; }
+    .prose-full strong { color: #fff; }
+
+    .prose-pullquote {
+      border-left: 2px solid var(--seg-accent);
+      padding: 14px 18px;
+      margin: 22px 0;
+      background: rgba(var(--seg-accent-rgb), 0.04);
+      border-radius: 0 8px 8px 0;
+    }
+
+    .prose-pullquote p {
+      font-family: 'Lora', serif;
+      font-size: clamp(14px, 1.5vw, 16px); font-style: italic;
+      color: #e8e8e8; line-height: 1.65; margin: 0 !important;
+    }
+
+    /* Mobile prose — compressed version */
+    /* These elements swap on breakpoint */
+    .prose-desktop { display: block; }
+    .prose-mobile  { display: none; }
+
+    @media (max-width: 899px) {
+      .prose-desktop { display: none; }
+      .prose-mobile  { display: block; }
+    }
+
+    /* Mobile prose styles */
+    .mobile-letter {
+      font-family: 'Inter', sans-serif;
+      font-size: 15px; color: #c8c8c8; line-height: 1.75;
+      padding: 4px 0 24px;
+    }
+
+    .mobile-letter p { margin-bottom: 14px; }
+    .mobile-letter p:last-child { margin-bottom: 0; }
+    .mobile-letter em { color: #fff; font-style: italic; }
+    .mobile-letter strong { color: #fff; }
+
+    /* Mobile CTA — large, full-width, inline */
+    .mobile-cta-row {
+      margin-top: 24px;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+
+    .mobile-cta {
+      padding: 18px 20px;
+      border: none; border-radius: 12px;
+      font-family: 'Inter', sans-serif; font-size: 16px; font-weight: 600;
+      cursor: pointer; text-align: center; text-decoration: none; display: block;
+      transition: all 0.3s ease;
+    }
+
+    .mobile-urgency {
+      font-size: 11px; color: rgba(255,255,255,0.3);
+      text-align: center; padding: 2px 0;
+    }
+
+    .mobile-roadmap {
+      font-size: 13px; color: rgba(255,255,255,0.3);
+      background: none; border: none; font-family: 'Inter', sans-serif;
+      cursor: pointer; padding: 8px 0; text-align: center; width: 100%;
+      transition: color 0.2s ease;
+    }
+
+    .mobile-roadmap:hover { color: var(--grey); }
+
+    /* ─────────────────────────────────────────
+       SEGMENT ACCENT THEMES
+    ───────────────────────────────────────── */
+    .segment--student {
+      --seg-accent: #40E0D0;
+      --seg-accent-rgb: 64, 224, 208;
+      --seg-accent-glow: rgba(64,224,208,0.2);
+      --seg-mark-bg: rgba(64,224,208,0.07);
+      --seg-mark-border: rgba(64,224,208,0.22);
+      --seg-status-bg: rgba(64,224,208,0.05);
+      --seg-status-border: rgba(64,224,208,0.18);
+    }
+
+    .segment--teacher {
+      --seg-accent: #F59E0B;
+      --seg-accent-rgb: 245, 158, 11;
+      --seg-accent-glow: rgba(245,158,11,0.2);
+      --seg-mark-bg: rgba(245,158,11,0.07);
+      --seg-mark-border: rgba(245,158,11,0.22);
+      --seg-status-bg: rgba(245,158,11,0.05);
+      --seg-status-border: rgba(245,158,11,0.18);
+    }
+
+    .segment--professional {
+      --seg-accent: #818CF8;
+      --seg-accent-rgb: 99, 102, 241;
+      --seg-accent-glow: rgba(99,102,241,0.2);
+      --seg-mark-bg: rgba(99,102,241,0.07);
+      --seg-mark-border: rgba(99,102,241,0.22);
+      --seg-status-bg: rgba(99,102,241,0.05);
+      --seg-status-border: rgba(99,102,241,0.18);
+    }
+
+    /* ─────────────────────────────────────────
+       CLOSING
+    ───────────────────────────────────────── */
+    .invitation-close {
+      max-width: 1200px; margin: 80px auto 0;
+      padding: 60px 0 20px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      text-align: center;
+    }
+
+    .close-text {
+      font-family: 'Lora', serif;
+      font-size: clamp(18px, 2.5vw, 24px); font-style: italic;
+      color: var(--grey); line-height: 1.65; margin-bottom: 16px;
+    }
+
+    .close-sig { font-size: 12px; color: rgba(64,224,208,0.45); letter-spacing: 1px; }
+
+    /* ─────────────────────────────────────────
+       ROADMAP MODAL
+    ───────────────────────────────────────── */
+    .roadmap-overlay {
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,0.93);
+      z-index: 9000;
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .roadmap-overlay.open { opacity: 1; pointer-events: all; }
+
+    .roadmap-modal {
+      background: rgba(8,8,8,0.98);
+      border: 1px solid rgba(64,224,208,0.2);
+      border-radius: 20px;
+      padding: 48px;
+      max-width: 680px; width: 100%;
+      max-height: 88vh; overflow-y: auto;
+      position: relative;
+      transform: translateY(20px) scale(0.97);
+      transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+    }
+
+    .roadmap-overlay.open .roadmap-modal { transform: translateY(0) scale(1); }
+
+    .roadmap-close {
+      position: absolute; top: 20px; right: 20px;
+      width: 36px; height: 36px; border-radius: 50%;
+      background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+      color: var(--grey); font-size: 18px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s ease;
+    }
+
+    .roadmap-close:hover { background: rgba(255,255,255,0.12); color: #fff; }
+
+    .rm-eyebrow  { font-size: 10px; letter-spacing: 3px; text-transform: uppercase; color: var(--teal); margin-bottom: 12px; }
+    .rm-title    { font-family: 'Space Grotesk', sans-serif; font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+    .rm-sub      { font-size: 14px; color: var(--grey); line-height: 1.65; margin-bottom: 36px; }
+
+    .rm-phases   { display: flex; flex-direction: column; gap: 16px; }
+
+    .rm-phase {
+      padding: 20px 22px; border-radius: 12px;
+      border: 1px solid var(--ph-border); background: var(--ph-bg);
+    }
+
+    .rm-phase--live    { --ph-border: rgba(64,224,208,0.28); --ph-bg: rgba(64,224,208,0.04); }
+    .rm-phase--build   { --ph-border: rgba(245,158,11,0.28); --ph-bg: rgba(245,158,11,0.04); }
+    .rm-phase--planned { --ph-border: rgba(99,102,241,0.28); --ph-bg: rgba(99,102,241,0.04); }
+    .rm-phase--explore { --ph-border: rgba(255,255,255,0.08); --ph-bg: rgba(255,255,255,0.02); }
+
+    .rm-phase-status { font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 6px; }
+    .rm-phase--live    .rm-phase-status { color: #40E0D0; }
+    .rm-phase--build   .rm-phase-status { color: #F59E0B; }
+    .rm-phase--planned .rm-phase-status { color: #818CF8; }
+    .rm-phase--explore .rm-phase-status { color: var(--grey); }
+
+    .rm-phase-name { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 5px; }
+    .rm-phase-desc { font-size: 13px; color: var(--grey); line-height: 1.6; margin-bottom: 12px; }
+
+    .rm-bar { height: 3px; background: rgba(255,255,255,0.07); border-radius: 2px; overflow: hidden; }
+    .rm-bar-fill { height: 100%; border-radius: 2px; transition: width 1.2s cubic-bezier(0.4,0,0.2,1); }
+    .rm-phase--live    .rm-bar-fill { background: #40E0D0; }
+    .rm-phase--build   .rm-bar-fill { background: #F59E0B; }
+    .rm-phase--planned .rm-bar-fill { background: #818CF8; }
+    .rm-phase--explore .rm-bar-fill { background: rgba(255,255,255,0.15); }
+
+    .rm-footer {
+      margin-top: 28px; padding-top: 20px;
+      border-top: 1px solid rgba(255,255,255,0.07);
+      font-size: 13px; color: var(--grey); line-height: 1.65; text-align: center;
+    }
+
+    @media (max-width: 640px) {
+      .roadmap-modal { padding: 28px 18px; }
+    }
+
+    /* ─────────────────────────────────────────
+       APPLICATION DEADLINE COUNTDOWN
+    ───────────────────────────────────────── */
+    .rm-countdown-wrap {
+      border-top: 1px solid rgba(64,224,208,0.12);
+      margin-top: 24px; padding-top: 20px;
+      text-align: center;
+    }
+
+    .rm-deadline-label {
+      font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase;
+      color: rgba(64,224,208,0.55); margin-bottom: 14px;
+    }
+
+    .rm-countdown {
+      display: flex; align-items: flex-start; justify-content: center;
+      gap: 6px;
+    }
+
+    .countdown-unit {
+      display: flex; flex-direction: column; align-items: center;
+      min-width: 56px;
+    }
+
+    .countdown-num {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 38px; font-weight: 700;
+      color: var(--teal); line-height: 1;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -1px;
+    }
+
+    .countdown-lbl {
+      font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+      color: var(--grey); margin-top: 5px;
+    }
+
+    .countdown-sep {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 30px; font-weight: 300;
+      color: rgba(64,224,208,0.25);
+      line-height: 1; padding-top: 3px;
+    }
+
+    /* ─────────────────────────────────────────
+       MOBILE SPACING FIXES
+    ───────────────────────────────────────── */
+    @media (max-width: 899px) {
+      .section-entry { padding: 0 16px; margin-top: 60px; }
+      .section-heading { margin-bottom: 40px; }
+      .segment-divider { margin: 0; height: 1px; background: rgba(255,255,255,0.07); }
+      .invitation-close { padding: 40px 16px 20px; }
+      .segments { padding: 0 16px; }
+    }
+
+    /* ─────────────────────────────────────────
+       COHORT 1 AWARENESS BADGE
+       Component 1 of the Gradient Reveal —
+       appears after hero scrolls out, fades when
+       Cohort 1 section enters view.
+    ───────────────────────────────────────── */
+    .cohort-badge {
+      position: fixed;
+      top: 20px; right: 20px;
+      z-index: 7500;
+      display: flex; align-items: center; gap: 9px;
+      padding: 10px 16px 10px 12px;
+      background: rgba(4, 4, 4, 0.94);
+      border: 1px solid rgba(64, 224, 208, 0.38);
+      border-radius: 100px;
+      font-size: 12px; color: #ddd;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+      opacity: 0;
+      pointer-events: none;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .cohort-badge.cb-visible { pointer-events: all; }
+
+    .cohort-badge:hover {
+      box-shadow: 0 4px 24px rgba(0,0,0,0.5), 0 0 0 6px rgba(64,224,208,0.08);
+    }
+
+    .cb-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--teal); box-shadow: 0 0 8px var(--teal);
+      animation: live-pulse 1.5s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+
+    .cb-text { font-size: 12px; }
+    .cb-text strong { color: #fff; font-weight: 600; }
+
+    .cb-arrow {
+      background: none; border: none;
+      color: var(--teal); font-size: 14px;
+      cursor: pointer; padding: 0; line-height: 1;
+      transition: transform 0.25s ease;
+    }
+
+    .cohort-badge:hover .cb-arrow { transform: translateY(3px); }
+
+    @media (max-width: 480px) {
+      .cohort-badge { top: 12px; right: 12px; padding: 8px 12px 8px 10px; }
+    }
+
+    /* ─────────────────────────────────────────
+       MOCKUP LABEL
+    ───────────────────────────────────────── */
+    .mockup-label {
+      position: fixed; bottom: 16px; right: 16px;
+      background: rgba(8,8,8,0.93); border: 1px solid var(--teal);
+      border-radius: 8px; padding: 12px 14px; font-size: 11px;
+      color: var(--grey); z-index: 8000; max-width: 260px; line-height: 1.55;
+    }
+
+    .mockup-label strong { display: block; color: var(--teal); font-size: 12px; margin-bottom: 5px; }
+
+    @media (max-width: 640px) { .mockup-label { display: none; } }
+  </style>
+</head>
+<body>
+
+<div class="starfield" id="starfield"></div>
+
+<!-- ══ COHORT 1 AWARENESS BADGE (Component 1 — Gradient Reveal) ══ -->
+<div class="cohort-badge" id="cohort-badge"
+     onclick="document.getElementById('seg-student').scrollIntoView({behavior:'smooth',block:'start'})">
+  <span class="cb-dot"></span>
+  <span class="cb-text">Cohort 1 Open · <strong>Apply by Apr 30</strong></span>
+  <button class="cb-arrow" tabindex="-1">↓</button>
+</div>
+
+<!-- ══ HERO ══ -->
+<section class="hero">
+  <div class="hero-eyebrow">The walls fell.</div>
+  <h1 class="hero-title">
+    Intelligence used to be locked behind universities and expensive experts.<br>
+    <strong>Not anymore.</strong>
+  </h1>
+  <p class="hero-sub">
+    AI changed that. But access alone isn't enough. The question now is
+    whether you know how to <em>think</em> with what's on the other side.
+  </p>
+</section>
+
+<!-- ══ RESONANCE ZONES ══ -->
+<section class="resonance-stub">
+  <div>
+    <div class="stub-label">Zone 2</div>
+    <div class="stub-quote">"I keep starting over. It never feels quite right."</div>
+    <div class="stub-echo">Sound familiar?</div>
+  </div>
+</section>
+
+<section class="resonance-stub">
+  <div>
+    <div class="stub-label">Zone 4</div>
+    <div class="stub-quote">"I control the quality. AI accelerates my vision."</div>
+    <div class="stub-echo">Sound familiar?</div>
+  </div>
+</section>
+
+<!-- ══ SECTION ENTRY ══ -->
+<div class="section-entry">
+
+  <!-- Bridge heading — recognition → revelation -->
+  <div class="section-heading">
+    <div class="section-heading-eyebrow">You found yourself in those voices</div>
+    <h2 class="section-heading-title">
+      Here's what we built<br>
+      <span>for where you are.</span>
+    </h2>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════════
+     THE SEGMENTS
+     Desktop: two-column letter layout
+     Mobile:  tappable accordion
+════════════════════════════════════════ -->
+<div class="segments">
+
+  <!-- ───────────────────────────────────
+       SEGMENT 1: THE STUDENT
+  ─────────────────────────────────────── -->
+  <div class="segment segment--student open" id="seg-student">
+
+    <!-- Mobile accordion header -->
+    <div class="seg-header" onclick="toggleSeg('seg-student')">
+      <div class="seg-header-mark">🎓</div>
+      <div class="seg-header-text">
+        <div class="seg-header-role">For the student</div>
+        <div class="seg-header-name">Gap Year Accelerator</div>
+        <div class="seg-header-status">Cohort 1 — Open Now · April 30 deadline</div>
+      </div>
+      <div class="seg-header-right">
+        <div class="seg-status-dot"></div>
+        <span class="seg-chevron">↓</span>
+      </div>
+    </div>
+
+    <!-- Content (always visible desktop / accordion mobile) -->
+    <div class="seg-content">
+
+      <!-- Identity panel -->
+      <div class="seg-identity">
+            <div class="seg-desktop-mark">🎓</div>
+            <div class="seg-identity-role">For the student</div>
+            <div class="seg-identity-name">Gap Year<br>Accelerator</div>
+            <div class="seg-identity-tagline">Navigate the professional world with AI as your edge — before the market even knows what hit it.</div>
+            <div class="seg-status-pill">
+              <div class="pill-dot"></div>
+              <div class="pill-text">
+                <div class="pill-label">Live — Open Now</div>
+                <div class="pill-sub">Applications close April 30, 2026</div>
+              </div>
+            </div>
+            <a href="#" class="seg-cta" style="background: linear-gradient(135deg,#20B2AA,#008B8B); color:#000; box-shadow: 0 4px 20px rgba(32,178,170,0.28);">
+              Apply for Cohort 1 →
+            </a>
+            <div style="font-size:11px; color:rgba(255,255,255,0.28); text-align:center; margin-bottom:8px;">
+              Full scholarship · No fee · Limited spots
+            </div>
+            <button class="seg-roadmap" onclick="openRoadmap()">View full program roadmap →</button>
+          </div>
+
+          <!-- Prose panel -->
+          <div class="seg-prose">
+            <span class="prose-mark">"</span>
+
+            <!-- DESKTOP: full letter -->
+            <div class="prose-desktop">
+              <div class="prose-full">
+                <p>
+                  You're at a threshold — between what you were taught
+                  and what the world is now demanding. That gap is real.
+                  You've felt it. The CV they told you to build doesn't
+                  quite match the world that's moving past it.
+                </p>
+                <div class="prose-pullquote">
+                  <p>"Skills used by top-tier global professionals." Every student we met in the field said: <em>I'm in.</em></p>
+                </div>
+                <p>
+                  Cohort 1 wasn't built to teach you AI tools.
+                  It was built to teach you to <strong>navigate with intelligence as your advantage</strong> —
+                  the way the most capable people in every field you're looking at
+                  actually think. We'll show you how.
+                </p>
+                <p>
+                  No prerequisites. Full scholarship.
+                  A structured acceleration from wherever you are
+                  to professional-grade capability.
+                </p>
+              </div>
+            </div>
+
+            <!-- MOBILE: compressed letter -->
+            <div class="prose-mobile">
+              <div class="mobile-letter">
+                <p>
+                  You're between what you were taught and what the world is demanding.
+                  That gap is real — and it can be closed.
+                </p>
+                <p>
+                  Cohort 1 doesn't teach you AI tools.
+                  It teaches you to <em>navigate with intelligence as your advantage</em> —
+                  the way top professionals actually think.
+                  No prerequisites. Full scholarship.
+                </p>
+              </div>
+              <div class="mobile-cta-row">
+                <a href="#" class="mobile-cta" style="background: linear-gradient(135deg,#20B2AA,#008B8B); color:#000;">
+                  Apply for Cohort 1 →
+                </a>
+                <div class="mobile-urgency">Full scholarship · April 30 deadline · Limited spots</div>
+                <button class="mobile-roadmap" onclick="openRoadmap()">View full program roadmap →</button>
+              </div>
+            </div>
+
+      </div><!-- /.seg-prose -->
+    </div><!-- /.seg-content -->
+  </div><!-- /.segment--student -->
+
+  <div class="segment-divider"></div>
+
+  <!-- ───────────────────────────────────
+       SEGMENT 2: THE EDUCATOR
+  ─────────────────────────────────────── -->
+  <div class="segment segment--teacher segment--reverse" id="seg-teacher">
+
+    <div class="seg-header" onclick="toggleSeg('seg-teacher')">
+      <div class="seg-header-mark">📐</div>
+      <div class="seg-header-text">
+        <div class="seg-header-role">For the educator</div>
+        <div class="seg-header-name">AI for Teachers</div>
+        <div class="seg-header-status">In Development · Priority Waitlist Open</div>
+      </div>
+      <div class="seg-header-right">
+        <div class="seg-status-dot"></div>
+        <span class="seg-chevron">↓</span>
+      </div>
+    </div>
+
+    <div class="seg-content">
+
+      <div class="seg-identity">
+        <div class="seg-desktop-mark">📐</div>
+          <div class="seg-identity-role">For the educator</div>
+          <div class="seg-identity-name">AI for Teachers</div>
+          <div class="seg-identity-tagline">Lead the AI conversation in your classroom — don't chase it. Your students are already there.</div>
+          <div class="seg-status-pill">
+            <div class="pill-dot"></div>
+            <div class="pill-text">
+              <div class="pill-label">In Development</div>
+              <div class="pill-sub">Priority waitlist open now</div>
+            </div>
+          </div>
+          <a href="#" class="seg-cta" style="background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.35); color: #F59E0B;">
+            Join Priority Waitlist →
+          </a>
+          <button class="seg-roadmap" onclick="openRoadmap()">View full program roadmap →</button>
+        </div>
+
+        <div class="seg-prose">
+          <span class="prose-mark">"</span>
+
+          <div class="prose-desktop">
+            <div class="prose-full">
+              <p>
+                Your students are already using AI. You can feel it
+                in how they write, how they research, how they submit.
+                You're not afraid of it — you're watching it change
+                the room without a map.
+              </p>
+              <div class="prose-pullquote">
+                <p>"Why don't you give us this product too?" — Teachers said this unprompted, in the field. <em>That's why we're building this next.</em></p>
+              </div>
+              <p>
+                AI for Teachers isn't a certificate course.
+                It's the guide you've been asking for — a way to
+                <strong>bring this into your classroom with confidence, not caution.</strong>
+                So you lead the conversation your students are already having.
+              </p>
+            </div>
+          </div>
+
+          <div class="prose-mobile">
+            <div class="mobile-letter">
+              <p>
+                Your students are already using AI. You're watching it change the room
+                without a map. That ends here.
+              </p>
+              <p>
+                AI for Teachers is being built for educators who want to
+                <em>lead</em> this conversation — not chase it.
+                Join the priority waitlist and help shape what we build.
+              </p>
+            </div>
+            <div class="mobile-cta-row">
+              <a href="#" class="mobile-cta" style="background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.35); color: #F59E0B;">
+                Join Priority Waitlist →
+              </a>
+              <button class="mobile-roadmap" onclick="openRoadmap()">View full program roadmap →</button>
+            </div>
+          </div>
+
+      </div><!-- /.seg-prose -->
+    </div><!-- /.seg-content -->
+  </div><!-- /.segment--teacher -->
+
+  <div class="segment-divider"></div>
+
+  <!-- ───────────────────────────────────
+       SEGMENT 3: THE PROFESSIONAL
+  ─────────────────────────────────────── -->
+  <div class="segment segment--professional" id="seg-professional">
+
+    <div class="seg-header" onclick="toggleSeg('seg-professional')">
+      <div class="seg-header-mark">⚡</div>
+      <div class="seg-header-text">
+        <div class="seg-header-role">For the professional</div>
+        <div class="seg-header-name">AI for Professionals</div>
+        <div class="seg-header-status">Coming 2026 · Signal Your Interest</div>
+      </div>
+      <div class="seg-header-right">
+        <div class="seg-status-dot"></div>
+        <span class="seg-chevron">↓</span>
+      </div>
+    </div>
+
+    <div class="seg-content">
+
+      <div class="seg-identity">
+        <div class="seg-desktop-mark">⚡</div>
+          <div class="seg-identity-role">For the professional</div>
+          <div class="seg-identity-name">AI for Professionals</div>
+          <div class="seg-identity-tagline">Everything you've built — multiplied by intelligence you actually know how to wield.</div>
+          <div class="seg-status-pill">
+            <div class="pill-dot"></div>
+            <div class="pill-text">
+              <div class="pill-label">Coming 2026</div>
+              <div class="pill-sub">Signal your interest now</div>
+            </div>
+          </div>
+          <a href="#" class="seg-cta" style="background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.35); color: #818CF8;">
+            Signal Your Interest →
+          </a>
+          <button class="seg-roadmap" onclick="openRoadmap()">View full program roadmap →</button>
+        </div>
+
+        <div class="seg-prose">
+          <span class="prose-mark">"</span>
+
+          <div class="prose-desktop">
+            <div class="prose-full">
+              <p>
+                You didn't get where you are by accident. You've built
+                a reputation, a way of working, a standard you hold
+                yourself to. And now the field is shifting under your feet.
+              </p>
+              <div class="prose-pullquote">
+                <p>A 40-year-old professional walked up to us after a school visit and said: <em>"I'm ready to pay for this right now."</em> You're the reason we're building what comes next.</p>
+              </div>
+              <p>
+                AI for Professionals isn't about catching up.
+                It's about <strong>running further and faster</strong> —
+                with everything you've built, sharpened to a point.
+                The waitlist you join today is the sold-out cohort we
+                launch to tomorrow.
+              </p>
+            </div>
+          </div>
+
+          <div class="prose-mobile">
+            <div class="mobile-letter">
+              <p>
+                You've built a career on a standard. Now the field is shifting.
+                This isn't about catching up.
+              </p>
+              <p>
+                AI for Professionals is about running <em>further, faster</em> —
+                with everything you've already built, multiplied.
+                Tell us you're serious. The waitlist you join today is the
+                sold-out cohort we launch to tomorrow.
+              </p>
+            </div>
+            <div class="mobile-cta-row">
+              <a href="#" class="mobile-cta" style="background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.35); color: #818CF8;">
+                Signal Your Interest →
+              </a>
+              <button class="mobile-roadmap" onclick="openRoadmap()">View full program roadmap →</button>
+            </div>
+          </div>
+
+      </div><!-- /.seg-prose -->
+    </div><!-- /.seg-content -->
+  </div><!-- /.segment--professional -->
+
+  <!-- Closing -->
+  <div class="invitation-close">
+    <p class="close-text">
+      "Wherever you are on this journey — you found us.<br>
+      That means something."
+    </p>
+    <div class="close-sig">— The K2M Team</div>
+  </div>
+
+</div><!-- /.segments -->
+
+
+<!-- ══ ROADMAP MODAL ══ -->
+<div class="roadmap-overlay" id="roadmapOverlay" onclick="handleOverlayClick(event)">
+  <div class="roadmap-modal">
+    <button class="roadmap-close" onclick="closeRoadmap()">×</button>
+    <div class="rm-eyebrow">K2M Program Roadmap</div>
+    <h2 class="rm-title">Where we're going.</h2>
+    <p class="rm-sub">We build in public. Announced before built. Launched to sold-out waitlists.</p>
+
+    <div class="rm-phases">
+      <div class="rm-phase rm-phase--live">
+        <div class="rm-phase-status">✅ Live Now</div>
+        <div class="rm-phase-name">Cohort 1: Gap Year Cognitive Accelerator</div>
+        <p class="rm-phase-desc">Full scholarship. Applications open. Closes April 30, 2026.</p>
+        <div class="rm-bar"><div class="rm-bar-fill" data-w="100%"></div></div>
+      </div>
+      <div class="rm-phase rm-phase--build">
+        <div class="rm-phase-status">🔨 In Development</div>
+        <div class="rm-phase-name">AI for Teachers</div>
+        <p class="rm-phase-desc">For educators who want to lead the AI conversation in their classroom. Priority waitlist open now — you help shape what we build.</p>
+        <div class="rm-bar"><div class="rm-bar-fill" data-w="40%"></div></div>
+      </div>
+      <div class="rm-phase rm-phase--planned">
+        <div class="rm-phase-status">📅 Planned — 2026</div>
+        <div class="rm-phase-name">AI for Professionals</div>
+        <p class="rm-phase-desc">Not catching up — multiplying what you've built. Signal interest to be first in the cohort.</p>
+        <div class="rm-bar"><div class="rm-bar-fill" data-w="10%"></div></div>
+      </div>
+      <div class="rm-phase rm-phase--explore">
+        <div class="rm-phase-status">💭 Exploring</div>
+        <div class="rm-phase-name">Corporate &amp; Team Training</div>
+        <p class="rm-phase-desc">Custom enterprise cohorts. Reach out if your organisation is ready.</p>
+        <div class="rm-bar"><div class="rm-bar-fill" data-w="5%"></div></div>
+      </div>
+    </div>
+
+    <!-- Live countdown to April 30, 2026 deadline -->
+    <div class="rm-countdown-wrap">
+      <div class="rm-deadline-label">Cohort 1 applications close in</div>
+      <div class="rm-countdown">
+        <div class="countdown-unit">
+          <div class="countdown-num" id="cd-days">--</div>
+          <div class="countdown-lbl">days</div>
+        </div>
+        <div class="countdown-sep">:</div>
+        <div class="countdown-unit">
+          <div class="countdown-num" id="cd-hrs">--</div>
+          <div class="countdown-lbl">hrs</div>
+        </div>
+        <div class="countdown-sep">:</div>
+        <div class="countdown-unit">
+          <div class="countdown-num" id="cd-mins">--</div>
+          <div class="countdown-lbl">min</div>
+        </div>
+        <div class="countdown-sep">:</div>
+        <div class="countdown-unit">
+          <div class="countdown-num" id="cd-secs">--</div>
+          <div class="countdown-lbl">sec</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="rm-footer">
+      Join a waitlist. You don't just attend the program — you help create it.
+    </div>
+  </div>
+</div>
+
+<div class="mockup-label">
+  <strong>Final Mockup — The Invitation</strong>
+  Desktop: two-column letter, sticky identity panel.<br>
+  Mobile: accordion, one tap = open. Short 2-para version.<br>
+  Urgency strip: inline, not floating.<br>
+  Roadmap: accessible everywhere, modal with progress bars.<br>
+  All content visible by default.
+</div>
+
+<script>
+  gsap.registerPlugin(ScrollTrigger);
+
+  /* ── Starfield ── */
+  const sf = document.getElementById('starfield');
+  for (let i = 0; i < 100; i++) {
+    const s = document.createElement('div');
+    s.style.cssText = `
+      position:absolute; border-radius:50%; background:#fff;
+      width:${1+Math.random()*1.8}px; height:${1+Math.random()*1.8}px;
+      left:${Math.random()*100}%; top:${Math.random()*100}%;
+      opacity:${0.04+Math.random()*0.28};
+    `;
+    sf.appendChild(s);
+  }
+
+  /* ── Hero ── */
+  gsap.timeline({ delay: 0.3 })
+    .from('.hero-eyebrow', { opacity:0, y:-12, duration:0.6, ease:'power2.out' })
+    .from('.hero-title',   { opacity:0, x:-45, duration:0.9, ease:'power3.out' }, '-=0.2')
+    .from('.hero-sub',     { opacity:0, x:30,  duration:0.8, ease:'power2.out' }, '-=0.5');
+
+  /* ── Resonance stubs — from hidden ── */
+  gsap.utils.toArray('.resonance-stub').forEach(stub => {
+    gsap.from(stub.querySelectorAll('.stub-label,.stub-quote,.stub-echo'), {
+      opacity:0, y:18, stagger:0.1, duration:0.7, ease:'power2.out',
+      scrollTrigger: { trigger:stub, start:'top 82%', once:true }
+    });
+  });
+
+  /* ── Section entry ── */
+  gsap.from('.section-heading > *', {
+    opacity:0, y:14, stagger:0.1, duration:0.7, ease:'power2.out', delay:0.1,
+    scrollTrigger: { trigger:'.section-heading', start:'top 82%', once:true }
+  });
+
+  /* ── Non-cohort segments — standard fade ── */
+  document.querySelectorAll('.segment:not(#seg-student)').forEach(seg => {
+    gsap.from(seg, {
+      opacity:0, y:28, duration:0.8, ease:'power3.out',
+      scrollTrigger: { trigger:seg, start:'top 80%', once:true }
+    });
+  });
+
+  /* ─────────────────────────────────────────
+     COHORT 1 GRADIENT REVEAL
+     Component 1: Badge appears after hero exits
+     Component 2: Cinematic split reveal when section arrives
+  ───────────────────────────────────────── */
+  const badge = document.getElementById('cohort-badge');
+
+  /* Badge appears when hero bottom crosses 90% viewport */
+  ScrollTrigger.create({
+    trigger: '.hero',
+    start: 'bottom 90%',
+    onEnter: () => {
+      badge.classList.add('cb-visible');
+      gsap.to(badge, { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out' });
+    },
+    onLeaveBack: () => {
+      badge.classList.remove('cb-visible');
+      gsap.to(badge, { opacity: 0, duration: 0.3 });
+    }
+  });
+
+  /* Badge fades when Cohort 1 section enters view — job done */
+  ScrollTrigger.create({
+    trigger: '#seg-student',
+    start: 'top 65%',
+    once: true,
+    onEnter: () => {
+      gsap.to(badge, { opacity: 0, y: -8, duration: 0.5, ease: 'power2.in',
+        onComplete: () => badge.classList.remove('cb-visible') });
+    }
+  });
+
+  /* Component 2: Split cinematic reveal for Cohort 1 only */
+  ScrollTrigger.create({
+    trigger: '#seg-student',
+    start: 'top 78%',
+    once: true,
+    onEnter: () => {
+      const identity = document.querySelector('#seg-student .seg-identity');
+      const prose    = document.querySelector('#seg-student .seg-prose');
+      const header   = document.querySelector('#seg-student .seg-header'); // mobile
+
+      const tl = gsap.timeline();
+
+      // Desktop: identity from left, prose from right
+      if (window.innerWidth >= 900) {
+        tl.from(identity, { x: -44, opacity: 0, duration: 1.0, ease: 'power3.out' }, 0)
+          .from(prose,    { x:  44, opacity: 0, duration: 1.0, ease: 'power3.out' }, 0.12);
+      } else {
+        // Mobile: the accordion header slides up
+        tl.from(header || document.querySelector('#seg-student'), {
+          opacity: 0, y: 24, duration: 0.8, ease: 'power3.out'
+        });
+      }
+    }
+  });
+
+  /* ── Closing ── */
+  gsap.from('.invitation-close > *', {
+    opacity:0, y:14, stagger:0.12, duration:0.7, ease:'power2.out',
+    scrollTrigger: { trigger:'.invitation-close', start:'top 85%', once:true }
+  });
+
+  /* ─────────────────────────────────────────
+     APPLICATION DEADLINE COUNTDOWN
+     Target: April 30, 2026 23:59:59 EAT (UTC+3)
+  ───────────────────────────────────────── */
+  (function startCountdown() {
+    const DEADLINE = new Date('2026-04-30T23:59:59+03:00');
+    const pad = n => String(Math.max(0, n)).padStart(2, '0');
+
+    function tick() {
+      const diff = DEADLINE - Date.now();
+
+      // Update roadmap modal (full d:h:m:s)
+      const dEl = document.getElementById('cd-days');
+      const hEl = document.getElementById('cd-hrs');
+      const mEl = document.getElementById('cd-mins');
+      const sEl = document.getElementById('cd-secs');
+
+      if (!dEl) return; // modal not in DOM yet
+
+      if (diff <= 0) {
+        [dEl, hEl, mEl, sEl].forEach(el => { el.textContent = '00'; });
+        return;
+      }
+
+      const totalSecs = Math.floor(diff / 1000);
+      const days  = Math.floor(totalSecs / 86400);
+      const hrs   = Math.floor((totalSecs % 86400) / 3600);
+      const mins  = Math.floor((totalSecs % 3600) / 60);
+      const secs  = totalSecs % 60;
+
+      dEl.textContent = pad(days);
+      hEl.textContent = pad(hrs);
+      mEl.textContent = pad(mins);
+      sEl.textContent = pad(secs);
+    }
+
+    tick();
+    setInterval(tick, 1000);
+  })();
+
+  /* ─────────────────────────────────────────
+     MOBILE ACCORDION
+  ───────────────────────────────────────── */
+  function toggleSeg(id) {
+    if (window.innerWidth >= 900) return; // no accordion on desktop
+
+    const seg = document.getElementById(id);
+    if (!seg) return;
+
+    const isOpen = seg.classList.contains('open');
+
+    // Close all
+    document.querySelectorAll('.segment.open').forEach(s => s.classList.remove('open'));
+
+    // Toggle
+    if (!isOpen) {
+      seg.classList.add('open');
+      setTimeout(() => {
+        seg.scrollIntoView({ behavior:'smooth', block:'start' });
+      }, 200);
+    }
+  }
+
+  /* ─────────────────────────────────────────
+     ROADMAP MODAL
+  ───────────────────────────────────────── */
+  function openRoadmap() {
+    const overlay = document.getElementById('roadmapOverlay');
+    overlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+
+    setTimeout(() => {
+      document.querySelectorAll('.rm-bar-fill').forEach(bar => {
+        const w = bar.dataset.w;
+        bar.style.width = '0%';
+        bar.style.transition = 'none';
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          bar.style.transition = 'width 1.3s cubic-bezier(0.4,0,0.2,1)';
+          bar.style.width = w;
+        }));
+      });
+    }, 250);
+  }
+
+  function closeRoadmap() {
+    document.getElementById('roadmapOverlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function handleOverlayClick(e) {
+    if (e.target === document.getElementById('roadmapOverlay')) closeRoadmap();
+  }
+
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeRoadmap(); });
+
+  /* Expose to onclick */
+  window.toggleSeg       = toggleSeg;
+  window.openRoadmap     = openRoadmap;
+  window.closeRoadmap    = closeRoadmap;
+  window.handleOverlayClick = handleOverlayClick;
+</script>
+</body>
+</html>

@@ -1,0 +1,123 @@
+* {
+  box-sizing: border-box;
+}
+
+body.k2m-form-page {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: radial-gradient(circle at 20% 10%, #1d3557 0%, #0b132b 45%, #05070f 100%);
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.k2m-form-shell {
+  width: 100%;
+  max-width: 680px;
+  background: rgba(8, 12, 24, 0.92);
+  border: 1px solid rgba(96, 165, 250, 0.25);
+  border-radius: 18px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+  padding: 28px 24px;
+}
+
+.k2m-form-shell h1 {
+  margin: 0 0 10px;
+  font-size: 1.8rem;
+  letter-spacing: 0.2px;
+}
+
+.k2m-form-shell p.lead {
+  margin: 0 0 20px;
+  color: #cbd5e1;
+}
+
+.k2m-form {
+  display: grid;
+  gap: 14px;
+}
+
+.k2m-form label {
+  display: block;
+  font-size: 0.92rem;
+  color: #dbeafe;
+  margin-bottom: 6px;
+}
+
+.k2m-form input,
+.k2m-form textarea,
+.k2m-form select,
+.k2m-form button {
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.85);
+  color: #f8fafc;
+  font-size: 0.98rem;
+  padding: 12px;
+}
+
+.k2m-form textarea {
+  min-height: 92px;
+  resize: vertical;
+}
+
+.k2m-form input:focus,
+.k2m-form textarea:focus,
+.k2m-form select:focus {
+  outline: none;
+  border-color: #22d3ee;
+  box-shadow: 0 0 0 3px rgba(34, 211, 238, 0.2);
+}
+
+.k2m-form button {
+  border: none;
+  font-weight: 700;
+  background: linear-gradient(90deg, #22d3ee 0%, #10b981 100%);
+  color: #042026;
+  cursor: pointer;
+}
+
+.k2m-form button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.k2m-note {
+  margin-top: 10px;
+  font-size: 0.85rem;
+  color: #93c5fd;
+}
+
+.k2m-status {
+  margin-top: 16px;
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 0.95rem;
+}
+
+.k2m-status.error {
+  background: rgba(127, 29, 29, 0.35);
+  border: 1px solid rgba(248, 113, 113, 0.5);
+  color: #fecaca;
+}
+
+.k2m-status.success {
+  background: rgba(20, 83, 45, 0.35);
+  border: 1px solid rgba(74, 222, 128, 0.45);
+  color: #bbf7d0;
+}
+
+.k2m-inline-link {
+  color: #67e8f9;
+  text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+  .k2m-form-shell {
+    padding: 22px 16px;
+  }
+}

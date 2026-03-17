@@ -15,14 +15,14 @@ This bot implements the complete CIS Agent System specified in Story 4.7 of the 
 - ✅ Dependencies configured (requirements.txt)
 - ✅ Environment variables template (.env.template)
 - ✅ Main bot entry point (main.py)
-- ✅ Database schema (SQLite)
-- ✅ Database operations layer (store.py)
+- ✅ Runtime database migration complete (PostgreSQL on Railway)
+- ✅ Database operations layer (store.py + PostgreSQL compatibility wrapper)
 - ✅ CIS Controller router stub
 - ✅ Framer agent system prompt
 - ✅ Frame command handler stub
 
 ### Next Tasks (Sprint 1)
-- [ ] Task 1.2: Implement StudentContext + SQLite schema operations
+- [ ] Task 1.2: Implement StudentContext + schema operations
 - [ ] Task 1.3: Implement CIS Controller routing logic
 - [ ] Task 1.4: Implement /frame agent (The Framer)
 - [ ] Task 1.5: Implement private DM workflow
@@ -73,6 +73,45 @@ Optional secure Brevo key setup (hidden prompt, no key echo):
 
 ```bash
 powershell -ExecutionPolicy Bypass -File .\scripts\set-brevo-key.ps1
+```
+
+Optional secure Railway variable setup (hidden prompt for value):
+
+```bash
+powershell -ExecutionPolicy Bypass -File .\scripts\set-railway-secret.ps1
+# Example (prompts hidden for value):
+#   Variable name: BREVO_API_KEY
+#   Service: kira-bot
+#   Environment: production
+```
+
+Task 7.13 Brevo setup audit (domain auth + sender readiness):
+
+```bash
+python .\scripts\task-713-brevo-audit.py --env-file .\.env --domain k2mlabs.com --sender-email trevor@k2mlabs.com --test-to k2m.labs@gmail.com --output ..\_bmad-output\cohort-design-artifacts\operations\sprint\task-notes\7.13-brevo-audit-k2mlabs.json
+```
+
+Optional mutation flags (only when you explicitly want to change Brevo state):
+
+```bash
+python .\scripts\task-713-brevo-audit.py --env-file .\.env --domain k2mlabs.com --sender-email trevor@k2mlabs.com --test-to k2m.labs@gmail.com --ensure-domain --ensure-sender --send-test
+```
+
+Expected ready-state for task 7.13:
+- domain `k2mlabs.com` is authenticated + verified in Brevo
+- sender `Trevor from K2M <trevor@k2mlabs.com>` exists and is active
+- runtime `EMAIL_FROM` points to `trevor@k2mlabs.com`
+
+Task 7.14 Brevo templates (create/update all 7 + test send each):
+
+```bash
+python .\scripts\task-714-brevo-templates.py --env-file .\.env --apply --send-test --test-to k2m.labs@gmail.com --output ..\_bmad-output\cohort-design-artifacts\operations\sprint\task-notes\7.14-brevo-templates.json
+```
+
+Optional personalized preview run (all 7 templates with first name override):
+
+```bash
+python .\scripts\task-714-brevo-templates.py --env-file .\.env --apply --send-test --test-to trevor@k2mlabs.com --test-first-name Ibrahim --output ..\_bmad-output\cohort-design-artifacts\operations\sprint\task-notes\7.14-brevo-preview-ibrahim-trevor-k2mlabs.json
 ```
 
 ### 3. Run the Bot
@@ -127,7 +166,8 @@ cis-discord-bot/
 │   └── synthesizer_prompt.py   # The Synthesizer (Habit 4)
 │
 ├── database/                   # Database Layer
-│   ├── schema.sql              # SQLite schema
+│   ├── schema.sql              # Legacy SQLite/local-test schema
+│   ├── schema_pg.sql           # PostgreSQL production schema
 │   ├── models.py               # StudentContext ORM (Task 1.2)
 │   └── store.py                # Database operations
 │
@@ -151,7 +191,7 @@ cis-discord-bot/
 | **Language** | Python | 3.10+ | Bot implementation |
 | **Discord Library** | discord.py | 2.3.2 | Discord API wrapper |
 | **LLM Provider** | OpenAI (active) / Anthropic / Zhipu | Env-swappable | CIS agent intelligence |
-| **Database** | SQLite | 3.38+ | State persistence |
+| **Database** | PostgreSQL (primary) + SQLite (local/tests only) | PG 14+ | State persistence |
 | **Environment** | python-dotenv | 1.0.0 | Configuration management |
 
 ## Architecture

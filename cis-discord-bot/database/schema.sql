@@ -21,7 +21,43 @@ CREATE TABLE IF NOT EXISTS students (
     last_interaction TEXT,  -- ISO timestamp
     cluster_id INTEGER DEFAULT 1,  -- Task 4.3: Cluster assignment (1-8)
     last_name TEXT,  -- Task 4.3: Last name for cluster assignment
-    created_at TEXT DEFAULT CURRENT_TIMESTAMP
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+
+    -- Sprint 7 runtime linkage fields
+    invite_code TEXT,
+    onboarding_stop INTEGER DEFAULT 0,
+    onboarding_stop_0_complete INTEGER DEFAULT 0,
+    onboarding_stop_0_started_at TEXT,
+    profile_complete INTEGER DEFAULT 0,
+    manual_override_timestamp TEXT,
+    enrollment_email TEXT,
+    enrollment_name TEXT,
+    discord_username TEXT,
+    enrollment_status TEXT DEFAULT 'pending',
+    payment_status TEXT DEFAULT 'pending',
+    payment_pending_since TEXT,
+    token_warning_sent INTEGER DEFAULT 0,
+    primary_device_context TEXT,
+    study_hours_per_week INTEGER,
+    confidence_level INTEGER,
+    family_obligations_hint TEXT,
+    profession TEXT,
+    profession_inferred TEXT,
+    barrier_type TEXT,
+    barrier_confidence REAL DEFAULT 0.0,
+    situation TEXT,
+    goals TEXT,
+    emotional_baseline TEXT,
+    real_last_name TEXT,
+    preloaded INTEGER DEFAULT 0,
+    engagement_level TEXT DEFAULT 'quiet',
+    zone_shift_count INTEGER DEFAULT 0,
+    frame_sessions_count INTEGER DEFAULT 0,
+    showcase_posts_count INTEGER DEFAULT 0,
+    last_frame_topic TEXT,
+    cis_journey_summary TEXT,
+    initial_zone INTEGER,
+    artifact_title TEXT
 );
 
 -- Index for common queries
@@ -29,6 +65,8 @@ CREATE INDEX IF NOT EXISTS idx_students_cohort ON students(cohort_id);
 CREATE INDEX IF NOT EXISTS idx_students_week ON students(current_week);
 CREATE INDEX IF NOT EXISTS idx_students_zone ON students(zone);
 CREATE INDEX IF NOT EXISTS idx_students_cluster ON students(cluster_id);  -- Task 4.3
+CREATE INDEX IF NOT EXISTS idx_students_invite ON students(invite_code);
+CREATE INDEX IF NOT EXISTS idx_students_onboarding ON students(onboarding_stop);
 
 -- ============================================================
 -- HABIT PRACTICE TABLE
@@ -115,8 +153,9 @@ CREATE TABLE IF NOT EXISTS api_usage (
 -- ============================================================
 CREATE TABLE IF NOT EXISTS observability_events (
     id INTEGER PRIMARY KEY,
-    student_id_hash TEXT,  -- Privacy: SHA256[:16] of discord_id — NOT a FK (hashed, can't join)
+    student_id_hash TEXT,  -- Privacy: SHA256[:16] of discord_id â€” NOT a FK (hashed, can't join)
     event_type TEXT,       -- "agent_used", "stuck_detected", "milestone_reached", "zone_shift"
+    model_used TEXT,       -- Task 6.5: model-level cost routing visibility
     metadata TEXT,         -- JSON: {agent: "framer", week: 4, zone: "zone_1"} NOT full messages
     timestamp TEXT DEFAULT CURRENT_TIMESTAMP
     -- No FK: student_id_hash is hashed for privacy, not equal to students.discord_id
@@ -125,6 +164,7 @@ CREATE TABLE IF NOT EXISTS observability_events (
 -- Indexes for observability queries
 CREATE INDEX IF NOT EXISTS idx_observability_student ON observability_events(student_id_hash);
 CREATE INDEX IF NOT EXISTS idx_observability_type ON observability_events(event_type);
+CREATE INDEX IF NOT EXISTS idx_observability_model ON observability_events(model_used);
 CREATE INDEX IF NOT EXISTS idx_observability_timestamp ON observability_events(timestamp);
 
 -- ============================================================
@@ -269,7 +309,7 @@ CREATE TABLE IF NOT EXISTS showcase_publications (
     publication_type TEXT NOT NULL,  -- 'habit_practice' OR 'artifact_completion'
     visibility_level TEXT NOT NULL,  -- 'public' OR 'anonymous' OR 'private'
     celebration_message TEXT NOT NULL,
-    habits_demonstrated TEXT,  -- JSON array: ["⏸️", "🎯", "🔄", "🧠"]
+    habits_demonstrated TEXT,  -- JSON array: ["â¸ï¸", "ðŸŽ¯", "ðŸ”„", "ðŸ§ "]
     nodes_mastered TEXT,  -- JSON array: [1.3, 2.1, 3.2]
     reactions_count INTEGER DEFAULT 0,
     parent_email_included INTEGER DEFAULT 0,
@@ -396,3 +436,4 @@ CREATE TABLE IF NOT EXISTS parent_email_log (
 CREATE INDEX IF NOT EXISTS idx_email_log_student ON parent_email_log(student_id);
 CREATE INDEX IF NOT EXISTS idx_email_log_date ON parent_email_log(sent_at);
 CREATE INDEX IF NOT EXISTS idx_email_log_status ON parent_email_log(status);
+

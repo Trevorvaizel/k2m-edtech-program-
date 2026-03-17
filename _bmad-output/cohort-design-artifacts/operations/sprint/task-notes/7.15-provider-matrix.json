@@ -1,0 +1,70 @@
+{
+  "task_id": "7.15",
+  "timestamp_utc": "2026-03-12T05:08:14Z",
+  "provider_matrix": {
+    "gmail": {
+      "executed": true,
+      "evidence": [
+        "_bmad-output\\cohort-design-artifacts\\operations\\sprint\\task-notes\\7.15-brevo-preview-k2m-labs-gmail.json",
+        "_bmad-output\\cohort-design-artifacts\\operations\\sprint\\task-notes\\7.15-brevo-preview-joytrevor-gmail.json"
+      ],
+      "summary": [
+        {
+          "exists": true,
+          "overall_status": "pass",
+          "templates": 7,
+          "all_http_201": true
+        },
+        {
+          "exists": true,
+          "overall_status": "pass",
+          "templates": 7,
+          "all_http_201": true
+        }
+      ],
+      "inbox_vs_spam_manual_check": "required"
+    },
+    "k2mlabs_domain_mailbox": {
+      "executed": true,
+      "evidence": [
+        "_bmad-output\\cohort-design-artifacts\\operations\\sprint\\task-notes\\7.15-brevo-preview-trevor-k2mlabs.json"
+      ],
+      "summary": [
+        {
+          "exists": true,
+          "overall_status": "pass",
+          "templates": 7,
+          "all_http_201": true
+        }
+      ],
+      "inbox_vs_spam_manual_check": "required"
+    },
+    "yahoo": {
+      "executed": false,
+      "reason": "No Yahoo test inbox configured in current automation context."
+    },
+    "safaricom": {
+      "executed": false,
+      "reason": "No Safaricom test inbox configured in current automation context."
+    },
+    "airtel": {
+      "executed": false,
+      "reason": "No Airtel test inbox configured in current automation context."
+    }
+  },
+  "delivery_event_audit": {
+    "evidence": "_bmad-output/cohort-design-artifacts/operations/sprint/task-notes/7.15-brevo-deliverability-events.json",
+    "method": "message considered delivered if Brevo event stream for that message contains at least one delivered event",
+    "summary": {
+      "total_messages": 21,
+      "delivered_by_any_event": 21,
+      "missing_delivered_event": 0,
+      "latest_event_breakdown": {
+        "delivered": 16,
+        "opened": 3,
+        "requests": 2
+      }
+    },
+    "overall_status": "pass"
+  }
+}

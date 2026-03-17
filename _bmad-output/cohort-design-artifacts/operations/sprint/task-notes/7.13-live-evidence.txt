@@ -1,0 +1,43 @@
+Task 7.13 live evidence snapshot (re-audit)
+Date (UTC): 2026-03-11
+
+1) Brevo API audit (fresh run)
+- Command:
+  python cis-discord-bot/scripts/task-713-brevo-audit.py --env-file cis-discord-bot/.env --sender-email trevor@k2mlabs.com --domain k2mlabs.com --send-test --test-to k2m.labs@gmail.com --wait-seconds 60 --output _bmad-output/cohort-design-artifacts/operations/sprint/task-notes/7.13-brevo-audit-k2mlabs.json
+- Result:
+  - overall_status=pass
+  - domain verified=true, authenticated=true
+  - sender trevor@k2mlabs.com active=true
+  - test_send status=201 with events=requests,delivered
+  - evidence file: task-notes/7.13-brevo-audit-k2mlabs.json
+
+2) Railway production variables (kira-bot / production)
+- Fix applied:
+  railway.cmd variables --service kira-bot --environment production --set "CHANNEL_WELCOME_LOUNGE=1481153734363840613" --skip-deploys
+- Query:
+  railway.cmd variables --service kira-bot --environment production --json
+- Verified keys:
+  - BREVO_API_KEY: present
+  - EMAIL_FROM: trevor@k2mlabs.com
+  - EMAIL_FROM_NAME: Trevor from K2M
+  - PARENT_EMAIL_FROM: trevor@k2mlabs.com
+  - PARENT_EMAIL_REPLY_TO: trevor@k2mlabs.com
+  - CHANNEL_WELCOME_LOUNGE: 1481153734363840613
+
+3) Production HTTP liveness
+- Probe:
+  GET https://kira-bot-production.up.railway.app/health
+- Response:
+  {"status":"healthy","db":"connected","discord":"connected"}
+
+4) Discord production health check
+- Command:
+  CHANNEL_WELCOME_LOUNGE=1481153734363840613 python cis-discord-bot/check_discord_health.py --json
+- Result:
+  - failures=0, warnings=0
+  - required channels + slash commands verified
+  - evidence file: task-notes/7.13-discord-health-production.json
+
+5) Remaining manual scope
+- Gmail inbox-vs-spam folder classification is not available via Brevo API.
+- Manual placement check is deferred to task 7.15 deliverability testing.

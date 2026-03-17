@@ -1,0 +1,56 @@
+{
+  "timestamp_utc": "2026-03-12T04:56:36Z",
+  "task_id": "7.16",
+  "base_url": "https://kira-bot-production.up.railway.app",
+  "checks": {
+    "role_upgrade_unsigned": {
+      "status_code": 401,
+      "elapsed_ms": 811,
+      "ok": true,
+      "expected_status": 401,
+      "error": null,
+      "body": "{\"success\": false, \"error\": \"Missing X-K2M-Signature header\"}"
+    },
+    "role_upgrade_signed_invalid_id": {
+      "status_code": 400,
+      "elapsed_ms": 480,
+      "ok": true,
+      "expected_status": 400,
+      "error": null,
+      "body": "{\"success\": false, \"error\": \"discord_id must be a numeric Discord user ID\"}"
+    },
+    "preload_unsigned": {
+      "status_code": 401,
+      "elapsed_ms": 768,
+      "ok": true,
+      "expected_status": 401,
+      "error": null,
+      "body": "{\"success\": false, \"error\": \"Missing X-K2M-Signature header\"}"
+    },
+    "preload_signed": {
+      "status_code": 200,
+      "elapsed_ms": 724,
+      "ok": true,
+      "expected_status": 200,
+      "error": null,
+      "body": "{\"success\": true}"
+    },
+    "apps_script_error_unsigned": {
+      "status_code": 401,
+      "elapsed_ms": 851,
+      "ok": true,
+      "expected_status": 401,
+      "error": null,
+      "body": "{\"success\": false, \"error\": \"Missing X-K2M-Signature header\"}"
+    },
+    "apps_script_error_signed": {
+      "status_code": 200,
+      "elapsed_ms": 831,
+      "ok": true,
+      "expected_status": 200,
+      "error": null,
+      "body": "{\"success\": true, \"dashboard_posted\": true}"
+    }
+  },
+  "overall_status": "pass"
+}

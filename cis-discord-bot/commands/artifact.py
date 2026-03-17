@@ -11,17 +11,88 @@ import logging
 import os
 
 import discord
-from database import get_store
+from database import get_runtime_store, get_store
 from database.models import ArtifactProgress
 from datetime import datetime
 from typing import Dict, Optional
 
-store = get_store()
 logger = logging.getLogger(__name__)
 
 # Student-level pending edit state for artifact section rewrites.
 # Key: discord_id, Value: section number (1-6).
 _PENDING_SECTION_EDITS: Dict[str, int] = {}
+
+_fallback_store = None
+
+
+def _resolve_store():
+    """
+    Resolve store lazily to avoid blocking DB initialization during module import.
+    Prefer the runtime store initialized in main.py.
+    """
+    runtime_store = get_runtime_store()
+    if runtime_store is not None:
+        return runtime_store
+
+    global _fallback_store
+    if _fallback_store is None:
+        _fallback_store = get_store()
+    return _fallback_store
+
+
+class _StoreProxy:
+    def __getattr__(self, item):
+        return getattr(_resolve_store(), item)
+
+
+store = _StoreProxy()
+
+
+def _read_value(record, key: str, default=None):
+    """Read value from sqlite row/dict-like objects with safe fallback."""
+    if record is None:
+        return default
+    if isinstance(record, dict):
+        return record.get(key, default)
+    try:
+        return record[key]
+    except Exception:
+        return default
+
+
+def _log_artifact_event(discord_id: str, event_type: str, metadata: Optional[Dict] = None) -> None:
+    """
+    Emit artifact lifecycle event to observability.
+
+    Metadata excludes artifact body content by design.
+    """
+    metadata_payload = dict(metadata or {})
+    try:
+        artifact_row = store.get_artifact_progress_row(discord_id)
+    except Exception:
+        artifact_row = None
+
+    started_at = str(_read_value(artifact_row, "started_at", "") or "").strip()
+    if started_at and "artifact_session_id" not in metadata_payload:
+        metadata_payload["artifact_session_id"] = started_at
+
+    status = str(_read_value(artifact_row, "status", "") or "").strip()
+    if status and "artifact_status" not in metadata_payload:
+        metadata_payload["artifact_status"] = status
+
+    current_section = _read_value(artifact_row, "current_section", None)
+    if current_section is not None and "artifact_current_section" not in metadata_payload:
+        metadata_payload["artifact_current_section"] = current_section
+
+    compact = {
+        key: value
+        for key, value in metadata_payload.items()
+        if value not in ("", None)
+    }
+    try:
+        store.log_observability_event(discord_id, event_type, compact)
+    except Exception as exc:
+        logger.warning("Failed to log artifact event %s for %s: %s", event_type, discord_id, exc)
 
 
 # ============================================================
@@ -520,6 +591,11 @@ async def _complete_artifact_if_ready(message: discord.Message, discord_id: str)
     artifact_progress.status = "completed"
     artifact_progress.completed_at = datetime.now()
     store.save_artifact_progress(discord_id, artifact_progress)
+    _log_artifact_event(
+        discord_id,
+        "artifact_completed",
+        {"completed_sections": len(artifact_progress.completed_sections)},
+    )
     await message.reply(COMPLETION_MESSAGE)
 
 
@@ -607,6 +683,14 @@ async def start_artifact(message: discord.Message, student) -> None:
     )
 
     store.save_artifact_progress(discord_id, artifact_progress)
+    _log_artifact_event(
+        discord_id,
+        "artifact_started",
+        {
+            "entrypoint": "create-artifact",
+            "week": _read_value(student, "current_week", None),
+        },
+    )
 
     # Show Section 1 prompt
     await message.reply(SECTION_1_PROMPT)
@@ -624,6 +708,11 @@ async def handle_section_1_input(message: discord.Message, content: str) -> None
 
     # Save Section 1
     store.update_artifact_section(discord_id, 1, content)
+    _log_artifact_event(
+        discord_id,
+        "artifact_section_saved",
+        {"section": 1},
+    )
 
     # Acknowledge and guide to Section 2
     response = SECTION_2_INTRO.format(question=content)
@@ -641,6 +730,11 @@ async def handle_section_2_input(message: discord.Message, content: str) -> None
 
     # Save Section 2
     store.update_artifact_section(discord_id, 2, content)
+    _log_artifact_event(
+        discord_id,
+        "artifact_section_saved",
+        {"section": 2},
+    )
 
     # Voice check prompt
     voice_check = """
@@ -666,6 +760,11 @@ async def handle_section_3_input(message: discord.Message, content: str) -> None
 
     # Save Section 3
     store.update_artifact_section(discord_id, 3, content)
+    _log_artifact_event(
+        discord_id,
+        "artifact_section_saved",
+        {"section": 3},
+    )
 
     # Voice check
     await message.reply(content + "\n\n**Voice Check:** ðŸŽ¤\n\nDoes this sound like your authentic voice? If yes, continue. If it sounds generic or AI-written, try adding more specifics from your actual /diverge conversation.")
@@ -680,6 +779,11 @@ async def handle_section_4_input(message: discord.Message, content: str) -> None
 
     # Save Section 4
     store.update_artifact_section(discord_id, 4, content)
+    _log_artifact_event(
+        discord_id,
+        "artifact_section_saved",
+        {"section": 4},
+    )
 
     # Voice check
     await message.reply(content + "\n\n**Voice Check:** ðŸŽ¤\n\nAuthentic thinking includes uncertainty. Did you share your real doubts and questions, or did it sound too polished? Keep it real.")
@@ -694,6 +798,11 @@ async def handle_section_5_input(message: discord.Message, content: str) -> None
 
     # Save Section 5
     store.update_artifact_section(discord_id, 5, content)
+    _log_artifact_event(
+        discord_id,
+        "artifact_section_saved",
+        {"section": 5},
+    )
 
     # Voice check
     await message.reply(
@@ -713,6 +822,11 @@ async def handle_section_6_input(message: discord.Message, content: str) -> None
 
     # Save Section 6
     store.update_artifact_section(discord_id, 6, content)
+    _log_artifact_event(
+        discord_id,
+        "artifact_section_saved",
+        {"section": 6},
+    )
 
     # Final voice check
     await message.reply(
@@ -948,8 +1062,21 @@ async def handle_artifact_commands(
         artifact_progress = _load_artifact_progress(store.conn, discord_id)
         if not artifact_progress.is_complete():
             await message.reply("Complete all 6 sections before publishing. Type **continue** to keep going.")
+            _log_artifact_event(
+                discord_id,
+                "artifact_publish_failed",
+                {"reason": "not_complete"},
+            )
             return
 
+        _log_artifact_event(
+            discord_id,
+            "artifact_publish_requested",
+            {
+                "week": _read_value(student, "current_week", None),
+                "options": "public,anonymous,private",
+            },
+        )
         # Task 4.2: Complete publication flow
         await publish_artifact_to_showcase(message, discord_id, artifact_progress)
 
@@ -1209,7 +1336,18 @@ async def handle_confirm_publish(
     artifact_progress = _load_artifact_progress(store.conn, discord_id)
     if not artifact_progress or not artifact_progress.is_complete():
         await message.reply("Artifact not complete. Type `/create-artifact` to continue.")
+        _log_artifact_event(
+            discord_id,
+            "artifact_publish_failed",
+            {"visibility": visibility, "reason": "not_complete"},
+        )
         return
+
+    _log_artifact_event(
+        discord_id,
+        "artifact_publish_confirmed",
+        {"visibility": visibility},
+    )
 
     student_name = "Anonymous"
     if bot and getattr(bot, "guilds", None):
@@ -1225,6 +1363,11 @@ async def handle_confirm_publish(
         if not facilitator_discord_id:
             await message.reply(
                 "**Private publish unavailable right now.** Trevor contact is not configured."
+            )
+            _log_artifact_event(
+                discord_id,
+                "artifact_publish_failed",
+                {"visibility": visibility, "reason": "facilitator_not_configured"},
             )
             return
 
@@ -1248,6 +1391,11 @@ async def handle_confirm_publish(
                 "**Private publish failed.** I could not deliver this to Trevor yet. "
                 "Nothing was published."
             )
+            _log_artifact_event(
+                discord_id,
+                "artifact_publish_failed",
+                {"visibility": visibility, "reason": "trevor_dm_failed"},
+            )
             return
 
         store.create_showcase_publication(
@@ -1266,11 +1414,21 @@ async def handle_confirm_publish(
             "**Artifact shared privately with Trevor.**\n\n"
             "Your artifact was delivered and recorded as a private publication."
         )
+        _log_artifact_event(
+            discord_id,
+            "artifact_published",
+            {"visibility": visibility, "destination": "trevor_dm"},
+        )
         return
 
     showcase_channel = _find_showcase_channel(bot)
     if not showcase_channel:
         await message.reply("#thinking-showcase channel not found. Contact Trevor.")
+        _log_artifact_event(
+            discord_id,
+            "artifact_publish_failed",
+            {"visibility": visibility, "reason": "showcase_channel_not_found"},
+        )
         return
 
     formatted_artifact = format_artifact_for_showcase(
@@ -1348,11 +1506,27 @@ async def handle_confirm_publish(
         await message.reply(
             "I kept this private for now. #thinking-showcase only accepts finished work."
         )
+        _log_artifact_event(
+            discord_id,
+            "artifact_publish_blocked",
+            {"visibility": visibility, "reason": "safety_filter"},
+        )
     except Exception as exc:
         await message.reply(
             "**Something went wrong.** Your artifact is saved; try publishing again later."
         )
+        _log_artifact_event(
+            discord_id,
+            "artifact_publish_failed",
+            {"visibility": visibility, "reason": "unexpected_error"},
+        )
         raise exc
+    else:
+        _log_artifact_event(
+            discord_id,
+            "artifact_published",
+            {"visibility": visibility, "destination": "thinking_showcase"},
+        )
 
 
 # ============================================================
@@ -1395,6 +1569,11 @@ async def handle_artifact_text_input(message: discord.Message, student, bot=None
             return True
 
         store.update_artifact_section(discord_id, pending_section, content)
+        _log_artifact_event(
+            discord_id,
+            "artifact_section_saved",
+            {"section": pending_section, "edit_mode": True},
+        )
         _PENDING_SECTION_EDITS.pop(discord_id, None)
         await message.reply(
             f"âœ… **Section {pending_section} updated!** Type **review** to inspect your artifact."

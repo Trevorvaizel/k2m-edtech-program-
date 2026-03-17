@@ -3,7 +3,8 @@ Database Store Module
 Story 4.7 Implementation: StudentContext & Database Schema
 
 Provides database operations for the CIS bot.
-Uses SQLite for Cohort 1 (100-200 students).
+PostgreSQL is the production runtime store (Task 7.6).
+SQLite is retained for local development/tests and compatibility fallback paths.
 """
 
 import sqlite3
@@ -12,8 +13,9 @@ import hashlib
 import os
 import inspect
 import weakref
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Tuple
+from typing import Any
 from typing import Optional, List, Dict
 from pathlib import Path
 import logging
@@ -212,6 +214,207 @@ class StudentStateStore:
             logger.info("Applying legacy migration: adding students.last_name")
             self.conn.execute("ALTER TABLE students ADD COLUMN last_name TEXT")
 
+        if not self._column_exists("students", "invite_code"):
+            logger.info("Applying legacy migration: adding students.invite_code")
+            self.conn.execute("ALTER TABLE students ADD COLUMN invite_code TEXT")
+
+        if not self._column_exists("students", "onboarding_stop"):
+            logger.info("Applying legacy migration: adding students.onboarding_stop")
+            self.conn.execute(
+                "ALTER TABLE students ADD COLUMN onboarding_stop INTEGER DEFAULT 0"
+            )
+
+        if not self._column_exists("students", "onboarding_stop_0_complete"):
+            logger.info(
+                "Applying legacy migration: adding students.onboarding_stop_0_complete"
+            )
+            self.conn.execute(
+                "ALTER TABLE students ADD COLUMN onboarding_stop_0_complete INTEGER DEFAULT 0"
+            )
+
+        if not self._column_exists("students", "onboarding_stop_0_started_at"):
+            logger.info(
+                "Applying legacy migration: adding students.onboarding_stop_0_started_at"
+            )
+            self.conn.execute(
+                "ALTER TABLE students ADD COLUMN onboarding_stop_0_started_at TEXT"
+            )
+
+        if not self._column_exists("students", "profile_complete"):
+            logger.info("Applying legacy migration: adding students.profile_complete")
+            self.conn.execute(
+                "ALTER TABLE students ADD COLUMN profile_complete INTEGER DEFAULT 0"
+            )
+
+        if not self._column_exists("students", "primary_device_context"):
+            logger.info(
+                "Applying legacy migration: adding students.primary_device_context"
+            )
+            self.conn.execute(
+                "ALTER TABLE students ADD COLUMN primary_device_context TEXT"
+            )
+
+        if not self._column_exists("students", "study_hours_per_week"):
+            logger.info(
+                "Applying legacy migration: adding students.study_hours_per_week"
+            )
+            self.conn.execute(
+                "ALTER TABLE students ADD COLUMN study_hours_per_week INTEGER"
+            )
+
+        if not self._column_exists("students", "confidence_level"):
+            logger.info("Applying legacy migration: adding students.confidence_level")
+            self.conn.execute(
+                "ALTER TABLE students ADD COLUMN confidence_level INTEGER"
+            )
+
+        if not self._column_exists("students", "family_obligations_hint"):
+            logger.info(
+                "Applying legacy migration: adding students.family_obligations_hint"
+            )
+            self.conn.execute(
+                "ALTER TABLE students ADD COLUMN family_obligations_hint TEXT"
+            )
+
+        if not self._column_exists("students", "profession"):
+            logger.info("Applying legacy migration: adding students.profession")
+            self.conn.execute("ALTER TABLE students ADD COLUMN profession TEXT")
+
+        if not self._column_exists("students", "profession_inferred"):
+            logger.info("Applying legacy migration: adding students.profession_inferred")
+            self.conn.execute(
+                "ALTER TABLE students ADD COLUMN profession_inferred TEXT"
+            )
+
+        if not self._column_exists("students", "barrier_type"):
+            logger.info("Applying legacy migration: adding students.barrier_type")
+            self.conn.execute("ALTER TABLE students ADD COLUMN barrier_type TEXT")
+
+        if not self._column_exists("students", "barrier_confidence"):
+            logger.info("Applying legacy migration: adding students.barrier_confidence")
+            self.conn.execute(
+                "ALTER TABLE students ADD COLUMN barrier_confidence REAL DEFAULT 0.0"
+            )
+
+        if not self._column_exists("students", "situation"):
+            logger.info("Applying legacy migration: adding students.situation")
+            self.conn.execute("ALTER TABLE students ADD COLUMN situation TEXT")
+
+        if not self._column_exists("students", "goals"):
+            logger.info("Applying legacy migration: adding students.goals")
+            self.conn.execute("ALTER TABLE students ADD COLUMN goals TEXT")
+
+        if not self._column_exists("students", "emotional_baseline"):
+            logger.info("Applying legacy migration: adding students.emotional_baseline")
+            self.conn.execute("ALTER TABLE students ADD COLUMN emotional_baseline TEXT")
+
+        if not self._column_exists("students", "real_last_name"):
+            logger.info("Applying legacy migration: adding students.real_last_name")
+            self.conn.execute("ALTER TABLE students ADD COLUMN real_last_name TEXT")
+
+        if not self._column_exists("students", "preloaded"):
+            logger.info("Applying legacy migration: adding students.preloaded")
+            self.conn.execute(
+                "ALTER TABLE students ADD COLUMN preloaded INTEGER DEFAULT 0"
+            )
+
+        if not self._column_exists("students", "engagement_level"):
+            logger.info("Applying legacy migration: adding students.engagement_level")
+            self.conn.execute(
+                "ALTER TABLE students ADD COLUMN engagement_level TEXT DEFAULT 'quiet'"
+            )
+
+        if not self._column_exists("students", "zone_shift_count"):
+            logger.info("Applying legacy migration: adding students.zone_shift_count")
+            self.conn.execute(
+                "ALTER TABLE students ADD COLUMN zone_shift_count INTEGER DEFAULT 0"
+            )
+
+        if not self._column_exists("students", "frame_sessions_count"):
+            logger.info("Applying legacy migration: adding students.frame_sessions_count")
+            self.conn.execute(
+                "ALTER TABLE students ADD COLUMN frame_sessions_count INTEGER DEFAULT 0"
+            )
+
+        if not self._column_exists("students", "showcase_posts_count"):
+            logger.info("Applying legacy migration: adding students.showcase_posts_count")
+            self.conn.execute(
+                "ALTER TABLE students ADD COLUMN showcase_posts_count INTEGER DEFAULT 0"
+            )
+
+        if not self._column_exists("students", "last_frame_topic"):
+            logger.info("Applying legacy migration: adding students.last_frame_topic")
+            self.conn.execute("ALTER TABLE students ADD COLUMN last_frame_topic TEXT")
+
+        if not self._column_exists("students", "cis_journey_summary"):
+            logger.info("Applying legacy migration: adding students.cis_journey_summary")
+            self.conn.execute("ALTER TABLE students ADD COLUMN cis_journey_summary TEXT")
+
+        if not self._column_exists("students", "initial_zone"):
+            logger.info("Applying legacy migration: adding students.initial_zone")
+            self.conn.execute("ALTER TABLE students ADD COLUMN initial_zone INTEGER")
+
+        if not self._column_exists("students", "artifact_title"):
+            logger.info("Applying legacy migration: adding students.artifact_title")
+            self.conn.execute("ALTER TABLE students ADD COLUMN artifact_title TEXT")
+
+        if not self._column_exists("students", "manual_override_timestamp"):
+            logger.info(
+                "Applying legacy migration: adding students.manual_override_timestamp"
+            )
+            self.conn.execute(
+                "ALTER TABLE students ADD COLUMN manual_override_timestamp TEXT"
+            )
+
+        if not self._column_exists("students", "enrollment_email"):
+            logger.info("Applying legacy migration: adding students.enrollment_email")
+            self.conn.execute("ALTER TABLE students ADD COLUMN enrollment_email TEXT")
+
+        if not self._column_exists("students", "enrollment_name"):
+            logger.info("Applying legacy migration: adding students.enrollment_name")
+            self.conn.execute("ALTER TABLE students ADD COLUMN enrollment_name TEXT")
+
+        if not self._column_exists("students", "discord_username"):
+            logger.info("Applying legacy migration: adding students.discord_username")
+            self.conn.execute("ALTER TABLE students ADD COLUMN discord_username TEXT")
+
+        if not self._column_exists("students", "enrollment_status"):
+            logger.info("Applying legacy migration: adding students.enrollment_status")
+            self.conn.execute(
+                "ALTER TABLE students ADD COLUMN enrollment_status TEXT DEFAULT 'pending'"
+            )
+
+        if not self._column_exists("students", "payment_status"):
+            logger.info("Applying legacy migration: adding students.payment_status")
+            self.conn.execute(
+                "ALTER TABLE students ADD COLUMN payment_status TEXT DEFAULT 'pending'"
+            )
+
+        if not self._column_exists("students", "payment_pending_since"):
+            logger.info(
+                "Applying legacy migration: adding students.payment_pending_since"
+            )
+            self.conn.execute(
+                "ALTER TABLE students ADD COLUMN payment_pending_since TEXT"
+            )
+
+        if not self._column_exists("students", "token_warning_sent"):
+            logger.info("Applying legacy migration: adding students.token_warning_sent")
+            self.conn.execute(
+                "ALTER TABLE students ADD COLUMN token_warning_sent INTEGER DEFAULT 0"
+            )
+
+        if self._table_exists("observability_events") and not self._column_exists(
+            "observability_events",
+            "model_used",
+        ):
+            logger.info(
+                "Applying legacy migration: adding observability_events.model_used"
+            )
+            self.conn.execute(
+                "ALTER TABLE observability_events ADD COLUMN model_used TEXT"
+            )
+
         if self._table_exists("parent_engagement"):
             if not self._column_exists("parent_engagement", "parent_opted_out"):
                 logger.info("Applying legacy migration: adding parent_engagement.parent_opted_out")
@@ -252,6 +455,40 @@ class StudentStateStore:
                 last_interaction TEXT,
                 cluster_id INTEGER DEFAULT 1,
                 last_name TEXT,
+                invite_code TEXT,
+                onboarding_stop INTEGER DEFAULT 0,
+                onboarding_stop_0_complete INTEGER DEFAULT 0,
+                onboarding_stop_0_started_at TEXT,
+                profile_complete INTEGER DEFAULT 0,
+                manual_override_timestamp TEXT,
+                enrollment_email TEXT,
+                enrollment_name TEXT,
+                discord_username TEXT,
+                enrollment_status TEXT DEFAULT 'pending',
+                payment_status TEXT DEFAULT 'pending',
+                payment_pending_since TEXT,
+                token_warning_sent INTEGER DEFAULT 0,
+                primary_device_context TEXT,
+                study_hours_per_week INTEGER,
+                confidence_level INTEGER,
+                family_obligations_hint TEXT,
+                profession TEXT,
+                profession_inferred TEXT,
+                barrier_type TEXT,
+                barrier_confidence REAL DEFAULT 0.0,
+                situation TEXT,
+                goals TEXT,
+                emotional_baseline TEXT,
+                real_last_name TEXT,
+                preloaded INTEGER DEFAULT 0,
+                engagement_level TEXT DEFAULT 'quiet',
+                zone_shift_count INTEGER DEFAULT 0,
+                frame_sessions_count INTEGER DEFAULT 0,
+                showcase_posts_count INTEGER DEFAULT 0,
+                last_frame_topic TEXT,
+                cis_journey_summary TEXT,
+                initial_zone INTEGER,
+                artifact_title TEXT,
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP
             )
         """)
@@ -413,6 +650,35 @@ class StudentStateStore:
                     "week": existing["current_week"],
                 },
             )
+
+    def get_profession_inferred(self, discord_id: str) -> str:
+        """
+        Return stored profession inference bucket for a student.
+        Empty string when unset.
+        """
+        discord_id = str(discord_id)
+        row = self.conn.execute(
+            "SELECT profession_inferred FROM students WHERE discord_id = ?",
+            (discord_id,),
+        ).fetchone()
+        if row is None:
+            return ""
+        value = row["profession_inferred"]
+        return str(value or "").strip()
+
+    def set_profession_inferred(self, discord_id: str, profession_inferred: str) -> None:
+        """
+        Persist Task 6.7 inferred profession bucket for students with profession='other'.
+        """
+        discord_id = str(discord_id)
+        inferred = str(profession_inferred or "").strip()
+        if not discord_id or not inferred:
+            return
+        self.conn.execute(
+            "UPDATE students SET profession_inferred = ? WHERE discord_id = ?",
+            (inferred, discord_id),
+        )
+        self.conn.commit()
 
     def record_student_consent(
         self,
@@ -597,6 +863,25 @@ class StudentStateStore:
         cursor = self.conn.execute("SELECT COUNT(*) as count FROM students")
         result = cursor.fetchone()
         return result['count'] if result else 0
+
+    def get_confirmed_student_count(self) -> int:
+        """
+        Count confirmed students with real Discord linkage.
+
+        Task 7.12 uses this for #welcome-lounge nightly status updates.
+        """
+        cursor = self.conn.execute(
+            """
+            SELECT COUNT(*) AS count
+              FROM students
+             WHERE LOWER(COALESCE(payment_status, '')) = 'confirmed'
+               AND discord_id IS NOT NULL
+               AND discord_id != ''
+               AND discord_id NOT LIKE '__pending__%'
+            """
+        )
+        result = cursor.fetchone()
+        return int(result["count"]) if result and result["count"] is not None else 0
 
     def build_student_context(self, discord_id: str):
         """
@@ -795,7 +1080,8 @@ class StudentStateStore:
         self,
         discord_id,
         event_type: str,
-        metadata: Dict
+        metadata: Dict,
+        model_used: Optional[str] = None,
     ):
         """
         Log observability event for Trevor dashboard
@@ -809,15 +1095,20 @@ class StudentStateStore:
         # Hash student ID for privacy (Task 1.7 Guardrail #8)
         student_id_hash = self._hash_student_id(discord_id)
 
+        resolved_model = model_used
+        if not resolved_model and isinstance(metadata, dict):
+            resolved_model = metadata.get("model")
+
         self.conn.execute(
             """
             INSERT INTO observability_events (
-                student_id_hash, event_type, metadata, timestamp
-            ) VALUES (?, ?, ?, ?)
+                student_id_hash, event_type, model_used, metadata, timestamp
+            ) VALUES (?, ?, ?, ?, ?)
             """,
             (
                 student_id_hash,
                 event_type,
+                resolved_model,
                 json.dumps(metadata),
                 datetime.now().isoformat()
             )
@@ -1124,6 +1415,188 @@ class StudentStateStore:
             })
 
         return milestones
+
+    # ============================================================
+    # ONBOARDING RUNTIME METHODS (Task 7.7)
+    # ============================================================
+
+    @staticmethod
+    def _row_value(row: Any, key: str, default=None):
+        """Read a value from sqlite3.Row or dict safely."""
+        if row is None:
+            return default
+        if isinstance(row, dict):
+            return row.get(key, default)
+        try:
+            return row[key]
+        except Exception:
+            return default
+
+    @staticmethod
+    def _parse_timestamp(value: Any) -> Optional[datetime]:
+        """Best-effort parse of DB timestamps across SQLite/PG adapters."""
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            if value.tzinfo is None:
+                return value.replace(tzinfo=timezone.utc)
+            return value.astimezone(timezone.utc)
+        text = str(value).strip()
+        if not text:
+            return None
+        for candidate in (
+            text.replace("Z", "+00:00"),
+            text.replace(" ", "T"),
+            text,
+        ):
+            try:
+                dt = datetime.fromisoformat(candidate)
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=timezone.utc)
+                return dt.astimezone(timezone.utc)
+            except ValueError:
+                continue
+        return None
+
+    def touch_student_last_active(self, discord_id: str) -> None:
+        """Update last_interaction timestamp for onboarding/re-entry checks."""
+        self.conn.execute(
+            "UPDATE students SET last_interaction = ? WHERE discord_id = ?",
+            (datetime.now(timezone.utc).isoformat(), str(discord_id)),
+        )
+        self.conn.commit()
+
+    def update_onboarding_stop(self, discord_id: str, stop: int) -> None:
+        """Advance student through onboarding stops 1-4."""
+        self.conn.execute(
+            "UPDATE students SET onboarding_stop = ? WHERE discord_id = ?",
+            (int(stop), str(discord_id)),
+        )
+        self.conn.commit()
+
+    def start_onboarding_stop_0(self, discord_id: str) -> None:
+        """Start Stop 0 timer (48h timeout fallback window)."""
+        self.conn.execute(
+            """
+            UPDATE students
+               SET onboarding_stop_0_started_at = ?,
+                   onboarding_stop_0_complete = FALSE
+             WHERE discord_id = ?
+            """,
+            (datetime.now(timezone.utc).isoformat(), str(discord_id)),
+        )
+        self.conn.commit()
+
+    def complete_onboarding_stop_0(self, discord_id: str) -> None:
+        """Mark Stop 0 complete."""
+        self.conn.execute(
+            "UPDATE students SET onboarding_stop_0_complete = TRUE WHERE discord_id = ?",
+            (str(discord_id),),
+        )
+        self.conn.commit()
+
+    def save_stop_0_profile(
+        self,
+        discord_id: str,
+        primary_device_context: str,
+        study_hours_per_week: int,
+        confidence_level: int,
+        family_obligations_hint: str,
+        profile_complete: bool,
+    ) -> None:
+        """Persist Stop 0 profile fields, then mark Stop 0 complete."""
+        self.conn.execute(
+            """
+            UPDATE students
+               SET primary_device_context = ?,
+                   study_hours_per_week = ?,
+                   confidence_level = ?,
+                   family_obligations_hint = ?,
+                   profile_complete = ?,
+                   onboarding_stop_0_complete = TRUE
+             WHERE discord_id = ?
+            """,
+            (
+                str(primary_device_context or ""),
+                int(study_hours_per_week) if study_hours_per_week is not None else None,
+                int(confidence_level) if confidence_level is not None else None,
+                str(family_obligations_hint or ""),
+                bool(profile_complete),
+                str(discord_id),
+            ),
+        )
+        self.conn.commit()
+
+    def apply_stop_0_timeout_defaults(
+        self,
+        discord_id: str,
+        primary_device_context: str,
+        study_hours_per_week: int,
+        confidence_level: int,
+        family_obligations_hint: str,
+    ) -> None:
+        """Apply non-blocking defaults when Stop 0 times out."""
+        self.save_stop_0_profile(
+            discord_id=discord_id,
+            primary_device_context=primary_device_context,
+            study_hours_per_week=study_hours_per_week,
+            confidence_level=confidence_level,
+            family_obligations_hint=family_obligations_hint,
+            profile_complete=False,
+        )
+
+    def get_students_pending_onboarding_reentry(self, inactive_days: int = 7) -> List[Any]:
+        """
+        Return students with onboarding_stop < 4 and inactivity beyond the cutoff.
+        """
+        rows = self.conn.execute(
+            """
+            SELECT *
+              FROM students
+             WHERE onboarding_stop < 4
+               AND discord_id IS NOT NULL
+               AND discord_id != ''
+               AND discord_id NOT LIKE '__pending__%'
+            """
+        ).fetchall()
+
+        cutoff = datetime.now(timezone.utc) - timedelta(days=max(1, inactive_days))
+        candidates = []
+        for row in rows:
+            last_active = self._parse_timestamp(self._row_value(row, "last_interaction"))
+            if last_active is None:
+                last_active = self._parse_timestamp(self._row_value(row, "created_at"))
+            if last_active is None or last_active <= cutoff:
+                candidates.append(row)
+        return candidates
+
+    def get_stop_0_timeout_candidates(self, timeout_hours: int = 48) -> List[Any]:
+        """
+        Return students whose Stop 0 timer has elapsed without completion.
+        """
+        rows = self.conn.execute(
+            """
+            SELECT discord_id,
+                   onboarding_stop_0_started_at,
+                   onboarding_stop_0_complete
+             FROM students
+             WHERE onboarding_stop >= 4
+               AND onboarding_stop_0_complete = FALSE
+               AND discord_id IS NOT NULL
+               AND discord_id != ''
+               AND discord_id NOT LIKE '__pending__%'
+            """
+        ).fetchall()
+
+        cutoff = datetime.now(timezone.utc) - timedelta(hours=max(1, timeout_hours))
+        timed_out = []
+        for row in rows:
+            started_at = self._parse_timestamp(
+                self._row_value(row, "onboarding_stop_0_started_at")
+            )
+            if started_at is not None and started_at <= cutoff:
+                timed_out.append(row)
+        return timed_out
 
     # ============================================================
     # WEEKLY REFLECTIONS METHODS (Task 2.5)
@@ -1944,25 +2417,24 @@ class StudentStateStore:
         """
         rosters = []
         for cluster_id in range(1, 9):  # Clusters 1-8
-            cursor = self.conn.execute(
-                """
-                SELECT
-                    c.cluster_id,
-                    COUNT(s.discord_id) as student_count,
-                    GROUP_CONCAT(s.last_name, ', ') as student_names
-                FROM cluster_assignments c
-                LEFT JOIN students s ON c.discord_id = s.discord_id
-                WHERE c.cluster_id = ?
-                GROUP BY c.cluster_id
-                """,
-                (cluster_id,)
-            )
-            row = cursor.fetchone()
-
+            # NOTE:
+            # SQLite supports GROUP_CONCAT while PostgreSQL uses STRING_AGG.
+            # Build the roster payload in Python so this stays portable across
+            # both runtime stores.
+            students = self.get_students_by_cluster(cluster_id)
+            names = []
+            for student in students:
+                try:
+                    last_name = str(student["last_name"] or "").strip()
+                except Exception:
+                    last_name = ""
+                if last_name:
+                    names.append(last_name)
+            student_names = ", ".join(names)
             rosters.append({
                 'cluster_id': cluster_id,
-                'student_count': row['student_count'] if row else 0,
-                'student_names': row['student_names'] if row and row['student_names'] else ''
+                'student_count': len(students),
+                'student_names': student_names,
             })
 
         return rosters

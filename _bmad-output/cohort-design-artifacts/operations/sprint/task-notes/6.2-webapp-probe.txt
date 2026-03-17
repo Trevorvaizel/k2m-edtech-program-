@@ -1,0 +1,14 @@
+Task 6.2 webapp probe evidence
+Date: 2026-03-12
+
+Probe command (PowerShell Invoke-RestMethod):
+POST https://script.google.com/macros/s/AKfycbyDI141yEoa4zAOx1zNdjc3cCW87HRJmDENnGbYFcFvbT7dC3jYBWUH2qtxFenVY5Va4w/exec
+Body: {"action":"getStudentContext","discord_id":"0"}
+
+Observed result:
+The remote server returned an error: (404) Not Found.
+
+Interpretation:
+- Deployment exists, but external unauthenticated webapp invocation is not currently reachable from this shell context.
+- Most likely causes: webapp deployment access level and/or endpoint mode not aligned to external POST access.
+- Requires Apps Script UI verification by owner account.
